@@ -1,4 +1,5 @@
 import { ResourcesView } from "./ResourcesView.jsx";
+import { CartVersion } from "./CartVersion.jsx";
 import {
   HomeHeader,
   WorkbenchHeader,
@@ -58,7 +59,7 @@ import { downloadCart } from "./pico8/cart.js";
 import { currentTool, describeTool, formatButtons } from "./workbench-state.js";
 import { countTokens } from "./pico8/tokens.js";
 import carts from "./assets/carts.json";
-import { emptySnapshot } from "./pico8/assets.js";
+import { emptySnapshot, sameSnapshot } from "./pico8/assets.js";
 import { Game } from "./game.js";
 import { Agent } from "./agent.js";
 import {
@@ -503,6 +504,7 @@ function Studio({ store }) {
     });
   }
   const [view, setView] = useState("preview");
+  const [inspectionVersion, setInspectionVersion] = useState("draft");
   const [frames, setFrames] = useState([]);
   const [label, setLabel] = useState(project.current.label ?? null);
   const [showRestore, setShowRestore] = useState(
@@ -924,6 +926,7 @@ function Studio({ store }) {
         setLabel(next.label ?? null);
         setShowRestore(!!activeSession(next).interrupted);
         setView("preview");
+        setInspectionVersion("draft");
         setError("");
         runtime.thread.composer.setText(
           enter ? activeSession(next).draft : homeDraft.current,
@@ -1033,7 +1036,18 @@ function Studio({ store }) {
   const currentSession = activeSession(project.current);
   const hasConversation = chat.messages.length > 0;
   const lastCart = shelf[0] ?? null;
-  const tokens = useMemo(() => countTokens(game.source ?? ""), [game.source]);
+  const version = game.hasGame ? inspectionVersion : "draft";
+  const inspected = version === "committed" ? game.snapshot : game.draft;
+  const meterSource =
+    view === "preview" ? (game.source ?? "") : inspected.source;
+  const tokens = useMemo(() => countTokens(meterSource), [meterSource]);
+  const versionProps = {
+    value: version,
+    onChange: setInspectionVersion,
+    hasGame: game.hasGame,
+    revision: game.revision,
+    dirty: !sameSnapshot(game.draft, game.snapshot),
+  };
   const modelName =
     providers
       .find((p) => p.id === config.provider)
@@ -1114,7 +1128,7 @@ function Studio({ store }) {
               hasGame={game.hasGame}
               saveFailed={storageError}
               tokens={tokens}
-              chars={game.source?.length ?? 0}
+              chars={meterSource.length}
               view={view}
               onView={setView}
               canUndo={game.canUndo}
@@ -1602,15 +1616,16 @@ function Studio({ store }) {
                   )}
                 </div>
                 {inWorkbench && view === "code" && (
-                  <CodeView source={game.source ?? ""} tokens={tokens} />
+                  <CodeView
+                    source={inspected.source}
+                    versionProps={versionProps}
+                  />
                 )}
                 {inWorkbench && view === "resources" && (
                   <ResourcesView
                     key={project.current.id}
-                    draft={game.draft}
-                    snapshot={game.snapshot}
-                    revision={game.revision}
-                    hasGame={game.hasGame}
+                    current={inspected}
+                    versionProps={versionProps}
                   />
                 )}
               </div>
@@ -1716,11 +1731,13 @@ function Studio({ store }) {
     </AssistantRuntimeProvider>
   );
 }
-function CodeView({ source, tokens }) {
+function CodeView({ source, versionProps }) {
   const lines = source.split("\n");
+  const tokens = useMemo(() => countTokens(source), [source]);
   const [copied, setCopied] = useState(false);
   return (
     <div className="code-view">
+      <CartVersion title="Code" {...versionProps} />
       <div className="code-head">
         <span>
           main.lua · {lines.length} lines · ≈{tokens} tokens

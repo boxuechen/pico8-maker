@@ -26,7 +26,7 @@ export const inputSchema = {
       maxItems: capabilities.maxInputCaptures - 1,
       items: { type: "integer", minimum: 1, maximum: maxFrames },
       description:
-        "Optional strictly increasing frame offsets from this call's start, within its total frames. Final frame is always included. Omit for each step end; [] captures only the final frame.",
+        "Optional strictly increasing frame offsets from this call's start, within its total frames. Final frame is always included. Omit or use [] for only the final frame; request intermediate frames to verify transitions or separate outcomes.",
     },
   },
   additionalProperties: false,
@@ -67,7 +67,6 @@ export function inputPlan(args) {
       `steps must contain 1–${capabilities.maxInputSteps} entries`,
     );
   let total = 0;
-  const ends = [];
   for (const step of steps) {
     if (
       !step ||
@@ -85,7 +84,6 @@ export function inputPlan(args) {
     )
       throw new Error("buttons must be an integer 0–63");
     total += step.frames;
-    ends.push(total);
   }
   if (total > maxFrames) throw new Error(`Total frames must be 1–${maxFrames}`);
   const requested = args.captureFrames;
@@ -107,7 +105,7 @@ export function inputPlan(args) {
   return {
     steps: steps.map((s) => ({ ...s })),
     total,
-    captures: [...new Set([...(requested ?? ends), total])],
+    captures: [...new Set([...(requested ?? []), total])],
   };
 }
 

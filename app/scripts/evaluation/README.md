@@ -1,8 +1,22 @@
 # PICO-8 Agent evaluation
 
-Open `/evaluation.html` on the same local development origin as the app. The evaluator uses the browser's saved model configuration, makes normal provider requests, and tests six fixed tasks twice with disposable carts. It records tool use, skill selection, scope preservation and fixture movement. Review creation gameplay with the returned frames. Compaction tests use declared synthetic history and real provider summarization.
+Open `/evaluation.html` on the same local development origin as the app. The evaluator uses the browser's saved model configuration and makes normal provider requests with disposable carts. Select Workflow for the original six tasks twice, or Small mechanics for three small repair tasks twice. It records tool use, skill selection, scope preservation and independent pixel checks. Review creation gameplay with the returned frames. Compaction tests use declared synthetic history and real provider summarization.
 
 The evaluator has a 180-second and 40-tool budget per attempt. Its loopback recorder saves reports and execution snapshots under `.cache/evaluations/skills-<id>/`. Preserve failed attempts and report the scope of each check. Deterministic evaluator tests are part of `npm test`.
+
+## Small mechanics suite
+
+These are short, deliberately broken fixtures, not unrestricted game generation benchmarks. Each task asks the model to preserve the small game's existing layout, resources and unrelated behavior. The independent verifier runs only after capturing the model transcript, so its inputs do not count as model playtesting.
+
+| Task | Independent checks |
+| --- | --- |
+| Jump | Grounded jump, rejection of a second airborne jump, landing, jumping again and horizontal movement. |
+| Enemy | One HP lost on contact, 19 further frames protected, damage on the 20th frame, loss, win and HP/position restoration after both retries. |
+| Map | Wall blocking, coin removal, no repeat scoring, victory after collecting both distinct coins, and map/score/position restoration on retry. |
+
+Checks inspect actual WASM frame pixels, not source substrings or the model's final claims. Regression tests first reject each runnable broken fixture, then accept a known repair. Passing proves these named behaviors in the fixtures, not fun, art quality or correctness of arbitrary generated games. Full-input evidence remains available for review.
+
+For manual version-view QA, run `npm run test:model`, use an isolated browser origin with custom model `fixture-draft`, Base URL `http://127.0.0.1:8788/v1` and a dummy key. This creates a green-sprite committed cart and a pink-sprite draft with invalid Lua. Confirm that Code and Resources share their version selection, display the matching source/resources, and keep the failed draft inspectable while Preview/export retain the committed cart. The fixture is a local scripted response, not a real model test.
 
 ## Recorded results
 
@@ -12,8 +26,43 @@ The evaluator has a 180-second and 40-tool budget per attempt. Its loopback reco
 | Revised skill routing | DeepSeek Flash, high | 12/12 checks passed. All ten action attempts read the required skills. |
 | Tool improvements | DeepSeek Flash, high | 12/12 checks passed. 28 input calls ran 54 steps, with four resource PNG previews. |
 | Leaner knowledge | DeepSeek Flash, high | 12/12 checks passed. Resource inventory reads fell from 11 to zero. |
+| Unified workflow, first pass | DeepSeek Flash, high | 12/12 original checks passed; 11/12 with the added resource-skill check. One creation edited audio without reading assets. |
+| Unified workflow, explicit resource routing | DeepSeek Flash, high | 12/12 checks passed, including reading assets before resource edits. No tool errors. |
+| Small mechanics | DeepSeek Flash, high | 6/6 checks passed across jump, enemy and map, twice each. 80 tool calls, no tool errors. |
 
 The samples use the same fixed prompts and one provider. Tool call counts reflect the generated games and the model's decisions. Human gameplay quality and cross-model reliability require separate evaluation.
+
+## Small-game improvements validation
+
+Completion guidance now covers each requested main mechanic and applicable success, failure and retry paths, with focused checks for focused edits. It does not require a separate planning document.
+
+The small mechanics batch passed all named pixel and scope checks in six attempts using DeepSeek Flash with high thinking. Each attempt read edit and playtest, used actual input, and preserved authored resources. Report: `.cache/evaluations/skills-f8d907bf-4afd-4e3e-8311-84ecb4be487e/report.json`. These are small repair fixtures and one model configuration, not an unrestricted creation-quality benchmark or a Codex comparison.
+
+Validation: 98 automated tests, production build and four Sites checks passed. Browser QA with `fixture-draft` confirmed shared Code/Resources selection, corresponding source/resource content and code budgets, inspectable failed drafts, and continued playback of the committed green-sprite cart. Switching from committed inspection to a new empty cart restored draft selection with no committed option. The local fixture's deliberate Lua load failure is expected and separate from the real-model batch's zero tool errors.
+
+## Unified workflow validation
+
+Source reads now use `read` with draft status, budget and pagination; the model has eight tools instead of nine. Input sequences return only the final PNG unless checkpoints are requested. Create covers its own repair loop, and nested asset work shares the main task's load/commit.
+
+| Batch | Tool calls | Returned images | Tool errors |
+| --- | ---: | ---: | ---: |
+| Leaner knowledge baseline | 116 | 90 | 1 |
+| Unified workflow, first pass | 107 | 85 | 2 |
+| Unified workflow, explicit resource routing | 101 | 76 | 0 |
+
+The final batch reduced calls by 12.9% and images by 15.6% against the baseline in these twelve samples. This is an observed batch comparison, not a controlled estimate of general savings: generated games, repairs and selected checkpoints vary. A deterministic WASM regression separately confirms that the same three-step input returns one default image instead of three while preserving final pixels, input timing and execution progress. Explicit checkpoints and early-stop evidence remain covered.
+
+The first pass exposed an existing evaluator gap: fixed create checks did not require assets when a generated game called `edit_assets`. The evaluator now checks for a successful assets skill read before the first resource edit, including within create tasks; missing, failed and late reads fail. Rechecking the baseline also finds this violation in `create-2`, so its historical 12/12 result is not a pass under the expanded checks. The final batch's second creation read assets before editing sprites, loaded source and resources together, and repaired the game without loading edit.
+
+Archived reports:
+
+- First pass: `.cache/evaluations/skills-880087ab-b7b8-4260-b6fd-39bd3035b67c/report.json`. Preserve its two recovered tool errors and resource-routing failure.
+- Interrupted attempt: `.cache/evaluations/skills-7c825e50-81bf-4951-bbd8-14bdbf31aa8d/report.json`. Build-time file generation triggered a development-page reload before any case completed; this is not a completed evaluation. The original partial report is retained.
+- Final batch: `.cache/evaluations/skills-b888f494-1a89-46f6-b6f5-2ebc61a0a0ce/report.json`.
+
+Validation: 95 automated tests, production build and four Sites checks passed. The browser preview loaded without reported console errors. Finish builds before starting the browser evaluator so generated-file changes cannot reload an active run.
+
+## Earlier knowledge-size comparison
 
 The leaner pack publishes 29 files and 63,713 bytes, down from 42 files and 113,294 bytes. For the same sample cart with stale evidence, startup sections total 3,366 bytes, down from 9,621. Serialized tool definitions total 8,530 bytes, down from 11,247. These are UTF-8 measurements before provider formatting.
 

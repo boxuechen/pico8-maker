@@ -13,7 +13,6 @@ import {
 } from "./pico8/assets.js";
 import { downloadCart, cartBytes } from "./pico8/cart.js";
 import { CartWorkspace } from "./pico8/workspace.js";
-import { readSource } from "./pico8/source-read.js";
 import { sourceBudget } from "./pico8/source-budget.js";
 import { inputPlan, runInputs } from "./pico8/input-sequence.js";
 import { assetPreview, assetChanges } from "./pico8/asset-preview.js";
@@ -301,7 +300,6 @@ export class Game {
       ![
         "read_assets",
         "edit_assets",
-        "read_game",
         "load_game",
         "reset_game",
         "press_buttons",
@@ -309,24 +307,6 @@ export class Game {
       ].includes(action)
     )
       throw new Error(`未知游戏工具：${action}`);
-    if (action === "read_game") {
-      const { structuredOutput: _programOutput, ...result } = await readSource(
-        {},
-        this.workspace,
-        { abortSignal: signal },
-      );
-      return {
-        ...result,
-        diagnostics: [
-          ...(result.diagnostics ?? []),
-          {
-            severity: "info",
-            code: "cart_status",
-            message: JSON.stringify(this.cartStatus()),
-          },
-        ],
-      };
-    }
     if (action === "read_assets") {
       const { version = "draft", format = "data", ...query } = args;
       if (

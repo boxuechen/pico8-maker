@@ -37,11 +37,20 @@
   <body>
     <h1>PICO-8 skills evaluation</h1>
     <p>
-      Uses this browser's saved model configuration. Twelve disposable attempts:
-      six tasks, twice each. Existing carts and conversations are untouched.
-      Calls the real provider and incurs normal API usage.
+      Uses this browser's saved model configuration. Each selected task runs
+      twice with disposable carts. Existing carts and conversations are
+      untouched. Calls the real provider and incurs normal API usage.
     </p>
     <p id="model"></p>
+    <p>
+      <label
+        >Evaluation suite
+        <select id="suite">
+          <option value="skills">Workflow · 6 tasks</option>
+          <option value="mechanics">Small mechanics · jump, enemy, map</option>
+        </select>
+      </label>
+    </p>
     <button id="start">Run 12 evaluations</button
     ><button id="stop" disabled>Stop evaluation</button>
     <p id="status" role="status">Ready</p>

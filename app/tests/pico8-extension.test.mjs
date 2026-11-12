@@ -152,7 +152,8 @@ test("actual provider requests replace legacy rules and preserve references acro
     assert.ok(!system.includes("## Observed implementation"));
     assert.ok(!system.includes("LEGACY_JUMP_ONLY"));
     assert.ok(!system.includes("LEGACY_KEEP_PLAYTESTING_FOREVER"));
-    assert.equal(body.tools.length, 9);
+    assert.equal(body.tools.length, 8);
+    assert.ok(!body.tools.some((t) => t.function.name === "read_game"));
     assert.ok(body.tools.some((t) => t.function.name === "edit"));
     assert.ok(body.tools.some((t) => t.function.name === "read"));
     if (bodies.length === 1)

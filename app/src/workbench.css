@@ -1177,17 +1177,19 @@
   gap: 10px;
   flex-wrap: wrap;
 }
-.resources-view h2,
+.cart-version h2,
 .resources-view h3 {
   margin: 0;
   font-family: var(--font-pixel);
   font-size: 18px;
   font-weight: normal;
 }
+.cart-version label,
 .resources-view label {
   font-size: 12px;
   color: #b8bcc8;
 }
+.cart-version select,
 .resources-view select {
   color: #fff1e8;
   background: #121a2c;
@@ -1196,6 +1198,7 @@
   padding: 5px;
   max-width: 150px;
 }
+.cart-version select:focus-visible,
 .resources-view select:focus-visible {
   outline: 2px solid #ff77a8;
   outline-offset: 2px;
@@ -1205,6 +1208,11 @@
   font-size: 12px;
   line-height: 1.6;
   margin: 10px 0;
+}
+.code-view > .cart-version {
+  flex-shrink: 0;
+  padding: 14px 14px 0;
+  border-bottom: 1px solid var(--border);
 }
 .resource-stats {
   display: flex;

@@ -213,7 +213,7 @@ export class CartWorkspace {
     return err(
       new ExecutionError(
         "shell_unavailable",
-        "The cart workspace has no shell. Use read_game, edit and load_game.",
+        "The cart workspace has no shell. Use read, edit and load_game.",
       ),
     );
   }

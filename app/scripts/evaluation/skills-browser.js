@@ -8,6 +8,7 @@ import { readableError } from "../../src/model-config.js";
 import { newCart } from "../../src/cart-store.js";
 import { activeSession, sessionContext } from "../../src/sessions.js";
 import { defaultKnowledgeFiles } from "../../src/pico8/knowledge-files.js";
+import { mechanicsCases, verifyMechanics } from "./mechanics-cases.mjs";
 import {
   skillCases,
   fixtureSnapshot,
@@ -96,7 +97,9 @@ async function compactAndRestore(agent, game, projectContext, config) {
 
 async function runCase(task, repetition, config) {
   const started = performance.now();
-  const before = task.id === "create" ? emptySnapshot() : fixtureSnapshot();
+  const before =
+    task.snapshot?.() ??
+    (task.id === "create" ? emptySnapshot() : fixtureSnapshot());
   const cart = newCart({
     title: "Disposable skills evaluation",
     versions: task.id === "create" ? [] : [before],
@@ -174,6 +177,11 @@ async function runCase(task, repetition, config) {
   // Run after capturing agent calls so independent verification cannot inflate
   // the agent's own playtesting metrics. Scope-specific pixel checks, not guesses.
   try {
+    if (task.mechanic && game.hasGame) {
+      const verified = await verifyMechanics(task.id, game);
+      Object.assign(checks, verified.checks);
+      evaluatorEvidence = verified.evidence;
+    }
     if (["edit", "compact"].includes(task.id) && game.hasGame) {
       const baseline = await game.execute("reset_game", {});
       const moved = await game.execute("press_buttons", {
@@ -239,6 +247,11 @@ async function runCase(task, repetition, config) {
   };
 }
 
+const suites = { skills: skillCases, mechanics: mechanicsCases };
+$("suite").onchange = () => {
+  $("start").textContent =
+    `Run ${suites[$("suite").value].length * 2} evaluations`;
+};
 $("start").onclick = async () => {
   const config = readModelConfig();
   if (!config.apiKey) {
@@ -248,11 +261,15 @@ $("start").onclick = async () => {
     return;
   }
   stopped = false;
+  const suite = $("suite").value;
+  const tasks = suites[suite];
   $("runs").replaceChildren();
   $("start").disabled = true;
+  $("suite").disabled = true;
   $("stop").disabled = false;
   report = {
     schemaVersion: 1,
+    suite,
     id: crypto.randomUUID(),
     startedAt: new Date().toISOString(),
     model: {
@@ -273,7 +290,7 @@ $("start").onclick = async () => {
   try {
     await saveReport(config);
     for (let repetition = 1; repetition <= 2; repetition++) {
-      for (const task of skillCases) {
+      for (const task of tasks) {
         if (stopped) break;
         progress(
           `Running ${task.id}, repetition ${repetition}/2 — ${config.provider}/${config.model}`,
@@ -298,6 +315,7 @@ $("start").onclick = async () => {
     progress(readableError(e, config.apiKey));
   } finally {
     $("start").disabled = false;
+    $("suite").disabled = false;
     $("stop").disabled = true;
   }
 };

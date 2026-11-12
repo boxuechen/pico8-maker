@@ -94,10 +94,19 @@ export function transcriptMetrics(entries) {
       ),
   );
   const assistant = messages.filter((m) => m.role === "assistant");
+  const firstAssetEdit = calls.findIndex((c) => c.name === "edit_assets");
+  const assetsSkillRead = calls.findIndex(
+    (c) =>
+      skillReads.includes(c) &&
+      c.arguments.path.endsWith("/pico8-assets/SKILL.md"),
+  );
   return {
     tools: calls.length,
     failedTools: calls.filter((c) => results.get(c.id)?.isError).length,
     skillReads: skillReads.map((c) => c.arguments.path.split("/").at(-2)),
+    resourceSkillBeforeEdits:
+      firstAssetEdit === -1 ||
+      (assetsSkillRead >= 0 && assetsSkillRead < firstAssetEdit),
     referenceReads: successful.filter(
       (c) =>
         c.name === "read" &&
@@ -134,6 +143,9 @@ export function assessScope(task, before, after, metrics, settled) {
     naturalCompletion: settled?.status === "done" && Boolean(metrics.finalText),
     selectedSkills: task.skills.every((s) => metrics.skillReads.includes(s)),
   };
+  if (metrics.operations.includes("edit_assets"))
+    checks.resourceSkillBeforeEdits = metrics.resourceSkillBeforeEdits === true;
+  if (task.mechanic) checks.preservedResources = before.assets === after.assets;
   if (["playtest", "explain"].includes(task.id)) {
     checks.preservedCart =
       before.source === after.source && before.assets === after.assets;

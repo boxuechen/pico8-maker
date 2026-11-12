@@ -131,7 +131,17 @@ test("load_game commits the working file; failed loads keep edits uncommitted", 
   const { game, loads, drafts } = scriptedGame();
   assert.equal(game.draft.source, "v1");
   await game.workspace.writeFile("main.lua", "v2", context);
-  assert.equal((await game.execute("read_game", {})).output[0].text, "v2");
+  const read = createPico8Extension({ game, knowledge }).tools.find(
+    (t) => t.name === "read",
+  );
+  const draft = await read.execute({ path: "main.lua" }, {}, context);
+  assert.equal(draft.output[0].text, "v2");
+  const status = JSON.parse(
+    draft.diagnostics.find((d) => d.code === "cart_status").message,
+  );
+  assert.equal(status.draftDirty, true);
+  assert.equal(status.committedRevision, 1);
+  assert.ok(status.draftSourceBudget);
   assert.equal(game.source, "v1");
   // reset_game runs the committed version, not the draft.
   await game.execute("reset_game", {});

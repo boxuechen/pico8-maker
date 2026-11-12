@@ -54,7 +54,7 @@ export function formatButtons(mask = 0) {
 }
 const toolLabels = {
   read: "Read a file",
-  read_game: "Read the cart source",
+  read_game: "Read the cart source", // Historical transcripts only.
   load_game: "Loaded the cart",
   edit: "Edited main.lua",
   read_assets: "Read resources",

@@ -6,8 +6,7 @@
 
 | Tool | Behavior |
 | --- | --- |
-| `read`, `edit` | Read source or mounted documentation. Edits target the single Lua draft at `/cart/main.lua`. |
-| `read_game` | Read the first source page and draft status. Follow the returned line or UTF-8 byte continuation for large source. |
+| `read`, `edit` | Read source with draft status and approximate budget, or mounted documentation. Follow the returned line or UTF-8 byte continuation for large source. Edits target the single Lua draft at `/cart/main.lua`. |
 | `load_game` | Start the draft in the test runtime and commit source and resources together after a successful load. Failed loads retain both the draft and last playable cart. |
 | `reset_game`, `press_buttons` | Operate the committed cart in a separate test Worker. Sequences allow up to eight steps, 600 total frames and eight PNG checkpoints. Results report actual progress and early stops. |
 | `observe_game` | Read the completed frame as PNG, ASCII or both with optional pixel cropping. |

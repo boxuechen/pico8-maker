@@ -10,6 +10,11 @@ import { editAssets } from "../src/pico8/assets.js";
 import { createPico8Session } from "../public/player/main/player.mjs";
 import { cartBytes } from "../src/pico8/cart.js";
 import { input } from "./helpers/game.mjs";
+import { TestGame } from "./helpers/game.mjs";
+import {
+  mechanicsCases,
+  verifyMechanics,
+} from "../scripts/evaluation/mechanics-cases.mjs";
 
 test("evaluation metrics require successful skill reads and actual tool evidence", () => {
   const entries = [
@@ -57,6 +62,46 @@ test("evaluation metrics require successful skill reads and actual tool evidence
   assert.equal(checks.selectedSkills, false);
   assert.equal(checks.actualInput, true);
   assert.equal(checks.naturalCompletion, true);
+});
+
+test("resource skill routing rejects missing, failed and late reads in creation tasks", () => {
+  const read = {
+    type: "toolCall",
+    id: "r",
+    name: "read",
+    arguments: { path: "/extensions/pico8/skills/pico8-assets/SKILL.md" },
+  };
+  const edit = {
+    type: "toolCall",
+    id: "e",
+    name: "edit_assets",
+    arguments: {},
+  };
+  for (const [calls, isError, expected] of [
+    [[edit], false, false],
+    [[read, edit], true, false],
+    [[edit, read], false, false],
+    [[read, edit], false, true],
+  ]) {
+    const entries = [
+      {
+        model: [
+          { role: "assistant", content: calls },
+          { role: "toolResult", toolCallId: "r", isError, content: [] },
+          { role: "toolResult", toolCallId: "e", isError: false, content: [] },
+        ],
+      },
+    ];
+    const metrics = transcriptMetrics(entries);
+    const checks = assessScope(
+      skillCases.find((t) => t.id === "create"),
+      fixtureSnapshot(),
+      fixtureSnapshot(),
+      metrics,
+      { status: "done" },
+    );
+    assert.equal(checks.resourceSkillBeforeEdits, expected);
+  }
 });
 
 test("scope assessment rejects unrequested edits, resource damage and aborted answers", () => {
@@ -127,3 +172,41 @@ test("the fixed fixture and speed oracle exercise the real runtime", async (t) =
     );
   }
 });
+
+for (const task of mechanicsCases) {
+  test(`${task.id} pixel checks reject the broken fixture and accept a repaired game`, async (t) => {
+    const game = new TestGame();
+    t.after(() => game.dispose());
+    const broken = task.snapshot();
+    game.versions = [broken];
+    game.draft = { ...broken };
+    const before = await verifyMechanics(task.id, game);
+    assert.equal(before.checks.noRuntimeFault, true);
+    assert.ok(
+      Object.values(before.checks).includes(false),
+      "A runnable broken game must fail gameplay checks",
+    );
+    const source = broken.source
+      .replace(
+        "if btnp(4) then vy=-4 end",
+        "if btnp(4) and y==88 then vy=-4 end",
+      )
+      .replace("then hp-=1 inv=0 end", "then hp-=1 inv=20 end")
+      .replace(
+        "if true then x=nx y=ny end",
+        "if mget(nx,ny)!=1 then x=nx y=ny end",
+      )
+      .replace(
+        "if mget(x,y)==2 then score+=1 end",
+        "if mget(x,y)==2 then score+=1 mset(x,y,0) end",
+      );
+    await game.execute("load_game", { source });
+    const after = await verifyMechanics(task.id, game);
+    assert.ok(
+      Object.values(after.checks).every(Boolean),
+      JSON.stringify(after.checks),
+    );
+    assert.ok(after.evidence.length > 1);
+    assert.equal(game.snapshot.assets, broken.assets);
+  });
+}

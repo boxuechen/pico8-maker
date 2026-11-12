@@ -100,7 +100,7 @@ test("read supports UTF-8 line ranges and documents stay read-only across carts"
     false,
   );
   const tool = createPico8Extension({
-    game: { workspace: a },
+    game: { workspace: a, cartStatus: () => ({ draftDirty: false }) },
     knowledge,
   }).tools.find((t) => t.name === "read");
   assert.equal(

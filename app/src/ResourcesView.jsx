@@ -5,8 +5,8 @@ import {
   sprite,
   sound,
   music,
-  sameSnapshot,
 } from "./pico8/assets.js";
+import { CartVersion } from "./CartVersion.jsx";
 import { renderSheet, renderMap } from "./pico8/asset-preview.js";
 function Pixels({ bytes, mode, page = 0, selected, onSelect }) {
   const ref = useRef(null);
@@ -82,13 +82,11 @@ function Slots({ label, value, onChange, count }) {
     </label>
   );
 }
-export function ResourcesView({ draft, snapshot, revision, hasGame }) {
-  const [committed, setCommitted] = useState(false);
+export function ResourcesView({ current, versionProps }) {
   const [spriteId, setSprite] = useState(0),
     [page, setPage] = useState(0),
     [sfxId, setSfx] = useState(0),
     [musicId, setMusic] = useState(0);
-  const current = committed && hasGame ? snapshot : draft;
   const bytes = useMemo(() => decodeAssets(current.assets), [current.assets]);
   const summary = useMemo(() => assetSummary(current.assets), [current.assets]);
   const selectedSprite = sprite(bytes, spriteId),
@@ -96,25 +94,8 @@ export function ResourcesView({ draft, snapshot, revision, hasGame }) {
     pattern = music(bytes, musicId);
   return (
     <section className="resources-view" aria-label="Cartridge resources">
-      <div className="resources-heading">
-        <h2>Resources</h2>
-        <label>
-          Version{" "}
-          <select
-            value={committed && hasGame ? "committed" : "draft"}
-            onChange={(e) => setCommitted(e.target.value === "committed")}
-          >
-            <option value="draft">Working draft</option>
-            {hasGame && (
-              <option value="committed">Committed v{revision}</option>
-            )}
-          </select>
-        </label>
-      </div>
+      <CartVersion title="Resources" {...versionProps} />
       <p className="resource-note">
-        {!committed && !sameSnapshot(draft, snapshot)
-          ? "Uncommitted changes · preview and export use the committed cart."
-          : "Source and resources are saved together."}{" "}
         Read-only preview. Ask the assistant to edit resources.
       </p>
       <div className="resource-stats">

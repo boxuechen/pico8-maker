@@ -71,6 +71,7 @@ test("real input sequences preserve checkpoints, exact movement and runtime stat
       { frames: 1, buttons: 0 },
       { frames: 5, buttons: 1 },
     ],
+    captureFrames: [10, 11],
   });
   const meta = headers(result);
   assert.deepEqual(
@@ -112,6 +113,33 @@ test("real input sequences preserve checkpoints, exact movement and runtime stat
   assert.equal(observed.frame.frameId, before.frame.frameId);
   assert.equal(observed.frame.cpuInstructions, before.frame.cpuInstructions);
   assert.equal(g.session.observe().frame.frameId, before.frame.frameId);
+});
+
+test("default final-only capture preserves batched movement and release timing", async (t) => {
+  const g = gameFor(t);
+  const steps = [
+    { frames: 10, buttons: 2 },
+    { frames: 1, buttons: 0 },
+    { frames: 5, buttons: 1 },
+  ];
+  await g.execute("reset_game", {});
+  const sampled = await g.execute("press_buttons", {
+    steps,
+    captureFrames: [10, 11],
+  });
+  const expected = g.testFrame.rgba.slice();
+  const expectedExecution = headers(sampled)[0].execution;
+  for (const options of [{}, { captureFrames: [] }]) {
+    await g.execute("reset_game", {});
+    const result = await g.execute("press_buttons", { steps, ...options });
+    const meta = headers(result);
+    assert.equal(meta.length, 1);
+    assert.deepEqual(meta[0].checkpoint, { step: 3, afterFrames: 16 });
+    assert.deepEqual(meta[0].execution, expectedExecution);
+    assert.equal(result.output.filter((p) => p.type === "image").length, 1);
+    assert.equal(g.testFrames.length, 1);
+    assert.deepEqual(g.testFrame.rgba, expected);
+  }
 });
 
 test("checkpoint sampling does not inject button releases or change btnp timing", async (t) => {
@@ -162,7 +190,6 @@ function _draw() cls(0) pset(n,0,8) end`),
         { frames: 10, buttons: 2 },
         { frames: 20, buttons: 1 },
       ],
-      captureFrames: [],
     });
     const m = headers(result)[0];
     assert.equal(m.execution.outcome, outcome);

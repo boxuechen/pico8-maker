@@ -23,7 +23,6 @@ export function createPico8Tools({ game, knowledge }) {
       "Read authored resources without running the game. For map reads, supply x, y, width and height. PNG uses the base palette and includes sprite IDs/flags or a map grid.",
     edit_assets:
       "Apply atomic draft edits. Sprite rows use lowercase hex (0 for transparent pixels) and require rows or flags. Map patches must be rectangular. SFX and music edits replace slots. Use load_game to commit.",
-    read_game: `Read the first source page of ${mainPath}, draft status and approximate budget. Use the returned read continuation for more source.`,
     load_game:
       "Compile the source and resource drafts, run one frame and commit them on success. Returns PNG and diagnostics. Failure retains the draft and last playable cart.",
     reset_game:
@@ -69,15 +68,31 @@ export function createPico8Tools({ game, knowledge }) {
   const read = createReadTool();
   const readTool = {
     ...read,
-    description: `Read ${mainPath} or /extensions/pico8/ documents. Use line offset/limit or follow the returned continuation. Oversized source lines support byteOffset.`,
+    description: `Read ${mainPath} with draft status and approximate budget, or /extensions/pico8/ documents. Use line offset/limit or follow the returned continuation. Oversized source lines support byteOffset.`,
     parameters: {
       ...read.parameters,
       properties: { ...read.parameters.properties, ...sourceRangeProperties },
     },
     replay: "safe",
     execute: async (args, api, ctx) => {
-      if (game.workspace?.resolve(args.path) === mainPath)
-        return readSource(args, game.workspace, ctx);
+      if (game.workspace?.resolve(args.path) === mainPath) {
+        const { structuredOutput: _source, ...result } = await readSource(
+          args,
+          game.workspace,
+          ctx,
+        );
+        return {
+          ...result,
+          diagnostics: [
+            ...(result.diagnostics ?? []),
+            {
+              severity: "info",
+              code: "cart_status",
+              message: JSON.stringify(game.cartStatus()),
+            },
+          ],
+        };
+      }
       if (args.byteOffset !== undefined || args.byteLimit !== undefined)
         throw new Error(`Byte ranges are only available for ${mainPath}`);
       return read.execute(args, withEnv(api, env), ctx);
@@ -100,8 +115,7 @@ export function createPico8Tools({ game, knowledge }) {
         name,
         description,
         parameters: parameters[name] ?? schema(),
-        replay:
-          name === "read_assets" || name === "read_game" ? "safe" : "unsafe",
+        replay: name === "read_assets" ? "safe" : "unsafe",
         ...(name === "read_assets"
           ? {
               outputLimits: {

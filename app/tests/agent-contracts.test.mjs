@@ -49,12 +49,12 @@ for (const [boundary, source] of [
   ["bytes", ("--" + "a".repeat(98) + "\n").repeat(550) + "-- TAIL_SENTINEL"],
   ["oversized UTF-8 line", "--" + "界".repeat(25000) + "\n-- TAIL_SENTINEL"],
 ]) {
-  test(`read_game continuation crosses ${boundary} through the actual Harness`, async (t) => {
+  test(`source read continuation crosses ${boundary} through the actual Harness`, async (t) => {
     let requests = 0;
     let sawTail = false;
     t.mock.method(globalThis, "fetch", async (_url, init) => {
       const body = JSON.parse(init.body);
-      if (++requests === 1) return reply("read_game");
+      if (++requests === 1) return reply("read", { path: "/cart/main.lua" });
       const text = textOf(
         body.messages.filter((m) => m.role === "tool").at(-1),
       );
