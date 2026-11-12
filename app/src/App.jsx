@@ -1,12 +1,18 @@
-import { HomeHeader, WorkbenchHeader } from "./PageHeaders.jsx";
+import {
+  HomeHeader,
+  WorkbenchHeader,
+  PixelPlay,
+  PixelArrow,
+} from "./PageHeaders.jsx";
 import {
   UserMessage,
   AssistantMessage,
   ActivityContext,
 } from "./WorkbenchMessages.jsx";
 import { BootScreen } from "./BootScreen.jsx";
+import { HowItWorks, HomeFooter } from "./HomeSections.jsx";
 import { cartridgeImage } from "./cartridges.js";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AssistantRuntimeProvider,
   useExternalStoreRuntime,
@@ -15,7 +21,6 @@ import {
 } from "@assistant-ui/react";
 import {
   ArrowUp,
-  Square,
   Play,
   Pause,
   RotateCcw,
@@ -24,18 +29,17 @@ import {
   Maximize,
   Settings,
   X,
-  ChevronRight,
+  ChevronDown,
   LoaderCircle,
-  MoreHorizontal,
-  Download,
-  Undo2,
-  Code2,
+  Copy,
 } from "lucide-react";
 import {
   readProject,
   writeProject,
   readLegacyVersions,
 } from "./project-store.js";
+import { currentTool, describeTool, formatButtons } from "./workbench-state.js";
+import { countTokens } from "./pico8/tokens.js";
 import { sampleSource } from "./sample.js";
 import carts from "./assets/carts.json";
 import { Game } from "./game.js";
@@ -55,6 +59,7 @@ import {
   clearModelConfig,
 } from "./model-store.js";
 
+const BASE = import.meta.env.BASE_URL;
 const convertMessage = (message) => message;
 function ModelSettings({ initial, onSave, onClear, onClose, pending }) {
   const dialog = useRef(null);
@@ -321,6 +326,50 @@ function ModelSettings({ initial, onSave, onClear, onClose, pending }) {
   );
 }
 
+
+const nextIdeas = [
+  "Make it a little harder",
+  "Add sound effects",
+  "Add a title screen",
+];
+const homeIdeas = [
+  ["Platformer", "#00e436", "Make a platformer with coins and a double jump."],
+  ["Space shooter", "#29adff", "Make a space shooter with upgradeable weapons."],
+  ["Moon fishing", "#ffa300", "Make a tiny fishing game set on the moon."],
+];
+function ago(time) {
+  if (!time) return "";
+  const minutes = Math.round((Date.now() - time) / 60000);
+  if (minutes < 1) return "just now";
+  if (minutes < 60) return `${minutes} min ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} h ago`;
+  return `${Math.round(hours / 24)} d ago`;
+}
+function rgbaToUrl(rgba) {
+  const canvas = document.createElement("canvas");
+  canvas.width = canvas.height = 128;
+  canvas
+    .getContext("2d")
+    .putImageData(new ImageData(new Uint8ClampedArray(rgba), 128, 128), 0, 0);
+  return canvas.toDataURL("image/png");
+}
+function urlToRgba(url) {
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.onload = () => {
+      const canvas = document.createElement("canvas");
+      canvas.width = canvas.height = 128;
+      const ctx = canvas.getContext("2d");
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(image, 0, 0, 128, 128);
+      resolve(ctx.getImageData(0, 0, 128, 128).data);
+    };
+    image.onerror = () => resolve(null);
+    image.src = url;
+  });
+}
+
 export function App() {
   const [saved] = useState(readProject);
   const project = useRef(
@@ -340,6 +389,10 @@ export function App() {
   const sendLock = useRef(false);
   const [storageError, setStorageError] = useState(false);
   const [split, setSplit] = useState(58);
+  const [view, setView] = useState("preview");
+  const [frames, setFrames] = useState([]);
+  const [label, setLabel] = useState(project.current.label ?? null);
+  const [showRestore, setShowRestore] = useState(!!saved?.interrupted);
   const saveTimer = useRef(null);
   function persist(patch) {
     Object.assign(project.current, patch, { updatedAt: Date.now() });
@@ -365,8 +418,9 @@ export function App() {
     agentRef = useRef(null);
   const [game, setGame] = useState({
     state: "loading",
-    source: "",
+    source: project.current.versions.at(-1),
     canUndo: false,
+    revision: project.current.revision ?? project.current.versions.length,
     testFrame: null,
     muted: false,
   });
@@ -379,12 +433,12 @@ export function App() {
     [ready, setReady] = useState(false),
     [configured, setConfigured] = useState(false);
   const [settings, setSettings] = useState(false),
-    [config, setConfig] = useState(readModelConfig),
-    [code, setCode] = useState(false);
+    [config, setConfig] = useState(readModelConfig);
   const [sending, setSending] = useState(false);
   const [cartLoading, setCartLoading] = useState(false);
   const cartLock = useRef(false);
-  const busy = chat.isRunning || sending || cartLoading || game.booting;
+  const running = chat.isRunning || sending;
+  const busy = running || cartLoading || game.booting;
   useEffect(() => {
     let disposed = false;
     const g = new Game(
@@ -396,7 +450,8 @@ export function App() {
       },
       {
         versions: project.current.versions,
-        onSave: (versions) => persist({ versions }),
+        revision: project.current.revision,
+        onSave: (versions, revision) => persist({ versions, revision }),
       },
     );
     gameRef.current = g;
@@ -425,15 +480,33 @@ export function App() {
       void g.dispose().catch(() => {});
     };
   }, []);
+  // Each AI observation: draw it on the TV, add it to the timeline, keep it as the cart label.
   useEffect(() => {
-    if (game.testFrame && testCanvas.current) {
-      const c = testCanvas.current;
-      c.getContext("2d").putImageData(
-        new ImageData(new Uint8ClampedArray(game.testFrame.rgba), 128, 128),
+    const frame = game.testFrame;
+    if (!frame) return;
+    testCanvas.current
+      ?.getContext("2d")
+      .putImageData(
+        new ImageData(new Uint8ClampedArray(frame.rgba), 128, 128),
         0,
         0,
       );
-    }
+    if (game.activeCart) return;
+    const url = rgbaToUrl(frame.rgba);
+    setFrames((list) =>
+      [
+        ...list,
+        {
+          key: `${Date.now()}-${list.length}`,
+          url,
+          rgba: frame.rgba,
+          frameId: frame.frameId,
+          revision: game.revision,
+        },
+      ].slice(-18),
+    );
+    setLabel(url);
+    persist({ label: url });
   }, [game.testFrame]);
   const safe = (fn) => async () => {
     setError("");
@@ -446,7 +519,7 @@ export function App() {
   const runtime = useExternalStoreRuntime({
     convertMessage,
     messages: chat.messages,
-    isRunning: chat.isRunning || sending,
+    isRunning: running,
     isSendDisabled: !ready || cartLoading || game.booting,
     onNew: async (m) => {
       const text = m.content
@@ -472,7 +545,7 @@ export function App() {
       runtime.thread.composer.setText(project.current.draft);
   }, []);
   async function selectCart(cart) {
-    if (cartLock.current || !ready || chat.isRunning || sending) return;
+    if (cartLock.current || !ready || running) return;
     cartLock.current = true;
     setCartLoading(true);
     setError("");
@@ -494,7 +567,9 @@ export function App() {
     sendLock.current = true;
     setError("");
     setSending(true);
+    setShowRestore(false);
     setWorkspace(true);
+    setView("preview");
     persist({
       active: true,
       draft: "",
@@ -545,7 +620,20 @@ export function App() {
     setConfig({ ...defaultConfig });
     setConfigured(false);
   }
-  const PageHeader = workspace ? WorkbenchHeader : HomeHeader;
+  async function resume() {
+    await gameRef.current.restoreProject();
+    setWorkspace(true);
+    persist({ active: true });
+  }
+  async function saveCart() {
+    const rgba = frames.at(-1)?.rgba ?? (label ? await urlToRgba(label) : null);
+    gameRef.current.export({ title: conversationTitle, label: rgba });
+  }
+  function setPrompt(text) {
+    runtime.thread.composer.setText(text);
+    persist({ draft: text });
+    document.getElementById("game-prompt")?.focus();
+  }
   const playing = game.state === "running" && !game.testFrame;
   const conversationTitle =
     chat.messages
@@ -555,95 +643,105 @@ export function App() {
       .join(" ")
       .replace(/\s+/g, " ")
       .trim() || project.current.title;
+  const hasConversation = chat.messages.length > 0;
+  const tokens = useMemo(() => countTokens(game.source ?? ""), [game.source]);
+  const modelName =
+    providers
+      .find((p) => p.id === config.provider)
+      ?.models.find((m) => m.id === config.model)?.name ?? config.model;
+  const tool = currentTool(chat.messages, running);
+  const pressing = tool?.toolName === "press_buttons" ? tool.args : null;
+  const status = game.booting
+    ? ["info", "POWERING ON"]
+    : cartLoading
+      ? ["info", "LOADING CART"]
+      : running
+        ? ["accent", "AI PLAYTESTING"]
+        : game.testFrame
+          ? ["success", "READY TO PLAY"]
+          : playing
+            ? ["info", "PLAYING"]
+            : ["neutral", "PRESS PLAY"];
+  const readout = running
+    ? pressing
+      ? `input ${formatButtons(pressing.buttons)} · ${pressing.frames ?? "?"} frames`
+      : tool
+        ? describeTool(tool).label.toLowerCase()
+        : "thinking…"
+    : `v${game.revision}${game.testFrame ? " · latest AI test frame" : ""}`;
+  const hint = running
+    ? "Your controls unlock when testing ends"
+    : game.testFrame
+      ? "Press play to take control"
+      : "";
+  const lastMessage = chat.messages.at(-1);
+  const groups = [];
+  for (const frame of frames) {
+    if (groups.at(-1)?.revision === frame.revision) groups.at(-1).frames.push(frame);
+    else groups.push({ revision: frame.revision, frames: [frame] });
+  }
+  const cartTile = (cart, i) => (
+    <Cart
+      key={cart.id}
+      cart={cart}
+      onSelect={selectCart}
+      disabled={busy || !ready}
+      active={game.activeCart?.id === cart.id}
+      below={i < 3}
+    />
+  );
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       <ActivityContext.Provider
         value={{
-          running: chat.isRunning || sending,
+          running,
+          busy,
+          canUndo: ready && game.canUndo,
+          onUndo: safe(() => gameRef.current.undo()),
+          onViewCode: () => setView("code"),
         }}
       >
         <div
           className={`app ${workspace ? "studio-mode" : "home-mode"}`}
           style={{ "--chat-width": `${split}%` }}
         >
-          <PageHeader
-            busy={busy}
-            title={conversationTitle}
-            previewStatus={
-              busy
-                ? "AI playtesting"
-                : game.testFrame
-                  ? "Ready to play"
-                  : playing
-                    ? "Playing"
-                    : "Press play to try"
-            }
-            hasConversation={chat.messages.length > 0}
-            onHome={() => {
-              setWorkspace(false);
-              persist({ active: false });
-            }}
-            onResume={async () => {
-              await gameRef.current.restoreProject();
-              setWorkspace(true);
-              persist({ active: true });
-            }}
-          >
-            <details className="more">
-              <summary aria-label="Project actions">
-                <MoreHorizontal size={20} />
-              </summary>
-              <div
-                className="more-menu"
-                onClick={(event) => {
-                  if (event.target.closest("button"))
-                    event.currentTarget.parentElement.open = false;
-                }}
-              >
-                <button
-                  disabled={!ready || busy || !game.canUndo}
-                  onClick={safe(() => gameRef.current.undo())}
-                >
-                  <Undo2 size={16} />
-                  Undo last change
-                </button>
-                <button disabled={!ready || busy} onClick={() => setCode(true)}>
-                  <Code2 size={16} />
-                  View source
-                </button>
-                <button
-                  disabled={!ready}
-                  onClick={() => gameRef.current.export()}
-                >
-                  <Download size={16} />
-                  Export .p8
-                </button>
-              </div>
-            </details>
-          </PageHeader>
+          {workspace ? (
+            <WorkbenchHeader
+              busy={busy}
+              ready={ready}
+              title={conversationTitle}
+              revision={game.revision}
+              saveFailed={storageError}
+              tokens={tokens}
+              chars={game.source?.length ?? 0}
+              view={view}
+              onView={setView}
+              canUndo={game.canUndo}
+              onUndo={safe(() => gameRef.current.undo())}
+              onSaveCart={safe(saveCart)}
+              onHome={() => {
+                setWorkspace(false);
+                persist({ active: false });
+              }}
+            />
+          ) : (
+            <HomeHeader
+              busy={busy}
+              canResume={hasConversation}
+              onResume={safe(resume)}
+            />
+          )}
           <main className="workspace">
             {!workspace && (
               <>
                 <section className="home-intro">
                   <div className="hero-brand">
-                    <img
-                      src={`${import.meta.env.BASE_URL}assets/pico8-logo.png`}
-                      alt="PICO-8"
-                    />
-                    <button
-                      className="make-badge"
-                      onClick={() => {
-                        const input = document.getElementById("game-prompt");
-                        input?.scrollIntoView({ block: "nearest" });
-                        input?.focus();
-                      }}
-                    >
-                      ✦ MAKE A GAME
-                    </button>
-                  </div>
-                  <div className="hero-copy">
+                    <span className="hero-logo">
+                      <img src={`${BASE}assets/pico8-logo.png`} alt="PICO-8" />
+                    </span>
+                    <span className="maker-word">MAKER</span>
                     {game.activeCart ? (
-                      <>
+                      <p className="now-playing">
                         <span>NOW PLAYING</span>
                         <strong>{game.activeCart.title}</strong>
                         <a
@@ -653,58 +751,83 @@ export function App() {
                         >
                           by {game.activeCart.author} ↗
                         </a>
-                      </>
+                      </p>
                     ) : (
-                      <>
-                        Play a tiny game.
-                        <br />
-                        Make your own with AI.
-                        <small>
-                          Pick a cartridge or describe your idea below.
-                        </small>
-                      </>
+                      <p className="tagline">
+                        Describe a tiny game. AI writes the cart, playtests it,
+                        and hands you the controls.
+                      </p>
                     )}
                   </div>
                   <div className="cart-grid left-carts">
-                    {carts.slice(0, 6).map((cart) => (
-                      <Cart
-                        key={cart.id}
-                        cart={cart}
-                        onSelect={selectCart}
-                        disabled={busy || !ready}
-                        active={game.activeCart?.id === cart.id}
-                      />
-                    ))}
+                    {carts.slice(0, 6).map(cartTile)}
                   </div>
-                  <p className="gallery-caption">
-                    CLICK A CARTRIDGE TO PLAY <span>↑</span>
-                  </p>
                 </section>
                 <section
                   className="home-gallery"
                   aria-label="Community cartridges"
                 >
+                  <div className="your-cart">
+                    <button
+                      className="your-cart-art"
+                      aria-label={
+                        hasConversation
+                          ? `Continue ${conversationTitle}`
+                          : "Make your own cart"
+                      }
+                      disabled={busy}
+                      onClick={
+                        hasConversation
+                          ? safe(resume)
+                          : () => document.getElementById("game-prompt")?.focus()
+                      }
+                    >
+                      <span className="cart-body">
+                        <span className="cart-window">
+                          {hasConversation && label ? (
+                            <img src={label} alt="" />
+                          ) : (
+                            <span className="cart-empty">
+                              {hasConversation ? "" : "?"}
+                            </span>
+                          )}
+                        </span>
+                        <span className="cart-strip" />
+                      </span>
+                    </button>
+                    <div className="your-cart-text">
+                      <span className="kicker">YOUR CART</span>
+                      {hasConversation ? (
+                        <>
+                          <strong title={conversationTitle}>
+                            {conversationTitle}
+                          </strong>
+                          <small>
+                            v{game.revision} · saved {ago(project.current.updatedAt)}
+                          </small>
+                          <button
+                            className="continue-button"
+                            disabled={busy}
+                            onClick={safe(resume)}
+                          >
+                            CONTINUE <PixelArrow />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <strong>Empty slot</strong>
+                          <small>
+                            Describe an idea below and it becomes your cart.
+                          </small>
+                        </>
+                      )}
+                    </div>
+                  </div>
                   <div className="cart-grid right-carts">
                     <div className="mobile-only-carts">
-                      {carts.slice(0, 6).map((cart) => (
-                        <Cart
-                          key={cart.id}
-                          cart={cart}
-                          onSelect={selectCart}
-                          disabled={busy || !ready}
-                          active={game.activeCart?.id === cart.id}
-                        />
-                      ))}
+                      {carts.slice(0, 6).map(cartTile)}
                     </div>
-                    {carts.slice(6).map((cart) => (
-                      <Cart
-                        key={cart.id}
-                        cart={cart}
-                        onSelect={selectCart}
-                        disabled={busy || !ready}
-                        active={game.activeCart?.id === cart.id}
-                      />
-                    ))}
+                    {carts.slice(6, 11).map((cart, i) => cartTile(cart, i))}
                     <a
                       className="more-carts"
                       href="https://www.lexaloffle.com/bbs/?cat=7&carts_tab=1#mode=carts&sub=2"
@@ -713,48 +836,31 @@ export function App() {
                     >
                       MORE
                       <br />
-                      CARTS<span>→</span>
+                      CARTS
+                      <PixelArrow />
                     </a>
                   </div>
                 </section>
               </>
             )}
             <ThreadPrimitive.Root className="chat-panel">
-              {!workspace && (
-                <div className="make-heading">
-                  <h1>What will you make?</h1>
-                  <p>A little idea. A tiny game. A whole world of your own.</p>
-                </div>
-              )}
               <ThreadPrimitive.Viewport className="chat-viewport">
                 <ThreadPrimitive.Empty>
                   <div className="welcome">
-                    <span className="eyebrow">LET’S MAKE A LITTLE GAME</span>
+                    <span className="kicker">LET’S MAKE A LITTLE GAME</span>
                     <h1>Your idea. Your cartridge.</h1>
                     <p>
-                      Describe a game, or play the preview and tell PICO Maker
+                      Describe a game, or play the preview and tell PICO-8 Maker
                       what to change.
                     </p>
-                    <button
-                      className="prompt-chip"
-                      onClick={() =>
-                        runtime.thread.composer.setText(
-                          "The character cannot jump over the wall. Help me fix it.",
-                        )
-                      }
-                    >
-                      The character cannot jump over the wall. Help me fix it.
-                      <ArrowUp size={14} />
-                    </button>
                   </div>
                 </ThreadPrimitive.Empty>
                 <ThreadPrimitive.Messages
                   components={{ UserMessage, AssistantMessage }}
                 />
-                {busy && (
+                {running && lastMessage?.role !== "assistant" && (
                   <div className="working" role="status">
-                    <LoaderCircle className="spin" size={14} />
-                    Making your cartridge…
+                    <i className="spinner" /> Thinking…
                   </div>
                 )}
               </ThreadPrimitive.Viewport>
@@ -773,13 +879,38 @@ export function App() {
                     </button>
                   </div>
                 )}
+                {workspace && showRestore && !running && (
+                  <div className="restore-note" role="status">
+                    <span>
+                      The previous run was interrupted. Your conversation and
+                      game were restored — send a message to continue.
+                    </span>
+                    <button
+                      aria-label="Dismiss"
+                      onClick={() => setShowRestore(false)}
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+                )}
+                {workspace && hasConversation && !busy && (
+                  <div className="next-ideas">
+                    {nextIdeas.map((idea) => (
+                      <button key={idea} onClick={() => setPrompt(idea)}>
+                        {idea}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <ComposerPrimitive.Root className="composer">
                   <ComposerPrimitive.Input
                     id="game-prompt"
                     placeholder={
                       workspace
-                        ? "What would you like to change?"
-                        : "A fishing game on the moon, where every fish glows…"
+                        ? running
+                          ? "AI is playtesting — press Stop to interrupt"
+                          : "Describe a change…"
+                        : "A frog hops across lily pads to catch flies before the sun sets…"
                     }
                     onChange={(e) => persist({ draft: e.target.value })}
                     aria-label="Message"
@@ -788,7 +919,7 @@ export function App() {
                   <div className="composer-footer">
                     <button
                       type="button"
-                      className="composer-model-button"
+                      className={`composer-model-button ${configured ? "" : "unconfigured"}`}
                       aria-label="Model settings"
                       title={
                         configured
@@ -798,17 +929,17 @@ export function App() {
                       disabled={!ready || busy}
                       onClick={() => setSettings(true)}
                     >
-                      <Settings size={14} />
-                      <span>{configured ? config.model : "Connect model"}</span>
-                      <ChevronRight size={13} />
+                      {configured ? <i /> : <Settings size={14} />}
+                      <span>{configured ? modelName : "Connect model"}</span>
+                      <ChevronDown size={14} />
                     </button>
-                    {chat.isRunning || sending ? (
+                    {running ? (
                       <ComposerPrimitive.Cancel
                         aria-label="Stop generation"
-                        className="send"
+                        className="send stop"
                       >
-                        <Square size={12} />
-                        <span>STOP</span>
+                        <i />
+                        STOP
                       </ComposerPrimitive.Cancel>
                     ) : (
                       <ComposerPrimitive.Send
@@ -821,48 +952,29 @@ export function App() {
                           </>
                         ) : (
                           <>
-                            MAKE <Play size={14} fill="currentColor" />
+                            MAKE <PixelPlay />
                           </>
                         )}
                       </ComposerPrimitive.Send>
                     )}
                   </div>
                 </ComposerPrimitive.Root>
-                <div className="composer-note">
-                  {storageError
-                    ? "Local save failed. Export your cartridge to keep a copy."
-                    : workspace
-                      ? "Enter to send · Shift + Enter for a new line"
-                      : "Play for free. Connect your model when you’re ready to create."}
-                </div>
+                {storageError && (
+                  <div className="composer-note">
+                    Local save failed. Save your cart to keep a copy.
+                  </div>
+                )}
               </div>
               {!workspace && (
                 <div className="prompt-examples">
-                  {["Platformer", "Space shooter", "Moon fishing"].map(
-                    (label, i) => (
-                      <button
-                        key={label}
-                        onClick={() => {
-                          const text = [
-                            "Make a platformer with coins and a double jump.",
-                            "Make a space shooter with upgradeable weapons.",
-                            "Make a tiny fishing game set on the moon.",
-                          ][i];
-                          runtime.thread.composer.setText(text);
-                          persist({ draft: text });
-                        }}
-                      >
-                        ＋ {label}
-                      </button>
-                    ),
-                  )}
+                  <span className="kicker">TRY</span>
+                  {homeIdeas.map(([labelText, color, text]) => (
+                    <button key={labelText} onClick={() => setPrompt(text)}>
+                      <i style={{ background: color }} />
+                      {labelText}
+                    </button>
+                  ))}
                 </div>
-              )}
-              {workspace && saved?.interrupted && (
-                <p className="restore-note">
-                  The previous run was interrupted. Your conversation and game
-                  have been restored. Send a message to continue.
-                </p>
               )}
             </ThreadPrimitive.Root>
             {workspace && (
@@ -906,113 +1018,183 @@ export function App() {
                 }}
               />
             )}
-            <section className="player-panel" aria-label="Game preview">
-              <div className="console-group" ref={stage}>
-                <div className="console">
-                  <div className="screen-backdrop" />
-                  <div className="screen">
-                    <div ref={mount} className="player-mount" />
-                    {game.testFrame && (
-                      <canvas
-                        ref={testCanvas}
-                        width={128}
-                        height={128}
-                        className="test-screen"
-                        aria-label="Actual AI playtest frame"
-                      />
-                    )}
-                    {game.booting && <BootScreen />}
-                    {!playing && !busy && (
+            <section
+              className={`player-panel ${workspace ? "has-timeline" : ""}`}
+              aria-label="Game preview"
+            >
+              {workspace && (
+                <div className="preview-header">
+                  <span className={`status-badge status-${status[0]}`}>
+                    <i />
+                    {status[1]}
+                  </span>
+                  <span className="readout">{readout}</span>
+                  {hint && <span className="preview-hint">{hint}</span>}
+                </div>
+              )}
+              <div className={`stage ${workspace && view === "code" ? "show-code" : ""}`}>
+                <div className="console-group" ref={stage}>
+                  <div className="console">
+                    <div className="screen">
+                      <div ref={mount} className="player-mount" />
+                      {game.testFrame && (
+                        <canvas
+                          ref={testCanvas}
+                          width={128}
+                          height={128}
+                          className="test-screen"
+                          aria-label="Actual AI playtest frame"
+                        />
+                      )}
+                      {game.booting && <BootScreen />}
+                      {workspace && pressing && (
+                        <span className="ai-input-tag">
+                          {formatButtons(pressing.buttons)}
+                        </span>
+                      )}
+                      {!playing && !busy && (
+                        <button
+                          disabled={!ready}
+                          className={`play-overlay ${game.testFrame ? "over-frame" : ""}`}
+                          aria-label="Start playing"
+                          onClick={safe(playCurrent)}
+                        >
+                          {ready ? (
+                            <img src={`${BASE}assets/pico8-play.png`} alt="" />
+                          ) : (
+                            <LoaderCircle className="spin" size={28} />
+                          )}
+                        </button>
+                      )}
+                    </div>
+                    <div
+                      className="shell official-shell"
+                      role="img"
+                      aria-label="Original PICO-8 pixel television"
+                    />
+                    <div className="player-controls">
                       <button
-                        disabled={!ready}
-                        className={`play-overlay ${game.testFrame ? "over-frame" : ""}`}
-                        aria-label="Start playing"
+                        aria-label={playing ? "Pause game" : "Play game"}
+                        disabled={!ready || busy}
                         onClick={safe(playCurrent)}
                       >
-                        {ready ? (
-                          <img
-                            src={`${import.meta.env.BASE_URL}assets/pico8-play.png`}
-                            alt=""
-                          />
+                        {playing ? <Pause size={20} /> : <Play size={20} />}
+                      </button>
+                      <button
+                        aria-label="Restart game"
+                        disabled={!ready || busy}
+                        onClick={safe(() => gameRef.current.restart())}
+                      >
+                        <RotateCcw size={19} />
+                      </button>
+                      <span className="control-divider" />
+                      <button
+                        aria-label={game.muted ? "Enable sound" : "Mute"}
+                        disabled={!ready || busy}
+                        onClick={() => gameRef.current.mute()}
+                      >
+                        {game.muted ? (
+                          <VolumeX size={20} />
                         ) : (
-                          <LoaderCircle className="spin" size={28} />
+                          <Volume2 size={20} />
                         )}
                       </button>
-                    )}
-                  </div>
-                  <div
-                    className="shell official-shell"
-                    role="img"
-                    aria-label="Original PICO-8 pixel television"
-                  />
-                  <div className="player-controls">
-                    <button
-                      aria-label={playing ? "Pause game" : "Play game"}
-                      disabled={!ready || busy}
-                      onClick={safe(playCurrent)}
-                    >
-                      {playing ? <Pause size={20} /> : <Play size={20} />}
-                    </button>
-                    <button
-                      aria-label="Restart game"
-                      disabled={!ready || busy}
-                      onClick={safe(() => gameRef.current.restart())}
-                    >
-                      <RotateCcw size={19} />
-                    </button>
-                    <span className="control-divider" />
-                    <button
-                      aria-label={game.muted ? "Enable sound" : "Mute"}
-                      disabled={!ready || busy}
-                      onClick={() => gameRef.current.mute()}
-                    >
-                      {game.muted ? (
-                        <VolumeX size={20} />
-                      ) : (
-                        <Volume2 size={20} />
-                      )}
-                    </button>
-                    <button
-                      aria-label="Fullscreen"
-                      onClick={safe(async () => {
-                        try {
-                          if (document.fullscreenElement)
-                            await document.exitFullscreen();
-                          else await stage.current.requestFullscreen();
-                        } catch {
-                          throw new Error(
-                            "Fullscreen is unavailable in this browser. Try opening the game in Chrome.",
-                          );
-                        }
-                      })}
-                    >
-                      <Maximize size={20} />
-                    </button>
-                  </div>
-                  <p className="player-help">
-                    {busy
-                      ? game.booting
+                      <button
+                        aria-label="Fullscreen"
+                        onClick={safe(async () => {
+                          try {
+                            if (document.fullscreenElement)
+                              await document.exitFullscreen();
+                            else await stage.current.requestFullscreen();
+                          } catch {
+                            throw new Error(
+                              "Fullscreen is unavailable in this browser. Try opening the game in Chrome.",
+                            );
+                          }
+                        })}
+                      >
+                        <Maximize size={20} />
+                      </button>
+                    </div>
+                    <p className="player-help">
+                      {game.booting
                         ? "POWERING ON…"
                         : cartLoading
                           ? "LOADING CARTRIDGE…"
-                          : "AI IS PLAYTESTING"
-                      : game.testFrame
-                        ? "AI TEST FRAME · PRESS PLAY TO TRY"
-                        : "ARROWS TO MOVE · Z / X TO PLAY"}
-                  </p>
+                          : running
+                            ? "AI IS PLAYTESTING"
+                            : "ARROWS TO MOVE · Z / X TO PLAY"}
+                    </p>
+                  </div>
+                  {workspace && running && (
+                    <div className="test-progress" aria-hidden="true" />
+                  )}
                 </div>
+                {workspace && view === "code" && (
+                  <CodeView source={game.source ?? ""} tokens={tokens} />
+                )}
               </div>
+              {workspace && (
+                <section className="timeline" aria-label="Playtest frames">
+                  <div className="timeline-head">
+                    <h2>Playtest frames</h2>
+                    <span>
+                      {frames.length
+                        ? `What the AI saw · ${frames.length} frames`
+                        : "What the AI sees"}
+                    </span>
+                  </div>
+                  {!groups.length && (
+                    <p className="timeline-empty">
+                      {running
+                        ? "Waiting for the first test frame…"
+                        : "Each time the AI presses buttons or looks at the screen, the real frame lands here."}
+                    </p>
+                  )}
+                  <div className="timeline-strip">
+                    {groups.map((group, i) => {
+                      const last = i === groups.length - 1;
+                      return (
+                        <div className="run" key={group.frames[0].key}>
+                          <span
+                            className={`run-label ${last ? (running ? "live" : "latest") : ""}`}
+                          >
+                            V{group.revision}
+                            {last ? (running ? " · LIVE" : " · LATEST") : ""}
+                          </span>
+                          <div className="run-frames">
+                            {group.frames.map((frame) => (
+                              <figure
+                                key={frame.key}
+                                className={
+                                  frame === frames.at(-1) ? "current" : ""
+                                }
+                              >
+                                <img src={frame.url} alt="AI playtest frame" />
+                                <figcaption>
+                                  f {frame.frameId ?? "–"}
+                                </figcaption>
+                              </figure>
+                            ))}
+                            {last && running && (
+                              <figure className="pending">
+                                <span>
+                                  <i className="spinner" />
+                                </span>
+                                <figcaption>next</figcaption>
+                              </figure>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
             </section>
           </main>
-          {!workspace && (
-            <footer className="home-footer">
-              <span>128 × 128 PIXELS. A WORLD OF YOUR OWN.</span>
-              <span>
-                Community games by their original creators · An independent
-                maker
-              </span>
-            </footer>
-          )}
+          {!workspace && <HowItWorks />}
+          {!workspace && <HomeFooter />}
         </div>
         {settings && (
           <ModelSettings
@@ -1022,50 +1204,61 @@ export function App() {
             onSave={saveConfig}
             onClear={clearConfig}
           />
-        )}{" "}
-        {code && (
-          <SourceDialog source={game.source} onClose={() => setCode(false)} />
         )}
       </ActivityContext.Provider>
     </AssistantRuntimeProvider>
   );
 }
-function SourceDialog({ source, onClose }) {
-  const ref = useRef();
-  useEffect(() => {
-    ref.current.showModal();
-  }, []);
+function CodeView({ source, tokens }) {
+  const lines = source.split("\n");
+  const [copied, setCopied] = useState(false);
   return (
-    <dialog ref={ref} className="source-dialog" onCancel={onClose}>
-      <div className="dialog-heading">
-        <h2>Current cartridge · Lua</h2>
-        <button onClick={onClose} aria-label="Close source">
-          <X size={20} />
+    <div className="code-view">
+      <div className="code-head">
+        <span>
+          main.lua · {lines.length} lines · ≈{tokens} tokens
+        </span>
+        <button
+          onClick={async () => {
+            await navigator.clipboard?.writeText(source);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1200);
+          }}
+        >
+          <Copy size={13} /> {copied ? "Copied" : "Copy"}
         </button>
       </div>
-      <pre>{source}</pre>
-    </dialog>
+      <pre>
+        <code>
+          {lines.map((line, i) => (
+            <span key={i} className="code-line">
+              {line || " "}
+            </span>
+          ))}
+        </code>
+      </pre>
+    </div>
   );
 }
 
-function Cart({ cart, onSelect, disabled, active }) {
+function Cart({ cart, onSelect, disabled, active, below }) {
   return (
     <button
-      className={`cart ${active ? "selected" : ""}`}
+      className={`cart ${active ? "selected" : ""} ${below ? "tip-below" : ""}`}
       onClick={() => onSelect(cart)}
       disabled={disabled}
-      aria-label={`Play ${cart.title}`}
+      aria-label={`Play ${cart.title} by ${cart.author}`}
       aria-pressed={active}
-      title={`${cart.title} · ${cart.author}`}
     >
       <img
         src={cartridgeImage(cart.id)}
-        alt={`${cart.title} — ${cart.author}`}
+        alt=""
         draggable="false"
       />
-      <span className="cart-credit">
-        {cart.title}
-        <small>{cart.author}</small>
+      <span className="cart-credit" aria-hidden="true">
+        <strong>{cart.title}</strong>
+        <small>by {cart.author}</small>
+        <em>Click to play here</em>
       </span>
     </button>
   );

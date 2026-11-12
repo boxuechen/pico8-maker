@@ -5,58 +5,58 @@ import {
   useAuiState,
 } from "@assistant-ui/react";
 import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
-import {
-  Check,
-  X,
-  Square,
-  ChevronRight,
-  Copy,
-  LoaderCircle,
-} from "lucide-react";
-import { summarizeTools, toolState } from "./workbench-state.js";
+import { Check, X, Square, ChevronRight, Copy } from "lucide-react";
+import { summarizeTools, toolState, mergeSteps, describeTool } from "./workbench-state.js";
 export const ActivityContext = createContext({ running: false });
-const names = {
-  read_reference: "Read reference",
-  read_game: "Read source",
-  load_game: "Update game",
-  press_buttons: "Test controls",
-  observe_game: "Observe game",
-  reset_game: "Reset test",
-};
+
 function StateIcon({ state }) {
   return state === "running" ? (
-    <LoaderCircle size={14} className="spin" />
+    <i className="state-dot" aria-label="Running" />
   ) : state === "failed" ? (
-    <X size={14} />
+    <X size={14} aria-label="Failed" />
   ) : state === "interrupted" ? (
-    <Square size={12} />
+    <Square size={11} aria-label="Interrupted" />
   ) : (
-    <Check size={14} />
+    <Check size={14} aria-label="Completed" />
   );
 }
-function ToolDetail({ tool, running }) {
-  const state = toolState(tool, running);
+function Spinner() {
+  return <i className="spinner" aria-hidden="true" />;
+}
+function resultText(tool, running) {
+  return tool.result === undefined
+    ? running
+      ? "Waiting for tool result…"
+      : "No result was recorded. Run another test to verify the game."
+    : typeof tool.result === "string"
+      ? tool.result
+      : JSON.stringify(tool.result, null, 2);
+}
+function Step({ step, running }) {
+  const { label, meta } = describeTool(step.tools.at(-1));
   return (
-    <details className={`tool tool-${state}`}>
+    <details className={`step step-${step.state}`}>
       <summary>
-        <StateIcon state={state} />
-        <span>{names[tool.toolName] ?? tool.toolName}</span>
-        <small>{state}</small>
-        <ChevronRight size={12} />
+        <StateIcon state={step.state} />
+        <span className="step-label">
+          {label}
+          {step.tools.length > 1 && <em> ×{step.tools.length}</em>}
+        </span>
+        {meta && <code>{meta}</code>}
       </summary>
-      <div className="tool-detail">
-        <span>INPUT</span>
-        <pre>{JSON.stringify(tool.args, null, 2)}</pre>
-        <span>RESULT</span>
-        <pre>
-          {tool.result === undefined
-            ? running
-              ? "Waiting for tool result…"
-              : "No result was recorded. Run another test to verify the game."
-            : typeof tool.result === "string"
-              ? tool.result
-              : JSON.stringify(tool.result, null, 2)}
-        </pre>
+      <div className="step-detail">
+        {step.tools.map((tool) => (
+          <div key={tool.toolCallId}>
+            <span>INPUT · {tool.toolName}</span>
+            <pre>
+              {tool.toolName === "load_game"
+                ? `${String(tool.args?.source ?? "").split("\n").length} lines of Lua`
+                : JSON.stringify(tool.args, null, 2)}
+            </pre>
+            <span>RESULT</span>
+            <pre>{resultText(tool, running)}</pre>
+          </div>
+        ))}
       </div>
     </details>
   );
@@ -65,31 +65,60 @@ function ToolActivity({ tools, running }) {
   const [open, setOpen] = useState(running);
   useEffect(() => setOpen(running), [running]);
   const summary = summarizeTools(tools, running);
+  const steps = mergeSteps(tools, running);
   return (
-    <section className={`tool-activity activity-${summary.state}`}>
+    <section className={`activity activity-${summary.state}`}>
       <button
-        className="activity-toggle"
+        className="activity-head"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
       >
-        <StateIcon state={summary.state} />
-        <span>
-          {summary.label}
-          <small>{summary.detail}</small>
-        </span>
+        {summary.state === "running" ? (
+          <Spinner />
+        ) : (
+          <span className="activity-badge">
+            <StateIcon state={summary.state} />
+          </span>
+        )}
+        <strong>{summary.label}</strong>
+        <small>{summary.detail}</small>
         <ChevronRight className={open ? "expanded" : ""} size={14} />
       </button>
       {open && (
         <div className="activity-steps">
-          {tools.map((tool) => (
-            <ToolDetail key={tool.toolCallId} tool={tool} running={running} />
+          {steps.map((step) => (
+            <Step key={step.tools[0].toolCallId} step={step} running={running} />
           ))}
-          <p className="activity-note">
-            Tool execution log. Gameplay findings are described in the reply.
-          </p>
         </div>
       )}
     </section>
+  );
+}
+function VersionCard({ tool, isLast }) {
+  const { canUndo, onUndo, onViewCode, busy } = useContext(ActivityContext);
+  const lines = String(tool.args?.source ?? "").split("\n").length;
+  return (
+    <div className="version-card">
+      <svg className="pixel-icon mini-cart" viewBox="0 0 16 20" aria-hidden="true">
+        <path d="M1 0h14v1h1v18h-1v1H1v-1H0V1h1z" fill="#5f574f" />
+        <path d="M2 2h12v11H2z" fill="#1d2b53" />
+        <path d="M2 10h12v3H2z" fill="#7e2553" />
+        <path d="M9 7h2v3H9z" fill="#ffa300" />
+        <path d="M12 8h1v2h-1z" fill="#00e436" />
+        <path d="M2 15h12v3H2z" fill="#3b3633" />
+        <path d="M3 16h6v1H3z" fill="#fff1e8" />
+      </svg>
+      <div className="version-text">
+        <strong>Cart updated</strong>
+        <code>{lines} lines · passed load check</code>
+      </div>
+      <button onClick={onViewCode}>View code</button>
+      {isLast && (
+        <button className="ghost" disabled={busy || !canUndo} onClick={onUndo}>
+          Undo
+        </button>
+      )}
+    </div>
   );
 }
 export function UserMessage() {
@@ -108,6 +137,13 @@ export function AssistantMessage() {
   const running = activity.running && isLast;
   const tools = parts.filter((p) => p.type === "tool-call");
   const firstTool = parts.findIndex((p) => p.type === "tool-call");
+  const update = running
+    ? null
+    : tools.findLast(
+        (t) =>
+          t.toolName === "load_game" &&
+          toolState(t, false) === "completed",
+      );
   return (
     <MessagePrimitive.Root className="message assistant">
       {parts.map((part, index) =>
@@ -123,6 +159,7 @@ export function AssistantMessage() {
           />
         ),
       )}
+      {update && <VersionCard tool={update} isLast={isLast} />}
       <ActionBarPrimitive.Root
         className="message-actions"
         hideWhenRunning

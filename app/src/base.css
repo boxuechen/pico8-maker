@@ -1,0 +1,558 @@
+@import url("../public/player/player.css");
+
+/* PICO-8 Maker design tokens: official assets and palette, quiet product chrome. */
+@font-face {
+  font-family: Proggy;
+  src: url("./assets/proggyvec.woff") format("woff");
+  font-display: swap;
+}
+:root {
+  --bg: #0a1020;
+  --bg-raised: #0c1324;
+  --surface: #121a2c;
+  --surface-2: #182238;
+  --border: #222d45;
+  --border-strong: #2e3a57;
+  --text: #fff1e8;
+  --text-2: #b8bcc8;
+  --text-3: #7e869c;
+  --accent: #ff77a8;
+  --accent-hover: #ff91b6;
+  --accent-soft: #2a1828;
+  --success: #00e436;
+  --success-soft: #0e2a1e;
+  --warning: #ffa300;
+  --danger: #ff004d;
+  --danger-soft: #3a1422;
+  --info: #29adff;
+  /* Shell-owned colours stay with the official television artwork. */
+  --shell-ink: #a994ac;
+  --font-pixel: Proggy, "PingFang SC", "Microsoft YaHei", monospace;
+  --font-ui:
+    Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Microsoft YaHei", sans-serif;
+  --font-mono:
+    ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --r-xs: 2px;
+  --r-sm: 4px;
+  --r-md: 6px;
+  --r-lg: 8px;
+  --r-xl: 10px;
+  color-scheme: dark;
+  font-family: var(--font-ui);
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+}
+#root {
+  width: 100%;
+  min-height: 100dvh;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  min-width: 360px;
+  min-height: 100vh;
+  display: block;
+  background: var(--bg);
+  justify-items: normal !important;
+  align-items: normal !important;
+}
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  transition:
+    background 0.12s,
+    color 0.12s,
+    border-color 0.12s,
+    opacity 0.12s;
+  -webkit-tap-highlight-color: transparent;
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+button svg {
+  flex-shrink: 0;
+}
+:is(button, a, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+a {
+  color: var(--accent);
+}
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+.pixel {
+  font-family: var(--font-pixel);
+  letter-spacing: 0.5px;
+}
+.app {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+}
+.topbar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+/* ---------- Official player (layout shared by both pages) ---------- */
+.player-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  overflow: hidden;
+}
+.console-group {
+  width: 100%;
+  max-width: 650px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+/* Original 1920×210 banner crop: 180×210 shell, 128×128 playfield. */
+.console {
+  position: relative;
+  width: min(100%, calc((100dvh - 210px) * 180 / 210));
+  aspect-ratio: 180 / 210;
+}
+.shell {
+  display: block;
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  image-rendering: pixelated;
+  z-index: 0;
+}
+.shell.official-shell {
+  background: url("/assets/pico8-tv.png") center / auto 100% no-repeat;
+}
+.screen {
+  position: absolute;
+  left: 14.4444%;
+  top: 24.2857%;
+  width: 71.1111%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background: #000;
+  z-index: 1;
+}
+.player-mount {
+  position: absolute;
+  inset: 0;
+}
+.player-mount .pico8-player {
+  position: absolute;
+  inset: 0;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: #000;
+  box-shadow: none;
+  overflow: hidden;
+}
+.player-mount .pico8-player__stage {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  border: 0;
+  border-radius: 0;
+  min-width: 0;
+  min-height: 0;
+  outline: none !important;
+}
+.player-mount .pico8-player__canvas {
+  width: 100% !important;
+  height: 100% !important;
+  image-rendering: pixelated;
+}
+.player-mount .pico8-player__chrome,
+.player-mount .pico8-player__toolbar,
+.player-mount .pico8-player__touch-controls,
+.player-mount .pico8-player__diagnostic,
+.player-mount .pico8-player__drop-hint,
+.player-mount .pico8-player__file {
+  display: none !important;
+}
+.test-screen {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+.boot-screen {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  background: #000;
+  z-index: 4;
+}
+.play-overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #000;
+  color: var(--text);
+  z-index: 3;
+}
+.play-overlay img {
+  width: 25%;
+  height: auto;
+  image-rendering: pixelated;
+}
+.play-overlay.over-frame {
+  background: #0006;
+}
+.ai-input-tag {
+  position: absolute;
+  top: 3%;
+  left: 3%;
+  z-index: 3;
+  padding: 2px 6px;
+  border-radius: var(--r-xs);
+  background: #0a1020d9;
+  color: var(--accent);
+  font: 13px var(--font-pixel);
+  pointer-events: none;
+}
+.player-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--shell-ink);
+}
+.player-controls button {
+  display: grid;
+  place-items: center;
+}
+.control-divider {
+  display: none;
+}
+.player-help {
+  font: 11px var(--font-pixel);
+  color: var(--shell-ink);
+}
+.console-group:fullscreen {
+  max-width: none;
+  background: var(--bg);
+  justify-content: center;
+}
+.console-group:fullscreen .console {
+  width: min(80vw, calc((100dvh - 100px) * 180 / 210));
+}
+
+/* ---------- Composer (shared) ---------- */
+.composer {
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  padding: 14px 12px 10px 16px;
+  transition: border-color 0.12s;
+}
+.composer:focus-within {
+  border-color: #4a3a55;
+}
+.composer textarea {
+  display: block;
+  width: 100%;
+  resize: none;
+  background: transparent;
+  border: 0;
+  outline: none;
+  padding: 0;
+  font: 15px/1.6 var(--font-ui);
+  color: var(--text);
+  caret-color: var(--accent);
+  min-height: 48px;
+  max-height: 180px;
+}
+.composer textarea::placeholder {
+  color: var(--text-3);
+}
+.composer-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 8px;
+}
+.composer-model-button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  max-width: calc(100% - 110px);
+  height: 30px;
+  padding: 0 8px 0 10px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--text-2);
+  font: 500 13px var(--font-ui);
+  text-align: left;
+}
+.composer-model-button span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.composer-model-button i {
+  flex: 0 0 6px;
+  height: 6px;
+  background: var(--success);
+}
+.composer-model-button.unconfigured {
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.composer-model-button:hover:not(:disabled) {
+  color: var(--text);
+  background: #1e2a44;
+}
+.composer-model-button svg:last-child {
+  color: var(--text-3);
+}
+.send {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-shrink: 0;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--r-sm);
+  background: var(--accent);
+  color: var(--bg);
+  font: 15px var(--font-pixel);
+  letter-spacing: 1.5px;
+}
+.send:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+.send:disabled {
+  opacity: 1;
+  background: var(--surface-2);
+  color: var(--text-3);
+}
+.send.stop {
+  background: var(--text);
+  color: var(--bg);
+}
+.send.stop i {
+  width: 9px;
+  height: 9px;
+  background: var(--bg);
+  border-radius: 1px;
+}
+.pixel-icon {
+  image-rendering: pixelated;
+  shape-rendering: crispEdges;
+}
+.error {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border: 1px solid #5c1f36;
+  border-radius: var(--r-md);
+  background: var(--danger-soft);
+  color: #ffc6d0;
+  font: 13px/1.5 var(--font-ui);
+}
+.error button {
+  align-self: flex-start;
+  display: flex;
+}
+.composer-note {
+  margin-top: 8px;
+  font: 12px var(--font-ui);
+  color: var(--warning);
+  text-align: center;
+}
+
+/* ---------- Dialogs ---------- */
+dialog {
+  width: min(460px, calc(100vw - 32px));
+  padding: 24px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  color: var(--text);
+  font-family: var(--font-ui);
+  box-shadow: 0 24px 80px #000a;
+}
+dialog::backdrop {
+  background: #05081099;
+  backdrop-filter: blur(4px);
+}
+.dialog-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.dialog-heading h2 {
+  font: 20px var(--font-pixel);
+  color: var(--accent);
+  letter-spacing: 0.5px;
+}
+.dialog-heading button {
+  display: flex;
+  padding: 4px;
+  border-radius: var(--r-sm);
+  color: var(--text-3);
+}
+.dialog-heading button:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--surface-2);
+}
+.settings-form > p {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+.settings-form > label:not(.checkbox) {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 16px;
+  font: 500 12px var(--font-ui);
+  color: var(--text-2);
+}
+.settings-form select,
+.settings-form input:not([type="checkbox"]) {
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+  padding: 0 11px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--bg);
+  color: var(--text);
+  font: 14px var(--font-ui);
+  outline: none;
+}
+.settings-form select:focus,
+.settings-form input:focus {
+  border-color: var(--accent);
+}
+.settings-form input::placeholder {
+  color: var(--text-3);
+}
+.settings-form .model-detail {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.checkbox {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 18px 0 6px;
+  font-size: 13px;
+  color: var(--text-2);
+}
+.checkbox input {
+  accent-color: var(--accent);
+}
+.settings-form .fine-print {
+  font-size: 12px;
+  color: var(--text-3);
+  overflow-wrap: anywhere;
+}
+.settings-form .notice {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--text-2);
+}
+.clear-model-settings {
+  margin-top: 10px;
+  padding: 2px 0;
+  font-size: 12px;
+  color: var(--text-3);
+}
+.clear-model-settings:hover:not(:disabled) {
+  color: var(--danger);
+}
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 22px;
+}
+.primary,
+.secondary {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: var(--r-sm);
+  font: 500 13px var(--font-ui);
+}
+.primary {
+  background: var(--accent);
+  color: var(--bg);
+}
+.primary:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+.secondary {
+  border: 1px solid var(--border-strong);
+  color: var(--text-2);
+}
+.secondary:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--surface-2);
+}
+.spin {
+  animation: spin 1s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (max-width: 480px) {
+  .dialog-actions {
+    flex-wrap: wrap;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    transition: none !important;
+  }
+}

@@ -45,12 +45,3 @@
   letter-spacing: 0;
   color: #a994ac;
 }
-/* Keep compact mode comfortable on short windows; fullscreen remains expansive. */
-@media (max-width: 800px) {
-  .studio-mode .workspace {
-    grid-template-rows: 34% 66%;
-  }
-  .studio-mode .console {
-    width: min(180px, calc((34dvh - 90px) * 180 / 210));
-  }
-}

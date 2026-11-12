@@ -24,13 +24,83 @@ export function summarizeTools(tools, running) {
     return {
       state: "running",
       label: "Building & playtesting",
-      detail: `${states.filter((s) => s === "completed").length} / ${tools.length} steps completed`,
+      detail: `step ${Math.min(tools.length, states.filter((s) => s === "completed").length + 1)} / ${tools.length}`,
     };
   const failed = states.filter((s) => s === "failed").length;
   const interrupted = states.filter((s) => s === "interrupted").length;
   return {
     state: failed ? "failed" : interrupted ? "interrupted" : "completed",
-    label: "Build & playtest",
+    label: failed
+      ? "Finished with errors"
+      : interrupted
+        ? "Stopped before finishing"
+        : "Built and playtested",
     detail: `${tools.length} steps${failed ? ` · ${failed} failed` : ""}${interrupted ? ` · ${interrupted} interrupted` : ""}`,
   };
+}
+
+const buttonNames = [
+  [1, "←"],
+  [2, "→"],
+  [4, "↑"],
+  [8, "↓"],
+  [16, "Z"],
+  [32, "X"],
+];
+/** Tool button mask (left=1 … X=32) → "→ + X". */
+export function formatButtons(mask = 0) {
+  const pressed = buttonNames.filter(([bit]) => mask & bit).map(([, n]) => n);
+  return pressed.length ? pressed.join(" + ") : "release";
+}
+const toolLabels = {
+  read_reference: "Read the PICO-8 reference",
+  read_game: "Read the cart source",
+  load_game: "Updated the cart",
+  press_buttons: "Pressed",
+  observe_game: "Looked at the screen",
+  reset_game: "Restarted the test",
+};
+export function describeTool(tool) {
+  const args = tool?.args ?? {};
+  if (tool?.toolName === "press_buttons")
+    return {
+      label: args.buttons
+        ? `${toolLabels.press_buttons} ${formatButtons(args.buttons)}`
+        : "Let the game run",
+      meta: Number.isInteger(args.frames) ? `${args.frames}f` : "",
+    };
+  if (tool?.toolName === "load_game")
+    return {
+      label: toolLabels.load_game,
+      meta: `${String(args.source ?? "").split("\n").length} lines`,
+    };
+  return { label: toolLabels[tool?.toolName] ?? tool?.toolName ?? "Tool", meta: "" };
+}
+/** Merge consecutive calls of the same tool into one display step. */
+export function mergeSteps(tools, running) {
+  const steps = [];
+  for (const tool of tools) {
+    const state = toolState(tool, running);
+    const last = steps.at(-1);
+    if (
+      last &&
+      last.tools[0].toolName === tool.toolName &&
+      tool.toolName !== "load_game" &&
+      last.state === "completed"
+    ) {
+      last.tools.push(tool);
+      last.state = state;
+    } else steps.push({ tools: [tool], state });
+  }
+  return steps;
+}
+/** The tool currently executing in the latest assistant turn, if any. */
+export function currentTool(messages, running) {
+  if (!running) return null;
+  const last = messages.at(-1);
+  if (last?.role !== "assistant") return null;
+  return (
+    last.content.findLast((p) => p.type === "tool-call" && p.result === undefined) ??
+    null
+  );
 }

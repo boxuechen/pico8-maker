@@ -6,10 +6,11 @@ import {
 } from "./pico8/observation.js";
 import { cartridgeBytes } from "./cartridges.js";
 import { sampleSource, cartBytes } from "./sample.js";
+import { cartText, cartFileName } from "./pico8/cart.js";
 
 const storageKey = "pico-demo-versions-v1";
 export class Game {
-  constructor(onChange, { versions, onSave } = {}) {
+  constructor(onChange, { versions, revision, onSave } = {}) {
     this.onSave = onSave;
     this.onChange = onChange;
     this.versions = [sampleSource];
@@ -25,6 +26,8 @@ export class Game {
       /* A demo still works when local storage is unavailable. */
     }
     if (versions?.length) this.versions = versions.slice(-12);
+    // A user-facing version number survives the 12-entry undo window.
+    this.revision = Math.max(revision ?? this.versions.length, this.versions.length);
     this.pending = new Map();
     this.nextId = 0;
     this.queue = Promise.resolve();
@@ -40,6 +43,7 @@ export class Game {
       state: this.state,
       source: this.source,
       canUndo: this.versions.length > 1,
+      revision: this.revision,
       testFrame: this.testFrame,
       muted: this.muted,
       activeCart: this.activeCart ?? null,
@@ -188,7 +192,7 @@ export class Game {
   }
   save() {
     if (this.onSave) {
-      this.onSave([...this.versions]);
+      this.onSave([...this.versions], this.revision);
       return;
     }
     try {
@@ -202,16 +206,18 @@ export class Game {
     this.cancelTests();
     this.activeCart = null;
     this.versions.pop();
+    this.revision = Math.max(1, this.revision - 1);
     this.save();
     this.changed();
   }
-  export() {
+  /** Save the current source as a .p8 cart, labelled with an RGBA frame. */
+  export({ title, label } = {}) {
     const url = URL.createObjectURL(
-      new Blob([cartBytes(this.source)], { type: "text/plain" }),
+      new Blob([cartText(this.source, label)], { type: "text/plain" }),
     );
     const a = document.createElement("a");
     a.href = url;
-    a.download = "my-game.p8";
+    a.download = cartFileName(title);
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
@@ -270,6 +276,7 @@ export class Game {
       }
       this.versions.push(args.source);
       this.versions = this.versions.slice(-12);
+      this.revision++;
       this.save();
     } else if (action === "press_buttons") {
       if (

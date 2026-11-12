@@ -128,3 +128,19 @@ Qwen 普通百炼与 Token Plan 分开，并区分中国/国际入口。普通�
 像素编码与裁剪位于 `app/src/pico8/observation.js`；调色板模块由知识包的 `palette.json` 同源生成。常驻规则和 `guide/playtest` 引导模型默认用 PNG 看整体、按需用局部 ASCII 核对像素。完整字符矩阵使用独立的 32 KiB / 256 行预算，大量诊断会明确标记缩减，矩阵不会被静默截断。历史保留 ASCII 及 session/generation/revision/frame 标识；恢复历史不会恢复游戏运行状态或重放操作。
 
 验证：32 项应用测试、15 项示例检查、4 项 Sites 测试及生产构建通过。真实 WASM 覆盖默认/扩展色、绘图与显示映射、重复颜色、奇数列和边缘裁剪，并逐像素还原 RGBA；真实 Pi 适配器使用模拟响应验证完整矩阵、裁剪和历史恢复。浏览器另用 `fixture-observation` 本地模型联调，确认实际 PNG 为 7×5 裁剪或默认 128×128，刷新后裁剪矩阵与调色板记录保留。本轮没有调用真实模型。
+
+## PICO-8 Maker 视觉改版（2026-11-12）
+
+产品统一命名为 PICO-8 Maker。样式重组为 `base.css`（设计变量、播放器、输入框、弹窗）、`home.css`、`workbench.css`，播放器机壳样式 `player-shell.css` 保持官网还原不变；删除旧的多层覆盖 `demo.css`。
+
+- 首页：官网横幅构图，左侧官方 logo + MAKER + 6 张卡带，右侧 YOUR CART（用户卡带及其试玩截图标签）+ 5 张卡带 + MORE CARTS；署名改为悬停提示；输入框紧贴电视下方；新增 How it works 与规格页脚。
+- 工作台：顶栏常驻版本号、近似 token / 字符用量（`src/pico8/tokens.js`）、Preview/Code 切换、撤销与 SAVE CART；导出的 `.p8` 带 `__label__`（取最近一帧 AI 试玩画面，`src/pico8/cart.js`）。工具记录合并为单张进度卡；成功修改后出现版本卡；预览区新增状态徽章、测试进度条与“Playtest frames”时间轴。修复了中断提示在新任务运行时仍显示的问题。
+- token 数按手册规则近似统计，可能与 PICO-8 编辑器显示略有差异；字符上限按 65535 显示。
+
+## PICO-8 Maker 视觉改版（2026-11-12）
+
+产品统一命名为 PICO-8 Maker。样式重组为 `base.css`（设计变量、播放器、输入框、弹窗）、`home.css`、`workbench.css`，播放器机壳样式 `player-shell.css` 保持官网还原不变；删除旧的多层覆盖 `demo.css`。
+
+- 首页：官网横幅构图，左侧官方 logo + MAKER + 6 张卡带，右侧 YOUR CART（用户卡带及其试玩截图标签）+ 5 张卡带 + MORE CARTS；署名改为悬停提示；输入框紧贴电视下方；新增 How it works 与规格页脚。
+- 工作台：顶栏常驻版本号、近似 token / 字符用量（`src/pico8/tokens.js`）、Preview/Code 切换、撤销与 SAVE CART；导出的 `.p8` 带 `__label__`（取最近一帧 AI 试玩画面，`src/pico8/cart.js`）。工具记录合并为单张进度卡；成功修改后出现版本卡；预览区新增状态徽章、测试进度条与“Playtest frames”时间轴。修复了中断提示在新任务运行时仍显示的问题。
+- token 数按手册规则近似统计，可能与 PICO-8 编辑器显示略有差异；字符上限按 65535 显示。

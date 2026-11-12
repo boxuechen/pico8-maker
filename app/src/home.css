@@ -1,0 +1,598 @@
+/* ---------- Home: the official site's banner composition ---------- */
+.home-header {
+  height: 52px;
+  padding: 0 40px;
+}
+.site-name {
+  font: 14px var(--font-pixel);
+  letter-spacing: 1px;
+  color: var(--text-2);
+  white-space: nowrap;
+}
+.home-nav {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+.home-nav a,
+.resume-link {
+  font: 14px var(--font-pixel);
+  color: var(--text-2);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.home-nav a:hover {
+  color: var(--text);
+}
+.resume-link {
+  display: none;
+  align-items: center;
+  gap: 2px;
+  color: var(--accent);
+}
+
+/* Desktop: the TV sits in the centre of the original banner, carts either side. */
+.home-mode .workspace {
+  --tv-width: min(37vw, 430px);
+  --tv-height: calc(var(--tv-width) * 210 / 180);
+  --row: calc(var(--tv-height) / 3);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--tv-width) minmax(0, 1fr);
+  grid-template-rows: var(--tv-height) auto;
+  gap: 0 16px;
+  width: min(1440px, 100%);
+  margin: 0 auto;
+  padding: 6px 22px 0;
+  background: url("/assets/pico8-tv.png") center 6px / auto var(--tv-height)
+    no-repeat;
+}
+.home-intro,
+.home-gallery {
+  display: grid;
+  grid-template-rows: var(--row) calc(var(--row) * 2);
+  min-width: 0;
+}
+.hero-brand {
+  align-self: center;
+  min-width: 0;
+}
+.hero-logo {
+  display: block;
+  width: min(210px, 64%);
+  aspect-ratio: 280 / 79;
+  overflow: hidden;
+}
+.hero-logo img {
+  display: block;
+  width: 100%;
+  image-rendering: pixelated;
+}
+.maker-word {
+  display: block;
+  margin: 6px 0 10px;
+  font: 20px var(--font-pixel);
+  letter-spacing: 8px;
+  color: var(--accent);
+}
+.tagline {
+  max-width: 340px;
+  font: 14px/1.5 var(--font-ui);
+  color: var(--text-2);
+}
+.now-playing {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.now-playing span {
+  font: 12px var(--font-pixel);
+  letter-spacing: 1px;
+  color: var(--accent);
+}
+.now-playing strong {
+  font: 600 17px var(--font-ui);
+  color: var(--text);
+}
+.now-playing a {
+  font: 13px var(--font-ui);
+  color: var(--text-2);
+  text-decoration: none;
+}
+.now-playing a:hover {
+  color: var(--accent);
+}
+
+/* Cartridges keep their original labels; credits appear on hover. */
+.home-mode .cart-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-auto-rows: calc(var(--row) - 14px);
+  gap: 12px;
+  align-self: end;
+  padding-bottom: 8px;
+}
+.cart {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+.cart:disabled {
+  opacity: 1;
+  cursor: wait;
+}
+.cart:focus-visible {
+  outline: none;
+}
+.cart img {
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  transition: transform 0.15s;
+}
+.cart:hover img,
+.cart:focus-visible img {
+  transform: translateY(-4px);
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.cart.selected img {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+.cart-credit {
+  position: absolute;
+  z-index: 10;
+  left: 50%;
+  bottom: calc(100% + 6px);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: max-content;
+  max-width: 220px;
+  padding: 8px 10px;
+  border-radius: var(--r-sm);
+  background: var(--text);
+  color: var(--bg);
+  text-align: left;
+  box-shadow: 0 8px 24px #0009;
+  transform: translateX(-50%);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s;
+}
+.cart.tip-below .cart-credit {
+  bottom: auto;
+  top: calc(100% + 4px);
+}
+.cart:hover .cart-credit,
+.cart:focus-visible .cart-credit {
+  opacity: 1;
+}
+.cart-credit strong {
+  font: 600 13px var(--font-ui);
+}
+.cart-credit small {
+  font: 13px var(--font-pixel);
+  color: #7e2553;
+}
+.cart-credit em {
+  font: normal 11px var(--font-ui);
+  color: #5f574f;
+}
+.more-carts {
+  justify-self: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  height: 100%;
+  aspect-ratio: 160 / 205;
+  border: 1px dashed var(--text-3);
+  background: #0a1020e6;
+  font: 16px/1.15 var(--font-pixel);
+  color: var(--text);
+  text-align: center;
+  text-decoration: none;
+}
+.more-carts svg {
+  color: var(--accent);
+}
+.more-carts:hover {
+  border-color: var(--accent);
+}
+.mobile-only-carts {
+  display: none;
+}
+
+/* Your cart: the user's own cartridge sits beside the community ones. */
+.your-cart {
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+  padding-left: 4%;
+}
+.your-cart-art {
+  flex-shrink: 0;
+  height: calc(var(--row) - 44px);
+  max-height: 120px;
+  padding: 0;
+}
+.your-cart-art:disabled {
+  opacity: 1;
+}
+.cart-body {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  aspect-ratio: 160 / 205;
+  padding: 11% 8% 6%;
+  background: #5f574f;
+  box-shadow: inset 0 3px 0 #83769c;
+  clip-path: polygon(
+    3% 0,
+    97% 0,
+    97% 2%,
+    100% 2%,
+    100% 98%,
+    97% 98%,
+    97% 100%,
+    3% 100%,
+    3% 98%,
+    0 98%,
+    0 2%,
+    3% 2%
+  );
+  transition: transform 0.15s;
+}
+.your-cart-art:hover:not(:disabled) .cart-body {
+  transform: translateY(-4px);
+}
+.cart-window {
+  flex: none;
+  width: 100%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #000;
+}
+.cart-window img {
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+}
+.cart-empty {
+  font: 28px var(--font-pixel);
+  color: var(--text-3);
+}
+.cart-strip {
+  flex: 1;
+  margin-top: 8%;
+  background:
+    linear-gradient(#fff1e8, #fff1e8) 8% 30% / 50% 14% no-repeat,
+    linear-gradient(#fff1e8, #fff1e8) 8% 70% / 34% 12% no-repeat,
+    #3b3633;
+}
+.your-cart-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-width: 0;
+}
+.your-cart-text .kicker {
+  color: var(--accent);
+}
+.your-cart-text strong {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 600 17px var(--font-ui);
+  color: var(--text);
+}
+.your-cart-text small {
+  font: 13px/1.4 var(--font-ui);
+  color: var(--text-3);
+}
+.continue-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  margin-top: 6px;
+  padding: 0 12px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  font: 13px var(--font-pixel);
+  letter-spacing: 1px;
+  color: var(--text);
+}
+.continue-button svg {
+  color: var(--accent);
+}
+.continue-button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+/* The player is the centrepiece; its shell styling lives in player-shell.css. */
+.home-mode .player-panel {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+  overflow: visible;
+  padding: 0;
+  background: none;
+}
+.home-mode .stage,
+.home-mode .console-group,
+.home-mode .console {
+  width: 100%;
+  max-width: none;
+}
+.home-mode .home-intro {
+  grid-column: 1;
+  grid-row: 1;
+}
+.home-mode .home-gallery {
+  grid-column: 3;
+  grid-row: 1;
+}
+
+/* Composer directly below the TV, the way the official Download sits under the banner. */
+.home-mode .chat-panel {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  justify-self: center;
+  width: min(720px, 100%);
+  padding-top: 20px;
+}
+.home-mode .chat-viewport {
+  display: none;
+}
+.home-mode .composer {
+  padding: 16px 12px 12px 18px;
+  box-shadow: 0 16px 32px -8px #0008;
+}
+.home-mode .composer textarea {
+  font-size: 16px;
+}
+.prompt-examples {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+}
+.prompt-examples .kicker {
+  margin-right: 2px;
+}
+.prompt-examples button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 30px;
+  padding: 0 12px 0 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  font: 500 13px var(--font-ui);
+  color: var(--text-2);
+}
+.prompt-examples button i {
+  width: 8px;
+  height: 8px;
+}
+.prompt-examples button:hover {
+  border-color: var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* Below the fold */
+.how-it-works {
+  width: min(1396px, calc(100% - 44px));
+  margin: 88px auto 0;
+}
+.how-it-works h2 {
+  padding-bottom: 20px;
+  margin-bottom: 28px;
+  border-bottom: 1px solid var(--border);
+  font: 22px var(--font-pixel);
+  color: var(--accent);
+}
+.how-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 40px;
+}
+.how-steps article {
+  display: flex;
+  gap: 20px;
+}
+.how-art {
+  flex: 0 0 88px;
+  height: 88px;
+  display: grid;
+  place-items: center;
+}
+.how-art svg {
+  max-width: 88px;
+  height: 88px;
+}
+.how-steps h3 {
+  margin-bottom: 8px;
+  font: normal 18px var(--font-pixel);
+  color: var(--accent);
+}
+.how-steps p {
+  font: 14px/1.6 var(--font-ui);
+  color: var(--text-2);
+}
+.home-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  width: min(1396px, calc(100% - 44px));
+  margin: 72px auto 0;
+  padding: 20px 0 32px;
+  border-top: 1px solid var(--border);
+  font: 12px var(--font-pixel);
+  letter-spacing: 1px;
+  color: var(--text-3);
+}
+.home-footer span:last-child {
+  font: 12px var(--font-ui);
+  letter-spacing: 0;
+  text-align: right;
+}
+
+/* Short desktop windows: shrink the TV so the composer stays above the fold. */
+@media (min-width: 1001px) and (max-height: 820px) {
+  .home-mode .workspace {
+    --tv-width: min(33vw, 370px);
+  }
+  .hero-logo {
+    width: min(180px, 60%);
+  }
+  .tagline {
+    font-size: 13px;
+  }
+}
+
+/* Tablet: brand and carts left, TV right; the right gallery folds away. */
+@media (max-width: 1000px) {
+  .home-mode .workspace {
+    grid-template-columns: minmax(0, 1fr) minmax(300px, 46%);
+    grid-template-rows: auto auto;
+    gap: 0 20px;
+    padding: 16px 20px 0;
+    background: none;
+  }
+  .home-intro {
+    grid-template-rows: auto auto;
+    gap: 18px;
+    align-content: center;
+  }
+  .home-mode .home-gallery {
+    display: none;
+  }
+  .home-mode .cart-grid {
+    max-width: 400px;
+    grid-auto-rows: auto;
+    gap: 10px;
+    padding: 0;
+  }
+  .home-mode .cart,
+  .home-mode .cart img {
+    height: auto;
+    width: 100%;
+  }
+  .resume-link {
+    display: inline-flex;
+  }
+  .how-steps {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 28px;
+  }
+}
+@media (max-width: 580px) {
+  .home-header {
+    padding: 0 16px;
+  }
+  .home-nav {
+    gap: 16px;
+  }
+  .home-nav a:not(:first-of-type) {
+    display: none;
+  }
+  .home-mode .workspace {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    padding: 12px 16px 0;
+  }
+  .home-mode .home-intro {
+    grid-row: 1;
+    display: block;
+    text-align: center;
+  }
+  .hero-logo {
+    width: 170px;
+    margin: 0 auto;
+  }
+  .tagline {
+    margin: 0 auto;
+    font-size: 13px;
+  }
+  .now-playing {
+    align-items: center;
+  }
+  .home-mode .left-carts {
+    display: none;
+  }
+  .home-mode .player-panel {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: center;
+    width: 240px;
+  }
+  .home-mode .home-gallery {
+    display: block;
+    grid-column: 1;
+    grid-row: 3;
+  }
+  .your-cart {
+    display: none;
+  }
+  .home-mode .right-carts {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    padding: 4px 4px 8px;
+  }
+  .mobile-only-carts {
+    display: contents;
+  }
+  .home-mode .right-carts .cart {
+    flex: 0 0 82px;
+  }
+  .home-mode .right-carts .more-carts {
+    flex: 0 0 82px;
+    height: 105px;
+    font-size: 13px;
+  }
+  .cart-credit {
+    display: none;
+  }
+  .home-mode .chat-panel {
+    grid-row: 4;
+    padding-top: 0;
+  }
+  .how-it-works,
+  .home-footer {
+    width: calc(100% - 32px);
+  }
+  .how-it-works {
+    margin-top: 56px;
+  }
+  .home-footer {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+  .home-footer span:last-child {
+    text-align: center;
+  }
+}
