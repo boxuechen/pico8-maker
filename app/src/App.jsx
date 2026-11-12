@@ -1,3 +1,8 @@
+import {
+  UserMessage,
+  AssistantMessage,
+  ActivityContext,
+} from "./WorkbenchMessages.jsx";
 import { BootScreen } from "./BootScreen.jsx";
 import { cartridgeImage } from "./cartridges.js";
 import { useEffect, useRef, useState } from "react";
@@ -5,11 +10,8 @@ import {
   AssistantRuntimeProvider,
   useExternalStoreRuntime,
   ThreadPrimitive,
-  MessagePrimitive,
   ComposerPrimitive,
-  ActionBarPrimitive,
 } from "@assistant-ui/react";
-import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
 import {
   ArrowUp,
   Square,
@@ -21,9 +23,7 @@ import {
   Maximize,
   Settings,
   X,
-  Copy,
   ChevronRight,
-  Check,
   LoaderCircle,
   MoreHorizontal,
   Download,
@@ -49,63 +49,6 @@ import {
 } from "./model-config.js";
 
 const convertMessage = (message) => message;
-const names = {
-  read_game: "读取游戏代码",
-  load_game: "更新并运行游戏",
-  press_buttons: "操作游戏",
-  observe_game: "观察游戏画面",
-  reset_game: "重置测试",
-};
-function Tool({ toolName, args, result, isError }) {
-  return (
-    <details className="tool">
-      <summary>
-        {result === undefined ? (
-          <LoaderCircle className="spin" size={15} />
-        ) : (
-          <Check size={15} />
-        )}
-        <span>
-          {names[toolName] ?? toolName}
-          {isError ? " · 未通过" : ""}
-        </span>
-        <ChevronRight size={14} />
-      </summary>
-      <pre>{JSON.stringify(args, null, 2)}</pre>
-      {result !== undefined && (
-        <pre>
-          {typeof result === "string"
-            ? result
-            : JSON.stringify(result, null, 2)}
-        </pre>
-      )}
-    </details>
-  );
-}
-function UserMessage() {
-  return (
-    <MessagePrimitive.Root className="message user">
-      <div className="user-bubble">
-        <MessagePrimitive.Parts />
-      </div>
-    </MessagePrimitive.Root>
-  );
-}
-function AssistantMessage() {
-  return (
-    <MessagePrimitive.Root className="message assistant">
-      <MessagePrimitive.Parts
-        components={{ Text: MarkdownTextPrimitive, tools: { Fallback: Tool } }}
-      />
-      <ActionBarPrimitive.Root className="message-actions">
-        <ActionBarPrimitive.Copy title="复制回复" aria-label="复制回复">
-          <Copy size={15} />
-        </ActionBarPrimitive.Copy>
-      </ActionBarPrimitive.Root>
-    </MessagePrimitive.Root>
-  );
-}
-
 function ModelSettings({ initial, onSave, onClose, pending }) {
   const dialog = useRef(null);
   const [form, setForm] = useState(() => normalizeConfig(initial));
@@ -189,19 +132,19 @@ function ModelSettings({ initial, onSave, onClose, pending }) {
     >
       <form onSubmit={save} className="settings-form">
         <div className="dialog-heading">
-          <h2>连接你的模型</h2>
+          <h2>Connect your model</h2>
           <button
             type="button"
-            aria-label="关闭设置"
+            aria-label="Close settings"
             onClick={onClose}
             disabled={busy}
           >
             <X size={20} />
           </button>
         </div>
-        <p>从 Pi 模型目录选择，填入对应服务的 API Key。</p>
+        <p>Choose a model and enter your provider’s API key.</p>
         <label>
-          模型服务
+          Provider
           <select
             value={form.provider}
             disabled={busy}
@@ -212,12 +155,12 @@ function ModelSettings({ initial, onSave, onClose, pending }) {
                 {p.name}
               </option>
             ))}
-            <option value="custom">自定义兼容接口</option>
+            <option value="custom">Custom compatible API</option>
           </select>
         </label>
         {preset && (
           <label>
-            模型
+            Model
             <select
               value={form.model}
               disabled={busy}
@@ -237,15 +180,17 @@ function ModelSettings({ initial, onSave, onClose, pending }) {
             </select>
           </label>
         )}
-        {preset && <p className="model-detail">{form.model} · 支持图片输入</p>}
+        {preset && (
+          <p className="model-detail">{form.model} · Image input supported</p>
+        )}
         {!preset && (
           <label>
-            接口地址
+            Base URL
             <input
               required
               type="url"
               disabled={busy}
-              placeholder="https://你的服务地址/v1"
+              placeholder="https://your-provider.com/v1"
               value={form.baseUrl}
               onChange={(e) => setForm({ ...form, baseUrl: e.target.value })}
             />
@@ -258,17 +203,17 @@ function ModelSettings({ initial, onSave, onClose, pending }) {
             type="password"
             disabled={busy}
             autoComplete="off"
-            placeholder="输入你的 API Key"
+            placeholder="Enter your API key"
             value={form.apiKey}
             onChange={(e) => setForm({ ...form, apiKey: e.target.value })}
           />
         </label>
         {!preset && (
           <label>
-            模型名称
+            Model ID
             <input
               required
-              placeholder="服务提供的模型 ID"
+              placeholder="Model ID from your provider"
               disabled={busy}
               value={form.model}
               onChange={(e) => setForm({ ...form, model: e.target.value })}
@@ -281,11 +226,12 @@ function ModelSettings({ initial, onSave, onClose, pending }) {
             checked={remember}
             onChange={(e) => setRemember(e.target.checked)}
           />
-          在这台设备记住配置（含 Key）
+          Remember settings on this device (including key)
         </label>
         <p className="fine-print">
-          请求直连 {preset ? form.baseUrl : "你的接口"}，默认不保存
-          Key。测试会发送两次小型请求，验证图片与工具能力。
+          Requests go directly to {preset ? form.baseUrl : "your endpoint"}.
+          Keys are not saved by default. Connection testing sends two small
+          requests to check image and tool support.
         </p>
         {notice && (
           <p role="status" className="notice">
@@ -299,10 +245,11 @@ function ModelSettings({ initial, onSave, onClose, pending }) {
             onClick={test}
             disabled={busy}
           >
-            {busy ? <LoaderCircle className="spin" size={16} /> : null}测试连接
+            {busy ? <LoaderCircle className="spin" size={16} /> : null}Test
+            connection
           </button>
           <button className="primary" disabled={busy}>
-            {pending ? "保存并开始制作" : "保存配置"}
+            {pending ? "Save & start making" : "Save settings"}
           </button>
         </div>
       </form>
@@ -325,7 +272,7 @@ export function App() {
     saved ?? {
       schema: 1,
       id: crypto.randomUUID(),
-      title: "未命名卡带",
+      title: "Untitled cartridge",
       transcript: [],
       versions: readLegacyVersions() ?? [sampleSource],
       active: false,
@@ -337,7 +284,7 @@ export function App() {
   const pendingRef = useRef("");
   const sendLock = useRef(false);
   const [storageError, setStorageError] = useState(false);
-  const [split, setSplit] = useState(38);
+  const [split, setSplit] = useState(42);
   const saveTimer = useRef(null);
   function persist(patch) {
     Object.assign(project.current, patch, { updatedAt: Date.now() });
@@ -533,142 +480,134 @@ export function App() {
   const playing = game.state === "running" && !game.testFrame;
   return (
     <AssistantRuntimeProvider runtime={runtime}>
-      <div className={`app ${workspace ? "studio-mode" : "home-mode"}`}>
-        <header className="topbar">
-          <button
-            className="app-title"
-            disabled={busy}
-            onClick={() => {
-              setWorkspace(false);
-              persist({ active: false });
-            }}
-            aria-label="返回创作首页"
-          >
-            <span className="pixel-spark">✦</span> PICO
-            <span className="brand-slash">/</span>MAKER{" "}
-            <span className="brand-caption">FANTASY GAME MAKER</span>
-          </button>
-          <div className="top-actions">
-            {!workspace && chat.messages.length > 0 && (
-              <button
-                className="resume-button"
-                disabled={busy}
-                onClick={async () => {
-                  await gameRef.current.restoreProject();
-                  setWorkspace(true);
-                  persist({ active: true });
-                }}
-              >
-                Continue making <ChevronRight size={14} />
-              </button>
-            )}
-            {workspace && (
-              <span className="project-label">{project.current.title}</span>
-            )}
+      <ActivityContext.Provider
+        value={{
+          running: chat.isRunning || sending,
+          lastId: chat.messages.at(-1)?.id,
+        }}
+      >
+        <div className={`app ${workspace ? "studio-mode" : "home-mode"}`}>
+          <header className="topbar">
             <button
-              className="settings-button"
-              disabled={!ready || busy}
-              onClick={() => setSettings(true)}
+              className="app-title"
+              disabled={busy}
+              onClick={() => {
+                setWorkspace(false);
+                persist({ active: false });
+              }}
+              aria-label="Back to home"
             >
-              <Settings size={16} />
-              <span>{configured ? "Model connected" : "Connect model"}</span>
-              {configured && <i />}
+              <span className="pixel-spark">✦</span> PICO
+              <span className="brand-slash">/</span>MAKER{" "}
+              <span className="brand-caption">FANTASY GAME MAKER</span>
             </button>
-            <details className="more">
-              <summary aria-label="更多操作">
-                <MoreHorizontal size={20} />
-              </summary>
-              <div
-                className="more-menu"
-                onClick={(event) => {
-                  if (event.target.closest("button"))
-                    event.currentTarget.parentElement.open = false;
-                }}
+            <div className="top-actions">
+              {!workspace && chat.messages.length > 0 && (
+                <button
+                  className="resume-button"
+                  disabled={busy}
+                  onClick={async () => {
+                    await gameRef.current.restoreProject();
+                    setWorkspace(true);
+                    persist({ active: true });
+                  }}
+                >
+                  Continue making <ChevronRight size={14} />
+                </button>
+              )}
+              {workspace && (
+                <span className="project-label">{project.current.title}</span>
+              )}
+              <button
+                className="settings-button"
+                disabled={!ready || busy}
+                onClick={() => setSettings(true)}
               >
-                <button
-                  disabled={!ready || busy || !game.canUndo}
-                  onClick={safe(() => gameRef.current.undo())}
+                <Settings size={16} />
+                <span>{configured ? "Model connected" : "Connect model"}</span>
+                {configured && <i />}
+              </button>
+              <details className="more">
+                <summary aria-label="Project actions">
+                  <MoreHorizontal size={20} />
+                </summary>
+                <div
+                  className="more-menu"
+                  onClick={(event) => {
+                    if (event.target.closest("button"))
+                      event.currentTarget.parentElement.open = false;
+                  }}
                 >
-                  <Undo2 size={16} />
-                  撤销上次修改
-                </button>
-                <button disabled={!ready || busy} onClick={() => setCode(true)}>
-                  <Code2 size={16} />
-                  查看源码
-                </button>
-                <button
-                  disabled={!ready}
-                  onClick={() => gameRef.current.export()}
-                >
-                  <Download size={16} />
-                  导出 .p8
-                </button>
-              </div>
-            </details>
-          </div>
-        </header>
-        <main className="workspace" style={{ "--chat-width": `${split}%` }}>
-          {!workspace && (
-            <>
-              <section className="home-intro">
-                <div className="hero-brand">
-                  <img
-                    src={`${import.meta.env.BASE_URL}assets/pico8-logo.png`}
-                    alt="PICO-8"
-                  />
                   <button
-                    className="make-badge"
-                    onClick={() => {
-                      const input = document.getElementById("game-prompt");
-                      input?.scrollIntoView({ block: "nearest" });
-                      input?.focus();
-                    }}
+                    disabled={!ready || busy || !game.canUndo}
+                    onClick={safe(() => gameRef.current.undo())}
                   >
-                    ✦ MAKE A GAME
+                    <Undo2 size={16} />
+                    Undo last change
+                  </button>
+                  <button
+                    disabled={!ready || busy}
+                    onClick={() => setCode(true)}
+                  >
+                    <Code2 size={16} />
+                    View source
+                  </button>
+                  <button
+                    disabled={!ready}
+                    onClick={() => gameRef.current.export()}
+                  >
+                    <Download size={16} />
+                    Export .p8
                   </button>
                 </div>
-                <div className="hero-copy">
-                  {game.activeCart ? (
-                    <>
-                      <span>NOW PLAYING</span>
-                      <strong>{game.activeCart.title}</strong>
-                      <a
-                        href={game.activeCart.page}
-                        target="_blank"
-                        rel="noreferrer"
-                      >
-                        by {game.activeCart.author} ↗
-                      </a>
-                    </>
-                  ) : (
-                    <>
-                      Play a tiny game.
-                      <br />
-                      Make your own with AI.
-                      <small>
-                        Pick a cartridge or describe your idea below.
-                      </small>
-                    </>
-                  )}
-                </div>
-                <div className="cart-grid left-carts">
-                  {carts.slice(0, 6).map((cart) => (
-                    <Cart
-                      key={cart.id}
-                      cart={cart}
-                      onSelect={selectCart}
-                      disabled={busy || !ready}
-                      active={game.activeCart?.id === cart.id}
+              </details>
+            </div>
+          </header>
+          <main className="workspace" style={{ "--chat-width": `${split}%` }}>
+            {!workspace && (
+              <>
+                <section className="home-intro">
+                  <div className="hero-brand">
+                    <img
+                      src={`${import.meta.env.BASE_URL}assets/pico8-logo.png`}
+                      alt="PICO-8"
                     />
-                  ))}
-                </div>
-                <p className="gallery-caption">
-                  CLICK A CARTRIDGE TO PLAY <span>↑</span>
-                </p>
-              </section>
-              <section className="home-gallery" aria-label="社区卡带灵感">
-                <div className="cart-grid right-carts">
-                  <div className="mobile-only-carts">
+                    <button
+                      className="make-badge"
+                      onClick={() => {
+                        const input = document.getElementById("game-prompt");
+                        input?.scrollIntoView({ block: "nearest" });
+                        input?.focus();
+                      }}
+                    >
+                      ✦ MAKE A GAME
+                    </button>
+                  </div>
+                  <div className="hero-copy">
+                    {game.activeCart ? (
+                      <>
+                        <span>NOW PLAYING</span>
+                        <strong>{game.activeCart.title}</strong>
+                        <a
+                          href={game.activeCart.page}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          by {game.activeCart.author} ↗
+                        </a>
+                      </>
+                    ) : (
+                      <>
+                        Play a tiny game.
+                        <br />
+                        Make your own with AI.
+                        <small>
+                          Pick a cartridge or describe your idea below.
+                        </small>
+                      </>
+                    )}
+                  </div>
+                  <div className="cart-grid left-carts">
                     {carts.slice(0, 6).map((cart) => (
                       <Cart
                         key={cart.id}
@@ -679,335 +618,359 @@ export function App() {
                       />
                     ))}
                   </div>
-                  {carts.slice(6).map((cart) => (
-                    <Cart
-                      key={cart.id}
-                      cart={cart}
-                      onSelect={selectCart}
-                      disabled={busy || !ready}
-                      active={game.activeCart?.id === cart.id}
-                    />
-                  ))}
-                  <a
-                    className="more-carts"
-                    href="https://www.lexaloffle.com/bbs/?cat=7&carts_tab=1#mode=carts&sub=2"
-                    target="_blank"
-                    rel="noreferrer"
-                  >
-                    MORE
-                    <br />
-                    CARTS<span>→</span>
-                  </a>
-                </div>
-              </section>
-            </>
-          )}
-          <ThreadPrimitive.Root className="chat-panel">
-            {workspace && (
-              <div className="panel-heading">
-                <span>01 / CHAT</span>
-                <span>{busy ? "● 正在制作" : "● 创作空间"}</span>
-              </div>
-            )}
-            {!workspace && (
-              <div className="make-heading">
-                <h1>What will you make?</h1>
-                <p>A little idea. A tiny game. A whole world of your own.</p>
-              </div>
-            )}
-            <ThreadPrimitive.Viewport className="chat-viewport">
-              <ThreadPrimitive.Empty>
-                <div className="welcome">
-                  <span className="eyebrow">LET’S MAKE A LITTLE GAME</span>
-                  <h1>
-                    你的想法，
-                    <br />
-                    一张游戏卡带。
-                  </h1>
-                  <p>
-                    描述一个游戏，或者试玩右侧的小关卡，
-                    <br />
-                    告诉 AI 你想改什么。
+                  <p className="gallery-caption">
+                    CLICK A CARTRIDGE TO PLAY <span>↑</span>
                   </p>
-                  <button
-                    className="prompt-chip"
-                    onClick={() =>
-                      runtime.thread.composer.setText(
-                        "角色跳不过这堵墙，帮我修复。",
-                      )
-                    }
-                  >
-                    角色跳不过这堵墙，帮我修复。
-                    <ArrowUp size={14} />
-                  </button>
-                </div>
-              </ThreadPrimitive.Empty>
-              <ThreadPrimitive.Messages
-                components={{ UserMessage, AssistantMessage }}
-              />
-              {busy && (
-                <div className="working" role="status">
-                  <LoaderCircle className="spin" size={14} />
-                  AI 正在处理…
+                </section>
+                <section
+                  className="home-gallery"
+                  aria-label="Community cartridges"
+                >
+                  <div className="cart-grid right-carts">
+                    <div className="mobile-only-carts">
+                      {carts.slice(0, 6).map((cart) => (
+                        <Cart
+                          key={cart.id}
+                          cart={cart}
+                          onSelect={selectCart}
+                          disabled={busy || !ready}
+                          active={game.activeCart?.id === cart.id}
+                        />
+                      ))}
+                    </div>
+                    {carts.slice(6).map((cart) => (
+                      <Cart
+                        key={cart.id}
+                        cart={cart}
+                        onSelect={selectCart}
+                        disabled={busy || !ready}
+                        active={game.activeCart?.id === cart.id}
+                      />
+                    ))}
+                    <a
+                      className="more-carts"
+                      href="https://www.lexaloffle.com/bbs/?cat=7&carts_tab=1#mode=carts&sub=2"
+                      target="_blank"
+                      rel="noreferrer"
+                    >
+                      MORE
+                      <br />
+                      CARTS<span>→</span>
+                    </a>
+                  </div>
+                </section>
+              </>
+            )}
+            <ThreadPrimitive.Root className="chat-panel">
+              {workspace && (
+                <div className="panel-heading">
+                  <span>01 / CHAT</span>
+                  <span>{busy ? "● Working" : "● Ready"}</span>
                 </div>
               )}
-            </ThreadPrimitive.Viewport>
-            <div className="composer-area">
-              {(error || chat.error) && (
-                <div role="alert" className="error">
-                  {error || chat.error}
-                  <button
-                    aria-label="关闭错误"
-                    onClick={() => {
-                      setError("");
-                      setChat((s) => ({ ...s, error: null }));
-                    }}
-                  >
-                    <X size={14} />
-                  </button>
+              {!workspace && (
+                <div className="make-heading">
+                  <h1>What will you make?</h1>
+                  <p>A little idea. A tiny game. A whole world of your own.</p>
                 </div>
               )}
-              <ComposerPrimitive.Root className="composer">
-                <ComposerPrimitive.Input
-                  id="game-prompt"
-                  placeholder={
-                    workspace
-                      ? "继续描述你想修改的地方…"
-                      : "A fishing game on the moon, where every fish glows…"
-                  }
-                  onChange={(e) => persist({ draft: e.target.value })}
-                  aria-label="消息"
-                  rows={2}
-                />
-                <div className="composer-footer">
-                  <span>
-                    {configured ? config.model : "Bring your own API key"}
-                  </span>
-                  {chat.isRunning || sending ? (
-                    <ComposerPrimitive.Cancel
-                      aria-label="停止生成"
-                      className="send"
-                    >
-                      <Square size={16} />
-                    </ComposerPrimitive.Cancel>
-                  ) : (
-                    <ComposerPrimitive.Send
-                      aria-label="发送消息"
-                      className="send"
-                    >
-                      {workspace ? (
-                        <ArrowUp size={20} />
-                      ) : (
-                        <>
-                          MAKE <Play size={14} fill="currentColor" />
-                        </>
-                      )}
-                    </ComposerPrimitive.Send>
-                  )}
-                </div>
-              </ComposerPrimitive.Root>
-              <div className="composer-note">
-                {storageError
-                  ? "本地保存失败，请导出卡带以免丢失。"
-                  : workspace
-                    ? "自动保存到此设备 · Enter 发送 · Shift + Enter 换行"
-                    : "Play for free. Connect your model when you’re ready to create."}
-              </div>
-            </div>
-            {!workspace && (
-              <div className="prompt-examples">
-                {["Platformer", "Space shooter", "Moon fishing"].map(
-                  (label, i) => (
+              <ThreadPrimitive.Viewport className="chat-viewport">
+                <ThreadPrimitive.Empty>
+                  <div className="welcome">
+                    <span className="eyebrow">LET’S MAKE A LITTLE GAME</span>
+                    <h1>Your idea. Your cartridge.</h1>
+                    <p>
+                      Describe a game, or play the preview and tell PICO Maker
+                      what to change.
+                    </p>
                     <button
-                      key={label}
+                      className="prompt-chip"
+                      onClick={() =>
+                        runtime.thread.composer.setText(
+                          "The character cannot jump over the wall. Help me fix it.",
+                        )
+                      }
+                    >
+                      The character cannot jump over the wall. Help me fix it.
+                      <ArrowUp size={14} />
+                    </button>
+                  </div>
+                </ThreadPrimitive.Empty>
+                <ThreadPrimitive.Messages
+                  components={{ UserMessage, AssistantMessage }}
+                />
+                {busy && (
+                  <div className="working" role="status">
+                    <LoaderCircle className="spin" size={14} />
+                    Making your cartridge…
+                  </div>
+                )}
+              </ThreadPrimitive.Viewport>
+              <div className="composer-area">
+                {(error || chat.error) && (
+                  <div role="alert" className="error">
+                    {error || chat.error}
+                    <button
+                      aria-label="Dismiss error"
                       onClick={() => {
-                        const text = [
-                          "Make a platformer with coins and a double jump.",
-                          "Make a space shooter with upgradeable weapons.",
-                          "Make a tiny fishing game set on the moon.",
-                        ][i];
-                        runtime.thread.composer.setText(text);
-                        persist({ draft: text });
+                        setError("");
+                        setChat((s) => ({ ...s, error: null }));
                       }}
                     >
-                      ＋ {label}
+                      <X size={14} />
                     </button>
-                  ),
+                  </div>
                 )}
+                <ComposerPrimitive.Root className="composer">
+                  <ComposerPrimitive.Input
+                    id="game-prompt"
+                    placeholder={
+                      workspace
+                        ? "What would you like to change?"
+                        : "A fishing game on the moon, where every fish glows…"
+                    }
+                    onChange={(e) => persist({ draft: e.target.value })}
+                    aria-label="Message"
+                    rows={workspace ? 3 : 2}
+                  />
+                  <div className="composer-footer">
+                    <span>
+                      {configured ? config.model : "Bring your own API key"}
+                    </span>
+                    {chat.isRunning || sending ? (
+                      <ComposerPrimitive.Cancel
+                        aria-label="Stop generation"
+                        className="send"
+                      >
+                        <Square size={12} />
+                        <span>STOP</span>
+                      </ComposerPrimitive.Cancel>
+                    ) : (
+                      <ComposerPrimitive.Send
+                        aria-label="Send message"
+                        className="send"
+                      >
+                        {workspace ? (
+                          <>
+                            SEND <ArrowUp size={15} />
+                          </>
+                        ) : (
+                          <>
+                            MAKE <Play size={14} fill="currentColor" />
+                          </>
+                        )}
+                      </ComposerPrimitive.Send>
+                    )}
+                  </div>
+                </ComposerPrimitive.Root>
+                <div className="composer-note">
+                  {storageError
+                    ? "Local save failed. Export your cartridge to keep a copy."
+                    : workspace
+                      ? "Enter to send · Shift + Enter for a new line"
+                      : "Play for free. Connect your model when you’re ready to create."}
+                </div>
               </div>
-            )}
-            {workspace && saved?.interrupted && (
-              <p className="restore-note">
-                上次生成已中断，已恢复保存的对话与游戏，可继续发送消息。
-              </p>
-            )}
-          </ThreadPrimitive.Root>
-          {workspace && (
-            <div
-              className="panel-divider"
-              role="separator"
-              aria-label="调整聊天宽度"
-              aria-orientation="vertical"
-              aria-valuemin={28}
-              aria-valuemax={55}
-              aria-valuenow={split}
-              tabIndex={0}
-              onKeyDown={(e) => {
-                if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
-                  e.preventDefault();
-                  setSplit((v) =>
-                    Math.max(
-                      28,
-                      Math.min(55, v + (e.key === "ArrowRight" ? 2 : -2)),
+              {!workspace && (
+                <div className="prompt-examples">
+                  {["Platformer", "Space shooter", "Moon fishing"].map(
+                    (label, i) => (
+                      <button
+                        key={label}
+                        onClick={() => {
+                          const text = [
+                            "Make a platformer with coins and a double jump.",
+                            "Make a space shooter with upgradeable weapons.",
+                            "Make a tiny fishing game set on the moon.",
+                          ][i];
+                          runtime.thread.composer.setText(text);
+                          persist({ draft: text });
+                        }}
+                      >
+                        ＋ {label}
+                      </button>
                     ),
-                  );
-                }
-              }}
-              onPointerDown={(e) => {
-                e.currentTarget.setPointerCapture(e.pointerId);
-              }}
-              onPointerMove={(e) => {
-                if (e.currentTarget.hasPointerCapture(e.pointerId)) {
-                  const box =
-                    e.currentTarget.parentElement.getBoundingClientRect();
-                  setSplit(
-                    Math.max(
-                      28,
-                      Math.min(55, ((e.clientX - box.left) / box.width) * 100),
-                    ),
-                  );
-                }
-              }}
-            />
-          )}
-          <section className="player-panel" aria-label="游戏试玩">
-            {workspace && (
-              <div className="preview-heading">
-                <span>02 / LIVE PREVIEW</span>
-                <span>
-                  {busy
-                    ? "AI 正在制作 / 测试"
-                    : game.testFrame
-                      ? "新版本已就绪"
-                      : playing
-                        ? "正在试玩"
-                        : "点击播放试玩"}
-                </span>
-              </div>
-            )}
-            <div className="console-group" ref={stage}>
-              <div className="console">
-                <div className="screen-backdrop" />
-                <div className="screen">
-                  <div ref={mount} className="player-mount" />
-                  {game.testFrame && (
-                    <canvas
-                      ref={testCanvas}
-                      width={128}
-                      height={128}
-                      className="test-screen"
-                      aria-label="AI 实际测试画面"
-                    />
-                  )}
-                  {game.booting && <BootScreen />}
-                  {!playing && !busy && (
-                    <button
-                      disabled={!ready}
-                      className={`play-overlay ${game.testFrame ? "over-frame" : ""}`}
-                      aria-label="开始试玩"
-                      onClick={safe(playCurrent)}
-                    >
-                      {ready ? (
-                        <img
-                          src={`${import.meta.env.BASE_URL}assets/pico8-play.png`}
-                          alt=""
-                        />
-                      ) : (
-                        <LoaderCircle className="spin" size={28} />
-                      )}
-                    </button>
                   )}
                 </div>
-                <div
-                  className="shell official-shell"
-                  role="img"
-                  aria-label="Original PICO-8 pixel television"
-                />
+              )}
+              {workspace && saved?.interrupted && (
+                <p className="restore-note">
+                  The previous run was interrupted. Your conversation and game
+                  have been restored. Send a message to continue.
+                </p>
+              )}
+            </ThreadPrimitive.Root>
+            {workspace && (
+              <div
+                className="panel-divider"
+                role="separator"
+                aria-label="Resize chat panel"
+                aria-orientation="vertical"
+                aria-valuemin={28}
+                aria-valuemax={55}
+                aria-valuenow={split}
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+                    e.preventDefault();
+                    setSplit((v) =>
+                      Math.max(
+                        28,
+                        Math.min(55, v + (e.key === "ArrowRight" ? 2 : -2)),
+                      ),
+                    );
+                  }
+                }}
+                onPointerDown={(e) => {
+                  e.currentTarget.setPointerCapture(e.pointerId);
+                }}
+                onPointerMove={(e) => {
+                  if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+                    const box =
+                      e.currentTarget.parentElement.getBoundingClientRect();
+                    setSplit(
+                      Math.max(
+                        28,
+                        Math.min(
+                          55,
+                          ((e.clientX - box.left) / box.width) * 100,
+                        ),
+                      ),
+                    );
+                  }
+                }}
+              />
+            )}
+            <section className="player-panel" aria-label="Game preview">
+              {workspace && (
+                <div className="preview-heading">
+                  <span>02 / LIVE PREVIEW</span>
+                  <span>
+                    {busy
+                      ? "AI playtesting"
+                      : game.testFrame
+                        ? "Ready to play"
+                        : playing
+                          ? "Playing"
+                          : "Press play to try"}
+                  </span>
+                </div>
+              )}
+              <div className="console-group" ref={stage}>
+                <div className="console">
+                  <div className="screen-backdrop" />
+                  <div className="screen">
+                    <div ref={mount} className="player-mount" />
+                    {game.testFrame && (
+                      <canvas
+                        ref={testCanvas}
+                        width={128}
+                        height={128}
+                        className="test-screen"
+                        aria-label="Actual AI playtest frame"
+                      />
+                    )}
+                    {game.booting && <BootScreen />}
+                    {!playing && !busy && (
+                      <button
+                        disabled={!ready}
+                        className={`play-overlay ${game.testFrame ? "over-frame" : ""}`}
+                        aria-label="Start playing"
+                        onClick={safe(playCurrent)}
+                      >
+                        {ready ? (
+                          <img
+                            src={`${import.meta.env.BASE_URL}assets/pico8-play.png`}
+                            alt=""
+                          />
+                        ) : (
+                          <LoaderCircle className="spin" size={28} />
+                        )}
+                      </button>
+                    )}
+                  </div>
+                  <div
+                    className="shell official-shell"
+                    role="img"
+                    aria-label="Original PICO-8 pixel television"
+                  />
+                </div>
+                <div className="player-controls">
+                  <button
+                    aria-label={playing ? "Pause game" : "Play game"}
+                    disabled={!ready || busy}
+                    onClick={safe(playCurrent)}
+                  >
+                    {playing ? <Pause size={20} /> : <Play size={20} />}
+                  </button>
+                  <button
+                    aria-label="Restart game"
+                    disabled={!ready || busy}
+                    onClick={safe(() => gameRef.current.restart())}
+                  >
+                    <RotateCcw size={19} />
+                  </button>
+                  <span className="control-divider" />
+                  <button
+                    aria-label={game.muted ? "Enable sound" : "Mute"}
+                    disabled={!ready || busy}
+                    onClick={() => gameRef.current.mute()}
+                  >
+                    {game.muted ? <VolumeX size={20} /> : <Volume2 size={20} />}
+                  </button>
+                  <button
+                    aria-label="Fullscreen"
+                    onClick={safe(async () => {
+                      try {
+                        if (document.fullscreenElement)
+                          await document.exitFullscreen();
+                        else await stage.current.requestFullscreen();
+                      } catch {
+                        throw new Error(
+                          "Fullscreen is unavailable in this browser. Try opening the game in Chrome.",
+                        );
+                      }
+                    })}
+                  >
+                    <Maximize size={20} />
+                  </button>
+                </div>
+                <p className="player-help">
+                  {busy
+                    ? game.booting
+                      ? "POWERING ON…"
+                      : cartLoading
+                        ? "LOADING CARTRIDGE…"
+                        : "AI IS PLAYTESTING"
+                    : game.testFrame
+                      ? "AI TEST FRAME · PRESS PLAY TO TRY"
+                      : "ARROWS TO MOVE · Z / X TO PLAY"}
+                </p>
               </div>
-              <div className="player-controls">
-                <button
-                  aria-label={playing ? "暂停游戏" : "播放游戏"}
-                  disabled={!ready || busy}
-                  onClick={safe(playCurrent)}
-                >
-                  {playing ? <Pause size={20} /> : <Play size={20} />}
-                </button>
-                <button
-                  aria-label="重新开始"
-                  disabled={!ready || busy}
-                  onClick={safe(() => gameRef.current.restart())}
-                >
-                  <RotateCcw size={19} />
-                </button>
-                <span className="control-divider" />
-                <button
-                  aria-label={game.muted ? "打开声音" : "静音"}
-                  disabled={!ready || busy}
-                  onClick={() => gameRef.current.mute()}
-                >
-                  {game.muted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-                </button>
-                <button
-                  aria-label="全屏"
-                  onClick={safe(async () => {
-                    try {
-                      if (document.fullscreenElement)
-                        await document.exitFullscreen();
-                      else await stage.current.requestFullscreen();
-                    } catch {
-                      throw new Error(
-                        "当前浏览器未允许全屏，可在 Chrome 中打开试玩。",
-                      );
-                    }
-                  })}
-                >
-                  <Maximize size={20} />
-                </button>
-              </div>
-              <p className="player-help">
-                {busy
-                  ? game.booting
-                    ? "POWERING ON…"
-                    : cartLoading
-                      ? "LOADING CARTRIDGE…"
-                      : "AI IS PLAYTESTING"
-                  : game.testFrame
-                    ? "AI TEST FRAME · PRESS PLAY TO TRY"
-                    : "ARROWS TO MOVE · Z / X TO PLAY"}
-              </p>
-            </div>
-          </section>
-        </main>
-        {!workspace && (
-          <footer className="home-footer">
-            <span>128 × 128 PIXELS. A WORLD OF YOUR OWN.</span>
-            <span>
-              Community games by their original creators · An independent maker
-            </span>
-          </footer>
+            </section>
+          </main>
+          {!workspace && (
+            <footer className="home-footer">
+              <span>128 × 128 PIXELS. A WORLD OF YOUR OWN.</span>
+              <span>
+                Community games by their original creators · An independent
+                maker
+              </span>
+            </footer>
+          )}
+        </div>
+        {settings && (
+          <ModelSettings
+            initial={config}
+            onClose={closeSettings}
+            pending={!!pending}
+            onSave={saveConfig}
+          />
+        )}{" "}
+        {code && (
+          <SourceDialog source={game.source} onClose={() => setCode(false)} />
         )}
-      </div>
-      {settings && (
-        <ModelSettings
-          initial={config}
-          onClose={closeSettings}
-          pending={!!pending}
-          onSave={saveConfig}
-        />
-      )}{" "}
-      {code && (
-        <SourceDialog source={game.source} onClose={() => setCode(false)} />
-      )}
+      </ActivityContext.Provider>
     </AssistantRuntimeProvider>
   );
 }
@@ -1019,8 +982,8 @@ function SourceDialog({ source, onClose }) {
   return (
     <dialog ref={ref} className="source-dialog" onCancel={onClose}>
       <div className="dialog-heading">
-        <h2>当前卡带 · Lua</h2>
-        <button onClick={onClose} aria-label="关闭源码">
+        <h2>Current cartridge · Lua</h2>
+        <button onClick={onClose} aria-label="Close source">
           <X size={20} />
         </button>
       </div>

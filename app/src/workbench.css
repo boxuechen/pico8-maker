@@ -1,0 +1,374 @@
+/* BBS-inspired workspace; the gallery keeps its established homepage theme. */
+.studio-mode {
+  --post-font: Proggy, "PingFang SC", "Microsoft YaHei", monospace;
+  font-family: var(--post-font);
+}
+.studio-mode .workspace {
+  background: #20232b;
+}
+.studio-mode .chat-panel {
+  background: #24262f;
+}
+.studio-mode .panel-heading {
+  background: #1c1f29;
+  border-bottom: 1px solid #49414f;
+  height: 43px;
+  padding: 0 24px;
+  font: 13px var(--post-font);
+  letter-spacing: 0;
+}
+.studio-mode .panel-heading span:last-child {
+  font: 12px var(--post-font);
+  color: #ac9eaf;
+}
+.studio-mode .chat-viewport {
+  padding: 8px 24px 22px;
+  scrollbar-color: #655968 transparent;
+}
+.studio-mode .message {
+  font: 16px/1.5 var(--post-font);
+  margin: 0;
+  padding: 24px 0 22px;
+  border-bottom: 1px solid #49414e;
+  overflow-wrap: anywhere;
+}
+.studio-mode .message.user {
+  display: block;
+}
+.post-heading {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 12px;
+  font: 13px/1 var(--post-font);
+  color: #fff1e8;
+}
+.post-heading small {
+  margin-left: auto;
+  color: #9b92a1;
+  font-size: 11px;
+}
+.post-avatar {
+  width: 23px;
+  height: 23px;
+  display: grid;
+  place-items: center;
+  font-size: 14px;
+  background: #48404d;
+}
+.user-avatar {
+  background: #684051;
+  color: #ff9fbd;
+}
+.maker-avatar {
+  color: #ffcfaf;
+  background: #443c52;
+}
+.user .post-heading > span:nth-child(2) {
+  color: #ff91b6;
+}
+.studio-mode .user-bubble {
+  max-width: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  color: #e4d6df;
+}
+.studio-mode .message p {
+  margin: 8px 0;
+}
+.studio-mode .message p:first-child {
+  margin-top: 0;
+}
+.studio-mode .message p:last-child {
+  margin-bottom: 0;
+}
+.studio-mode .assistant {
+  color: #d7d3d9;
+}
+.studio-mode .assistant ul,
+.studio-mode .assistant ol {
+  padding-left: 23px;
+}
+.studio-mode .assistant a {
+  color: #ff9fbd;
+}
+.studio-mode .assistant pre {
+  border: 1px solid #4e4557;
+  border-radius: 0;
+  background: #191e29;
+  font:
+    12px/1.5 ui-monospace,
+    SFMono-Regular,
+    monospace;
+  padding: 12px;
+}
+.studio-mode .assistant code {
+  font:
+    12px/1.5 ui-monospace,
+    SFMono-Regular,
+    monospace;
+}
+.studio-mode .message-actions {
+  margin-top: 12px;
+  color: #b4a4b7;
+  font: 11px var(--post-font);
+}
+.studio-mode .message-actions button {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  padding: 3px 0;
+}
+.studio-mode .working {
+  font: 12px var(--post-font);
+  color: #c7acbd;
+  margin: 14px 0 0;
+}
+.studio-mode .composer-area {
+  padding: 16px 20px 13px;
+  background: #20232c;
+  border-top: 1px solid #4e4353;
+}
+.studio-mode .composer {
+  background: #fff1e8;
+  border: 1px solid #b9a7a5;
+  box-shadow: none;
+  padding: 13px 15px 11px;
+}
+.studio-mode .composer:focus-within {
+  border-color: #ff77a8;
+  outline: 2px solid #ff77a844;
+  outline-offset: 0;
+  box-shadow: none;
+}
+.studio-mode .composer textarea {
+  color: #302b35;
+  font: 16px/1.5 var(--post-font);
+  min-height: 72px;
+  max-height: 180px;
+  caret-color: #8b285a;
+}
+.studio-mode .composer textarea::placeholder {
+  color: #85777d;
+}
+.studio-mode .composer-footer {
+  margin-top: 8px;
+}
+.studio-mode .composer-footer > span {
+  color: #75616f;
+  font: 11px var(--post-font);
+}
+.studio-mode .send {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: auto;
+  min-width: 90px;
+  height: 32px;
+  padding: 0 12px;
+  gap: 9px;
+  background: #b73067;
+  color: #fff1e8;
+  font: 14px var(--post-font);
+}
+.studio-mode .send:hover:not(:disabled) {
+  background: #932452;
+  color: white;
+}
+.studio-mode .send:disabled {
+  background: #dcc5ca;
+  color: #8e747e;
+  opacity: 1;
+}
+.studio-mode .composer-note {
+  font: 11px var(--post-font);
+  color: #a99bae;
+  margin-top: 9px;
+}
+.studio-mode .error,
+.studio-mode .restore-note {
+  font: 13px/1.5 var(--post-font);
+}
+.studio-mode .player-panel {
+  background: #080f1c;
+  padding-top: 58px;
+}
+.studio-mode .console {
+  width: min(100%, calc((100dvh - 240px) * 180 / 210));
+}
+.studio-mode .preview-heading {
+  height: 43px;
+  font: 13px var(--post-font);
+  letter-spacing: 0;
+  background: #101520;
+}
+.studio-mode .preview-heading span:last-child,
+.studio-mode .player-help {
+  font: 12px var(--post-font);
+  letter-spacing: 0;
+}
+.studio-mode .project-label {
+  font: 13px var(--post-font);
+  max-width: 260px;
+}
+.studio-mode .settings-button,
+.studio-mode .more-menu {
+  font-family: var(--post-font);
+}
+.studio-mode .panel-divider {
+  width: 5px;
+  background: #49404e;
+}
+.studio-mode .panel-divider:hover,
+.studio-mode .panel-divider:focus-visible {
+  background: #ff77a8;
+}
+.tool-activity {
+  margin: 16px 0;
+  border: 1px solid #64566b;
+  background: #1f222d;
+}
+.activity-toggle {
+  width: 100%;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  color: #e3c9dc;
+  font:
+    14px Proggy,
+    "PingFang SC",
+    monospace;
+}
+.activity-toggle > span {
+  flex: 1;
+}
+.activity-toggle small {
+  display: block;
+  font-size: 11px;
+  margin-top: 5px;
+  color: #a69aac;
+}
+.activity-toggle .expanded {
+  transform: rotate(90deg);
+}
+.activity-failed .activity-toggle > svg:first-child {
+  color: #ff879a;
+}
+.activity-interrupted .activity-toggle > svg:first-child {
+  color: #ffcf9c;
+}
+.activity-completed .activity-toggle > svg:first-child {
+  color: #b9c9b1;
+}
+.activity-steps {
+  border-top: 1px solid #493e52;
+  padding: 2px 12px 9px;
+}
+.studio-mode .tool {
+  margin: 0;
+  padding: 10px 0;
+  border: 0;
+  border-bottom: 1px solid #ffffff0c;
+  background: none;
+  font:
+    13px Proggy,
+    "PingFang SC",
+    monospace;
+}
+.studio-mode .tool summary {
+  gap: 8px;
+}
+.studio-mode .tool summary > span {
+  flex: 1;
+}
+.studio-mode .tool small {
+  color: #9e93a6;
+  font-size: 10px;
+}
+.studio-mode .tool-completed summary > svg:first-child {
+  color: #b9c9b1;
+}
+.studio-mode .tool-failed summary > svg:first-child {
+  color: #ff879a;
+}
+.studio-mode .tool-interrupted summary > svg:first-child {
+  color: #ffcf9c;
+}
+.tool-detail {
+  padding: 12px 0 0 22px;
+}
+.tool-detail > span {
+  font:
+    10px Proggy,
+    monospace;
+  color: #a899b2;
+}
+.studio-mode .tool pre {
+  font-size: 11px;
+  max-height: 200px;
+  margin: 6px 0 12px;
+}
+.studio-mode .activity-note {
+  font:
+    11px/1.5 Proggy,
+    "PingFang SC",
+    monospace;
+  color: #998ba4;
+  margin-top: 9px;
+}
+dialog {
+  font-family: Proggy, "PingFang SC", "Microsoft YaHei", monospace;
+}
+.dialog-heading h2 {
+  font-size: 22px;
+}
+.settings-form > p,
+.settings-form > label:not(.checkbox),
+.checkbox,
+.primary,
+.secondary {
+  font-size: 14px;
+}
+.settings-form .fine-print,
+.settings-form .model-detail {
+  font-size: 12px;
+}
+@media (max-width: 800px) {
+  .studio-mode .chat-viewport {
+    padding: 0 17px 14px;
+  }
+  .studio-mode .message {
+    padding: 18px 0;
+    font-size: 15px;
+  }
+  .studio-mode .panel-heading,
+  .studio-mode .preview-heading {
+    height: 34px;
+    padding: 0 17px;
+    font-size: 11px;
+  }
+  .studio-mode .composer-area {
+    padding: 10px 12px;
+  }
+  .studio-mode .composer textarea {
+    min-height: 54px;
+    max-height: 108px;
+    font-size: 15px;
+  }
+  .studio-mode .composer {
+    padding: 10px 12px;
+  }
+  .studio-mode .player-panel {
+    padding-top: 35px;
+  }
+  .studio-mode .console {
+    width: min(210px, calc((40dvh - 120px) * 180 / 210));
+  }
+  .activity-toggle {
+    padding: 10px;
+  }
+}

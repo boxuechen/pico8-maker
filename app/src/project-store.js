@@ -1,3 +1,6 @@
+export const interruptedToolResult =
+  "上次操作因页面关闭而中断，结果未知。请读取当前源码并重新验证。";
+
 export const projectKey = "pico-maker-project-v1";
 
 // Persist transcript text/tool results, never screenshots or model credentials.
@@ -41,7 +44,7 @@ export function recoverTranscript(messages = []) {
           content: [
             {
               type: "text",
-              text: "上次操作因页面关闭而中断，结果未知。请读取当前源码并重新验证。",
+              text: interruptedToolResult,
             },
           ],
           isError: true,

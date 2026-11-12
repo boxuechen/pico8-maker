@@ -1,3 +1,4 @@
+import { groupAssistantTurns } from "./workbench-state.js";
 import { BACKGROUND_CONTEXT as context } from "@earendil-works/chord/context";
 import { createModels } from "@earendil-works/pi-ai/models";
 import { compactTranscript, recoverTranscript } from "./project-store.js";
@@ -98,7 +99,7 @@ export function projectView(view) {
     (e.model ?? []).forEach((m, i) => add(m, `${e.id}-${i}`));
   if (live.generation?.message) add(live.generation.message, "streaming", true);
   return {
-    messages,
+    messages: groupAssistantTurns(messages),
     isRunning: !!live.run,
     error:
       live.runFailure && live.runFailure.reason !== "aborted"
