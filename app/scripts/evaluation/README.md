@@ -6,6 +6,15 @@ Open `/scripts/evaluation/case-study.html` locally for the Lodge Podge experimen
 
 Use `/scripts/evaluation/case-study.html?case=garden` for the Sweet Garden prompt inspired by OpenAI's Seedy's Sweet Garden. The model and workflow are unchanged between these case presets. The preview buttons operate the live player; independent test inputs remain in the separate test Worker.
 
+The completed two-turn Sweet Garden sample is at `/case-studies/sweet-garden/index.html`. See [its report](../../../docs/sweet-garden-case-study.md) for the actual Agent output, retained tool errors, normal-play verification and remaining gaps. Its final route can be replayed from `app/`:
+
+```sh
+mkdir -p ../.cache/sweet-garden-replay
+node scripts/evaluation/replay-case.mjs public/case-studies/sweet-garden/final.p8 public/case-studies/sweet-garden/replay-inputs.json ../.cache/sweet-garden-replay/game
+```
+
+Four retained `baseline-*-inputs.json` routes show differing early wins on one initial board. They are not random-player samples or a difficulty rating. Normal loss, dead-board shuffle and listening remain unverified.
+
 The finished two-version sample is at `/case-studies/lodge-podge/index.html`. See [the case study](../../../docs/lodge-podge-case-study.md) for scope, failures and actual verification. Full provider transcripts remain in the ignored cache.
 
 To replay its final successful route from `app/`, create an output directory and run:

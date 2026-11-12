@@ -1,0 +1,299 @@
+[
+  {
+    "frames": 1,
+    "buttons": 0,
+    "capture": "start"
+  },
+  {
+    "frames": 120,
+    "buttons": 0,
+    "capture": "board"
+  },
+  {
+    "frames": 1,
+    "buttons": 1
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 1,
+    "buttons": 1
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 1,
+    "buttons": 1
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 1,
+    "buttons": 4
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 1,
+    "buttons": 4
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 1,
+    "buttons": 4
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 1,
+    "buttons": 16
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 1,
+    "buttons": 2
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 90,
+    "buttons": 0,
+    "capture": "invalid"
+  },
+  {
+    "frames": 1,
+    "buttons": 8
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 1,
+    "buttons": 8
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 1,
+    "buttons": 8
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 1,
+    "buttons": 16
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 1,
+    "buttons": 8
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 4,
+    "buttons": 0,
+    "capture": "swap-1"
+  },
+  {
+    "frames": 116,
+    "buttons": 0,
+    "capture": "turn-1"
+  },
+  {
+    "frames": 1,
+    "buttons": 2
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 1,
+    "buttons": 2
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 1,
+    "buttons": 2
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 1,
+    "buttons": 4
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 1,
+    "buttons": 4
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 1,
+    "buttons": 16
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 1,
+    "buttons": 8
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 4,
+    "buttons": 0,
+    "capture": "swap-2"
+  },
+  {
+    "frames": 116,
+    "buttons": 0,
+    "capture": "turn-2"
+  },
+  {
+    "frames": 1,
+    "buttons": 1
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 1,
+    "buttons": 1
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 1,
+    "buttons": 16
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 1,
+    "buttons": 2
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 4,
+    "buttons": 0,
+    "capture": "swap-3"
+  },
+  {
+    "frames": 116,
+    "buttons": 0,
+    "capture": "turn-3"
+  },
+  {
+    "frames": 1,
+    "buttons": 1
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 1,
+    "buttons": 1
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 1,
+    "buttons": 16
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 1,
+    "buttons": 2
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 4,
+    "buttons": 0,
+    "capture": "swap-4"
+  },
+  {
+    "frames": 116,
+    "buttons": 0,
+    "capture": "turn-4"
+  },
+  {
+    "frames": 1,
+    "buttons": 0,
+    "capture": "outcome"
+  },
+  {
+    "frames": 1,
+    "buttons": 16
+  },
+  {
+    "frames": 1,
+    "buttons": 0
+  },
+  {
+    "frames": 120,
+    "buttons": 0,
+    "capture": "restart"
+  }
+]

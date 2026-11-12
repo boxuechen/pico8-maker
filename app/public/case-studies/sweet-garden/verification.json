@@ -1,0 +1,101 @@
+{
+  "reference": "https://developers.openai.com/modretro/seedys-sweet-garden",
+  "sourceCommit": "d0760f7",
+  "harnessCommit": "85f9b3b",
+  "knowledgeVersion": "pico8-files-v1-1a3d2e4d082c5c0d",
+  "model": {
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "thinkingLevel": "high"
+  },
+  "provenance": "Games exported from actual Agent commits without manual source or resource edits. No original ROM, code, art or screenshot supplied to the Agent. The surrounding preview page and independent verifier were built by Codex.",
+  "runs": [
+    {
+      "id": "turn-1",
+      "prompt": "做一个像 Seedy’s Sweet Garden 那样温暖可爱的 PICO-8 花园消除小游戏：交换相邻花朵，三个相同就消除，掉落后能连锁。在有限步数内完成目标，有清楚的操作提示、轻快的音效和背景音乐，结束后可以再来一局。",
+      "status": "done",
+      "elapsedMs": 733153,
+      "firstPlayableMs": 259176,
+      "tools": 127,
+      "toolErrors": 1,
+      "committedRevision": 7,
+      "draftDirty": false
+    },
+    {
+      "id": "turn-2",
+      "prompt": "有些花朵不太好辨认，尤其紫色容易和底色混在一起。请让五种花在小屏幕上更容易分清，并让开场就能看懂“先选中、再按方向交换”的操作。保留现在的目标、步数和计分规则，方便比较前后的操作体验。",
+      "status": "done",
+      "elapsedMs": 252349,
+      "firstPlayableMs": 76030,
+      "tools": 49,
+      "toolErrors": 1,
+      "committedRevision": 15,
+      "draftDirty": false
+    }
+  ],
+  "carts": {
+    "baseline": {
+      "sha256": "09fc7272f95d2572730aaad0f768c6b30feabbf8674346a2b3db67000502c8c0",
+      "file": "baseline.p8"
+    },
+    "final": {
+      "sha256": "8f1bf649292af567ac5bbd225972247d1cc789051e20066ab64ecdac7682005e",
+      "file": "final.p8"
+    }
+  },
+  "independentChecks": [
+    {
+      "cart": "baseline",
+      "policy": "max",
+      "result": "win and retry, visually inspected",
+      "matchingMoves": 2,
+      "inputSegments": 43,
+      "frames": 606,
+      "diagnostics": 0
+    },
+    {
+      "cart": "baseline",
+      "policy": "min",
+      "result": "win and retry, visually inspected",
+      "matchingMoves": 10,
+      "inputSegments": 141,
+      "frames": 1648,
+      "diagnostics": 0
+    },
+    {
+      "cart": "baseline",
+      "policy": "min-last",
+      "result": "win and retry, visually inspected",
+      "matchingMoves": 3,
+      "inputSegments": 69,
+      "frames": 750,
+      "diagnostics": 0
+    },
+    {
+      "cart": "baseline",
+      "policy": "min-mid",
+      "result": "win and retry, visually inspected",
+      "matchingMoves": 4,
+      "inputSegments": 71,
+      "frames": 870,
+      "diagnostics": 0
+    },
+    {
+      "cart": "final",
+      "policy": "baseline max route with a title dismissal at startup",
+      "result": "title, board, invalid swap with 14 moves remaining, win and retry, visually inspected",
+      "matchingMoves": 2,
+      "inputSegments": 45,
+      "frames": 608,
+      "diagnostics": 0
+    }
+  ],
+  "limits": [
+    "One case and model, no same-task control or human fun rating.",
+    "Four baseline routes are deterministic policies on one initial board, not a random player sample or success-rate estimate.",
+    "Normal loss and automatic dead-board shuffle were not observed. Agent used temporary values for some end-state tests and disclosed this.",
+    "Audio authored, not listened to.",
+    "Bundled compatibility runtime; official PICO-8 execution and compressed size not checked."
+  ],
+  "privateReport": ".cache/evaluations/skills-7de97928-1061-4d21-901d-4ccf03115679/report.json"
+}

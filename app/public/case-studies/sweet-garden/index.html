@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sweet Garden · 花园消除</title>
+<link rel="stylesheet" href="../../player/player.css"><link rel="stylesheet" href="./style.css">
+</head>
+<body>
+<main>
+<aside>
+<span class="eyebrow">PICO-8 · A LITTLE GARDEN PUZZLE</span>
+<h1>Sweet<br>Garden<span>花园消除</span></h1>
+<p class="intro">交换花朵，等待一场小小的连锁。<br>在有限步数里，让花园盛开。</p>
+<div class="instructions" id="instructions"><p><kbd>方向键</kbd><span>移动光标</span></p><p><kbd>Z → 方向</kbd><span>选中花朵，再朝相邻花朵交换</span></p><p><kbd>14 步</kbd><span>达到 500 分，连锁可获得更多分数</span></p><p><kbd>Z</kbd><span>结算后再来一局</span></p></div>
+<label for="version">选择版本</label>
+<select id="version"><option value="final">当前版本</option><option value="baseline">第一版</option></select>
+<nav><a id="download" href="./final.p8" download>下载 .p8 卡带 ↗</a><a href="https://developers.openai.com/modretro/seedys-sweet-garden" target="_blank" rel="noreferrer">OpenAI 原案例 ↗</a></nav>
+<p class="credit">参考 Seedy’s Sweet Garden 主题制作的 PICO-8 改编。<br>游戏代码、像素和音频来自 PICO-8 Maker Agent。</p>
+</aside>
+<section class="game"><div id="player"></div><p id="status" aria-live="polite">正在准备卡带…</p></section>
+</main>
+<script type="module" src="./play.js"></script>
+</body>
+</html>
