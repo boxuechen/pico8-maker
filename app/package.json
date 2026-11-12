@@ -1,0 +1,36 @@
+{
+  "name": "app",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && node scripts/prepare-sites-build.mjs",
+    "preview": "vite preview",
+    "test:sites": "node --test tests/sites-worker.test.mjs",
+    "prepare:player": "node scripts/prepare-player.mjs",
+    "predev": "npm run prepare:player",
+    "prebuild": "npm run prepare:player",
+    "test": "node --test tests/runtime.test.mjs",
+    "test:model": "node tests/mock-model.mjs"
+  },
+  "dependencies": {
+    "@assistant-ui/react": "0.15.36",
+    "@assistant-ui/react-markdown": "0.14.26",
+    "@earendil-works/chord": "1.5.2",
+    "@earendil-works/pi-ai": "1.5.2",
+    "@earendil-works/pi-durable": "1.5.2",
+    "@earendil-works/pi-schema": "1.5.2",
+    "@vitejs/plugin-react": "5.0.4",
+    "lucide-react": "1.72.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "vite": "6.4.2"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "prettier": "3.10.0",
+    "typescript": "7.0.2"
+  }
+}
