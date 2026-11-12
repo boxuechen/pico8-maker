@@ -1,14 +1,6 @@
 # Native resource authoring
 
-The cart has one Lua source file, /cart/main.lua, and separate native resources. Use read_assets and edit_assets; do not place .p8 section markers in Lua. Use load_game to validate and commit the entire source/resource draft. Passing source replaces only Lua. Failed loads retain drafts and the last playable version. Exports contain committed data only.
-
-## Workflow
-
-1. Read the current source and call read_assets with no arguments for occupied slots.
-2. Inspect the slots or map rectangle you intend to change. Preserve unrelated resources.
-3. Call edit_assets with one batch of edits. Invalid batches apply nothing.
-4. Edit main.lua to reference the resource ids, then load_game.
-5. Test gameplay with actual inputs and frames. A resource edit alone does not update the running game.
+Use native tools for static resources. Draft edits become playable after load_game.
 
 ## Sprite and map example
 

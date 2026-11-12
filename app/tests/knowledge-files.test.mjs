@@ -20,6 +20,7 @@ test("startup reads entry files and skill metadata, not skill bodies; documents 
   await docs.prepare();
   assert.deepEqual(loaded.sort(), Object.values(index.sections).sort());
   assert.ok(!loaded.includes("references/audio.md"));
+  assert.ok(!loaded.includes("REFERENCE_INDEX.md"));
   assert.ok(loaded.includes("SKILLS.md"));
   assert.ok(!loaded.some((file) => file.startsWith("skills/")));
   const a = mountKnowledge(null, docs),
@@ -106,11 +107,11 @@ test("read supports UTF-8 line ranges and documents stay read-only across carts"
     (await tool.execute({ path: "main.lua" }, {}, {})).output[0].text,
     sourceA,
   );
-  const document = await load("references/api-catalog.md");
+  const document = await load("references/audio.md");
   const result = await tool.execute(
     {
-      path: "/extensions/pico8/references/api-catalog.md",
-      offset: 201,
+      path,
+      offset: 22,
       limit: 10,
     },
     {},
@@ -118,7 +119,7 @@ test("read supports UTF-8 line ranges and documents stay read-only across carts"
   );
   assert.ok(
     result.output[0].text.includes(
-      document.split("\n").slice(200, 210).join("\n"),
+      document.split("\n").slice(21, 31).join("\n"),
     ),
   );
   await a.writeFile("main.lua", "print('updated')");
@@ -156,6 +157,7 @@ test("read supports UTF-8 line ranges and documents stay read-only across carts"
   );
 });
 test("published Markdown and Lua are original files; metadata contains no bodies", async () => {
+  assert.ok(!Object.hasOwn(index.files, "runtime-api-inventory.md"));
   const manifest = JSON.parse(
     await readFile(
       new URL("../../docs/pico8-agent/manifest.json", import.meta.url),

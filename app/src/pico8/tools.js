@@ -20,16 +20,18 @@ const schema = (properties = {}, required = []) => ({
 export function createPico8Tools({ game, knowledge }) {
   const descriptions = {
     read_assets:
-      "Read authored resources; version defaults to draft, or committed for the last playable cart. Omit kind for used-slot inventory. Use kind/id/count for sprite, sfx or music; kind=map requires x,y,width,height (max 32×32). format defaults to data; png/both preview selected sprites as a numbered atlas with flags metadata or a map region with grid, using base colors. Reads never run, commit or pause the game and do not show live RAM.",
+      "Read authored resources without running the game. For map reads, supply x, y, width and height. PNG uses the base palette and includes sprite IDs/flags or a map grid.",
     edit_assets:
-      "Atomically edit native cartridge resources. Sprites use eight 8-pixel hex rows (0–f), optional flags. Map patches use rectangular tile-id rows, within 128×32. SFX replaces one slot; omitted tail notes are silent, loops default off. Music replaces one pattern; four SFX ids or null, flags default false. A sprite edit requires rows or flags; omitted fields preserve that sprite's other data. Resources are loaded before _init. Edits affect only the draft until load_game; invalid batches apply nothing. Read occupied slots before allocating ids. All 256 sprites are available; map rows 32–63 share sprite memory and are not editable by this tool.",
-    read_game: `Read the first page of the current working source, ${mainPath}, plus draft/committed status and approximate code budget. Bounded to 2000 lines or 50 KiB. Follow the returned read({path,offset}) or byteOffset continuation until the needed source is read. Repeating read_game starts at the beginning. Not a live-variable snapshot.`,
-    load_game: `Compile ${mainPath} with the current resource draft, run one frame and commit both as a new version. Omit source after targeted edit calls; pass complete Lua source (game logic; static resources are edited separately with edit_assets) to replace the whole file for a new game or a rewrite. Failure retains both drafts and the previous committed playable cart. Passing source never clears resource drafts. Returns PNG and diagnostics; startup success is not gameplay verification.`,
+      "Apply atomic draft edits. Sprite rows use lowercase hex (0 for transparent pixels) and require rows or flags. Map patches must be rectangular. SFX and music edits replace slots. Use load_game to commit.",
+    read_game: `Read the first source page of ${mainPath}, draft status and approximate budget. Use the returned read continuation for more source.`,
+    load_game:
+      "Compile the source and resource drafts, run one frame and commit them on success. Returns PNG and diagnostics. Failure retains the draft and last playable cart.",
     reset_game:
-      "Reload the last committed version into the independent test session and advance one frame. Uncommitted edits are not loaded. This does not promise to erase cartdata.",
-    press_buttons: `Apply frames/buttons or an ordered steps array (up to ${capabilities.maxInputSteps} steps, ${capabilities.maxInputFrames} total logical frames). Left=1, right=2, up=4, down=8, O/Z=16, X=32; add bits for combinations, 0 releases. No implicit release frame between steps. Returns actual completed counts, outcome and PNG checkpoints. Defaults to each step end; captureFrames selects up to 7 cumulative offsets, final always included. Stops on runtime fault/stop/interruption; later steps are not executed. Use a short call when the next action depends on seeing its result. Masks differ from Lua button indices.`,
+      "Reload the committed cart in the test Worker and advance one frame. Treat cartdata as potentially retained.",
+    press_buttons:
+      "Advance player 0 input in the test Worker. Button masks are left=1, right=2, up=4, down=8, O/Z=16, X=32. Add masks for combinations. Zero releases all buttons. Returns actual progress and PNG checkpoints, stopping early on runtime faults or stops.",
     observe_game:
-      "Observe the latest completed test frame without advancing time. Load/reset/input already return PNG. Repeated observation returns the same completed frame until input/reset/load changes it. Default PNG for overall appearance; request ascii with a small region for exact pixels, or both for the same frame/region. ASCII uses screen slots 0-f and the actual frame's English palette legend. Coordinates are screen pixels from the top left. No live-variable or audio observation. A new test session may have no completed frame; reset or advance explicitly.",
+      "Read the last completed test frame without advancing time. Use a small ASCII crop to inspect exact pixels with the frame's palette. Reset or advance if no frame exists.",
   };
   const parameters = {
     read_assets: readAssetsSchema,
@@ -58,7 +60,7 @@ export function createPico8Tools({ game, knowledge }) {
     load_game: schema({
       source: {
         type: "string",
-        description: `Optional complete Lua source that replaces ${mainPath} before loading. Omit to load the current file.`,
+        description: `Complete replacement Lua for ${mainPath}. Omit to load the current draft. Resources are preserved.`,
       },
     }),
     press_buttons: inputSchema,
@@ -67,7 +69,7 @@ export function createPico8Tools({ game, knowledge }) {
   const read = createReadTool();
   const readTool = {
     ...read,
-    description: `${read.description} For an oversized line in ${mainPath}, use the returned byteOffset continuation; no shell is available.`,
+    description: `Read ${mainPath} or /extensions/pico8/ documents. Use line offset/limit or follow the returned continuation. Oversized source lines support byteOffset.`,
     parameters: {
       ...read.parameters,
       properties: { ...read.parameters.properties, ...sourceRangeProperties },
@@ -86,7 +88,7 @@ export function createPico8Tools({ game, knowledge }) {
   const edit = createEditTool();
   const editTool = {
     ...edit,
-    description: `${edit.description} Only ${mainPath} is writable (relative path main.lua). Changes are not live until load_game.`,
+    description: `Apply exact text replacements to ${mainPath} (main.lua). Changes stay in the draft until load_game.`,
     execute: (args, api, ctx) => {
       if (!game.workspace) throw new Error("No cart workspace is available");
       return edit.execute(args, withEnv(api, game.workspace), ctx);

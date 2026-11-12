@@ -109,7 +109,7 @@ test(
     ])
       assert.ok(system.includes(`/skills/${name}/SKILL.md`));
     assert.ok(
-      !system.includes("## Diagnose the requested change"),
+      !system.includes("Identify the smallest change and reproduce"),
       "skill bodies are not permanent system sections",
     );
     assert.ok(
@@ -141,13 +141,14 @@ test("actual provider requests replace legacy rules and preserve references acro
     assert.ok(system.includes("## Completion"));
     assert.ok(
       system.includes(
-        "Once the requested behavior is implemented and the relevant checks pass, stop calling tools",
+        "Once the requested behavior and relevant checks pass, stop calling tools",
       ),
     );
     assert.ok(system.includes("Repeated attempts without new evidence"));
     assert.ok(system.includes("16.16"));
     assert.ok(system.includes("bright green"));
-    assert.ok(system.includes("references/game-design.md"));
+    assert.ok(system.includes("/extensions/pico8/REFERENCE_INDEX.md"));
+    assert.ok(!system.includes("references/game-design.md"));
     assert.ok(!system.includes("## Observed implementation"));
     assert.ok(!system.includes("LEGACY_JUMP_ONLY"));
     assert.ok(!system.includes("LEGACY_KEEP_PLAYTESTING_FOREVER"));
@@ -417,7 +418,9 @@ test("Pi delivers complete full/cropped ASCII and restores it without replaying 
     const system = JSON.stringify(
       body.messages.filter((m) => m.role === "system"),
     );
-    assert.ok(system.includes("Historical frames are past evidence"));
+    assert.ok(
+      system.includes("Establish fresh evidence after restoring a session"),
+    );
     assert.ok(!system.includes("no ASCII"));
     const resultText = body.messages
       .filter((m) => m.role === "tool")
@@ -535,7 +538,7 @@ test("design references resolve and knowledge compilation rejects stale microgam
   await writeFile(source, original + "\n-- unverified change\n");
   let result = compile();
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /Unverified recipe recipe\/lantern-vault/);
+  assert.match(result.stderr, /Unverified recipe games\/lantern-vault\.lua/);
   await writeFile(source, original);
   const path = join(docs, "games/validation-results.json");
   const receipts = JSON.parse(await readFile(path, "utf8"));
@@ -545,7 +548,7 @@ test("design references resolve and knowledge compilation rejects stale microgam
   await writeFile(path, JSON.stringify(receipts));
   result = compile();
   assert.notEqual(result.status, 0);
-  assert.match(result.stderr, /Unverified recipe recipe\/lantern-vault/);
+  assert.match(result.stderr, /Unverified recipe games\/lantern-vault\.lua/);
 });
 
 test("agent sends high/low/off thinking, uses model output capacity and retries transient failures", async (t) => {

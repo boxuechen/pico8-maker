@@ -232,7 +232,10 @@ test("asset-only drafts persist, duplicate and invalidate resumed conversations"
   addSession(cart);
   cart.contentVersion = 1;
   assert.match(sessionContext(cart, session), /shared cart content changed/);
-  assert.match(sessionContext(cart, session), /read_assets/);
+  assert.match(
+    sessionContext(cart, session),
+    /Earlier source, resources and test results are stale/,
+  );
   await store.put(cart);
   const reopened = (await openCartStore({ backend })).carts[0];
   assert.deepEqual(reopened.workingDraft, cart.workingDraft);

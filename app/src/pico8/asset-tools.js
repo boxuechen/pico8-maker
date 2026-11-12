@@ -23,20 +23,17 @@ export const readAssetsSchema = object(
     version: {
       type: "string",
       enum: ["draft", "committed"],
-      description:
-        "Defaults to draft. committed requires a saved playable version; neither reads live RAM.",
+      description: "Defaults to draft. committed requires a playable version.",
     },
     format: {
       type: "string",
       enum: ["data", "png", "both"],
-      description:
-        "Defaults to data. png/both require kind sprite with id/count or kind map with a region. PNG previews use authored base colors, not live display remapping.",
+      description: "Defaults to data. png/both support sprite and map reads.",
     },
     kind: {
       type: "string",
       enum: ["sprite", "map", "sfx", "music"],
-      description:
-        "Omit for an inventory of used slots. Reads the draft, never live RAM.",
+      description: "Omit for an inventory of used slots.",
     },
     id: int(
       0,

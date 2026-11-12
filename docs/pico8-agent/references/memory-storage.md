@@ -66,5 +66,3 @@ Project-source storage, game cartdata and Pi conversation storage are distinct. 
 Official cartridge design targets include 8192 code tokens, a 32 KiB cart data model and roughly 4M VM instructions/second. Lua heap is separate from Base RAM. PNG/ROM export also constrains compressed code size. Source character count is not a substitute for token or compressed-size measurement; the host does not necessarily enforce every export constraint.
 
 Avoid rebuilding assets each frame, large temporary tables, unbounded loops and unnecessary full-map scans. Measure actual runtime diagnostics rather than inferring correctness from a visible frame.
-
-Optional API details: /extensions/pico8/references/api-catalog.md, /extensions/pico8/references/api-catalog.md and /extensions/pico8/references/api-catalog.md.

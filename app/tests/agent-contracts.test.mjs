@@ -171,7 +171,12 @@ test("request baseline stays stable through own edit/load and detects external c
   await agent.send("Change the number.");
   assert.equal(prompts.length, 3);
   assert.ok(prompts.every((p) => !p.includes("shared cart content changed")));
-  assert.ok(prompts.every((p) => p.includes("change counter 3")));
+  assert.ok(
+    prompts.every((p) => p.includes("Committed revision 1. Draft is clean.")),
+  );
+  assert.ok(
+    prompts.every((p) => !p.includes(cart.id) && !p.includes(session.id)),
+  );
   session.lastContentVersion = cart.contentVersion;
   await game.workspace.writeFile("main.lua", "print(99)");
   await agent.send("Review the current game.");
@@ -181,7 +186,7 @@ test("request baseline stays stable through own edit/load and detects external c
   );
   assert.match(
     prompts.at(-1),
-    /does not invalidate evidence gathered during this request/,
+    /Committed revision 2. Draft has uncommitted changes/,
   );
 });
 

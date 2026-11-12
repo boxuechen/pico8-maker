@@ -33,10 +33,8 @@ btn tests held state; btnp includes new presses and automatic repeats. Right plu
 
 Console/platform entries such as save/folder/ls/resume/reboot/info/serial are listed in the API catalog. Normal game states (title/play/win/gameover) should be implemented in Lua with input transitions rather than depending on console/editor operations.
 
-Useful local stat selectors: 0 memory KiB, 1 CPU fraction; 16–19 or 46–49 channel SFX IDs; 20–23 or 50–53 note positions; 24/54 music pattern, 25/55 pattern count, 26/56 music tick, 57 music-playing boolean. More selectors are documented in /extensions/pico8/references/api-catalog.md.
+Useful local stat selectors: 0 memory KiB, 1 CPU fraction; 16–19 or 46–49 channel SFX IDs; 20–23 or 50–53 note positions; 24/54 music pattern, 25/55 pattern count, 26/56 music tick, 57 music-playing boolean.
 
 There is no model tool for arbitrary live stat queries. A game may render a diagnostic HUD; development verification can instrument assertions. Neither implies a general live-variable tool exists.
 
 For a fresh btnp edge, advance a release frame with buttons=0 before pressing again. Held movement uses btn; menu/grid input using btnp must account for repeats. To ignore automatic repeats, compare current btn with previous-frame state yourself. Test reset/focus/pause boundaries where relevant.
-
-Optional API details: /extensions/pico8/references/api-catalog.md, /extensions/pico8/references/api-catalog.md and /extensions/pico8/references/api-catalog.md.

@@ -39,5 +39,3 @@ Map rows 32–63 share RAM 0x1000–0x1fff with sprite-sheet rows 64–127 (spri
 mset changes this run's RAM. Reset reconstructs the original level. To preserve collected items, store progress separately with cartdata and apply it after rebuilding the map.
 
 Verify actual transparent pixels, frame changes, wall blocking, coin disappearance/count, and resource reconstruction after source reload.
-
-Optional API details: /extensions/pico8/references/api-catalog.md; sprite drawing signatures are also in /extensions/pico8/references/api-catalog.md.

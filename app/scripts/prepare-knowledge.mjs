@@ -9,6 +9,7 @@ const palette = JSON.parse(await read("palette.json"));
 // This publishes metadata, not a general filesystem/package discovery service.
 const skills = [];
 const skillNames = new Set();
+const fileTexts = {};
 for (const file of manifest.skills ?? []) {
   const text = await read(file);
   const match = text.match(
@@ -26,57 +27,52 @@ for (const file of manifest.skills ?? []) {
     throw new Error(`Invalid skill content: ${file}`);
   skillNames.add(match[1]);
   skills.push({ name: match[1], description: match[2], file });
+  fileTexts[file] = text;
 }
 const validations = new Map();
-const referenceIds = new Set();
-for (const item of manifest.references) {
-  if (referenceIds.has(item.id))
-    throw new Error(`Duplicate reference ${item.id}`);
-  let content = await read(item.file);
-  if (item.heading) {
-    const marker = `## ${item.heading}\n`;
-    if (content.split(marker).length !== 2)
-      throw new Error(`Invalid heading ${item.id}`);
-    content = marker + content.split(marker)[1].split("\n## ")[0];
-  }
-  if (item.id.startsWith("recipe/")) {
-    const receiptFile = item.validation ?? "validation-results.json";
+for (const {
+  file,
+  validation: receiptFile = "validation-results.json",
+} of manifest.references) {
+  if (Object.hasOwn(fileTexts, file))
+    throw new Error(`Duplicate reference ${file}`);
+  const content = await read(file);
+  if (file.endsWith(".lua")) {
     if (!validations.has(receiptFile))
       validations.set(receiptFile, JSON.parse(await read(receiptFile)));
     const validation = validations.get(receiptFile);
     const receipt = validation.checks.find(
       (c) =>
         c.name ===
-        item.file.split("/").at(-1).replace(".lua", "") +
+        file.split("/").at(-1).replace(".lua", "") +
           ": original Lua and exported cart",
     );
     if (!receipt?.passed || receipt.sourceSha256 !== hash(content))
-      throw new Error(`Unverified recipe ${item.id}`);
+      throw new Error(`Unverified recipe ${file}`);
   }
   if (
     /[\u3400-\u9fff]/u.test(content) ||
     /\/Users\/|\]\([^)]*\.md\)/u.test(content)
   )
-    throw new Error(`Unprocessed model content ${item.id}`);
-  referenceIds.add(item.id);
+    throw new Error(`Unprocessed model content ${file}`);
+  fileTexts[file] = content;
 }
-const sections = {};
-for (const [key, file] of Object.entries(manifest.sections))
-  sections[key] = await read(file);
-sections.pico8_palette =
-  "Default colors: numeric Lua ID / pixel character / English name / RGB\n" +
-  palette.slots
-    .map((s) => {
-      const c = palette.colors.find(
-        (c) => c.displayCode === s.defaultDisplayCode,
-      );
-      return `${s.index} / ${s.character} / ${c.nameEn} / ${c.rgb}`;
-    })
-    .join("\n") +
-  '\nExtended display colors: read({"path":"/extensions/pico8/PALETTE.md"}).';
-for (const text of Object.values(sections))
+for (const file of Object.values(manifest.sections)) {
+  const text = await read(file);
   if (/[\u3400-\u9fff]/u.test(text) || text.includes("/Users/"))
-    throw new Error("Invalid section language/path");
+    throw new Error(`Invalid section language/path: ${file}`);
+  fileTexts[file] = text;
+}
+fileTexts["PALETTE_DEFAULT.md"] =
+  "Base palette in slot order 0–f: " +
+  palette.slots
+    .map(
+      (s) =>
+        palette.colors.find((c) => c.displayCode === s.defaultDisplayCode)
+          .nameEn,
+    )
+    .join(", ") +
+  ". Use numeric Lua IDs. RGB and extended colors: /extensions/pico8/PALETTE.md.";
 const output = new URL("../src/generated/pico8-files.js", import.meta.url);
 await mkdir(new URL(".", output), { recursive: true });
 // Share the knowledge pack's English labels with the runtime encoder, without
@@ -87,29 +83,12 @@ await writeFile(
 );
 // Publish original model-facing files as versioned static assets. The browser imports only metadata.
 const files = {};
-const fileTexts = {};
-const sourceFiles = new Set([
-  ...Object.values(manifest.sections),
-  ...manifest.references.map((r) => r.file),
-  ...skills.map((skill) => skill.file),
-  "REFERENCE_INDEX.md",
-]);
-for (const file of sourceFiles) fileTexts[file] = await read(file);
-fileTexts["PALETTE_DEFAULT.md"] = sections.pico8_palette;
 fileTexts["SKILLS.md"] =
-  "# Available PICO-8 skills\n\nSelect the relevant skill by its purpose and read its path with read({path}). Full instructions load on demand; reuse a skill already read in the current context.\n\n" +
+  "# Skills\n" +
   skills
     .map(
       (s) =>
         `- ${s.name}: ${s.description}\n  Path: /extensions/pico8/${s.file}`,
-    )
-    .join("\n");
-fileTexts["REFERENCE_FILES.md"] =
-  "# PICO-8 document files\n\nRead these paths with read({path}). The following files cover all registered references. For long files use offset/limit to continue reading.\n\n" +
-  manifest.references
-    .map(
-      (r) =>
-        `- /extensions/pico8/${r.file}${r.heading ? ` (heading: ${r.heading})` : ""} — ${r.title}`,
     )
     .join("\n");
 for (const [file, text] of Object.entries(fileTexts)) {
@@ -138,7 +117,6 @@ for (const [file, text] of Object.entries(fileTexts)) {
 const fileSections = {
   ...manifest.sections,
   pico8_palette: "PALETTE_DEFAULT.md",
-  pico8_references: "REFERENCE_INDEX.md",
   pico8_skills: "SKILLS.md",
 };
 await writeFile(

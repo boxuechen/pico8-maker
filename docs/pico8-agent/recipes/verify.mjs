@@ -169,7 +169,7 @@ await check("documentation palette, API coverage and local links", async () => {
   const readable=await readFile(new URL("PALETTE.md",root),"utf8");
   assert.deepEqual([...readable.matchAll(/\| (#[0-9a-f]{6}) \|/g)].map(m=>m[1]),rgb);
   const inventory=JSON.parse(await readFile(new URL("../../ref/pico8-web-player/spec/pico-api-inventory.yaml",root),"utf8"));
-  const catalog=await readFile(new URL("references/api-catalog.md",root),"utf8");
+  const catalog=await readFile(new URL("runtime-api-inventory.md",root),"utf8");
   for(const item of inventory.apis) assert.ok(catalog.includes("`"+[item.name,...(item.aliases??[])].join(", ")+"`"),item.name);
   async function walk(url) {
     for(const e of await readdir(url,{withFileTypes:true})) {

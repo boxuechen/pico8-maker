@@ -80,9 +80,10 @@ test("source context detects edits from other sessions even before a commit", ()
   assert.match(sessionContext(cart, a), /shared cart content changed/);
   assert.match(
     sessionContext(cart, a),
-    /never restore source from conversation history/,
+    /Earlier source, resources and test results are stale/,
   );
-  assert.match(sessionContext(cart, activeSession(cart)), /new conversation/);
+  assert.doesNotMatch(sessionContext(cart, activeSession(cart)), /stale/);
+  assert.match(sessionContext(cart, a), /Draft has uncommitted changes/);
 });
 test("real Pi conversations isolate histories and read the current shared game on resume", async (t) => {
   const cart = newCart({ title: "One cart" });

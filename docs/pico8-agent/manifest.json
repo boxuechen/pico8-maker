@@ -6,246 +6,70 @@
   },
   "references": [
     {
-      "id": "guide/asset-authoring",
-      "title": "Native cartridge resource tools and workflow",
+      "file": "REFERENCE_INDEX.md"
+    },
+    {
       "file": "references/asset-authoring.md"
     },
     {
-      "id": "guide/lua",
-      "title": "P8 Lua, tables, math and strings",
       "file": "references/lua.md"
     },
     {
-      "id": "guide/graphics",
-      "title": "Drawing and palettes",
       "file": "references/graphics.md"
     },
     {
-      "id": "guide/sprites-maps",
-      "title": "Pixel art, animation and maps",
       "file": "references/sprites-maps.md"
     },
     {
-      "id": "guide/audio",
-      "title": "SFX and music encoding",
       "file": "references/audio.md"
     },
     {
-      "id": "guide/memory-storage",
-      "title": "RAM, asset lifetime and saves",
       "file": "references/memory-storage.md"
     },
     {
-      "id": "guide/input-system",
-      "title": "Input, time and menus",
       "file": "references/input-system.md"
     },
     {
-      "id": "guide/playtest",
-      "title": "Gameplay verification",
       "file": "references/playtest.md"
     },
     {
-      "id": "palette/full",
-      "title": "Default and extended display colors",
       "file": "PALETTE.md"
     },
     {
-      "id": "recipe/sprite-from-rows",
-      "title": "sprite from rows",
       "file": "recipes/sprite-from-rows.lua"
     },
     {
-      "id": "recipe/map-from-rows",
-      "title": "map from rows",
       "file": "recipes/map-from-rows.lua"
     },
     {
-      "id": "recipe/sfx-from-notes",
-      "title": "sfx from notes",
       "file": "recipes/sfx-from-notes.lua"
     },
     {
-      "id": "recipe/music-from-patterns",
-      "title": "music from patterns",
       "file": "recipes/music-from-patterns.lua"
     },
     {
-      "id": "recipe/save-high-score",
-      "title": "save high score",
       "file": "recipes/save-high-score.lua"
     },
     {
-      "id": "api/system",
-      "title": "API catalog: system",
-      "file": "references/api-catalog.md",
-      "heading": "system"
-    },
-    {
-      "id": "api/graphics",
-      "title": "API catalog: graphics",
-      "file": "references/api-catalog.md",
-      "heading": "graphics"
-    },
-    {
-      "id": "api/table",
-      "title": "API catalog: table",
-      "file": "references/api-catalog.md",
-      "heading": "table"
-    },
-    {
-      "id": "api/input",
-      "title": "API catalog: input",
-      "file": "references/api-catalog.md",
-      "heading": "input"
-    },
-    {
-      "id": "api/audio",
-      "title": "API catalog: audio",
-      "file": "references/api-catalog.md",
-      "heading": "audio"
-    },
-    {
-      "id": "api/map",
-      "title": "API catalog: map",
-      "file": "references/api-catalog.md",
-      "heading": "map"
-    },
-    {
-      "id": "api/memory",
-      "title": "API catalog: memory",
-      "file": "references/api-catalog.md",
-      "heading": "memory"
-    },
-    {
-      "id": "api/math",
-      "title": "API catalog: math",
-      "file": "references/api-catalog.md",
-      "heading": "math"
-    },
-    {
-      "id": "api/bitwise",
-      "title": "API catalog: bitwise",
-      "file": "references/api-catalog.md",
-      "heading": "bitwise"
-    },
-    {
-      "id": "api/menu",
-      "title": "API catalog: menu",
-      "file": "references/api-catalog.md",
-      "heading": "menu"
-    },
-    {
-      "id": "api/string",
-      "title": "API catalog: string",
-      "file": "references/api-catalog.md",
-      "heading": "string"
-    },
-    {
-      "id": "api/persistence",
-      "title": "API catalog: persistence",
-      "file": "references/api-catalog.md",
-      "heading": "persistence"
-    },
-    {
-      "id": "api/gpio",
-      "title": "API catalog: gpio",
-      "file": "references/api-catalog.md",
-      "heading": "gpio"
-    },
-    {
-      "id": "api/lua",
-      "title": "API catalog: lua",
-      "file": "references/api-catalog.md",
-      "heading": "lua"
-    },
-    {
-      "id": "guide/game-design",
-      "title": "Designing a replayable small game",
       "file": "references/game-design.md"
     },
     {
-      "id": "guide/microgames",
-      "title": "Original microgames: controls, tuning and limits",
       "file": "references/microgames.md"
     },
     {
-      "id": "case/celeste-classic",
-      "title": "Celeste Classic: forgiving precision",
-      "file": "cases/celeste-classic.md"
-    },
-    {
-      "id": "case/just-one-boss",
-      "title": "Just One Boss: readable attack phases",
-      "file": "cases/just-one-boss.md"
-    },
-    {
-      "id": "case/porklike",
-      "title": "Porklike: turn and resource decisions",
-      "file": "cases/porklike.md"
-    },
-    {
-      "id": "case/high-stakes",
-      "title": "High Stakes: information and optional risk",
-      "file": "cases/high-stakes.md"
-    },
-    {
-      "id": "pattern/forgiving-controls",
-      "title": "Input forgiveness and consistent controls",
-      "file": "patterns/forgiving-controls.md"
-    },
-    {
-      "id": "pattern/telegraph-attack-recovery",
-      "title": "Readable attack phases",
-      "file": "patterns/telegraph-attack-recovery.md"
-    },
-    {
-      "id": "pattern/risk-reward",
-      "title": "Optional risk and visible reward",
-      "file": "patterns/risk-reward.md"
-    },
-    {
-      "id": "pattern/teach-vary-combine",
-      "title": "Teach, vary, then combine",
-      "file": "patterns/teach-vary-combine.md"
-    },
-    {
-      "id": "pattern/turn-economy",
-      "title": "Action costs and turn resolution",
-      "file": "patterns/turn-economy.md"
-    },
-    {
-      "id": "pattern/resource-pressure",
-      "title": "Resources that change decisions",
-      "file": "patterns/resource-pressure.md"
-    },
-    {
-      "id": "pattern/event-feedback",
-      "title": "Coherent visual and audio event feedback",
-      "file": "patterns/event-feedback.md"
-    },
-    {
-      "id": "pattern/information-before-commitment",
-      "title": "Useful information before commitment",
-      "file": "patterns/information-before-commitment.md"
-    },
-    {
-      "id": "recipe/spring-courier",
-      "title": "Spring Courier: complete platform microgame",
       "file": "games/spring-courier.lua",
       "validation": "games/validation-results.json"
     },
     {
-      "id": "recipe/signal-arena",
-      "title": "Signal Arena: complete timing microgame",
       "file": "games/signal-arena.lua",
       "validation": "games/validation-results.json"
     },
     {
-      "id": "recipe/lantern-vault",
-      "title": "Lantern Vault: complete turn microgame",
       "file": "games/lantern-vault.lua",
       "validation": "games/validation-results.json"
+    },
+    {
+      "file": "references/runtime-compatibility.md"
     }
   ],
   "skills": [

@@ -1,22 +1,13 @@
-# Optional game-design references
+# Designing a small PICO-8 game
 
-Use these references for a specific design question or when you want an example. Your own design can stand on its own; there is no prerequisite case, pattern or recipe to read. Adapt any useful ideas to the requested game.
+Make the objective and first action visible. Teach a mechanic in a forgiving situation, then vary and combine it. Use distinct visuals for warning, damage, reward and recovery. Keep essential cues readable with audio muted.
 
-## Find a relevant example
+| Design problem | Try this | Verify |
+| --- | --- | --- |
+| Precision movement | Give edge jumps a short grace period and buffer a jump just before landing. Teach on a safe platform before adding risk. | Replay edge and landing inputs. Check intended jumps and accidental triggers. |
+| Telegraphing attacks | Lock the threatened region during a visible warning. Leave enough time to reach safety and expose a recovery opening. | Compare the cue and hit area. Try escape, staying in danger and using the opening. |
+| Turn decisions | Resolve hazards and resource costs once per valid action. Show the next danger and which actions consume a turn. | Test movement, waits, blocked moves and idle. Confirm exhaustion and success precedence. |
+| Optional risk | Provide an affordable direct route and a detour with a visible cost and reward. Define when the reward is banked. | Compare completion, remaining resources and banked reward across routes. |
+| Feedback | Keep the player, goal and current state distinguishable at 128×128. Make restart clear. | Check a representative success, failure and retry using actual inputs. |
 
-| Question | Optional references |
-| --- | --- |
-| How can a precision platformer feel forgiving? | /extensions/pico8/cases/celeste-classic.md; /extensions/pico8/patterns/forgiving-controls.md |
-| How can attacks communicate their timing? | /extensions/pico8/cases/just-one-boss.md; /extensions/pico8/patterns/telegraph-attack-recovery.md |
-| How can turn costs and routes create decisions? | /extensions/pico8/cases/porklike.md; /extensions/pico8/patterns/turn-economy.md; /extensions/pico8/patterns/resource-pressure.md |
-| How can players understand and choose optional risk? | /extensions/pico8/cases/high-stakes.md; /extensions/pico8/patterns/risk-reward.md; /extensions/pico8/patterns/information-before-commitment.md |
-| How can a game introduce and communicate its mechanics? | /extensions/pico8/patterns/teach-vary-combine.md; /extensions/pico8/patterns/event-feedback.md |
-| Would a runnable implementation help? | /extensions/pico8/references/microgames.md describes three original examples and their recipe IDs. |
-
-Cases discuss classic games; patterns suggest reusable techniques; microgames provide small working implementations. They are alternatives to consult as needed, not successive steps. Original classic-game code and assets are not included in the model library.
-
-## Questions for an iteration
-
-When reviewing an unclear or unsatisfying interaction, consider what the player can understand, decide and improve: is the objective visible, is feedback readable, is the result connected to an action, and does another attempt offer something worthwhile? Relevant checks might include a normal strategy, a risky alternative, or simply waiting or repeating one button. Choose checks that fit the intended rules.
-
-A title screen, fixed number of phases, loss condition, persistent score or particular art style is not a universal requirement. Judge the implementation against the request and the experience it is meant to create. Observed behavior can support that judgment; compilation, screenshots and model self-ratings alone do not establish human enjoyment.
+/extensions/pico8/references/microgames.md links to Spring Courier, Signal Arena and Lantern Vault. Use a matching example when a runnable implementation helps. Try ordinary input and any obvious idle or spam strategy that might bypass the main challenge. Player feedback is needed to judge whether a successful run is enjoyable.

@@ -1,6 +1,6 @@
 # PICO-8 knowledge and host contract
 
-[AGENT.md](AGENT.md) routes requests to the create, edit, assets or playtest skill. [MACHINE.md](MACHINE.md) defines the PICO-8 target. The default palette, [reference index](REFERENCE_INDEX.md), project context and skill metadata are available at startup. Skill bodies and references load through `read` when needed. Tool evidence drives the final response in the user's language.
+[AGENT.md](AGENT.md) routes requests to the create, edit, assets or playtest skill. [MACHINE.md](MACHINE.md) defines the PICO-8 target. The base palette, project state and skill metadata are available at startup. The [reference index](REFERENCE_INDEX.md), skill bodies and references load through `read` when needed.
 
 ## Host tools
 
@@ -21,4 +21,4 @@ Runtime observations include frame identity, cart revision, draft status and app
 
 Keep full skill instructions out of startup context and use virtual paths in model-facing links. The compiler checks language, skill metadata, links and recipe source hashes against successful receipts. When Lua examples change, run the appropriate [recipe verifier](recipes/README.md) or [microgame verifier](games/README.md) before regenerating the bundle.
 
-[Sources](SOURCES.md) records the PICO-8 manual and runtime evidence. [Research provenance](research/README.md) describes the classic-game references and the local acquisition script.
+[Sources](SOURCES.md) records the PICO-8 manual and runtime evidence. Maintainers can consult the full [API inventory](runtime-api-inventory.md). The model reads a short [browser compatibility guide](references/runtime-compatibility.md). [Research provenance](research/README.md) records the sources behind the consolidated [design guide](references/game-design.md).

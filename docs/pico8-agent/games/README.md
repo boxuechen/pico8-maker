@@ -6,7 +6,7 @@ Three standalone examples combine rules, newly authored pixel rows, packed notes
 - Signal Arena: locked lane warnings, dodge, recovery opening and three-hit victory.
 - Lantern Vault: turn costs, visible resource pressure, a relic route and optional gems.
 
-All code, pixel data and note sequences in these examples were newly authored for this project. The classics studied in ../cases supply design questions, not copied assets. Model-facing controls, tuning and limitations are in ../references/microgames.md. Every Lua file can be submitted directly through load_game or wrapped in a .p8 cartridge with a __lua__ section.
+The examples use original code, pixel data and note sequences. The [design guide](../references/game-design.md) distills ideas from the classic-game studies. The [microgame reference](../references/microgames.md) covers controls and tuning. Pass each complete Lua example to load_game or wrap it in a .p8 cartridge with a __lua__ section.
 
 Run `node docs/pico8-agent/games/verify.mjs` from the repository root after preparing the existing player. It verifies unmodified source and exported cartridges in the public player, then uses the actual WASM runtime with read-only scratch-RAM state probes for behavioral checks. It writes validation-results.json with source hashes and ignored PNG snapshots under .cache/microgames. Audio checks measure generated PCM and channel separation, not listening quality. A failed run does not produce a new receipt; source/hash changes invalidate compilation of the knowledge pack until verification passes again.
 
