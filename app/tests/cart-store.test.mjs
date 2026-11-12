@@ -112,3 +112,30 @@ test("shelf membership, save status and duplicates", () => {
   copy.sessions[0].transcript.push({ role: "assistant" });
   assert.equal(cart.sessions[0].transcript.length, 1);
 });
+
+test("named empty carts persist and default numbering survives reload and deletion", async () => {
+  const backend = memoryBackend();
+  const store = await openCartStore({ backend });
+  const named = await store.createCart("  月亮钓鱼  ");
+  assert.equal(named.title, "月亮钓鱼");
+  assert.equal(isOnShelf(named), true);
+  const first = await store.createCart("   ");
+  assert.equal(first.title, "New Cart1");
+  await store.remove(first.id);
+  const reopened = await openCartStore({ backend });
+  assert.equal((await reopened.createCart()).title, "New Cart2");
+  await reopened.createCart("New Cart9");
+  assert.equal((await reopened.createCart()).title, "New Cart10");
+  assert.equal(
+    (await openCartStore({ backend })).carts.find((c) => c.id === named.id)
+      .title,
+    "月亮钓鱼",
+  );
+});
+
+test("default cart names skip existing numbered titles", async () => {
+  const backend = memoryBackend();
+  await backend.put("carts", newCart({ title: "New Cart7" }));
+  const store = await openCartStore({ backend });
+  assert.equal((await store.createCart()).title, "New Cart8");
+});

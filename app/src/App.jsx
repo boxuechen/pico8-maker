@@ -32,6 +32,7 @@ import {
   ChevronDown,
   LoaderCircle,
   Copy,
+  PanelLeftOpen,
 } from "lucide-react";
 import {
   openCartStore,
@@ -48,7 +49,8 @@ import {
   updateSession,
   sessionContext,
 } from "./sessions.js";
-import { SessionBar } from "./SessionBar.jsx";
+import { SessionSidebar } from "./SessionSidebar.jsx";
+import { NameDialog } from "./NameDialog.jsx";
 import { CartShelf, CartBody, ago } from "./CartShelf.jsx";
 import { downloadCart } from "./pico8/cart.js";
 import { currentTool, describeTool, formatButtons } from "./workbench-state.js";
@@ -414,6 +416,19 @@ function Studio({ store }) {
   const sendLock = useRef(false);
   const [storageError, setStorageError] = useState(false);
   const [split, setSplit] = useState(58);
+  const [collapsed, setCollapsed] = useState(
+    () => store.navigation.sidebarCollapsed ?? window.innerWidth < 1100,
+  );
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [creation, setCreation] = useState(null);
+  function toggleSidebar() {
+    setCollapsed((value) => {
+      void store
+        .setNavigation({ sidebarCollapsed: !value })
+        .catch(() => setStorageError(true));
+      return !value;
+    });
+  }
   const [view, setView] = useState("preview");
   const [frames, setFrames] = useState([]);
   const [label, setLabel] = useState(project.current.label ?? null);
@@ -619,6 +634,7 @@ function Studio({ store }) {
       await connectAgent(next);
       await flush();
       refreshSessions((v) => v + 1);
+      setMobileOpen(false);
     } catch (error) {
       cart.activeSessionId = previousId;
       const previous = activeSession(cart);
@@ -668,6 +684,28 @@ function Studio({ store }) {
   };
   const runtime = useExternalStoreRuntime({
     convertMessage,
+    adapters: {
+      threadList: {
+        threadId: project.current.activeSessionId,
+        threads: project.current.sessions.map((session) => ({
+          id: session.id,
+          title: session.title,
+          status: "regular",
+        })),
+        onSwitchToThread: selectSession,
+        onSwitchToNewThread: () => selectSession(null),
+        onRename: async (id, title) => {
+          if (busy || transitionLock.current) return;
+          const session = project.current.sessions.find((s) => s.id === id);
+          if (!session || !title.trim()) return;
+          session.title = title.trim().slice(0, 120);
+          session.titleEdited = true;
+          session.updatedAt = project.current.updatedAt = Date.now();
+          refreshSessions((v) => v + 1);
+          await flush();
+        },
+      },
+    },
     messages: chat.messages,
     isRunning: running,
     isSendDisabled: !ready || cartLoading || game.booting || switching,
@@ -676,14 +714,12 @@ function Studio({ store }) {
         .filter((p) => p.type === "text")
         .map((p) => p.text)
         .join("\n");
-      if (!configured) {
-        pendingRef.current = text;
-        setPending(text);
+      if (!inWorkbench) {
         saveComposerDraft(text);
-        setSettings(true);
+        setCreation({ text });
         return;
       }
-      await sendMessage(text);
+      await submitMessage(text);
     },
     onCancel: async () => {
       await agentRef.current.abort();
@@ -694,7 +730,7 @@ function Studio({ store }) {
     runtime.thread.composer.setText(
       inWorkbench ? activeSession(project.current).draft : homeDraft.current,
     );
-  }, []);
+  }, [project.current.activeSessionId, inWorkbench]);
   async function selectCart(cart) {
     if (cartLock.current || !ready || running) return;
     cartLock.current = true;
@@ -717,18 +753,6 @@ function Studio({ store }) {
     if (sendLock.current || transitionLock.current || !ready || !text.trim())
       return;
     sendLock.current = true;
-    // On the home page a new idea always starts a new cart; existing carts
-    // stay untouched on the shelf.
-    if (!inWorkbench && isOnShelf(project.current)) {
-      try {
-        await openCart(newCart(), { enter: true });
-      } catch (e) {
-        sendLock.current = false;
-        setError(e.message);
-        return;
-      }
-    }
-    if (!isOnShelf(project.current)) void requestPersistence();
     setError("");
     setSending(true);
     setShowRestore(false);
@@ -736,23 +760,14 @@ function Studio({ store }) {
     setView("preview");
     const session = activeSession(project.current);
     const title = text.trim().replace(/\s+/g, " ").slice(0, 120);
-    persist({
-      active: true,
-      title:
-        project.current.title === "Untitled cartridge"
-          ? title
-          : project.current.title,
-    });
+    persist({ active: true });
     persistSession({
       draft: "",
-      title: session.transcript.length ? session.title : title,
+      title:
+        session.transcript.length || session.titleEdited
+          ? session.title
+          : title,
     });
-    if (!inWorkbench) {
-      homeDraft.current = "";
-      void store
-        .setNavigation({ homeDraft: "" })
-        .catch(() => setStorageError(true));
-    }
     runtime.thread.composer.setText("");
     try {
       await gameRef.current.restoreProject();
@@ -850,9 +865,35 @@ function Studio({ store }) {
   async function resume(cart = shelf[0]) {
     if (cart) await openCart(cart, { enter: true });
   }
-  async function newBlankCart() {
-    if (isOnShelf(project.current)) await openCart(newCart(), { enter: false });
-    document.getElementById("game-prompt")?.focus();
+  function newBlankCart() {
+    setCreation({ text: "" });
+  }
+  async function submitMessage(text) {
+    if (!configured) {
+      pendingRef.current = text;
+      setPending(text);
+      persistSession({ draft: text });
+      runtime.thread.composer.setText(text);
+      setSettings(true);
+      return;
+    }
+    await sendMessage(text);
+  }
+  async function createNamedCart(name) {
+    const text = creation.text;
+    const cart = await store.createCart(name);
+    activeSession(cart).draft = text;
+    void requestPersistence();
+    await openCart(cart);
+    await flush();
+    setCreation(null);
+    if (text) {
+      homeDraft.current = "";
+      void store
+        .setNavigation({ homeDraft: "" })
+        .catch(() => setStorageError(true));
+      await submitMessage(text);
+    }
   }
   function markSaved(cart) {
     const savedAt = Date.now();
@@ -968,7 +1009,11 @@ function Studio({ store }) {
       >
         <div
           className={`app ${inWorkbench ? "studio-mode" : "home-mode"}`}
-          style={{ "--chat-width": `${split}%` }}
+          style={{
+            "--chat-fr": `${split}fr`,
+            "--preview-fr": `${100 - split}fr`,
+            "--sidebar-width": collapsed ? "48px" : "220px",
+          }}
         >
           {inWorkbench ? (
             <WorkbenchHeader
@@ -1001,6 +1046,17 @@ function Studio({ store }) {
             />
           )}
           <main className="workspace">
+            {inWorkbench && (
+              <SessionSidebar
+                collapsed={collapsed}
+                onToggle={toggleSidebar}
+                activeId={currentSession.id}
+                disabled={busy || !ready}
+                running={running}
+                mobileOpen={mobileOpen}
+                onMobileClose={() => setMobileOpen(false)}
+              />
+            )}
             {!inWorkbench && (
               <>
                 <section className="home-intro">
@@ -1106,13 +1162,18 @@ function Studio({ store }) {
             )}
             <ThreadPrimitive.Root className="chat-panel">
               {inWorkbench && (
-                <SessionBar
-                  sessions={project.current.sessions}
-                  activeId={currentSession.id}
-                  disabled={busy || !ready}
-                  onSelect={selectSession}
-                  onNew={() => selectSession(null)}
-                />
+                <div className="conversation-heading">
+                  <button
+                    className="mobile-conversations"
+                    aria-label="Open conversations"
+                    onClick={() => setMobileOpen(true)}
+                  >
+                    <PanelLeftOpen size={18} />
+                  </button>
+                  <span title={currentSession.title}>
+                    {currentSession.title}
+                  </span>
+                </div>
               )}
 
               <ThreadPrimitive.Viewport
@@ -1292,12 +1353,18 @@ function Studio({ store }) {
                   if (e.currentTarget.hasPointerCapture(e.pointerId)) {
                     const box =
                       e.currentTarget.parentElement.getBoundingClientRect();
+                    const sidebarWidth =
+                      e.currentTarget.parentElement
+                        .querySelector(".session-sidebar")
+                        ?.getBoundingClientRect().width ?? 0;
                     setSplit(
                       Math.max(
                         35,
                         Math.min(
                           72,
-                          ((e.clientX - box.left) / box.width) * 100,
+                          ((e.clientX - box.left - sidebarWidth) /
+                            (box.width - sidebarWidth - 5)) *
+                            100,
                         ),
                       ),
                     );
@@ -1498,6 +1565,20 @@ function Studio({ store }) {
           {!inWorkbench && <HowItWorks />}
           {!inWorkbench && <HomeFooter />}
         </div>
+        {creation && (
+          <NameDialog
+            title="Create a cart"
+            label="Cart name"
+            placeholder={store.defaultCartName()}
+            hint={`Give your game a name. Leave blank to use ${store.defaultCartName()}.`}
+            action="Create cart"
+            onClose={() => {
+              runtime.thread.composer.setText(homeDraft.current);
+              setCreation(null);
+            }}
+            onSave={createNamedCart}
+          />
+        )}
         {settings && (
           <ModelSettings
             initial={config}

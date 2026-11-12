@@ -66,11 +66,12 @@ export function normalizeCart(data) {
   return cart;
 }
 
-/** A cart earns a shelf slot once it has a conversation or an edit. */
+/** Named carts remain on the shelf even before their first conversation. */
 export function isOnShelf(cart) {
   return (
     !!cart &&
-    (cart.sessions.length > 1 ||
+    (cart.named === true ||
+      cart.sessions.length > 1 ||
       cart.sessions.some((s) => s.transcript.length > 0 || s.draft.trim()) ||
       cart.sourceDraft != null ||
       cart.versions.length > 1 ||
@@ -216,6 +217,24 @@ export async function openCartStore({ backend } = {}) {
     navigation,
     put: (cart) => backend.put("carts", cart),
     remove: (id) => backend.delete("carts", id),
+    defaultCartName() {
+      return `New Cart${Math.max(navigation.nextCartNumber || 1, ...carts.map((c) => Number(/^New Cart(\d+)$/.exec(c.title)?.[1] || 0) + 1))}`;
+    },
+    async createCart(name = "") {
+      const title = name.trim().slice(0, 120) || this.defaultCartName();
+      const number = /^New Cart(\d+)$/.exec(title)?.[1];
+      if (number)
+        await this.setNavigation({
+          nextCartNumber: Math.max(
+            navigation.nextCartNumber || 1,
+            Number(number) + 1,
+          ),
+        });
+      const cart = newCart({ title, named: true });
+      await backend.put("carts", cart);
+      carts.push(cart);
+      return cart;
+    },
     setNavigation(patch) {
       Object.assign(navigation, patch);
       return backend.put("meta", { key: "session", value: { ...navigation } });
