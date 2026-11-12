@@ -1077,14 +1077,18 @@ function Studio({ store }) {
               : ["neutral", "PRESS PLAY"];
   const readout = running
     ? pressing
-      ? Array.isArray(pressing.steps)
-        ? `input sequence · ${pressing.steps.length} steps · ${pressing.steps.reduce((n, s) => n + (s.frames ?? 0), 0)} frames`
-        : `input ${formatButtons(pressing.buttons)} · ${pressing.frames ?? "?"} frames`
+      ? (() => {
+          const detail = describeTool({
+            toolName: "press_buttons",
+            args: pressing,
+          });
+          return `${detail.label.toLowerCase()} · ${detail.meta}`;
+        })()
       : tool
         ? describeTool(tool).label.toLowerCase()
         : "thinking…"
     : game.hasGame
-      ? `v${game.revision}${game.testFrame ? " · latest AI test frame" : ""}`
+      ? `v${game.previewVersion === "before" ? game.comparisonRevision : game.revision}${game.testFrame ? " · latest AI test frame" : ""}`
       : "";
   const hint = running
     ? "Your controls unlock when testing ends"
@@ -1519,7 +1523,7 @@ function Studio({ store }) {
                     >
                       <option value="current">Current v{game.revision}</option>
                       <option value="before">
-                        Before feedback v{game.comparisonRevision}
+                        Before v{game.comparisonRevision}
                       </option>
                     </select>
                   )}
