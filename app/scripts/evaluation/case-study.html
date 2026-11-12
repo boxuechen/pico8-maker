@@ -2,12 +2,13 @@
 <html lang="zh-CN">
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="../../player/player.css" />
   <title>Lodge Podge · PICO-8 case study</title>
   <style>
-    body{margin:24px auto;padding:0 24px;max-width:1250px;background:#11141d;color:#eee;font:15px/1.6 system-ui}a{color:#ff77a8}button,input,textarea,select{font:inherit}button{padding:8px 16px;cursor:pointer}textarea{box-sizing:border-box;width:100%;background:#202431;color:#fff;padding:12px;border:1px solid #53576a;border-radius:6px}main{display:grid;grid-template-columns:1fr 520px;gap:24px}#stage{width:512px;height:512px}canvas{image-rendering:pixelated;width:256px;height:256px;background:#000}pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:450px;overflow:auto;font-size:12px}#history{max-height:300px;overflow:auto}#status{color:#ffccaa}@media(max-width:900px){main{display:block}#stage{width:100%;max-width:512px}}
+    body{display:block;margin:24px auto;padding:0 24px;max-width:1250px;background:#11141d;color:#eee;font:15px/1.6 system-ui}a{color:#ff77a8}button,input,textarea,select{font:inherit}button{padding:8px 16px;cursor:pointer}textarea{box-sizing:border-box;width:100%;background:#202431;color:#fff;padding:12px;border:1px solid #53576a;border-radius:6px}main{display:grid;grid-template-columns:1fr 520px;gap:24px}#stage{width:512px;height:512px}canvas{image-rendering:pixelated;width:256px;height:256px;background:#000}#stage .pico8-player__canvas{width:100%!important;height:auto!important}pre{white-space:pre-wrap;overflow-wrap:anywhere;max-height:450px;overflow:auto;font-size:12px}#history{max-height:300px;overflow:auto}#status{color:#ffccaa}@media(max-width:900px){main{display:block}#stage{width:100%;max-width:512px}}
   </style>
-  <h1>Lodge Podge · PICO-8 创作实验</h1>
-  <p>参考 <a href="https://developers.openai.com/blog/build-a-game-with-modretro-chromatic" target="_blank" rel="noreferrer">OpenAI 官方海狸建窝案例</a>。使用当前应用的 Agent、知识库与已保存的模型配置；独立临时卡带，普通 API 用量。</p>
+  <h1 id="case-title">Lodge Podge · PICO-8 创作实验</h1>
+  <p>参考 <a id="reference" href="https://developers.openai.com/blog/build-a-game-with-modretro-chromatic" target="_blank" rel="noreferrer">OpenAI 官方海狸建窝案例</a>。使用当前应用的 Agent、知识库与已保存的模型配置；独立临时卡带，普通 API 用量。</p>
   <p id="model"></p>
   <main>
     <section>
@@ -22,6 +23,7 @@
     </section>
     <section>
       <div id="stage"></div>
+      <p><button id="play" disabled>开始 / 继续预览</button> <button id="restart" disabled>重新开始预览</button></p>
       <p>右侧为可操作预览。下方为独立测试 Worker 的真实帧；测试不代表人工听评。</p>
       <canvas id="frame" width="128" height="128" aria-label="最新测试帧"></canvas>
       <p id="revision"></p>

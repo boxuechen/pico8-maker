@@ -11,16 +11,27 @@ import { defaultKnowledgeFiles } from "../../src/pico8/knowledge-files.js";
 import { transcriptMetrics } from "./skills-cases.mjs";
 
 const $ = (id) => document.getElementById(id);
+const garden = new URLSearchParams(location.search).get("case") === "garden";
+const caseTitle = garden ? "Sweet Garden" : "Lodge Podge";
+const caseSlug = garden ? "sweet-garden" : "lodge-podge";
+const reference = garden
+  ? "https://developers.openai.com/modretro/seedys-sweet-garden"
+  : "https://developers.openai.com/blog/build-a-game-with-modretro-chromatic";
+document.title = `${caseTitle} · PICO-8 case study`;
+$("case-title").textContent = `${caseTitle} · PICO-8 创作验证`;
+$("reference").href = reference;
+$("reference").textContent = garden ? "OpenAI 官方花园消除案例" : "OpenAI 官方海狸建窝案例";
+if (garden) $("prompt").value = "做一个像 Seedy’s Sweet Garden 那样温暖可爱的 PICO-8 花园消除小游戏：交换相邻花朵，三个相同就消除，掉落后能连锁。在有限步数内完成目标，有清楚的操作提示、轻快的音效和背景音乐，结束后可以再来一局。";
 const config = readModelConfig();
-const cart = newCart({ title: "Lodge Podge case study", workingDraft: emptySnapshot() });
+const cart = newCart({ title: `${caseTitle} case study`, workingDraft: emptySnapshot() });
 const session = activeSession(cart);
 const report = {
   schemaVersion: 1,
-  suite: "lodge-podge-case-study",
+  suite: `${caseSlug}-case-study`,
   id: crypto.randomUUID(),
   startedAt: new Date().toISOString(),
   model: { provider: config.provider, model: config.model, thinkingLevel: config.thinkingLevel },
-  reference: "https://developers.openai.com/blog/build-a-game-with-modretro-chromatic",
+  reference,
   knowledgeVersion: defaultKnowledgeFiles.version,
   limits: { millisecondsPerTurn: 900000 },
   limitations: ["One model, one case; no general quality or human enjoyment claim.", "Independent test inputs are separate from model playtesting.", "Audio authoring is inspectable; listening is not verified by agent tools."],
@@ -44,6 +55,8 @@ function controls() {
   $("stop").disabled = !busy;
   $("test").disabled = busy || !game.hasGame;
   $("export").disabled = busy || !game.hasGame;
+  $("play").disabled = busy || !game.hasGame;
+  $("restart").disabled = busy || !game.hasGame;
 }
 const game = new Game((state) => {
   $("revision").textContent = `Committed revision: ${state.revision}; draft dirty: ${game.cartStatus().draftDirty}`;
@@ -115,7 +128,9 @@ $("send").onclick = async () => {
   controls();
 };
 $("stop").onclick = () => { stopped = true; void agent?.abort(); };
-$("export").onclick = () => downloadCart(game.snapshot, { title: `lodge-podge-v${report.runs.length}`, label: game.testFrame?.rgba });
+$("play").onclick = () => game.play();
+$("restart").onclick = () => game.restart();
+$("export").onclick = () => downloadCart(game.snapshot, { title: `${caseSlug}-v${report.runs.length}`, label: game.testFrame?.rgba });
 $("test").onclick = async () => {
   if (busy || !game.hasGame) return;
   busy = true; controls();

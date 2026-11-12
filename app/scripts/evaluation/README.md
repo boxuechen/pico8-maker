@@ -4,6 +4,8 @@
 
 Open `/scripts/evaluation/case-study.html` locally for the Lodge Podge experiment. This uses the same Agent, knowledge and saved provider configuration with a disposable cart. Send the initial request, then follow-up feedback in the same session. Each turn has a 15-minute timeout and no tool-call limit. It archives the original prompts, transcript, committed revisions, draft and separate evaluator inputs through the loopback recorder. It does not write to the user's cart library or score fun automatically. The page is a local research tool, not a production entry point.
 
+Use `/scripts/evaluation/case-study.html?case=garden` for the Sweet Garden prompt inspired by OpenAI's Seedy's Sweet Garden. The model and workflow are unchanged between these case presets. The preview buttons operate the live player; independent test inputs remain in the separate test Worker.
+
 The finished two-version sample is at `/case-studies/lodge-podge/index.html`. See [the case study](../../../docs/lodge-podge-case-study.md) for scope, failures and actual verification. Full provider transcripts remain in the ignored cache.
 
 To replay its final successful route from `app/`, create an output directory and run:
