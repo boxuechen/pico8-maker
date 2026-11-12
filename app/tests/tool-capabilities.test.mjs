@@ -212,6 +212,30 @@ test("failed loads and worker loss cannot extend an old route", async (t) => {
   invalid.ensureWorker = () => assert.fail("invalid reset started worker");
   await assert.rejects(invalid.execute("reset_game", { purpose: "passed" }));
 });
+
+test("stopping during a cart fingerprint cannot revive a recording", async (t) => {
+  for (const action of ["load_game", "reset_game"]) {
+    const g = gameFor(t),
+      controller = new AbortController();
+    const digest = crypto.subtle.digest.bind(crypto.subtle);
+    const mock = t.mock.method(crypto.subtle, "digest", async (...args) => {
+      const result = await digest(...args);
+      Game.prototype.cancelTests.call(g);
+      controller.abort();
+      return result;
+    });
+    try {
+      await assert.rejects(g.execute(action, {}, controller.signal), {
+        name: "AbortError",
+      });
+      assert.equal(g.playtests.active, null);
+      assert.equal(g.playtests.runs.length, 0);
+    } finally {
+      mock.mock.restore();
+    }
+  }
+});
+
 test("invalid complete input plans have no player or runtime side effects", async () => {
   const g = new Game(() => {}, { versions: [fixtureSnapshot()] });
   g.ensureWorker = () => assert.fail("invalid request initialized the Worker");

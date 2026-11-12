@@ -534,9 +534,11 @@ export class Game {
         this.save();
         note = `\nCommitted as version ${this.revision}.`;
       }
+      const cartHash = await fingerprint(cartBytes(snapshot));
+      signal?.throwIfAborted();
       this.playtests.start({
         revision: this.revision,
-        cartHash: await fingerprint(cartBytes(snapshot)),
+        cartHash,
         purpose,
         origin: "load",
         frame: observation.frame,
@@ -581,14 +583,17 @@ export class Game {
         frames: 1,
         buttons: 0,
       }));
-      if (observation.state !== "faulted")
+      if (observation.state !== "faulted") {
+        const cartHash = await fingerprint(cartBytes(this.snapshot));
+        signal?.throwIfAborted();
         this.playtests.start({
           revision: this.revision,
-          cartHash: await fingerprint(cartBytes(this.snapshot)),
+          cartHash,
           purpose,
           origin: "reset",
           frame: observation.frame,
         });
+      }
     } else observation = await this.rpc("observe");
     this.testFrame = observation.frame;
     this.testFrames = observation.frame ? [observation.frame] : [];
