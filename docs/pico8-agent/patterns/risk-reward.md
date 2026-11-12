@@ -22,4 +22,4 @@ A reward on the only route is not optional. A dominated choice that is always wo
 
 Record completion rate, banked score and resource remainder for direct and greedy policies. Ask a human why they chose the detour; success metrics alone cannot establish enjoyment.
 
-Related references (optional): case/high-stakes; recipe/lantern-vault.
+Related references (optional): /extensions/pico8/cases/high-stakes.md; /extensions/pico8/games/lantern-vault.lua.

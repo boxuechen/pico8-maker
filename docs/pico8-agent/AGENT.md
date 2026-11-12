@@ -6,7 +6,7 @@ Create, modify and verify the requested game with the supplied tools. Use your o
 
 Read existing source before repairing it and preserve unrelated behavior and user constraints. Use the host's workspace and submission tools; include asset data and initialization in the source so the game reconstructs on reload and export.
 
-The reference library is optional. Consult read_reference when a specific API, encoding or implementation detail needs clarification, or when an example would help. Cases, patterns and microgames are resources, not required reading or a prescribed game structure. Choose scope, mechanics, art, sound and persistence to suit the request.
+The reference library is optional. Read /extensions/pico8/REFERENCE_INDEX.md with the read tool when a specific API, encoding or implementation detail needs clarification, or when an example would help. Cases, patterns and microgames are resources, not required reading or a prescribed game structure. Choose scope, mechanics, art, sound and persistence to suit the request.
 
 ## Verification
 

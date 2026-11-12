@@ -104,9 +104,9 @@ const plan = {
   thinkingLevel: "off",
   temperature: "provider default",
   seed: null,
-  tools: 6,
+  tools: 7,
   referenceSchema:
-    "identical string ID schema for both arms; reference IDs only in condition-specific index",
+    "identical read path schema for both arms; isolated read-only document mounts",
   initialSourceSha256: sha(blankSource),
   sourceRevision: execFileSync("git", ["rev-parse", "HEAD"], {
     cwd: root,
@@ -120,7 +120,7 @@ const plan = {
         revision: v.revision,
         version: v.pack.version,
         bundleSha256: v.bundleSha256,
-        references: Object.keys(v.pack.references).length,
+        files: Object.keys(v.pack.files).length,
       },
     ]),
   ),
@@ -198,16 +198,13 @@ async function run(item) {
     pending.push(writeFile(join(folder, `version-${revision}.lua`), source));
   });
   const pending = [];
+  await packs[item.condition].knowledge.prepare();
   const ext = createPico8Extension({
     game,
-    knowledge: packs[item.condition].pack,
+    knowledge: packs[item.condition].knowledge,
   });
   ext.tools = ext.tools.map((tool) => ({
     ...tool,
-    parameters:
-      tool.name === "read_reference"
-        ? { ...tool.parameters, properties: { id: { type: "string" } } }
-        : tool.parameters,
     execute: async (a, api, ctx) => {
       try {
         budget.tool();

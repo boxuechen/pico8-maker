@@ -1,6 +1,6 @@
 # SFX and music without an editor
 
-Optional examples: recipe/sfx-from-notes and recipe/music-from-patterns are complete Lua programs with encoding helpers. The layouts below are sufficient when you do not need a full example.
+Optional examples: /extensions/pico8/recipes/sfx-from-notes.lua and /extensions/pico8/recipes/music-from-patterns.lua are complete Lua programs with encoding helpers. The layouts below are sufficient when you do not need a full example.
 
 ## Workflow and API
 
@@ -58,4 +58,4 @@ The recipe uses pattern 0 with SFX 0/1 and pattern 1 with SFX 2/3. Both music ch
 
 Check RAM encoding, non-silent PCM, pattern progression 0→1→0 and channel independence after input. The supplied recipes have passed these local runtime checks. This is synthesis/behavior evidence, not subjective listening approval. Current model tools do not return audio; do not claim to have heard it.
 
-Optional API details: api/audio.
+Optional API details: /extensions/pico8/references/api-catalog.md.

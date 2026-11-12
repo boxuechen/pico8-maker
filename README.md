@@ -32,7 +32,7 @@ npm run dev -- --host 127.0.0.1 --port 5173
 - `pico8-web-player`：完整 standalone release。实时试玩使用 WebPlayer 的 Worker 执行；AI 手动步进使用独立 Worker 内的 `createPico8Session`。
 - `design/simple-demo/`：当前设计目标；像素机壳图片放在 `app/public/assets/`。
 
-游戏工具：`read_game`、`load_game`、`reset_game`、`press_buttons`、`observe_game`；知识工具：`read_reference`。截图将实际 RGBA 编码成 PNG image content 交给模型。修改先编译并执行一帧，通过后才替换用户游戏。模型调用最多 24 轮；每次输入 1–120 帧；测试 Worker 超时会被终止。
+游戏工具：`read_game`、`load_game`、`reset_game`、`press_buttons`、`observe_game`；文件工具：`read`（读取 `/extensions/pico8/` 文档和当前源码）、`edit`（仅修改 `/cart/main.lua`）。截图将实际 RGBA 编码成 PNG image content 交给模型。修改先编译并执行一帧，通过后才替换用户游戏。模型调用最多 24 轮；每次输入 1–120 帧；测试 Worker 超时会被终止。
 
 ## 存储与范围
 
@@ -155,3 +155,7 @@ Qwen 普通百炼与 Token Plan 分开，并区分中国/国际入口。普通�
 - 界面：进度卡显示“Edited main.lua · n changes”，展开可见 `- 旧 / + 新`；版本卡只在真正提交新版本时出现并显示版本号。
 - 未引入 just-bash：单文件卡带用不上 shell。以后若工作区变成多文件，可把它作为同一 ExecutionEnv 的 Shell 部分接入。
 
+
+## 默认文档文件挂载（2026-11-12）
+
+默认 PICO-8 文档以原始 Markdown/Lua 静态文件发布，挂载到只读 `/extensions/pico8/`；每张 cart 的 `/cart/main.lua` 独立可写。启动只读取 Agent 说明、机器定义、默认调色板与精简目录，详细指南由 Pi Durable 内置 `read({path, offset, limit})` 按需读取。文档共享缓存，使用版本路径与 SHA-256 校验；加载失败可重试。已移除 `read_reference` 工具与整包 `pico8-knowledge.js`，不保留旧加载兼容分支。源码编辑、编译提交、测试与导出流程保持原有边界。

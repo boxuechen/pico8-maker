@@ -60,4 +60,4 @@ Metatables: setmetatable/getmetatable. Raw operations: rawget/rawset/rawequal/ra
 
 Use ASCII hex digits for pixel rows. Default game text uses P8SCII, not an arbitrary Unicode font. A Chinese conversation does not mean the built-in game font supports Chinese text.
 
-Optional lookups: api/lua, api/table, api/math, api/string and api/bitwise list the local API coverage. guide/input-system covers callbacks, input and system facilities.
+Optional lookups: /extensions/pico8/references/api-catalog.md, /extensions/pico8/references/api-catalog.md, /extensions/pico8/references/api-catalog.md, /extensions/pico8/references/api-catalog.md and /extensions/pico8/references/api-catalog.md list the local API coverage. /extensions/pico8/references/input-system.md covers callbacks, input and system facilities.

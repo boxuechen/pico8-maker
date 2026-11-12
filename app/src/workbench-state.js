@@ -53,7 +53,7 @@ export function formatButtons(mask = 0) {
   return pressed.length ? pressed.join(" + ") : "release";
 }
 const toolLabels = {
-  read_reference: "Read the PICO-8 reference",
+  read: "Read a file",
   read_game: "Read the cart source",
   load_game: "Loaded the cart",
   edit: "Edited main.lua",

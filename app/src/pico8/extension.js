@@ -3,8 +3,12 @@ import {
   defineTool,
   section,
 } from "@earendil-works/pi-durable";
-import { createEditTool } from "@earendil-works/pi-durable/tools";
+import {
+  createEditTool,
+  createReadTool,
+} from "@earendil-works/pi-durable/tools";
 import { capabilities } from "./capabilities.js";
+import { mountKnowledge } from "./knowledge-env.js";
 import { mainPath } from "./workspace.js";
 const schema = (properties = {}, required = []) => ({
   type: "object",
@@ -13,13 +17,11 @@ const schema = (properties = {}, required = []) => ({
   additionalProperties: false,
 });
 export function createPico8Extension({ game, knowledge }) {
-  if (!knowledge?.version || !knowledge.sections || !knowledge.references)
+  if (!knowledge?.version || !knowledge.sections || !knowledge.read)
     throw new Error("PICO-8 knowledge is required");
   const descriptions = {
-    read_game:
-      `Read the complete working source, the workspace file ${mainPath} (path main.lua for edit). Read it before editing. This is not a live-variable snapshot.`,
-    load_game:
-      `Compile ${mainPath}, run one frame and commit it as a new version. Omit source after targeted edit calls; pass complete Lua source (including procedural sprite/map/audio initialization) to replace the whole file for a new game or a rewrite. A failed compile keeps the file unchanged and uncommitted so it can be fixed with edit. Returns PNG and diagnostics; startup success is not gameplay verification.`,
+    read_game: `Read the complete working source, the workspace file ${mainPath} (path main.lua for edit). Read it before editing. This is not a live-variable snapshot.`,
+    load_game: `Compile ${mainPath}, run one frame and commit it as a new version. Omit source after targeted edit calls; pass complete Lua source (including procedural sprite/map/audio initialization) to replace the whole file for a new game or a rewrite. A failed compile keeps the file unchanged and uncommitted so it can be fixed with edit. Returns PNG and diagnostics; startup success is not gameplay verification.`,
     reset_game:
       "Reload the last committed version into the independent test session and advance one frame. Uncommitted edits are not loaded. This does not promise to erase cartdata.",
     press_buttons:
@@ -68,13 +70,19 @@ export function createPico8Extension({ game, knowledge }) {
       ["frames", "buttons"],
     ),
   };
-  const references = knowledge.references;
+  const env = mountKnowledge(game.workspace, knowledge);
+  const read = createReadTool();
+  const readTool = {
+    ...read,
+    replay: "safe",
+    execute: (args, api, ctx) => read.execute(args, withEnv(api, env), ctx),
+  };
   // pi-durable's edit tool, always pointed at this cart's workspace rather than
   // whatever environment the harness has (it has none).
   const edit = createEditTool();
   const editTool = {
     ...edit,
-    description: `${edit.description} Only ${mainPath} exists (relative path main.lua). Changes are not live until load_game.`,
+    description: `${edit.description} Only ${mainPath} is writable (relative path main.lua). Changes are not live until load_game.`,
     execute: (args, api, ctx) => {
       if (!game.workspace) throw new Error("No cart workspace is available");
       return edit.execute(args, withEnv(api, game.workspace), ctx);
@@ -83,13 +91,13 @@ export function createPico8Extension({ game, knowledge }) {
   return defineExtension({
     name: "pico8",
     sections: [
-      ...Object.entries(knowledge.sections).map(([key, text]) =>
-        section(key, () => text),
+      ...Object.entries(knowledge.sections).map(([key, path]) =>
+        section(key, (_, ctx) => knowledge.read(path, ctx)),
       ),
       section(
         "pico8_host",
         () =>
-          `The cart is one workspace file, ${mainPath} (maximum ${capabilities.maxSourceLength} characters); initialize art, map and sound data in Lua. For repairs and focused changes, read_game, then edit main.lua with exact unique oldText blocks, then load_game without source; this preserves unrelated code and avoids resending the whole cart. For a new game or a rewrite of most of the file, pass the complete source to load_game. Edits take effect only after load_game succeeds. There is no shell and no other file. Game tools run sequentially. Test input: player 0, at most ${capabilities.maxInputFrames} frames. Default observation: ${capabilities.observation}. observe_game supports ${capabilities.observationFormats.join(", ")} and optional pixel-region cropping. Use PNG for overall appearance and cropped ASCII with the actual palette for precise pixels. Other game tools return PNG. No live-variable query or audio return. Test persistence: ${capabilities.persistence}; destroying its Worker loses that instance. Test and live player are separate. Historical frames are past evidence, not the current session state; establish a new baseline after restore. read_reference reads bundled documentation without operating the game. Source exports retain procedural initialization.`,
+          `The cart is one workspace file, ${mainPath} (maximum ${capabilities.maxSourceLength} characters); initialize art, map and sound data in Lua. For repairs and focused changes, read_game, then edit main.lua with exact unique oldText blocks, then load_game without source; this preserves unrelated code and avoids resending the whole cart. For a new game or a rewrite of most of the file, pass the complete source to load_game. Edits take effect only after load_game succeeds. Read-only documentation is mounted at /extensions/pico8. Use read({path}) to consult Markdown or Lua examples; start with /extensions/pico8/REFERENCE_INDEX.md. There is no shell. Game tools run sequentially. Test input: player 0, at most ${capabilities.maxInputFrames} frames. Default observation: ${capabilities.observation}. observe_game supports ${capabilities.observationFormats.join(", ")} and optional pixel-region cropping. Use PNG for overall appearance and cropped ASCII with the actual palette for precise pixels. Other game tools return PNG. No live-variable query or audio return. Test persistence: ${capabilities.persistence}; destroying its Worker loses that instance. Test and live player are separate. Historical frames are past evidence, not the current session state; establish a new baseline after restore. Reading documentation does not operate the game. Source exports retain procedural initialization.`,
       ),
       section(
         "pico8_knowledge",
@@ -118,40 +126,7 @@ export function createPico8Extension({ game, knowledge }) {
         }),
       ),
       editTool,
-      defineTool({
-        name: "read_reference",
-        description:
-          "Read bundled English PICO-8 API guidance or a complete verified Lua recipe by exact ID. No network or game-state side effects.",
-        parameters: schema(
-          { id: { type: "string", enum: Object.keys(references) } },
-          ["id"],
-        ),
-        replay: "safe",
-        outputLimits: { maxBytes: 16384, maxLines: 256, retain: "head" },
-        execute: async ({ id }, api, ctx) => {
-          ctx.abortSignal?.throwIfAborted();
-          if (!Object.hasOwn(references, id))
-            return {
-              isError: true,
-              output: [
-                {
-                  type: "text",
-                  text: `Unknown reference. Available IDs: ${Object.keys(references).join(", ")}`,
-                },
-              ],
-            };
-          const r = references[id];
-          return {
-            output: [{ type: "text", text: r.outputText }],
-            details: {
-              id,
-              title: r.title,
-              version: knowledge.version,
-              sha256: r.sha256,
-            },
-          };
-        },
-      }),
+      readTool,
     ],
   });
 }

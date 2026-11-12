@@ -16,6 +16,6 @@ The decoded sprite sheet uses nine slots: 0, 5, 6, 7, 8, 10, 11, 13 and 14. That
 
 ## Transfer experiment
 
-Use recipe/lantern-vault, pattern/turn-economy and pattern/resource-pressure. It is an original fixed-map extraction puzzle. Test a direct escape route, optional detour, blocked movement, waiting and exhaustion. Compare success with remaining fuel, damage and optional reward. Confirm that leaving the game idle consumes no turns.
+Use /extensions/pico8/games/lantern-vault.lua, /extensions/pico8/patterns/turn-economy.md and /extensions/pico8/patterns/resource-pressure.md. It is an original fixed-map extraction puzzle. Test a direct escape route, optional detour, blocked movement, waiting and exhaustion. Compare success with remaining fuel, damage and optional reward. Confirm that leaving the game idle consumes no turns.
 
 Sources: https://krystman.itch.io/porklike and https://www.lexaloffle.com/bbs/?pid=76877&tid=37045 . The author links a making-of tutorial; the release differs from the tutorial. The BBS displays No License. Original source/art/audio are local research material, not a reusable asset library.

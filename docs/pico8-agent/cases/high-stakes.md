@@ -16,6 +16,6 @@ The input handler checks whether a hint token is valid for the selected card bef
 
 ## Transfer experiment
 
-Optional related references: pattern/risk-reward and pattern/information-before-commitment. In recipe/lantern-vault, use an optional detour and visible fuel as an original deterministic alternative to random loss. Compare banked reward against successful extraction rate. A later card prototype should expose exact rules and use reproducible seeds for evaluation; do not reskin the original card artwork or copy its music.
+Optional related references: /extensions/pico8/patterns/risk-reward.md and /extensions/pico8/patterns/information-before-commitment.md. In /extensions/pico8/games/lantern-vault.lua, use an optional detour and visible fuel as an original deterministic alternative to random loss. Compare banked reward against successful extraction rate. A later card prototype should expose exact rules and use reproducible seeds for evaluation; do not reskin the original card artwork or copy its music.
 
 Sources: https://krystman.itch.io/high-stakes and https://www.lexaloffle.com/bbs/?pid=83548 . The BBS labels this cartridge CC4-BY-NC-SA. This package retains provenance and analysis while keeping original assets outside the distributed model bundle.

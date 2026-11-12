@@ -22,4 +22,4 @@ A flashing warning that differs from the actual hitbox teaches distrust. Invente
 
 Compare preview and outcome for every relevant state. Test whether a cautious and a risky policy yield distinguishable outcomes, and whether the player can explain the tradeoff.
 
-Related references (optional): case/high-stakes; recipe/signal-arena; recipe/lantern-vault.
+Related references (optional): /extensions/pico8/cases/high-stakes.md; /extensions/pico8/games/signal-arena.lua; /extensions/pico8/games/lantern-vault.lua.

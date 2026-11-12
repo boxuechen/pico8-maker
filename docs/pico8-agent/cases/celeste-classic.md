@@ -16,6 +16,6 @@ The inspected draw path remaps hair slot 8: red with one dash, blue with none, a
 
 ## Transfer experiment
 
-Use recipe/spring-courier and pattern/forgiving-controls. Compare identical edge-jump and early-landing input traces with grace/buffering enabled and disabled. Record successful intended actions, accidental jumps, and time until the next attempt. Keep level geometry and speed fixed. Avoid copying the original character, levels or soundtrack.
+Use /extensions/pico8/games/spring-courier.lua and /extensions/pico8/patterns/forgiving-controls.md. Compare identical edge-jump and early-landing input traces with grace/buffering enabled and disabled. Record successful intended actions, accidental jumps, and time until the next attempt. Keep level geometry and speed fixed. Avoid copying the original character, levels or soundtrack.
 
 Sources: https://www.lexaloffle.com/bbs/?tid=2145 and https://github.com/NoelFB/Celeste/blob/master/Source/PICO-8/Readme.md . The GitHub example is a C# port; the inspected artifact is the original PICO-8 cart. The BBS currently displays No License; this package distributes analysis and newly authored examples, not original assets.

@@ -1,6 +1,6 @@
 # Complete reference catalog
 
-Maintainer inventory of all registered references. This file is not a persistent model section or a registered read_reference document. The compact entry points are in [REFERENCE_INDEX.md](REFERENCE_INDEX.md); manifest.json remains the registry. Existing IDs are retained for direct reads and historical references.
+Maintainer inventory of all registered references. This file is not a persistent model section or a mounted model document. The compact entry points are in [REFERENCE_INDEX.md](REFERENCE_INDEX.md); manifest.json remains the registry. IDs remain manifest identifiers for validation; the Agent reads virtual file paths.
 
 - `guide/lua`: P8 Lua, tables, math and strings
 - `guide/graphics`: Drawing and palettes

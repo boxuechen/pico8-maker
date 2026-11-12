@@ -16,6 +16,6 @@ The magic-tile spawn draws expanding rectangle outlines before the collectible a
 
 ## Transfer experiment
 
-Use recipe/signal-arena and pattern/telegraph-attack-recovery. It is a newly authored lane-warning microgame, not a remake. Hold the warning duration fixed while changing the dangerous axis. Test whether a player can explain the next hit area before it fires. Test deliberately staying in danger, avoiding it and using the recovery opening.
+Use /extensions/pico8/games/signal-arena.lua and /extensions/pico8/patterns/telegraph-attack-recovery.md. It is a newly authored lane-warning microgame, not a remake. Hold the warning duration fixed while changing the dangerous axis. Test whether a player can explain the next hit area before it fires. Test deliberately staying in danger, avoiding it and using the recovery opening.
 
 Sources: https://aylanonsense.itch.io/just-one-boss and https://github.com/aylanonsense/just-one-boss . The author page labels the asset license CC BY-NC-SA 4.0. Code and asset permissions must not be conflated. No third-party source or assets enter the model bundle.

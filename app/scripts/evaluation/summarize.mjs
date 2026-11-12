@@ -52,8 +52,8 @@ for (const r of results) {
       output: e.result.output.filter((o) => o.type === "text"),
     }));
   const readReferences = calls
-    .filter((e) => e.name === "read_reference")
-    .map((e) => e.args.id);
+    .filter((e) => e.name === "read")
+    .map((e) => e.args.path);
   const firstLoad = calls.findIndex((e) => e.name === "load_game");
   const metric = {
     ...r,
@@ -61,7 +61,7 @@ for (const r of results) {
     readReferences,
     readsBeforeFirstLoad: calls
       .slice(0, firstLoad)
-      .filter((e) => e.name === "read_reference").length,
+      .filter((e) => e.name === "read").length,
     errors,
     providerUsage: usage,
     estimatedUsd:
@@ -97,7 +97,7 @@ const arms = Object.fromEntries(
         output: sum((r) => r.providerUsage.output),
         cached: sum((r) => r.providerUsage.cached),
         estimatedUsd: sum((r) => r.estimatedUsd),
-        referenceCalls: sum((r) => r.toolCounts.read_reference ?? 0),
+        referenceCalls: sum((r) => r.toolCounts.read ?? 0),
         pressCalls: sum((r) => r.toolCounts.press_buttons ?? 0),
         toolCalls: sum((r) => r.budget.toolCalls),
         meanGenerationSeconds:
@@ -169,7 +169,7 @@ const csv =
         r.providerUsage.total,
         r.budget.tokenOvershoot,
         r.budget.toolCalls,
-        r.toolCounts.read_reference ?? 0,
+        r.toolCounts.read ?? 0,
         r.toolCounts.press_buttons ?? 0,
         (r.budget.elapsedMs / 1000).toFixed(3),
         r.estimatedUsd.toFixed(6),

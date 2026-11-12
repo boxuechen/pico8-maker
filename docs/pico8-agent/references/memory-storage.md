@@ -50,7 +50,7 @@ Use a stable distinctive ID of at most 64 lowercase letters, digits or underscor
 
 Slots store numbers, not arbitrary tables/strings. Document the layout, e.g. slot 0 schema version, slot 1 best score, remaining slots reserved. Bound scores to the numeric range. Unit/encoding changes require a schema migration.
 
-Optional example: recipe/save-high-score migrates schema 0 to 1 while preserving the old best, bounds best to 0–30000, and treats newer unknown schemas as read-only. X scores; O restarts the round without clearing best. It does not zero every slot or write every draw frame.
+Optional example: /extensions/pico8/recipes/save-high-score.lua migrates schema 0 to 1 while preserving the old best, bounds best to 0–30000, and treats newer unknown schemas as read-only. X scores; O restarts the round without clearing best. It does not zero every slot or write every draw frame.
 
 Migrate stepwise and preserve unknown slots. Do not erase user progress as a default repair. Handle corrupted data with a deliberate policy.
 
@@ -67,4 +67,4 @@ Official cartridge design targets include 8192 code tokens, a 32 KiB cart data m
 
 Avoid rebuilding assets each frame, large temporary tables, unbounded loops and unnecessary full-map scans. Measure actual runtime diagnostics rather than inferring correctness from a visible frame.
 
-Optional API details: api/memory, api/persistence and api/gpio.
+Optional API details: /extensions/pico8/references/api-catalog.md, /extensions/pico8/references/api-catalog.md and /extensions/pico8/references/api-catalog.md.

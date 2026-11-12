@@ -30,7 +30,7 @@ ASCII uses encoding pico8-slots-v1: exactly width characters per row and height 
 
 both derives PNG and ASCII from one snapshot and the same crop, without resampling. Compare the sessionId, generation, revision and frameId in the result header. A new Worker can have no completed frame: explicitly reset_game or press_buttons to establish one. Repeated observation does not run another frame. The host may initialize the Worker and pause live playback, so observation remains an unsafe-to-replay tool.
 
-Full-screen pixel text is bounded separately from read_reference. A diagnostic overflow is marked diagnosticsTruncated; a pixel matrix is never silently shortened. Historical ASCII is saved as past evidence, not restored machine state. After refresh, cancellation or reload, establish a new baseline before combining observations.
+Full-screen pixel text is bounded separately from read. A diagnostic overflow is marked diagnosticsTruncated; a pixel matrix is never silently shortened. Historical ASCII is saved as past evidence, not restored machine state. After refresh, cancellation or reload, establish a new baseline before combining observations.
 
 Separate observed pixels from source inference. Do not claim a hidden velocity or variable was measured without a tool/diagnostic exposing it. Manual test and live player instances have separate state.
 

@@ -29,7 +29,7 @@ Homepage MAKE A GAME button: use explicit line height and comfortable horizontal
 Unified workbench header: chat title and Preview/status share the same 52px top row, aligned to the draggable content split. Extend the divider through the header, keep project actions at the far right, and remove any separate player heading. The player starts directly below with the same 20px top inset as chat. On narrow stacked layouts keep Preview in the compact top row and hide only the secondary status text.
 
 
-PICO-8 knowledge: model-facing rules and references are English, compiled from docs/pico8-agent via prepare:knowledge. Keep replies in the user’s language. Preserve the pico8 extension sections, six tools (plus the workspace edit tool), versioned reference output and legacy-history migration. observe_game supports png/ascii/both and validated screen-region crops. Other game tools keep PNG. Preserve full pixel grids and frame identity across tool output and history; observation must not advance time.
+PICO-8 knowledge: model-facing rules and references are English, published as versioned static files from docs/pico8-agent via prepare:knowledge. Keep replies in the user’s language. Preserve the pico8 extension sections, six tools (plus the workspace edit tool), versioned reference output and legacy-history migration. observe_game supports png/ascii/both and validated screen-region crops. Other game tools keep PNG. Preserve full pixel grids and frame identity across tool output and history; observation must not advance time.
 
 ## PICO-8 Maker redesign (2026-11-12, supersedes conflicting notes above)
 
@@ -47,7 +47,9 @@ Static site only, never a server: carts live in the browser. `src/cart-store.js`
 
 ## Cart workspace (2026-11-12)
 
-The agent works in a one-file virtual workspace, `/cart/main.lua` (`src/pico8/workspace.js`, a FileSystem-only pi-durable ExecutionEnv; no shell, no other files). The pico8 extension adds pi-durable's built-in `edit` tool, always bound to the game's workspace. `Game.draft` is the working file; `versions` are what `load_game` committed. `load_game` takes optional complete source (replaces the file first); without it, it compiles the edited file and commits a version, or reports "unchanged". A failed compile keeps the draft uncommitted and the test session on the last committed version. `reset_game`, export and the live player use the committed version. The draft persists per cart as `workspace` in IndexedDB and resets on undo. The version card appears only when a load reports "Committed as version N". just-bash is intentionally not used; it could later implement the Shell half of the same env.
+The agent has one writable game file, `/cart/main.lua`, and a shared read-only document mount, `/extensions/pico8/`. `CartWorkspace` owns game file mutations; `knowledge-files.js` loads manifest-listed static documents by version with hash validation and caching; `knowledge-env.js` composes the two for Pi Durable's built-in `read`. Built-in `edit` stays bound to the cart only. There is no shell. `Game.draft` is the working source; `load_game` compiles and commits it. Failed compilation retains the draft and the last committed playable version. Undo resets the draft; export uses committed source.
+
+Publish original Markdown/Lua files, not a JS object containing their bodies. Automatically read AGENT.md, MACHINE.md, the generated default palette and REFERENCE_INDEX.md before opening a session; other files are read on demand with offset/limit support. Remove obsolete loading paths rather than adding compatibility: there is no read_reference tool or pico8-knowledge.js bundle. Keep Markdown links as virtual file paths, validate recipes, and never mount maintainer/research documents by directory-wide copying.
 
 ## Workspace and session product direction (2026-11-12)
 

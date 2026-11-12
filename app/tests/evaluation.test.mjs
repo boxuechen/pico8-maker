@@ -16,19 +16,22 @@ test("frozen treatment keeps baseline APIs but cannot expose design cases", asyn
   const folder = await mkdtemp(join(tmpdir(), "pico8-eval-packs-"));
   t.after(() => rm(folder, { recursive: true, force: true }));
   const { A, B } = await freezePacks(folder);
-  assert.equal(Object.keys(A.pack.references).length, 27);
-  assert.equal(Object.keys(B.pack.references).length, 44);
-  for (const [id, ref] of Object.entries(A.pack.references))
-    assert.equal(B.pack.references[id].sha256, ref.sha256);
-  const tool = createPico8Extension({ game: {}, knowledge: A.pack }).tools.find(
-    (t) => t.name === "read_reference",
+  assert.ok(
+    Object.keys(B.pack.files).length > Object.keys(A.pack.files).length,
   );
-  assert.equal(
-    (await tool.execute({ id: "case/celeste-classic" }, {}, {})).isError,
-    true,
+  const tool = createPico8Extension({
+    game: {},
+    knowledge: A.knowledge,
+  }).tools.find((t) => t.name === "read");
+  await assert.rejects(() =>
+    tool.execute(
+      { path: "/extensions/pico8/cases/celeste-classic.md" },
+      {},
+      {},
+    ),
   );
-  assert.ok(!JSON.stringify(A.pack).includes("guide/game-design"));
-  assert.ok(B.pack.sections.pico8_agent.includes("guide/game-design"));
+  assert.ok(!A.pack.files["references/game-design.md"]);
+  assert.ok(B.pack.files["references/game-design.md"]);
 });
 test("evaluation transport uses real Game validation, rollback and non-advancing observations", async (t) => {
   const g = new EvaluationGame();

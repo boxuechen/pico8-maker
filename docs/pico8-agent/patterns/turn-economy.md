@@ -22,4 +22,4 @@ Animation callbacks can accidentally run the enemy twice. Auto-repeat can spend 
 
 Check idle, wall bump, valid move, wait and fresh versus held input. Verify the same action list creates the same logical state regardless of idle frames inserted.
 
-Related references (optional): case/porklike; recipe/lantern-vault.
+Related references (optional): /extensions/pico8/cases/porklike.md; /extensions/pico8/games/lantern-vault.lua.

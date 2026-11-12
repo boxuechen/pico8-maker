@@ -6,12 +6,12 @@ Use these references for a specific design question or when you want an example.
 
 | Question | Optional references |
 | --- | --- |
-| How can a precision platformer feel forgiving? | case/celeste-classic; pattern/forgiving-controls |
-| How can attacks communicate their timing? | case/just-one-boss; pattern/telegraph-attack-recovery |
-| How can turn costs and routes create decisions? | case/porklike; pattern/turn-economy; pattern/resource-pressure |
-| How can players understand and choose optional risk? | case/high-stakes; pattern/risk-reward; pattern/information-before-commitment |
-| How can a game introduce and communicate its mechanics? | pattern/teach-vary-combine; pattern/event-feedback |
-| Would a runnable implementation help? | guide/microgames describes three original examples and their recipe IDs. |
+| How can a precision platformer feel forgiving? | /extensions/pico8/cases/celeste-classic.md; /extensions/pico8/patterns/forgiving-controls.md |
+| How can attacks communicate their timing? | /extensions/pico8/cases/just-one-boss.md; /extensions/pico8/patterns/telegraph-attack-recovery.md |
+| How can turn costs and routes create decisions? | /extensions/pico8/cases/porklike.md; /extensions/pico8/patterns/turn-economy.md; /extensions/pico8/patterns/resource-pressure.md |
+| How can players understand and choose optional risk? | /extensions/pico8/cases/high-stakes.md; /extensions/pico8/patterns/risk-reward.md; /extensions/pico8/patterns/information-before-commitment.md |
+| How can a game introduce and communicate its mechanics? | /extensions/pico8/patterns/teach-vary-combine.md; /extensions/pico8/patterns/event-feedback.md |
+| Would a runnable implementation help? | /extensions/pico8/references/microgames.md describes three original examples and their recipe IDs. |
 
 Cases discuss classic games; patterns suggest reusable techniques; microgames provide small working implementations. They are alternatives to consult as needed, not successive steps. Original classic-game code and assets are not included in the model library.
 

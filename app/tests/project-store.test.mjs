@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { BACKGROUND_CONTEXT as context } from "@earendil-works/chord/context";
-import { Agent } from "../src/agent.js";
+import { Agent } from "./helpers/knowledge.mjs";
 import {
   compactTranscript,
   recoverTranscript,

@@ -1,4 +1,4 @@
-import knowledge from "./generated/pico8-knowledge.js";
+import { defaultKnowledgeFiles } from "./pico8/knowledge-files.js";
 import { createPico8Extension } from "./pico8/extension.js";
 import { groupAssistantTurns } from "./workbench-state.js";
 import { BACKGROUND_CONTEXT as context } from "@earendil-works/chord/context";
@@ -78,14 +78,15 @@ export function projectView(view) {
 }
 
 export class Agent {
-  constructor(game, onUpdate, { knowledgePack = knowledge } = {}) {
-    this.knowledge = knowledgePack;
+  constructor(game, onUpdate, { knowledge = defaultKnowledgeFiles } = {}) {
+    this.knowledge = knowledge;
     this.game = game;
     this.onUpdate = onUpdate;
     this.models = createModels();
     this.transcriptEntries = new Map();
   }
   async open(transcript = []) {
+    await this.knowledge.prepare();
     const registry = createRegistry();
     const pico8 = createPico8Extension({
       game: this.game,

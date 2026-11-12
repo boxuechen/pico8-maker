@@ -10,5 +10,7 @@ app/.vite/
 !.env.example
 *.log
 
-/app/src/generated/pico8-knowledge.js
 /app/src/generated/pico8-palette.js
+
+/app/src/generated/pico8-files.js
+/app/public/extensions/pico8/

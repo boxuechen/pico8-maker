@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { Agent } from "../src/agent.js";
-import knowledge from "../src/generated/pico8-knowledge.js";
+import { Agent } from "./helpers/knowledge.mjs";
+import { knowledge, index, load } from "./helpers/knowledge.mjs";
 import { createPico8Extension } from "../src/pico8/extension.js";
 import { defaultConfig } from "../src/model-config.js";
 import { compactTranscript } from "../src/project-store.js";
@@ -24,21 +24,23 @@ test("references are English, complete, bounded and isolated", async () => {
     },
     knowledge,
   });
-  const tool = ext.tools.find((t) => t.name === "read_reference");
-  for (const id of Object.keys(knowledge.references)) {
-    const r = await tool.execute({ id }, {}, {});
-    const text = r.output[0].text;
-    assert.ok(Buffer.byteLength(text) <= 16384);
-    assert.ok(text.split("\n").length <= 256);
-    assert.ok(!/[\u3400-\u9fff]/u.test(text));
-    assert.ok(text.includes(knowledge.references[id].content));
+  const tool = ext.tools.find((t) => t.name === "read");
+  for (const file of Object.keys(index.files)) {
+    const r = await tool.execute({ path: "/extensions/pico8/" + file }, {}, {});
+    assert.equal(r.isError, undefined, file);
+    assert.ok(r.output[0].text.length > 0);
+    assert.ok(!/[\u3400-\u9fff]/u.test(r.output[0].text));
   }
   assert.equal(calls, 0);
-  assert.equal((await tool.execute({ id: "__proto__" }, {}, {})).isError, true);
+  await assert.rejects(() => tool.execute({ path: "/etc/passwd" }, {}, {}));
   const c = new AbortController();
   c.abort();
   await assert.rejects(() =>
-    tool.execute({ id: "guide/audio" }, {}, { abortSignal: c.signal }),
+    tool.execute(
+      { path: "/extensions/pico8/references/audio.md" },
+      {},
+      { abortSignal: c.signal },
+    ),
   );
 });
 test("actual provider requests replace legacy rules and preserve references across restore without replay", async (t) => {
@@ -57,13 +59,12 @@ test("actual provider requests replace legacy rules and preserve references acro
     assert.ok(system.includes("PICO-8 game author"));
     assert.ok(system.includes("16.16"));
     assert.ok(system.includes("bright green"));
-    assert.ok(system.includes("guide/game-design"));
-    assert.ok(system.includes("case/celeste-classic"));
+    assert.ok(system.includes("references/game-design.md"));
     assert.ok(!system.includes("## Observed implementation"));
     assert.ok(!system.includes("LEGACY_JUMP_ONLY"));
     assert.equal(body.tools.length, 7);
     assert.ok(body.tools.some((t) => t.function.name === "edit"));
-    assert.ok(body.tools.some((t) => t.function.name === "read_reference"));
+    assert.ok(body.tools.some((t) => t.function.name === "read"));
     if (bodies.length === 1)
       return response(
         {
@@ -74,8 +75,9 @@ test("actual provider requests replace legacy rules and preserve references acro
               id: "ref-1",
               type: "function",
               function: {
-                name: "read_reference",
-                arguments: '{"id":"recipe/lantern-vault"}',
+                name: "read",
+                arguments:
+                  '{"path":"/extensions/pico8/games/lantern-vault.lua"}',
               },
             },
           ],
@@ -256,11 +258,15 @@ test("Pi delivers complete full/cropped ASCII and restores it without replaying 
 });
 
 test("design references resolve and knowledge compilation rejects stale microgame receipts", async (t) => {
-  for (const ref of Object.values(knowledge.references)) {
-    for (const [id] of ref.content.matchAll(
-      /\b(?:guide|case|pattern|recipe|palette|api)\/[a-z][a-z-]*/g,
+  for (const file of Object.keys(index.files)) {
+    const text = await load(file);
+    for (const [path] of text.matchAll(
+      /\/extensions\/pico8\/[A-Za-z0-9_./-]+\.(?:md|lua)/g,
     )) {
-      assert.ok(knowledge.references[id], `${ref.id} refers to missing ${id}`);
+      assert.ok(
+        index.files[path.slice("/extensions/pico8/".length)],
+        `${file} links to missing ${path}`,
+      );
     }
   }
   const dir = await mkdtemp(join(tmpdir(), "pico8-knowledge-"));

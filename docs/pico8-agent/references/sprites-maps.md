@@ -1,6 +1,6 @@
 # Pixel art, animation and maps without an editor
 
-Optional examples: recipe/sprite-from-rows and recipe/map-from-rows are complete verified Lua programs.
+Optional examples: /extensions/pico8/recipes/sprite-from-rows.lua and /extensions/pico8/recipes/map-from-rows.lua are complete verified Lua programs.
 
 ## Resource planning
 
@@ -40,4 +40,4 @@ mset changes this run's RAM. Reset reconstructs the original level. To preserve 
 
 Verify actual transparent pixels, frame changes, wall blocking, coin disappearance/count, and resource reconstruction after source reload.
 
-Optional API details: api/map; sprite drawing signatures are also in api/graphics.
+Optional API details: /extensions/pico8/references/api-catalog.md; sprite drawing signatures are also in /extensions/pico8/references/api-catalog.md.

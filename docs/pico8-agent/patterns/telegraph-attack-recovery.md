@@ -22,4 +22,4 @@ Tracking a player after the warning locks makes the cue misleading. Damage befor
 
 Test staying in the lane, crossing during warning, leaving before activation and attacking during recovery. Assert the warning/active region does not change mid-cycle.
 
-Related references (optional): case/just-one-boss; recipe/signal-arena.
+Related references (optional): /extensions/pico8/cases/just-one-boss.md; /extensions/pico8/games/signal-arena.lua.

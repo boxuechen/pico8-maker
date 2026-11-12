@@ -4,7 +4,7 @@ import { BACKGROUND_CONTEXT as context } from "@earendil-works/chord/context";
 import { CartWorkspace, mainPath } from "../src/pico8/workspace.js";
 import { createPico8Extension } from "../src/pico8/extension.js";
 import { Game } from "../src/game.js";
-import knowledge from "../src/generated/pico8-knowledge.js";
+import { knowledge } from "./helpers/knowledge.mjs";
 
 function memoryWorkspace(text = "", maxLength) {
   const box = { text, writes: 0 };

@@ -22,4 +22,4 @@ Resource exhaustion that arrives offscreen feels arbitrary. Refills on every saf
 
 Test an affordable direct route, a rewarding detour and deliberate exhaustion. Ensure win/loss precedence is explicit when arrival and the last resource expenditure coincide.
 
-Related references (optional): case/porklike; recipe/lantern-vault.
+Related references (optional): /extensions/pico8/cases/porklike.md; /extensions/pico8/games/lantern-vault.lua.
