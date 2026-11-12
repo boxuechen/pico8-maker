@@ -48,6 +48,8 @@ For manual version-view QA, run `npm run test:model`, use an isolated browser or
 
 For feedback-preview QA use `fixture-comparison` on an isolated origin with the same local mock endpoint. The first request makes a green BEFORE scene; the second makes an intermediate blue scene and a final pink AFTER scene. Confirm the selector compares green to pink, export remains current, reload retains the comparison, and a third explanation-only request restores the current preview without replacing the baseline. This is UI integration coverage, not a real-model quality result.
 
+P0–P2 integration evidence lives in `.cache/p0-p2/`: the unmodified Sweet Garden and Lodge Podge carts were recorded and replayed through `Game.execute`, with all 44 and 34 call-end frame hashes matching respectively. Browser QA used the explicit local fixture to check before/current preview, persistence and restoration before read-only feedback. This batch did not rerun unrestricted real-model creation or human enjoyment tests.
+
 ## Recorded results
 
 | Batch | Saved configuration | Result |

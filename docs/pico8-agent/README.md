@@ -26,7 +26,9 @@ Source reads and runtime observations carry advisory warnings for decimal litera
 
 Input validation names invalid fields and cumulative checkpoint bounds before any input executes. Native edit matching remains atomic; a missing or ambiguous block explains that the batch was not applied and asks for a fresh source read. The edit tool retains its upstream same-original-source and non-overlap contract.
 
-Validation for this update: 103 automated tests, the production build and four Sites checks passed. Regression coverage includes string/comment exclusions and bounded numeric advice, an unchanged large literal wrapping in the actual WASM runtime, input rejection before side effects, and atomic edit recovery. The browser preview loaded without captured warnings or errors. No new real-model creation or comparison run was performed; these checks establish implementation behavior, not improved game quality.
+Validation: 110 automated tests, the production build and four Sites checks passed. Coverage includes numeric advice, atomic edits, input validation before side effects, actual tap timing, persisted/sequential replay, cancellation, changed-cart evidence and feedback-preview isolation. The two existing case routes replayed through the new Game tools with all 78 recorded-call frame comparisons matching. These are implementation checks; they do not establish improved autonomous game quality. Detailed local evidence is in `.cache/p0-p2/`.
+
+Two short optional references cover collection/construction and adjacent-swap matching. Their index entries name the applicable genres and problems. They are not included at startup; the shared author/machine instructions and skill catalog remain unchanged.
 
 ## Publication and validation
 

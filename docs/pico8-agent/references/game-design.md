@@ -10,7 +10,6 @@ For an open-ended request, choose one clear experience before expanding content.
 | Telegraphing attacks | Lock the threatened region during a visible warning. Leave enough time to reach safety and expose a recovery opening. | Compare the cue and hit area. Try escape, staying in danger and using the opening. |
 | Turn decisions | Resolve hazards and resource costs once per valid action. Show the next danger and which actions consume a turn. | Test movement, waits, blocked moves and idle. Confirm exhaustion and success precedence. |
 | Optional risk | Provide an affordable direct route and a detour with a visible cost and reward. Define when the reward is banked. | Compare completion, remaining resources and banked reward across routes. |
-| Collect and build | Make one collection trip visibly change the construction. If route planning fits the request, a shared carrying limit or differently located resources can create a choice. Add one such constraint at a time. | From empty inventory, collect, return, deposit and see the result. Compare the proposed routes: does the constraint actually change the player's decision? Check pickup range and source-to-inventory type mapping. |
 | Feedback | Keep the player, goal and current state distinguishable at 128×128. Make restart clear. | Check a representative success, failure and retry using actual inputs. |
 
 ## Inspect the first playable loop
@@ -26,3 +25,5 @@ Use a small representative scene and actual input before making a large map or m
 Fix an observed problem, replay that moment, then finish the requested scope. These are design hypotheses and checks, not a fun score or a requirement to add every pattern.
 
 /extensions/pico8/references/microgames.md links to Spring Courier, Signal Arena and Lantern Vault. Use a matching example when a runnable implementation helps. Try ordinary input and any obvious idle or spam strategy that might bypass the main challenge. Player feedback is needed to judge whether a successful run is enjoyable.
+
+For a matching genre or concrete problem, read only the relevant pattern: /extensions/pico8/references/collect-build.md for gathering and repetitive trips, or /extensions/pico8/references/match-puzzle.md for swaps, cascades and move balance. These are small design/checking references, not templates to copy wholesale.

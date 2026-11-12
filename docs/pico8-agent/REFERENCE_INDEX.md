@@ -11,3 +11,5 @@ Read a topic when it answers a specific question. Use line offset and limit for 
 | Frame evidence | /extensions/pico8/references/playtest.md |
 | Browser runtime differences | /extensions/pico8/references/runtime-compatibility.md |
 | Game design and examples | /extensions/pico8/references/game-design.md, /extensions/pico8/references/microgames.md |
+| Gathering/construction; repetitive collection trips | /extensions/pico8/references/collect-build.md |
+| Adjacent-swap matching; selection, chains or move balance | /extensions/pico8/references/match-puzzle.md |
