@@ -51,5 +51,7 @@ The agent works in a one-file virtual workspace, `/cart/main.lua` (`src/pico8/wo
 
 ## Workspace and session product direction (2026-11-12)
 
+One home-screen cart corresponds to exactly one project workspace. Use "cart" / "My carts" in the user-facing project UI; workspace is the internal boundary for that cart's files, versions and conversation sessions, not an additional user-facing container. Creating a cart creates its workspace; continuing a cart opens that workspace in the workbench. A downloaded `.p8` is an export of the game's committed content, not a backup of its conversation sessions or full workspace.
+
 The workbench activates only one project workspace at a time. Workspace creation and selection can remain on the home/project list; do not add an in-workbench workspace switcher. Allow the design to support multiple conversation sessions within one workspace, sharing that workspace's game source and committed versions while keeping conversation histories separate. This is product direction, not a claim that multi-session persistence is implemented. A product workspace owns the game environment and session records; do not equate it with one pi-durable Harness (the current Harness runs over one Session). The current `CartWorkspace` is the virtual filesystem adapter, while the `workspace` page-mode boolean and stored source draft are separate legacy uses of the same word.
 
