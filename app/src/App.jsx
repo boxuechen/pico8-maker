@@ -1,3 +1,4 @@
+import { HomeHeader, WorkbenchHeader } from "./PageHeaders.jsx";
 import {
   UserMessage,
   AssistantMessage,
@@ -544,6 +545,7 @@ export function App() {
     setConfig({ ...defaultConfig });
     setConfigured(false);
   }
+  const PageHeader = workspace ? WorkbenchHeader : HomeHeader;
   const playing = game.state === "running" && !game.testFrame;
   const conversationTitle =
     chat.messages
@@ -561,77 +563,52 @@ export function App() {
         }}
       >
         <div className={`app ${workspace ? "studio-mode" : "home-mode"}`}>
-          <header className="topbar">
-            <button
-              className="app-title"
-              disabled={busy}
-              onClick={() => {
-                setWorkspace(false);
-                persist({ active: false });
-              }}
-              aria-label="Back to home"
-              title="Back to home"
-            >
-              <span className="pixel-spark" aria-hidden="true">
-                ✦
-              </span>
-              {!workspace && (
-                <>
-                  PICO<span className="brand-slash">/</span>MAKER{" "}
-                  <span className="brand-caption">FANTASY GAME MAKER</span>
-                </>
-              )}
-            </button>
-            <div className="top-actions">
-              {!workspace && chat.messages.length > 0 && (
+          <PageHeader
+            busy={busy}
+            title={conversationTitle}
+            hasConversation={chat.messages.length > 0}
+            onHome={() => {
+              setWorkspace(false);
+              persist({ active: false });
+            }}
+            onResume={async () => {
+              await gameRef.current.restoreProject();
+              setWorkspace(true);
+              persist({ active: true });
+            }}
+          >
+            <details className="more">
+              <summary aria-label="Project actions">
+                <MoreHorizontal size={20} />
+              </summary>
+              <div
+                className="more-menu"
+                onClick={(event) => {
+                  if (event.target.closest("button"))
+                    event.currentTarget.parentElement.open = false;
+                }}
+              >
                 <button
-                  className="resume-button"
-                  disabled={busy}
-                  onClick={async () => {
-                    await gameRef.current.restoreProject();
-                    setWorkspace(true);
-                    persist({ active: true });
-                  }}
+                  disabled={!ready || busy || !game.canUndo}
+                  onClick={safe(() => gameRef.current.undo())}
                 >
-                  Continue making <ChevronRight size={14} />
+                  <Undo2 size={16} />
+                  Undo last change
                 </button>
-              )}
-              <details className="more">
-                <summary aria-label="Project actions">
-                  <MoreHorizontal size={20} />
-                </summary>
-                <div
-                  className="more-menu"
-                  onClick={(event) => {
-                    if (event.target.closest("button"))
-                      event.currentTarget.parentElement.open = false;
-                  }}
+                <button disabled={!ready || busy} onClick={() => setCode(true)}>
+                  <Code2 size={16} />
+                  View source
+                </button>
+                <button
+                  disabled={!ready}
+                  onClick={() => gameRef.current.export()}
                 >
-                  <button
-                    disabled={!ready || busy || !game.canUndo}
-                    onClick={safe(() => gameRef.current.undo())}
-                  >
-                    <Undo2 size={16} />
-                    Undo last change
-                  </button>
-                  <button
-                    disabled={!ready || busy}
-                    onClick={() => setCode(true)}
-                  >
-                    <Code2 size={16} />
-                    View source
-                  </button>
-                  <button
-                    disabled={!ready}
-                    onClick={() => gameRef.current.export()}
-                  >
-                    <Download size={16} />
-                    Export .p8
-                  </button>
-                </div>
-              </details>
-            </div>
-          </header>
+                  <Download size={16} />
+                  Export .p8
+                </button>
+              </div>
+            </details>
+          </PageHeader>
           <main className="workspace" style={{ "--chat-width": `${split}%` }}>
             {!workspace && (
               <>
@@ -731,13 +708,6 @@ export function App() {
               </>
             )}
             <ThreadPrimitive.Root className="chat-panel">
-              {workspace && (
-                <div className="panel-heading">
-                  <h1 className="conversation-title" title={conversationTitle}>
-                    {conversationTitle}
-                  </h1>
-                </div>
-              )}
               {!workspace && (
                 <div className="make-heading">
                   <h1>What will you make?</h1>

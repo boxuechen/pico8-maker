@@ -110,3 +110,5 @@ Qwen 普通百炼与 Token Plan 分开，并区分中国/国际入口。普通�
 验证：真实 Pi 适配器的请求地址、认证头、图片和工具 schema 经过受控网络测试；默认保存、取消保存与清除配置有自动化覆盖。浏览器使用测试字符串验证刷新恢复、切换服务清空密钥、清除配置后聊天/游戏保留；测试配置已清除。
 
 本轮 23 项应用测试、4 项 Sites 测试与生产构建通过；桌面 1440×900 和窄屏 390×844 完成 UI 检查。截图：`app/qa/pico-maker-composer-model.jpg`、`app/qa/pico-maker-model-settings.jpg`。
+
+工作台页头调整（2026-11-12）：首页与工作台使用独立的 HomeHeader / WorkbenchHeader 组件。工作台标题移到顶部图标旁的 52px 导航行，移除聊天区重复标题栏；长标题视觉省略并保留完整 tooltip。底层会话与播放器保持共享，切换保留草稿和游戏。生产构建、23 项应用测试通过，桌面与手机布局及页面往返已验证。截图：`app/qa/pico-maker-workbench-header.jpg`。

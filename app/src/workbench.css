@@ -14,7 +14,6 @@
 .studio-mode .topbar,
 .studio-mode .chat-panel,
 .studio-mode .player-panel,
-.studio-mode .panel-heading,
 .studio-mode .preview-heading,
 .studio-mode .composer-area {
   background: var(--canvas);
@@ -25,7 +24,6 @@
 .studio-mode .workspace {
   grid-template-columns: var(--chat-width, 58%) 5px minmax(0, 1fr);
 }
-.studio-mode .panel-heading,
 .studio-mode .preview-heading {
   height: 43px;
   padding: 0 28px;
@@ -33,10 +31,6 @@
   font: 14px var(--workbench-font);
   letter-spacing: 0;
   color: var(--muted);
-}
-.studio-mode .panel-heading span {
-  font: inherit;
-  color: inherit;
 }
 .studio-mode .preview-heading span:last-child {
   font: 12px var(--workbench-font);
@@ -199,8 +193,26 @@
 .studio-mode .console-group:fullscreen .console {
   width: min(80vw, calc((100dvh - 120px) * 180 / 210));
 }
-/* The project title belongs to the conversation, not the global toolbar. */
+/* Workbench navigation is a single compact row, independent of the home header. */
+.studio-mode .workbench-header {
+  height: 52px;
+  padding: 0 24px;
+  gap: 12px;
+}
+.studio-mode .workbench-header .top-actions {
+  flex-shrink: 0;
+}
+.studio-mode .workbench-header .conversation-title {
+  flex: 1;
+}
+@media (max-width: 800px) {
+  .studio-mode .workbench-header {
+    padding: 0 12px;
+    gap: 8px;
+  }
+}
 .studio-mode .app-title {
+  flex: 0 0 36px;
   width: 36px;
   height: 36px;
   justify-content: center;
@@ -353,7 +365,6 @@ dialog {
   .studio-mode .assistant {
     padding-right: 0;
   }
-  .studio-mode .panel-heading,
   .studio-mode .preview-heading {
     height: 34px;
     padding: 0 17px;
