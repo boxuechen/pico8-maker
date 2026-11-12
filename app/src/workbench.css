@@ -23,7 +23,7 @@
   border-bottom: 1px solid var(--edge);
 }
 .studio-mode .workspace {
-  grid-template-columns: var(--chat-width, 55%) 5px minmax(0, 1fr);
+  grid-template-columns: var(--chat-width, 62%) 5px minmax(0, 1fr);
 }
 .studio-mode .panel-heading,
 .studio-mode .preview-heading {
@@ -197,14 +197,6 @@
 }
 .studio-mode .console-group:fullscreen .console {
   width: min(80vw, calc((100dvh - 120px) * 180 / 210));
-}
-.studio-mode .player-help {
-  font: 12px var(--workbench-font);
-  color: var(--muted);
-  letter-spacing: 0;
-}
-.studio-mode .player-controls {
-  color: var(--muted);
 }
 .studio-mode .project-label {
   font: 13px var(--workbench-font);

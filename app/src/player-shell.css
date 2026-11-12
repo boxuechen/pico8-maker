@@ -1,0 +1,56 @@
+/* Both screens use the homepage's compact controls, anchored to the TV itself. */
+:is(.home-mode, .studio-mode) .console .player-controls {
+  position: absolute;
+  bottom: 15%;
+  right: 5%;
+  z-index: 3;
+  flex-direction: column;
+  gap: 5px;
+  margin: 0;
+  color: #a994ac;
+}
+:is(.home-mode, .studio-mode) .console .player-controls button {
+  width: 18px;
+  height: 18px;
+  border-radius: 0;
+}
+:is(.home-mode, .studio-mode) .console .player-controls svg {
+  width: 14px;
+  height: 14px;
+}
+:is(.home-mode, .studio-mode)
+  .console
+  .player-controls
+  button:hover:not(:disabled) {
+  color: #fff1e8;
+}
+:is(.home-mode, .studio-mode) .console .player-controls button:focus-visible {
+  outline: 1px solid #ff77a8;
+  outline-offset: 2px;
+}
+:is(.home-mode, .studio-mode) .console .control-divider {
+  display: none;
+}
+:is(.home-mode, .studio-mode) .console .player-help {
+  position: absolute;
+  bottom: 1%;
+  left: 0;
+  width: 100%;
+  margin: 0;
+  text-align: center;
+  font:
+    10px Proggy,
+    "PingFang SC",
+    monospace;
+  letter-spacing: 0;
+  color: #a994ac;
+}
+/* Keep compact mode comfortable on short windows; fullscreen remains expansive. */
+@media (max-width: 800px) {
+  .studio-mode .workspace {
+    grid-template-rows: 34% 66%;
+  }
+  .studio-mode .console {
+    width: min(180px, calc((34dvh - 90px) * 180 / 210));
+  }
+}

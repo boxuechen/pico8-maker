@@ -1570,39 +1570,6 @@ dialog {
   width: 100%;
   max-width: none;
 }
-.home-mode .player-controls {
-  position: absolute;
-  bottom: 15%;
-  right: 5%;
-  z-index: 3;
-  flex-direction: column;
-  gap: 5px;
-  margin: 0;
-  color: #8b718a;
-}
-.home-mode .player-controls button {
-  width: 18px;
-  height: 18px;
-}
-.home-mode .player-controls svg {
-  width: 14px;
-  height: 14px;
-}
-.home-mode .control-divider {
-  display: none;
-}
-.home-mode .console-group {
-  position: relative;
-}
-.home-mode .player-help {
-  position: absolute;
-  bottom: 1%;
-  margin: 0;
-  font:
-    10px Proggy,
-    monospace;
-  color: #a994ac;
-}
 .home-mode .chat-panel {
   width: min(800px, 100%);
   padding: 10px 0 0;

@@ -284,7 +284,7 @@ export function App() {
   const pendingRef = useRef("");
   const sendLock = useRef(false);
   const [storageError, setStorageError] = useState(false);
-  const [split, setSplit] = useState(55);
+  const [split, setSplit] = useState(62);
   const saveTimer = useRef(null);
   function persist(patch) {
     Object.assign(project.current, patch, { updatedAt: Date.now() });
@@ -805,7 +805,7 @@ export function App() {
                 aria-label="Resize chat panel"
                 aria-orientation="vertical"
                 aria-valuemin={35}
-                aria-valuemax={65}
+                aria-valuemax={72}
                 aria-valuenow={split}
                 tabIndex={0}
                 onKeyDown={(e) => {
@@ -814,7 +814,7 @@ export function App() {
                     setSplit((v) =>
                       Math.max(
                         35,
-                        Math.min(65, v + (e.key === "ArrowRight" ? 2 : -2)),
+                        Math.min(72, v + (e.key === "ArrowRight" ? 2 : -2)),
                       ),
                     );
                   }
@@ -830,7 +830,7 @@ export function App() {
                       Math.max(
                         35,
                         Math.min(
-                          65,
+                          72,
                           ((e.clientX - box.left) / box.width) * 100,
                         ),
                       ),
@@ -892,58 +892,62 @@ export function App() {
                     role="img"
                     aria-label="Original PICO-8 pixel television"
                   />
+                  <div className="player-controls">
+                    <button
+                      aria-label={playing ? "Pause game" : "Play game"}
+                      disabled={!ready || busy}
+                      onClick={safe(playCurrent)}
+                    >
+                      {playing ? <Pause size={20} /> : <Play size={20} />}
+                    </button>
+                    <button
+                      aria-label="Restart game"
+                      disabled={!ready || busy}
+                      onClick={safe(() => gameRef.current.restart())}
+                    >
+                      <RotateCcw size={19} />
+                    </button>
+                    <span className="control-divider" />
+                    <button
+                      aria-label={game.muted ? "Enable sound" : "Mute"}
+                      disabled={!ready || busy}
+                      onClick={() => gameRef.current.mute()}
+                    >
+                      {game.muted ? (
+                        <VolumeX size={20} />
+                      ) : (
+                        <Volume2 size={20} />
+                      )}
+                    </button>
+                    <button
+                      aria-label="Fullscreen"
+                      onClick={safe(async () => {
+                        try {
+                          if (document.fullscreenElement)
+                            await document.exitFullscreen();
+                          else await stage.current.requestFullscreen();
+                        } catch {
+                          throw new Error(
+                            "Fullscreen is unavailable in this browser. Try opening the game in Chrome.",
+                          );
+                        }
+                      })}
+                    >
+                      <Maximize size={20} />
+                    </button>
+                  </div>
+                  <p className="player-help">
+                    {busy
+                      ? game.booting
+                        ? "POWERING ON…"
+                        : cartLoading
+                          ? "LOADING CARTRIDGE…"
+                          : "AI IS PLAYTESTING"
+                      : game.testFrame
+                        ? "AI TEST FRAME · PRESS PLAY TO TRY"
+                        : "ARROWS TO MOVE · Z / X TO PLAY"}
+                  </p>
                 </div>
-                <div className="player-controls">
-                  <button
-                    aria-label={playing ? "Pause game" : "Play game"}
-                    disabled={!ready || busy}
-                    onClick={safe(playCurrent)}
-                  >
-                    {playing ? <Pause size={20} /> : <Play size={20} />}
-                  </button>
-                  <button
-                    aria-label="Restart game"
-                    disabled={!ready || busy}
-                    onClick={safe(() => gameRef.current.restart())}
-                  >
-                    <RotateCcw size={19} />
-                  </button>
-                  <span className="control-divider" />
-                  <button
-                    aria-label={game.muted ? "Enable sound" : "Mute"}
-                    disabled={!ready || busy}
-                    onClick={() => gameRef.current.mute()}
-                  >
-                    {game.muted ? <VolumeX size={20} /> : <Volume2 size={20} />}
-                  </button>
-                  <button
-                    aria-label="Fullscreen"
-                    onClick={safe(async () => {
-                      try {
-                        if (document.fullscreenElement)
-                          await document.exitFullscreen();
-                        else await stage.current.requestFullscreen();
-                      } catch {
-                        throw new Error(
-                          "Fullscreen is unavailable in this browser. Try opening the game in Chrome.",
-                        );
-                      }
-                    })}
-                  >
-                    <Maximize size={20} />
-                  </button>
-                </div>
-                <p className="player-help">
-                  {busy
-                    ? game.booting
-                      ? "POWERING ON…"
-                      : cartLoading
-                        ? "LOADING CARTRIDGE…"
-                        : "AI IS PLAYTESTING"
-                    : game.testFrame
-                      ? "AI TEST FRAME · PRESS PLAY TO TRY"
-                      : "ARROWS TO MOVE · Z / X TO PLAY"}
-                </p>
               </div>
             </section>
           </main>
