@@ -2,43 +2,30 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   assetSummary,
   decodeAssets,
-  pixel,
   sprite,
   sound,
   music,
   sameSnapshot,
 } from "./pico8/assets.js";
-import palette from "./generated/pico8-palette.js";
-const colors = palette
-  .slice(0, 16)
-  .map((p) => [1, 3, 5].map((i) => parseInt(p.rgb.slice(i, i + 2), 16)));
+import { renderSheet, renderMap } from "./pico8/asset-preview.js";
 function Pixels({ bytes, mode, page = 0, selected, onSelect }) {
   const ref = useRef(null);
   useEffect(() => {
     const context = ref.current.getContext("2d");
-    const image = context.createImageData(128, 128);
-    for (let y = 0; y < 128; y++)
-      for (let x = 0; x < 128; x++) {
-        let color;
-        if (mode === "map") {
-          const tile =
-            bytes[
-              0x2000 +
-                (Math.floor(page / 8) * 16 + (y >> 3)) * 128 +
-                ((page % 8) * 16 + (x >> 3))
-            ];
-          color =
-            tile === 0
-              ? 0
-              : pixel(
-                  bytes,
-                  (tile % 16) * 8 + (x % 8),
-                  Math.floor(tile / 16) * 8 + (y % 8),
-                );
-        } else color = pixel(bytes, x, y);
-        image.data.set([...colors[color], 255], (y * 128 + x) * 4);
-      }
-    context.putImageData(image, 0, 0);
+    const image =
+      mode === "map"
+        ? renderMap(bytes, {
+            x: (page % 8) * 16,
+            y: Math.floor(page / 8) * 16,
+            width: 16,
+            height: 16,
+          })
+        : renderSheet(bytes);
+    context.putImageData(
+      new ImageData(image.rgba, image.width, image.height),
+      0,
+      0,
+    );
     if (mode === "sprites") {
       context.strokeStyle = "#ff77a8";
       context.lineWidth = 1;

@@ -2,6 +2,14 @@
 
 Observation formats, frame identity and evidence limits for the PICO-8 host. The pico8-playtest skill owns the task workflow; consult this reference for a specific observation question. A completed operation or successful compile is not gameplay verification.
 
+## Input sequences and execution evidence
+
+The original press_buttons({frames:30,buttons:2}) still holds one mask. To perform known consecutive inputs, use press_buttons({steps:[{frames:10,buttons:2},{frames:1,buttons:0},{frames:5,buttons:1}]}). Up to 8 steps and 600 total frames are allowed per call. No release frame is inserted between steps; include buttons:0 when a distinct press is needed.
+
+By default each step end returns a PNG. Optional captureFrames:[3,8] selects cumulative offsets from this call's start instead; up to 7 strictly increasing offsets within the total are accepted, and the final frame is always included. captureFrames:[] returns only the final frame. A sequence stops immediately on runtime stop/fault/session replacement/interruption. The first observation header includes execution with total requestedFrames/completedFrames/outcome and the executed steps. Each PNG has its own observation identity and checkpoint {step,afterFrames}; step is 1-based, afterFrames counts actual completed frames from call entry. Later steps after an early stop did not run. A fault may leave the last successfully completed frame; it is not a screenshot of the faulting draw.
+
+Frame cpuInstructions and slowFrame are the current WASM runtime's measurements for that completed frame. They are not aggregate batch statistics or official PICO-8 CPU percentages. Load/reset also report their startup advance progress. Observation alone never executes another frame. Batch only inputs known in advance; use separate calls when the next action depends on what happens.
+
 | Feature | Useful evidence |
 | --- | --- |
 | Sprite | Correct pixels, transparency, animation and movement alignment |

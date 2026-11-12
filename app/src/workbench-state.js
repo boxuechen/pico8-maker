@@ -65,6 +65,19 @@ const toolLabels = {
 };
 export function describeTool(tool) {
   const args = tool?.args ?? {};
+  if (tool?.toolName === "press_buttons" && Array.isArray(args.steps))
+    return {
+      label: "Played an input sequence",
+      meta: `${args.steps.length} steps · ${args.steps.reduce((n, s) => n + (s.frames ?? 0), 0)}f`,
+    };
+  if (tool?.toolName === "read_assets" && ["png", "both"].includes(args.format))
+    return {
+      label:
+        args.kind === "map"
+          ? "Previewed map resources"
+          : "Previewed sprite resources",
+      meta: args.version === "committed" ? "committed" : "draft",
+    };
   if (tool?.toolName === "press_buttons")
     return {
       label: args.buttons

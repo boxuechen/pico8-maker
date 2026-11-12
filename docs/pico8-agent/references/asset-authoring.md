@@ -34,6 +34,10 @@ Music ids: 0–63, exactly four channels containing an SFX id or null (disabled)
 
 ## Reads and persistence
 
-read_assets({kind:"sprite",id:1,count:2}) reads consecutive sprites. SFX reads allow at most 4 slots per call, other slot reads at most 16. read_assets({kind:"map",x:0,y:0,width:16,height:16}) reads a room. All reads reflect the shared working draft. Asset changes also invalidate other conversations' historical context. Undo restores code and resources together.
+read_assets({kind:"sprite",id:1,count:2}) reads consecutive sprites. SFX reads allow at most 4 slots per call, other slot reads at most 16. read_assets({kind:"map",x:0,y:0,width:16,height:16}) reads a room. Reads default to the shared working draft; version:"committed" selects the last playable resources and fails if none exist. Asset changes also invalidate other conversations' historical context. Undo restores code and resources together.
+
+format defaults to "data". For sprite/map reads, format:"png" returns a visual preview with metadata; "both" adds the original data. For example read_assets({kind:"sprite",id:1,count:4,format:"both"}) returns a numbered sprite atlas with flags and image-region metadata. Map PNGs have a one-pixel grid and report the tile origin/extent. A resourceView identifies draft/committed and committed cartRevision. These previews use base palette colors, show color 0 as black, and treat map tile 0 as empty; they do not apply runtime palette, transparency, camera or flag filtering. Reading a preview does not start a Worker, pause playback, advance frames or commit edits. Test integration separately when needed. SFX/music have data reads only.
+
+edit_assets reports changed slots/fields and changed map regions/cell counts based on the final batch result, plus draft/committed status. Overlapping map regions can report the same cell; their counts should not be added as a unique-cell total. A net no-op has changed:false and an empty changes list. Invalid batches still apply nothing.
 
 Standalone Lua recipes demonstrate procedural initialization for portable examples. In this workbench, prefer native tools for static data instead of copying their initialization helpers into every game. Do not automatically extract resources from arbitrary running Lua: it may generate or modify them dynamically.

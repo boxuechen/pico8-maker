@@ -20,6 +20,18 @@ const kind = (name) => ({ type: "string", enum: [name] });
 const flag = { type: "boolean" };
 export const readAssetsSchema = object(
   {
+    version: {
+      type: "string",
+      enum: ["draft", "committed"],
+      description:
+        "Defaults to draft. committed requires a saved playable version; neither reads live RAM.",
+    },
+    format: {
+      type: "string",
+      enum: ["data", "png", "both"],
+      description:
+        "Defaults to data. png/both require kind sprite with id/count or kind map with a region. PNG previews use authored base colors, not live display remapping.",
+    },
     kind: {
       type: "string",
       enum: ["sprite", "map", "sfx", "music"],

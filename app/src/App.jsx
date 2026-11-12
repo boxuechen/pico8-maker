@@ -740,16 +740,17 @@ function Studio({ store }) {
       );
     if (game.activeCart) return;
     const url = rgbaToUrl(frame.rgba);
+    const captured = game.testFrames?.length ? game.testFrames : [frame];
     setFrames((list) =>
       [
         ...list,
-        {
-          key: `${Date.now()}-${list.length}`,
-          url,
-          rgba: frame.rgba,
-          frameId: frame.frameId,
+        ...captured.map((sample, i) => ({
+          key: `${Date.now()}-${list.length}-${i}`,
+          url: sample === frame ? url : rgbaToUrl(sample.rgba),
+          rgba: sample.rgba,
+          frameId: sample.frameId,
           revision: game.revision,
-        },
+        })),
       ].slice(-18),
     );
     setLabel(url);
@@ -1054,7 +1055,9 @@ function Studio({ store }) {
               : ["neutral", "PRESS PLAY"];
   const readout = running
     ? pressing
-      ? `input ${formatButtons(pressing.buttons)} · ${pressing.frames ?? "?"} frames`
+      ? Array.isArray(pressing.steps)
+        ? `input sequence · ${pressing.steps.length} steps · ${pressing.steps.reduce((n, s) => n + (s.frames ?? 0), 0)} frames`
+        : `input ${formatButtons(pressing.buttons)} · ${pressing.frames ?? "?"} frames`
       : tool
         ? describeTool(tool).label.toLowerCase()
         : "thinking…"

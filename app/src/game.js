@@ -1,4 +1,3 @@
-import { capabilities } from "./pico8/capabilities.js";
 import {
   observationOptions,
   observationText,
@@ -10,11 +9,14 @@ import {
   sameSnapshot,
   readAssets,
   editAssets,
+  decodeAssets,
 } from "./pico8/assets.js";
 import { downloadCart, cartBytes } from "./pico8/cart.js";
 import { CartWorkspace } from "./pico8/workspace.js";
 import { readSource } from "./pico8/source-read.js";
 import { sourceBudget } from "./pico8/source-budget.js";
+import { inputPlan, runInputs } from "./pico8/input-sequence.js";
+import { assetPreview, assetChanges } from "./pico8/asset-preview.js";
 
 export class Game {
   constructor(onChange, { versions, revision, draft, onSave, onDraft } = {}) {
@@ -38,6 +40,7 @@ export class Game {
     this.queue = Promise.resolve();
     this.state = "loading";
     this.testFrame = null;
+    this.testFrames = [];
     this.muted = false;
   }
   get source() {
@@ -87,6 +90,7 @@ export class Game {
       canUndo: this.versions.length > 1,
       revision: this.revision,
       testFrame: this.testFrame,
+      testFrames: this.testFrame ? this.testFrames : null,
       muted: this.muted,
       activeCart: this.activeCart ?? null,
       booting: this.booting ?? false,
@@ -323,26 +327,75 @@ export class Game {
         ],
       };
     }
-    if (action === "read_assets")
-      return {
-        output: [
-          {
-            type: "text",
-            text: JSON.stringify(readAssets(this.draft.assets, args)),
+    if (action === "read_assets") {
+      const { version = "draft", format = "data", ...query } = args;
+      if (
+        !["draft", "committed"].includes(version) ||
+        !["data", "png", "both"].includes(format)
+      )
+        throw new Error(
+          "read_assets requires version draft/committed and format data/png/both",
+        );
+      if (version === "committed" && !this.hasGame)
+        throw new Error("No committed resource version exists");
+      if (format !== "data" && !["sprite", "map"].includes(query.kind))
+        throw new Error(
+          "Resource PNG requires kind sprite or map with its slot/region arguments",
+        );
+      const assets =
+        version === "draft" ? this.draft.assets : this.snapshot.assets;
+      const data = readAssets(assets, query);
+      const output =
+        format === "png" ? [] : [{ type: "text", text: JSON.stringify(data) }];
+      const preview =
+        format === "data"
+          ? null
+          : assetPreview(decodeAssets(assets), query, data);
+      output.push({
+        type: "text",
+        text: JSON.stringify({
+          resourceView: {
+            version,
+            cartRevision: version === "committed" ? this.revision : null,
+            ...(preview
+              ? {
+                  preview: {
+                    ...preview.description,
+                    width: preview.image.width,
+                    height: preview.image.height,
+                  },
+                }
+              : {}),
           },
-        ],
-      };
+          cart: this.cartStatus(),
+        }),
+      });
+      if (preview) output.push(this.image(preview.image));
+      return { output };
+    }
     if (action === "edit_assets") {
-      const assets = editAssets(this.draft.assets, args.edits);
+      const before = this.draft.assets;
+      const assets = editAssets(before, args.edits);
       const changed = assets !== this.draft.assets;
       this.setWorking({ ...this.draft, assets });
       return {
         output: [
           {
             type: "text",
-            text: changed
-              ? "Resource draft updated. Call load_game to commit source and resources together."
-              : "Resources unchanged.",
+            text:
+              JSON.stringify({
+                changed,
+                changes: assetChanges(
+                  decodeAssets(before),
+                  decodeAssets(assets),
+                  args.edits,
+                ),
+                cart: this.cartStatus(),
+              }) +
+              "\n" +
+              (changed
+                ? "Resource draft updated. Call load_game to commit source and resources together."
+                : "Resources unchanged."),
           },
         ],
       };
@@ -352,9 +405,11 @@ export class Game {
         "No game has been loaded yet. Write main.lua and call load_game first.",
       );
     const options = observationOptions(action === "observe_game" ? args : {});
+    const plan = action === "press_buttons" ? inputPlan(args) : null;
     await this.ensureWorker();
     await this.player.pause();
     let observation;
+    let execution;
     let note = "";
     if (action === "load_game") {
       if (args.source !== undefined && typeof args.source !== "string")
@@ -368,12 +423,16 @@ export class Game {
           "main.lua is empty. Write game source before loading it.",
         );
       observation = await this.rpc("load", { cart: cartBytes(snapshot) });
-      if (observation.state !== "faulted")
-        observation = (await this.rpc("advance", { frames: 1, buttons: 0 }))
-          .observation;
+      if (observation.state !== "faulted") {
+        ({ observation, ...execution } = await this.rpc("advance", {
+          frames: 1,
+          buttons: 0,
+        }));
+      }
       if (observation.state === "faulted") {
         const result = this.output({
           ...observation,
+          execution,
           cart: this.cartStatus("failed-draft"),
         });
         if (this.hasGame)
@@ -410,28 +469,52 @@ export class Game {
         note = `\nCommitted as version ${this.revision}.`;
       }
     } else if (action === "press_buttons") {
-      if (
-        !Number.isInteger(args.frames) ||
-        args.frames < 1 ||
-        args.frames > capabilities.maxInputFrames
-      )
-        throw new Error(`frames 必须为 1–${capabilities.maxInputFrames}`);
-      if (
-        !Number.isInteger(args.buttons) ||
-        args.buttons < 0 ||
-        args.buttons > 63
-      )
-        throw new Error("buttons 必须为 0–63");
-      observation = (await this.rpc("advance", args)).observation;
+      const run = await runInputs(
+        plan,
+        (args) => this.rpc("advance", args),
+        signal,
+      );
+      this.testFrames = run.captures.flatMap((c) =>
+        c.observation.frame ? [c.observation.frame] : [],
+      );
+      this.testFrame = run.observation.frame;
+      this.changed();
+      const cart = this.cartStatus(
+        run.execution.outcome === "session-replaced"
+          ? "runtime-replaced"
+          : "committed",
+      );
+      const output = run.captures.flatMap(
+        (c, i) =>
+          this.output({
+            ...c.observation,
+            cart,
+            checkpoint: c.checkpoint,
+            ...(i === 0 ? { execution: run.execution } : {}),
+          }).output,
+      );
+      return {
+        output,
+        isError: ["faulted", "interrupted", "session-replaced"].includes(
+          run.execution.outcome,
+        ),
+      };
     } else if (action === "reset_game") {
       await this.rpc("load", { cart: cartBytes(this.snapshot) });
-      observation = (await this.rpc("advance", { frames: 1, buttons: 0 }))
-        .observation;
+      ({ observation, ...execution } = await this.rpc("advance", {
+        frames: 1,
+        buttons: 0,
+      }));
     } else observation = await this.rpc("observe");
-    if (observation.frame) this.testFrame = observation.frame;
+    this.testFrame = observation.frame;
+    this.testFrames = observation.frame ? [observation.frame] : [];
     this.changed();
     const result = this.output(
-      { ...observation, cart: this.cartStatus("committed") },
+      {
+        ...observation,
+        ...(execution ? { execution } : {}),
+        cart: this.cartStatus("committed"),
+      },
       options,
     );
     if (note) result.output[0].text += note;
@@ -447,23 +530,24 @@ export class Game {
     ];
     if (frame && options.format !== "ascii") {
       const { width, height } = options.region;
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      canvas
-        .getContext("2d")
-        .putImageData(
-          new ImageData(cropRgba(frame, options.region), width, height),
-          0,
-          0,
-        );
-      output.push({
-        type: "image",
-        data: canvas.toDataURL("image/png").split(",")[1],
-        mimeType: "image/png",
-      });
+      output.push(
+        this.image({ rgba: cropRgba(frame, options.region), width, height }),
+      );
     }
     return { output, isError: observation.state === "faulted" };
+  }
+  image({ rgba, width, height }) {
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    canvas
+      .getContext("2d")
+      .putImageData(new ImageData(rgba, width, height), 0, 0);
+    return {
+      type: "image",
+      data: canvas.toDataURL("image/png").split(",")[1],
+      mimeType: "image/png",
+    };
   }
   async dispose() {
     this.disposed = true;

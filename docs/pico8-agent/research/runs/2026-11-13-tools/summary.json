@@ -1,0 +1,312 @@
+{
+  "schemaVersion": 1,
+  "report": ".cache/evaluations/skills-750eb327-8f9f-4320-8ef5-1e22ca3e903a/report.json",
+  "reportSha256": "6c7eb9ae76cf5416c82244be9cd16b997af4981e4be0db7146a326ef7e503331",
+  "model": {
+    "provider": "deepseek",
+    "model": "deepseek-flash",
+    "thinkingLevel": "high"
+  },
+  "knowledgeVersion": "pico8-files-v1-502636dc0427b59b",
+  "startedAt": "2026-11-12T16:59:10.011Z",
+  "finishedAt": "2026-11-12T17:03:35.998Z",
+  "totals": {
+    "tools": 100,
+    "failedTools": 1,
+    "inputCalls": 28,
+    "inputSteps": 54,
+    "resourcePreviews": 4
+  },
+  "runs": [
+    {
+      "id": "create-1",
+      "status": "done",
+      "elapsedMs": 41515,
+      "automaticChecksPass": true,
+      "checks": {
+        "naturalCompletion": true,
+        "selectedSkills": true,
+        "actualInput": true,
+        "committedDraft": true
+      },
+      "tools": 7,
+      "failedTools": 0,
+      "inputCalls": 2,
+      "inputSteps": 8,
+      "resourcePreviews": 0,
+      "skillReads": [
+        "pico8-create",
+        "pico8-playtest"
+      ],
+      "sourceSha256": "bb331736d891f992d6ea895a81594074ccbfb8605d30563138d04dcbb000f20a",
+      "resourcesSha256": "e003dd13f75baf94bf01554ec326fcad5a92372c913a8946b06449e4ddd90e15"
+    },
+    {
+      "id": "edit-1",
+      "status": "done",
+      "elapsedMs": 35248,
+      "automaticChecksPass": true,
+      "checks": {
+        "naturalCompletion": true,
+        "selectedSkills": true,
+        "actualInput": true,
+        "preservedResources": true,
+        "preservedCredit": true,
+        "committedDraft": true,
+        "speedTwoPixels": true,
+        "noRuntimeFault": true
+      },
+      "tools": 13,
+      "failedTools": 0,
+      "inputCalls": 4,
+      "inputSteps": 7,
+      "resourcePreviews": 0,
+      "skillReads": [
+        "pico8-edit",
+        "pico8-playtest"
+      ],
+      "sourceSha256": "4d3244dc9a21910f36e4e984ab27810e5e20eeb6f328c5c46a15c5fb1fd4d89a",
+      "resourcesSha256": "a9f9a2d1c54e58915f42ef57759c9d5f7dc695da87d8138fcba59582d6e47cd0"
+    },
+    {
+      "id": "assets-1",
+      "status": "done",
+      "elapsedMs": 10359,
+      "automaticChecksPass": true,
+      "checks": {
+        "naturalCompletion": true,
+        "selectedSkills": true,
+        "sourceUnchanged": true,
+        "onlyRequestedResourceChanged": true,
+        "committedDraft": true
+      },
+      "tools": 8,
+      "failedTools": 0,
+      "inputCalls": 0,
+      "inputSteps": 0,
+      "resourcePreviews": 2,
+      "skillReads": [
+        "pico8-assets"
+      ],
+      "sourceSha256": "51487954da9cbe88a4b4be329edac37a8dca1dae948b98f1a79ed2fae63673e6",
+      "resourcesSha256": "f127a7086171ada8657d4b3a7b6cd5a40ce1486147a888904ff30abcd740a277"
+    },
+    {
+      "id": "playtest-1",
+      "status": "done",
+      "elapsedMs": 20222,
+      "automaticChecksPass": true,
+      "checks": {
+        "naturalCompletion": true,
+        "selectedSkills": true,
+        "preservedCart": true,
+        "noAuthoring": true,
+        "actualInput": true,
+        "committedDraft": true
+      },
+      "tools": 11,
+      "failedTools": 0,
+      "inputCalls": 6,
+      "inputSteps": 8,
+      "resourcePreviews": 0,
+      "skillReads": [
+        "pico8-playtest"
+      ],
+      "sourceSha256": "51487954da9cbe88a4b4be329edac37a8dca1dae948b98f1a79ed2fae63673e6",
+      "resourcesSha256": "a9f9a2d1c54e58915f42ef57759c9d5f7dc695da87d8138fcba59582d6e47cd0"
+    },
+    {
+      "id": "explain-1",
+      "status": "done",
+      "elapsedMs": 4274,
+      "automaticChecksPass": true,
+      "checks": {
+        "naturalCompletion": true,
+        "selectedSkills": true,
+        "preservedCart": true,
+        "noAuthoring": true,
+        "noGameOperation": true
+      },
+      "tools": 2,
+      "failedTools": 0,
+      "inputCalls": 0,
+      "inputSteps": 0,
+      "resourcePreviews": 0,
+      "skillReads": [],
+      "sourceSha256": "51487954da9cbe88a4b4be329edac37a8dca1dae948b98f1a79ed2fae63673e6",
+      "resourcesSha256": "a9f9a2d1c54e58915f42ef57759c9d5f7dc695da87d8138fcba59582d6e47cd0"
+    },
+    {
+      "id": "compact-1",
+      "status": "done",
+      "elapsedMs": 20647,
+      "automaticChecksPass": true,
+      "checks": {
+        "naturalCompletion": true,
+        "selectedSkills": true,
+        "actualInput": true,
+        "preservedResources": true,
+        "preservedCredit": true,
+        "committedDraft": true,
+        "speedTwoPixels": true,
+        "noRuntimeFault": true
+      },
+      "tools": 9,
+      "failedTools": 0,
+      "inputCalls": 3,
+      "inputSteps": 4,
+      "resourcePreviews": 0,
+      "skillReads": [
+        "pico8-edit",
+        "pico8-playtest"
+      ],
+      "sourceSha256": "4d3244dc9a21910f36e4e984ab27810e5e20eeb6f328c5c46a15c5fb1fd4d89a",
+      "resourcesSha256": "a9f9a2d1c54e58915f42ef57759c9d5f7dc695da87d8138fcba59582d6e47cd0"
+    },
+    {
+      "id": "create-2",
+      "status": "done",
+      "elapsedMs": 61831,
+      "automaticChecksPass": true,
+      "checks": {
+        "naturalCompletion": true,
+        "selectedSkills": true,
+        "actualInput": true,
+        "committedDraft": true
+      },
+      "tools": 11,
+      "failedTools": 1,
+      "inputCalls": 2,
+      "inputSteps": 8,
+      "resourcePreviews": 0,
+      "skillReads": [
+        "pico8-create",
+        "pico8-playtest"
+      ],
+      "sourceSha256": "0d0d9317963288d6729193c12efd2fb004ddf9585f9d4c251ad94b6ce30f59b3",
+      "resourcesSha256": "83bea24cc3164e2c103bf88112629beeb58bfb9eb267f06c1562e566e54ccf30"
+    },
+    {
+      "id": "edit-2",
+      "status": "done",
+      "elapsedMs": 15727,
+      "automaticChecksPass": true,
+      "checks": {
+        "naturalCompletion": true,
+        "selectedSkills": true,
+        "actualInput": true,
+        "preservedResources": true,
+        "preservedCredit": true,
+        "committedDraft": true,
+        "speedTwoPixels": true,
+        "noRuntimeFault": true
+      },
+      "tools": 10,
+      "failedTools": 0,
+      "inputCalls": 3,
+      "inputSteps": 6,
+      "resourcePreviews": 0,
+      "skillReads": [
+        "pico8-edit",
+        "pico8-playtest"
+      ],
+      "sourceSha256": "4d3244dc9a21910f36e4e984ab27810e5e20eeb6f328c5c46a15c5fb1fd4d89a",
+      "resourcesSha256": "a9f9a2d1c54e58915f42ef57759c9d5f7dc695da87d8138fcba59582d6e47cd0"
+    },
+    {
+      "id": "assets-2",
+      "status": "done",
+      "elapsedMs": 11382,
+      "automaticChecksPass": true,
+      "checks": {
+        "naturalCompletion": true,
+        "selectedSkills": true,
+        "sourceUnchanged": true,
+        "onlyRequestedResourceChanged": true,
+        "committedDraft": true
+      },
+      "tools": 9,
+      "failedTools": 0,
+      "inputCalls": 0,
+      "inputSteps": 0,
+      "resourcePreviews": 2,
+      "skillReads": [
+        "pico8-assets"
+      ],
+      "sourceSha256": "51487954da9cbe88a4b4be329edac37a8dca1dae948b98f1a79ed2fae63673e6",
+      "resourcesSha256": "f127a7086171ada8657d4b3a7b6cd5a40ce1486147a888904ff30abcd740a277"
+    },
+    {
+      "id": "playtest-2",
+      "status": "done",
+      "elapsedMs": 15917,
+      "automaticChecksPass": true,
+      "checks": {
+        "naturalCompletion": true,
+        "selectedSkills": true,
+        "preservedCart": true,
+        "noAuthoring": true,
+        "actualInput": true,
+        "committedDraft": true
+      },
+      "tools": 9,
+      "failedTools": 0,
+      "inputCalls": 5,
+      "inputSteps": 7,
+      "resourcePreviews": 0,
+      "skillReads": [
+        "pico8-playtest"
+      ],
+      "sourceSha256": "51487954da9cbe88a4b4be329edac37a8dca1dae948b98f1a79ed2fae63673e6",
+      "resourcesSha256": "a9f9a2d1c54e58915f42ef57759c9d5f7dc695da87d8138fcba59582d6e47cd0"
+    },
+    {
+      "id": "explain-2",
+      "status": "done",
+      "elapsedMs": 3284,
+      "automaticChecksPass": true,
+      "checks": {
+        "naturalCompletion": true,
+        "selectedSkills": true,
+        "preservedCart": true,
+        "noAuthoring": true,
+        "noGameOperation": true
+      },
+      "tools": 1,
+      "failedTools": 0,
+      "inputCalls": 0,
+      "inputSteps": 0,
+      "resourcePreviews": 0,
+      "skillReads": [],
+      "sourceSha256": "51487954da9cbe88a4b4be329edac37a8dca1dae948b98f1a79ed2fae63673e6",
+      "resourcesSha256": "a9f9a2d1c54e58915f42ef57759c9d5f7dc695da87d8138fcba59582d6e47cd0"
+    },
+    {
+      "id": "compact-2",
+      "status": "done",
+      "elapsedMs": 25315,
+      "automaticChecksPass": true,
+      "checks": {
+        "naturalCompletion": true,
+        "selectedSkills": true,
+        "actualInput": true,
+        "preservedResources": true,
+        "preservedCredit": true,
+        "committedDraft": true,
+        "speedTwoPixels": true,
+        "noRuntimeFault": true
+      },
+      "tools": 10,
+      "failedTools": 0,
+      "inputCalls": 3,
+      "inputSteps": 6,
+      "resourcePreviews": 0,
+      "skillReads": [
+        "pico8-edit",
+        "pico8-playtest"
+      ],
+      "sourceSha256": "4d3244dc9a21910f36e4e984ab27810e5e20eeb6f328c5c46a15c5fb1fd4d89a",
+      "resourcesSha256": "a9f9a2d1c54e58915f42ef57759c9d5f7dc695da87d8138fcba59582d6e47cd0"
+    }
+  ]
+}

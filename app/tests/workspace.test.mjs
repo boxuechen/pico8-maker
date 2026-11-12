@@ -113,7 +113,12 @@ function scriptedGame(options) {
         ? { state: "faulted", diagnostics: [] }
         : ok;
     }
-    return { observation: ok };
+    return {
+      observation: ok,
+      requestedFrames: args.frames,
+      completedFrames: args.frames,
+      outcome: "completed",
+    };
   };
   game.output = (observation) => ({
     output: [{ type: "text", text: observation.state }],

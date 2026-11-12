@@ -107,6 +107,14 @@ export function transcriptMetrics(entries) {
     inputs: successful
       .filter((c) => c.name === "press_buttons")
       .map((c) => c.arguments),
+    inputSteps: successful
+      .filter((c) => c.name === "press_buttons")
+      .reduce((n, c) => n + (c.arguments.steps?.length ?? 1), 0),
+    resourcePreviews: successful.filter(
+      (c) =>
+        c.name === "read_assets" &&
+        ["png", "both"].includes(c.arguments.format),
+    ).length,
     operations: calls.map((c) => c.name),
     finalText: (assistant.at(-1)?.content ?? [])
       .filter((p) => p.type === "text")

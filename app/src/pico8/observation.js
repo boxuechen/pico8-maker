@@ -119,6 +119,8 @@ export function observationText(observation, options) {
       ? {
           frameId: frame.frameId,
           targetFps: frame.targetFps,
+          cpuInstructions: frame.cpuInstructions,
+          slowFrame: frame.slowFrame,
           width: frame.width,
           height: frame.height,
         }

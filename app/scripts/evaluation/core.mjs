@@ -98,6 +98,13 @@ export class EvaluationGame extends Game {
   cancelTests() {
     /* guest execution is instruction-bounded; disposal follows abort */
   }
+  image({ rgba, width, height }) {
+    return {
+      type: "image",
+      mimeType: "image/png",
+      data: png(rgba, width, height).toString("base64"),
+    };
+  }
   output(observation, options = observationOptions()) {
     const output = [
       { type: "text", text: observationText(observation, options) },

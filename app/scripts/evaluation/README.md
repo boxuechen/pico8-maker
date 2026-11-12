@@ -4,6 +4,8 @@ Open `/evaluation.html` on the same local development origin used for the main a
 
 `skills-browser.js` runs the cases from `skills-cases.mjs`; the dev-only `skills-recorder.mjs` accepts same-origin loopback POSTs and archives reports plus source, knowledge, evaluator and dependency-lock snapshots in `.cache/evaluations/skills-<id>/`. Production builds do not include this page or archive endpoint. The harness checks successful skill reads, scope/resource preservation, actual inputs, natural completion and exact fixture movement pixels. Create-game checks require separate gameplay review. Compaction uses declared synthetic history, real provider summarization and transcript restoration. The evaluator alone has a 180-second / 40-tool budget per attempt; the interactive app remains uncapped.
 
+Metrics now distinguish input tool calls from the number of steps they contain and count resource PNG reads. The [tool-capability regression](../../../docs/pico8-agent/research/runs/2026-11-13-tools/README.md) uses the same six tasks after adding batched input/checkpoints and resource previews. Compare these measurements as descriptive samples, not a controlled performance benchmark.
+
 Run `npm run test:skills` from `app/` for deterministic evaluator tests. The [2026-11-13 report](../../../docs/pico8-agent/research/runs/2026-11-13-skills/README.md) records two full DeepSeek batches, including the routing failures that motivated the final prompt change. Preserve raw attempts; do not selectively rerun failures or silently repair generated games.
 
 # Fixed-task knowledge-pack pilot
