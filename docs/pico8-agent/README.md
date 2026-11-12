@@ -20,6 +20,8 @@ Playtest routes persist with the cart and are read on demand through `/cart/play
 
 Create starts with a repeated action, a player choice/skill or expressive payoff, and a small playable loop. Inspect its actual frame and input feedback before expanding content, then finish the requested scope. The normal start, completion and retry must be verified for a short finite game; seeded-progress checks are separate evidence. Focused edits retain their narrower verification scope. The optional design guide contains compact patterns and failure signs, not mandatory features or an automated fun score.
 
+Feedback edits start from an observable problem and compare the affected moment. The app retains one snapshot from before the latest modifying request for preview comparison; internal commits and read-only requests do not replace it. Comparison playback leaves the draft, export and test Worker on the current cart.
+
 Source reads and runtime observations carry advisory warnings for decimal literal magnitudes greater than 32768, including likely oversized distance sentinels. The shared token scanner excludes comments, strings, identifiers and hex/binary bit patterns. Advice is bounded to four locations plus an omitted count; it does not rewrite or reject the cart. This is a lexical check, not a parser or overflow proof: it does not evaluate expressions, infer material types, or resolve the +/-32768 boundary.
 
 Input validation names invalid fields and cumulative checkpoint bounds before any input executes. Native edit matching remains atomic; a missing or ambiguous block explains that the batch was not applied and asks for a fresh source read. The edit tool retains its upstream same-original-source and non-overlap contract.

@@ -46,6 +46,8 @@ Checks inspect actual WASM frame pixels, not source substrings or the model's fi
 
 For manual version-view QA, run `npm run test:model`, use an isolated browser origin with custom model `fixture-draft`, Base URL `http://127.0.0.1:8788/v1` and a dummy key. This creates a green-sprite committed cart and a pink-sprite draft with invalid Lua. Confirm that Code and Resources share their version selection, display the matching source/resources, and keep the failed draft inspectable while Preview/export retain the committed cart. The fixture is a local scripted response, not a real model test.
 
+For feedback-preview QA use `fixture-comparison` on an isolated origin with the same local mock endpoint. The first request makes a green BEFORE scene; the second makes an intermediate blue scene and a final pink AFTER scene. Confirm the selector compares green to pink, export remains current, reload retains the comparison, and a third explanation-only request restores the current preview without replacing the baseline. This is UI integration coverage, not a real-model quality result.
+
 ## Recorded results
 
 | Batch | Saved configuration | Result |

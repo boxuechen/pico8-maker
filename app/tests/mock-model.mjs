@@ -93,7 +93,16 @@ const server = http.createServer(async (req, res) => {
       if (!offered.has(name))
         throw new Error(`Missing registered game tool: ${name}`);
     const resourceFixture = body.model === "fixture-resources";
-    const toolResults = body.messages.filter((m) => m.role === "tool");
+    const comparisonFixture = body.model === "fixture-comparison";
+    const isRequest = (m) =>
+      m.role === "user" &&
+      (typeof m.content === "string" ||
+        m.content?.every((p) => p.type === "text"));
+    const round = body.messages.filter(isRequest).length;
+    const messages = comparisonFixture
+      ? body.messages.slice(body.messages.findLastIndex(isRequest))
+      : body.messages;
+    const toolResults = messages.filter((m) => m.role === "tool");
     const step = toolResults.length;
     const first = toolResults[0]?.content;
     const source =
@@ -106,8 +115,29 @@ const server = http.createServer(async (req, res) => {
     const observationFixture = body.model === "fixture-observation";
     // Repair through the workspace: targeted edit, then load the edited file.
     const editFixture = body.model === "fixture-edit";
-    const operations =
-      body.model === "fixture-draft"
+    const operations = comparisonFixture
+      ? round > 2
+        ? []
+        : [
+            ...(round === 1
+              ? [[11, "BEFORE"]]
+              : [
+                  [12, "INTERMEDIATE"],
+                  [14, "AFTER"],
+                ]
+            ).map(([color, label]) => [
+              "load_game",
+              {
+                source: `function _draw() cls(1) circfill(64,64,14,${color}) print("${label}",40,90,7) end`,
+              },
+            ]),
+            ["reset_game", { purpose: "normal" }],
+            [
+              "press_buttons",
+              { frames: 1, buttons: 16, tap: true, capture: true },
+            ],
+          ]
+      : body.model === "fixture-draft"
         ? [
             [
               "edit_assets",
@@ -290,7 +320,7 @@ const server = http.createServer(async (req, res) => {
         tool_calls: [
           {
             index: 0,
-            id: `call_${step}`,
+            id: comparisonFixture ? `call_${round}_${step}` : `call_${step}`,
             type: "function",
             function: { name, arguments: JSON.stringify(args) },
           },

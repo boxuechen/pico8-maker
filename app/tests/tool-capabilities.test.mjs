@@ -30,6 +30,55 @@ function gameFor(t, snapshot = fixtureSnapshot()) {
   return g;
 }
 
+test("feedback comparison uses the request baseline and never changes the test cart or export", async (t) => {
+  const original = emptySnapshot("function _draw() cls(12) end");
+  const g = gameFor(t, original),
+    saved = [];
+  g.onComparison = (value) => saved.push(value);
+  g.player.start = async () => g.live.advance({ frames: 1 });
+  g.beginRequest();
+  await g.execute("load_game", { source: "function _draw() cls(8) end" });
+  await g.execute("load_game", { source: "function _draw() cls(11) end" });
+  g.endRequest();
+  assert.equal(saved.length, 1);
+  assert.deepEqual(g.comparison.snapshot, original);
+  const current = { ...g.snapshot },
+    testFrame = g.session.observe().frame.rgba.slice(),
+    run = g.playtests.active.id;
+  await g.previewComparison("before");
+  assert.deepEqual(
+    [...g.live.observe().frame.rgba.slice(0, 3)],
+    [41, 173, 255],
+  );
+  assert.deepEqual(g.snapshot, current);
+  assert.deepEqual(g.draft, current);
+  assert.deepEqual(g.session.observe().frame.rgba, testFrame);
+  assert.equal(g.playtests.active.id, run);
+  await g.restoreProject();
+  await g.player.start();
+  assert.deepEqual([...g.live.observe().frame.rgba.slice(0, 3)], [0, 228, 54]);
+  g.beginRequest();
+  g.endRequest(); // An explanation-only request keeps the comparison.
+  assert.deepEqual(g.comparison.snapshot, original);
+  const restored = normalizeCart(newCart({ comparison: g.comparison }));
+  assert.deepEqual(restored.comparison.snapshot, original);
+  g.beginRequest();
+  await g.execute("load_game", { source: "function _draw() cls(7) end" });
+  g.endRequest();
+  assert.deepEqual(g.comparison.snapshot, current);
+});
+
+test("a rejected edit does not replace a saved comparison", async (t) => {
+  const g = gameFor(t);
+  const comparison = { snapshot: emptySnapshot("print(1)"), revision: 1 };
+  g.comparison = comparison;
+  g.beginRequest();
+  const failed = await g.execute("load_game", { source: "not valid lua!" });
+  g.endRequest();
+  assert.equal(failed.isError, true);
+  assert.equal(g.comparison, comparison);
+});
+
 test("tap inputs release repeated buttons and capture logical step ends in the real runtime", async (t) => {
   const g = gameFor(
     t,

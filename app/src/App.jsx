@@ -610,7 +610,8 @@ function Studio({ store }) {
   const [cartLoading, setCartLoading] = useState(false);
   const cartLock = useRef(false);
   const running = chat.isRunning || sending;
-  const busy = running || cartLoading || game.booting || switching;
+  const busy =
+    running || cartLoading || game.booting || game.previewLoading || switching;
   useEffect(() => {
     let disposed = false;
     const g = new Game(
@@ -626,6 +627,8 @@ function Studio({ store }) {
         draft: project.current.workingDraft,
         playtests: project.current.playtests,
         onPlaytests: (playtests) => persist({ playtests }),
+        comparison: project.current.comparison,
+        onComparison: (comparison) => persist({ comparison }),
         onSave: (versions, revision) =>
           persist({ versions, revision, savedRevision: null }),
         onDraft: (text) => persist({ workingDraft: text }),
@@ -855,7 +858,6 @@ function Studio({ store }) {
     });
     runtime.thread.composer.setText("");
     try {
-      await gameRef.current.restoreProject();
       await agentRef.current.send(text);
     } catch (e) {
       setError(readableError(e, config.apiKey));
@@ -938,6 +940,7 @@ function Studio({ store }) {
           next.revision,
           next.workingDraft,
           next.playtests,
+          next.comparison,
         );
         await connectAgent(activeSession(next));
         setInWorkbench(enter);
@@ -1042,7 +1045,9 @@ function Studio({ store }) {
   const version = game.hasGame ? inspectionVersion : "draft";
   const inspected = version === "committed" ? game.snapshot : game.draft;
   const meterSource =
-    view === "preview" ? (game.source ?? "") : inspected.source;
+    view === "preview"
+      ? (game.previewSource ?? game.source ?? "")
+      : inspected.source;
   const tokens = useMemo(() => countTokens(meterSource), [meterSource]);
   const versionProps = {
     value: version,
@@ -1499,6 +1504,25 @@ function Studio({ store }) {
                   </span>
                   <span className="readout">{readout}</span>
                   {hint && <span className="preview-hint">{hint}</span>}
+                  {view === "preview" && game.comparisonRevision != null && (
+                    <select
+                      className="preview-version"
+                      aria-label="Preview version"
+                      title="Switching versions restarts the preview. Export uses the current cart."
+                      value={game.previewVersion ?? "current"}
+                      disabled={busy}
+                      onChange={(e) =>
+                        safe(() =>
+                          gameRef.current.previewComparison(e.target.value),
+                        )()
+                      }
+                    >
+                      <option value="current">Current v{game.revision}</option>
+                      <option value="before">
+                        Before feedback v{game.comparisonRevision}
+                      </option>
+                    </select>
+                  )}
                   <WorkspaceViewSwitch
                     view={view}
                     onView={setView}

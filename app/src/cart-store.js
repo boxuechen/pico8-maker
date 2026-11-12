@@ -19,6 +19,7 @@ export function newCart(patch = {}) {
     contentVersion: 0,
     versions: [],
     playtests: [],
+    comparison: null,
     revision: 0,
     label: null,
     // Source and resource draft; null means same as the latest complete version.
@@ -50,6 +51,15 @@ export function normalizeCart(data) {
   const cart = { ...newCart(), ...data };
   cart.versions = cart.versions.slice(-12);
   cart.playtests = normalizePlaytests(cart.playtests);
+  cart.comparison =
+    validSnapshot(cart.comparison?.snapshot) &&
+    Number.isInteger(cart.comparison.revision) &&
+    cart.comparison.revision > 0
+      ? {
+          snapshot: { ...cart.comparison.snapshot },
+          revision: cart.comparison.revision,
+        }
+      : null;
   cart.contentVersion = Math.max(0, Number(cart.contentVersion) || 0);
   cart.sessions = cart.sessions.map((s) => ({
     ...newSession(),

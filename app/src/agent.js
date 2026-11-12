@@ -195,6 +195,8 @@ export class Agent {
   }
   async send(text) {
     if (!this.configured) throw new Error("Please connect a model first.");
+    await this.game.restoreProject?.();
+    this.game.beginRequest?.();
     // A request owns its edits. Freeze the entry baseline so its own tools do
     // not make fresh evidence look like a change by another conversation.
     this.runProjectContext = this.projectContext?.();
@@ -206,6 +208,7 @@ export class Agent {
       return await submission.wait(context);
     } finally {
       this.runProjectContext = undefined;
+      this.game.endRequest?.();
     }
   }
   async abort() {

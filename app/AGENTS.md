@@ -18,6 +18,7 @@
 - Each cart owns shared source, resources, versions and the change counter. Sessions own history, composer drafts and titles. Keep schema version 3 and readable flat transcript recovery. IndexedDB stores carts, with a visible memory fallback. Preserve transcript heads and thinking signatures on restore, with interrupted tool results represented explicitly.
 - Keep only one live Agent for the active session. Block cart and session switches during runs, reject stale callbacks and keep the cart runtime across conversation switches. Restore context without replaying tools. Freeze the shared project baseline per user request and detect intervening changes on the next request.
 - Keep model settings at the composer. Save them in the browser by default with opt-out and clear controls. Send requests directly to the selected provider, keep keys out of transcripts and exports, and preserve Pi native protocol and model capability checks.
+- Preserve one comparison snapshot from before the user's latest modifying request, not an intermediate tool commit. Preview can switch between that snapshot and the current cart without changing source, export or test state. Restore current preview before the next Agent request; retain the comparison across read-only requests.
 - Pi Durable owns retry and compaction. Use provider output/timeout defaults and high thinking clamped to model support. Preserve sequential tools, STOP, bounded WASM execution and model-led completion without a tool-round cap or automatic continuation.
 
 ## Knowledge and tools

@@ -21,11 +21,24 @@ import { Playtests, fingerprint, resetPurpose } from "./pico8/playtests.js";
 export class Game {
   constructor(
     onChange,
-    { versions, revision, draft, onSave, onDraft, playtests, onPlaytests } = {},
+    {
+      versions,
+      revision,
+      draft,
+      onSave,
+      onDraft,
+      playtests,
+      onPlaytests,
+      comparison,
+      onComparison,
+    } = {},
   ) {
     this.onSave = onSave;
     this.onDraft = onDraft;
     this.onChange = onChange;
+    this.comparison = comparison ?? null;
+    this.onComparison = onComparison;
+    this.previewVersion = "current";
     this.onPlaytests = onPlaytests;
     this.playtests = new Playtests(playtests, onPlaytests);
     this.versions = versions?.slice(-12) ?? [];
@@ -101,6 +114,17 @@ export class Game {
       muted: this.muted,
       activeCart: this.activeCart ?? null,
       booting: this.booting ?? false,
+      comparisonRevision:
+        this.comparison &&
+        !sameSnapshot(this.comparison.snapshot, this.snapshot)
+          ? this.comparison.revision
+          : null,
+      previewVersion: this.previewVersion,
+      previewLoading: this.previewLoading ?? false,
+      previewSource:
+        this.previewVersion === "before"
+          ? this.comparison.snapshot.source
+          : this.source,
       ...extra,
     });
   }
@@ -217,15 +241,51 @@ export class Game {
     this.changed();
   }
   async restoreProject() {
-    if (!this.activeCart) return;
+    if (!this.activeCart && this.previewVersion === "current") return;
     if (this.hasGame)
       await this.player.loadCart(cartBytes(this.snapshot), {
         displayName: "my-game.p8",
       });
     else await this.player.pause();
     this.activeCart = null;
+    this.previewVersion = "current";
     this.testFrame = null;
     this.changed();
+  }
+  beginRequest() {
+    this.requestBaseline = this.hasGame
+      ? { snapshot: { ...this.snapshot }, revision: this.revision }
+      : null;
+  }
+  endRequest() {
+    this.requestBaseline = null;
+  }
+  async previewComparison(version) {
+    if (
+      !["current", "before"].includes(version) ||
+      (version === "before" && !this.comparison)
+    )
+      throw new Error("No comparison version is available.");
+    if (this.previewLoading) return;
+    this.previewLoading = true;
+    this.testFrame = null;
+    this.changed();
+    try {
+      const snapshot =
+        version === "before" ? this.comparison.snapshot : this.snapshot;
+      await this.player.loadCart(cartBytes(snapshot));
+      this.previewVersion = version;
+      this.activeCart = null;
+      await this.player.start();
+      this.player.canvas?.focus();
+    } catch (error) {
+      this.previewVersion = "current";
+      await this.player.loadCart(cartBytes(this.snapshot));
+      throw error;
+    } finally {
+      this.previewLoading = false;
+      this.changed();
+    }
   }
   async play() {
     if (!this.hasGame && !this.activeCart) return;
@@ -260,6 +320,9 @@ export class Game {
     this.cancelTests();
     this.activeCart = null;
     this.versions.pop();
+    this.previewVersion = "current";
+    this.comparison = null;
+    this.onComparison?.(null);
     this.revision = Math.max(1, this.revision - 1);
     this.setWorking(this.snapshot);
     this.save();
@@ -271,9 +334,12 @@ export class Game {
     downloadCart(this.snapshot, { title, label });
   }
   /** Swap in another cart's versions without rebooting the player. */
-  async switchProject(versions, revision, draft, playtests) {
+  async switchProject(versions, revision, draft, playtests, comparison) {
     this.cancelTests("Switched to another cart.");
     this.playtests = new Playtests(playtests, this.onPlaytests);
+    this.comparison = comparison ?? null;
+    this.previewVersion = "current";
+    this.requestBaseline = null;
     this.versions = versions?.slice(-12) ?? [];
     this.revision = Math.max(
       revision ?? this.versions.length,
@@ -457,6 +523,12 @@ export class Game {
           throw error;
         }
         this.versions.push(snapshot);
+        if (this.requestBaseline) {
+          this.comparison = this.requestBaseline;
+          this.onComparison?.(this.comparison);
+          this.requestBaseline = null;
+        }
+        this.previewVersion = "current";
         this.versions = this.versions.slice(-12);
         this.revision++;
         this.save();
@@ -526,7 +598,9 @@ export class Game {
         ...observation,
         ...(execution ? { execution } : {}),
         cart: this.cartStatus("committed"),
-        ...(this.playtests.active ? { playtest: this.playtests.summary() } : {}),
+        ...(this.playtests.active
+          ? { playtest: this.playtests.summary() }
+          : {}),
       },
       options,
     );
