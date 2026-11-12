@@ -1,8 +1,10 @@
+import { cartridgeBytes } from "./cartridges.js";
 import { sampleSource, cartBytes } from "./sample.js";
 
 const storageKey = "pico-demo-versions-v1";
 export class Game {
-  constructor(onChange) {
+  constructor(onChange, { versions, onSave } = {}) {
+    this.onSave = onSave;
     this.onChange = onChange;
     this.versions = [sampleSource];
     try {
@@ -16,6 +18,7 @@ export class Game {
     } catch {
       /* A demo still works when local storage is unavailable. */
     }
+    if (versions?.length) this.versions = versions.slice(-12);
     this.pending = new Map();
     this.nextId = 0;
     this.queue = Promise.resolve();
@@ -33,6 +36,8 @@ export class Game {
       canUndo: this.versions.length > 1,
       testFrame: this.testFrame,
       muted: this.muted,
+      activeCart: this.activeCart ?? null,
+      booting: this.booting ?? false,
       ...extra,
     });
   }
@@ -69,6 +74,7 @@ export class Game {
     await this.player.loadCart(cartBytes(this.source), {
       displayName: "little-wall.p8",
     });
+    if (!this.muted) this.mute();
     this.changed();
   }
   async ensureWorker() {
@@ -111,6 +117,48 @@ export class Game {
     this.testFrame = null;
     this.changed();
   }
+  async boot() {
+    this.booting = true;
+    this.changed();
+    await new Promise((resolve) => {
+      this.finishBoot = resolve;
+      this.bootTimer = setTimeout(resolve, 1400);
+    });
+    this.finishBoot = null;
+    this.booting = false;
+    this.changed();
+  }
+  async previewCart(cart) {
+    this.testFrame = null;
+    this.activeCart = cart;
+    this.changed();
+    try {
+      const [loaded] = await Promise.allSettled([
+        this.player.loadCart(cartridgeBytes(cart.id), {
+          displayName: `${cart.id}.p8.png`,
+        }),
+        this.hasPoweredOn ? Promise.resolve() : this.boot(),
+      ]);
+      if (loaded.status === "rejected") throw loaded.reason;
+      if (this.disposed) return;
+      await this.player.start();
+      this.hasPoweredOn = true;
+      this.player.canvas.focus();
+    } catch (error) {
+      await this.restoreProject();
+      throw error;
+    }
+    this.changed();
+  }
+  async restoreProject() {
+    if (!this.activeCart) return;
+    await this.player.loadCart(cartBytes(this.source), {
+      displayName: "my-game.p8",
+    });
+    this.activeCart = null;
+    this.testFrame = null;
+    this.changed();
+  }
   async play() {
     this.testFrame = null;
     this.changed();
@@ -133,6 +181,10 @@ export class Game {
     this.player.root.querySelector('[data-action="mute"]').click();
   }
   save() {
+    if (this.onSave) {
+      this.onSave([...this.versions]);
+      return;
+    }
     try {
       localStorage.setItem(storageKey, JSON.stringify(this.versions));
     } catch {}
@@ -142,6 +194,7 @@ export class Game {
     const previous = this.versions.at(-2);
     await this.player.loadCart(cartBytes(previous));
     this.cancelTests();
+    this.activeCart = null;
     this.versions.pop();
     this.save();
     this.changed();
@@ -264,6 +317,9 @@ export class Game {
     return { output, isError: observation.state === "faulted" };
   }
   async dispose() {
+    this.disposed = true;
+    clearTimeout(this.bootTimer);
+    this.finishBoot?.();
     this.cancelTests();
     this.muteObserver?.disconnect();
     this.offState?.();

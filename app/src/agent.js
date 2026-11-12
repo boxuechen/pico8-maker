@@ -1,5 +1,6 @@
 import { BACKGROUND_CONTEXT as context } from "@earendil-works/chord/context";
 import { createModels } from "@earendil-works/pi-ai/models";
+import { compactTranscript, recoverTranscript } from "./project-store.js";
 import { createConnection, readableError } from "./model-config.js";
 import {
   Harness,
@@ -111,8 +112,9 @@ export class Agent {
     this.game = game;
     this.onUpdate = onUpdate;
     this.models = createModels();
+    this.transcriptEntries = new Map();
   }
-  async open() {
+  async open(transcript = []) {
     const registry = createRegistry();
     registry.install(
       defineExtension({
@@ -145,6 +147,14 @@ export class Agent {
     this.root = await this.harness.root(context, {
       agent: { instructions, maxTurns: 24, thinkingLevel: "off" },
     });
+    const recovered = recoverTranscript(transcript);
+    if (recovered.length) {
+      const imported = await this.root.submit(
+        { type: "write", entry: { kind: "restored", model: recovered } },
+        context,
+      );
+      await imported.wait(context);
+    }
     this.watch = await this.root.watch(context, { min: 100, max: 200 });
     this.publish(this.watch.value);
     this.watch.start((call) => {
@@ -157,7 +167,12 @@ export class Agent {
     if (failure?.reason === "turn_limit")
       view.error = "已达到本次工具调用上限，可发送“继续测试”接着验证。";
     else if (view.error) view.error = readableError(view.error, this.apiKey);
-    this.onUpdate(view);
+    for (const entry of value.entries ?? [])
+      this.transcriptEntries.set(entry.id, entry);
+    this.onUpdate(
+      view,
+      compactTranscript([...this.transcriptEntries.values()]),
+    );
   }
   async configure(value) {
     const { config, model, provider } = createConnection(value);

@@ -1,3 +1,5 @@
+import { BootScreen } from "./BootScreen.jsx";
+import { cartridgeImage } from "./cartridges.js";
 import { useEffect, useRef, useState } from "react";
 import {
   AssistantRuntimeProvider,
@@ -28,6 +30,13 @@ import {
   Undo2,
   Code2,
 } from "lucide-react";
+import {
+  readProject,
+  writeProject,
+  readLegacyVersions,
+} from "./project-store.js";
+import { sampleSource } from "./sample.js";
+import carts from "./assets/carts.json";
 import { Game } from "./game.js";
 import { Agent } from "./agent.js";
 import {
@@ -97,7 +106,7 @@ function AssistantMessage() {
   );
 }
 
-function ModelSettings({ initial, onSave, onClose }) {
+function ModelSettings({ initial, onSave, onClose, pending }) {
   const dialog = useRef(null);
   const [form, setForm] = useState(() => normalizeConfig(initial));
   const [remember, setRemember] = useState(initial.remember ?? false);
@@ -293,7 +302,7 @@ function ModelSettings({ initial, onSave, onClose }) {
             {busy ? <LoaderCircle className="spin" size={16} /> : null}测试连接
           </button>
           <button className="primary" disabled={busy}>
-            保存配置
+            {pending ? "保存并开始制作" : "保存配置"}
           </button>
         </div>
       </form>
@@ -311,6 +320,42 @@ function readConfig() {
 }
 
 export function App() {
+  const [saved] = useState(readProject);
+  const project = useRef(
+    saved ?? {
+      schema: 1,
+      id: crypto.randomUUID(),
+      title: "未命名卡带",
+      transcript: [],
+      versions: readLegacyVersions() ?? [sampleSource],
+      active: false,
+      draft: "",
+    },
+  );
+  const [workspace, setWorkspace] = useState(!!saved?.active);
+  const [pending, setPending] = useState("");
+  const pendingRef = useRef("");
+  const sendLock = useRef(false);
+  const [storageError, setStorageError] = useState(false);
+  const [split, setSplit] = useState(38);
+  const saveTimer = useRef(null);
+  function persist(patch) {
+    Object.assign(project.current, patch, { updatedAt: Date.now() });
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(
+      () => setStorageError(!writeProject(project.current)),
+      180,
+    );
+  }
+  useEffect(() => {
+    const flush = () => writeProject(project.current);
+    window.addEventListener("pagehide", flush);
+    return () => {
+      clearTimeout(saveTimer.current);
+      flush();
+      window.removeEventListener("pagehide", flush);
+    };
+  }, []);
   const mount = useRef(null),
     stage = useRef(null),
     testCanvas = useRef(null),
@@ -335,21 +380,32 @@ export function App() {
     [config, setConfig] = useState(readConfig),
     [code, setCode] = useState(false);
   const [sending, setSending] = useState(false);
-  const busy = chat.isRunning || sending;
+  const [cartLoading, setCartLoading] = useState(false);
+  const cartLock = useRef(false);
+  const busy = chat.isRunning || sending || cartLoading || game.booting;
   useEffect(() => {
     let disposed = false;
-    const g = new Game((s) => {
+    const g = new Game(
+      (s) => {
+        if (!disposed) {
+          setGame(s);
+          if (s.error) setError(s.error);
+        }
+      },
+      {
+        versions: project.current.versions,
+        onSave: (versions) => persist({ versions }),
+      },
+    );
+    gameRef.current = g;
+    const a = new Agent(g, (s, transcript) => {
       if (!disposed) {
-        setGame(s);
-        if (s.error) setError(s.error);
+        setChat(s);
+        persist({ transcript, interrupted: s.isRunning });
       }
     });
-    gameRef.current = g;
-    const a = new Agent(g, (s) => {
-      if (!disposed) setChat(s);
-    });
     agentRef.current = a;
-    Promise.all([g.mount(mount.current), a.open()])
+    Promise.all([g.mount(mount.current), a.open(project.current.transcript)])
       .then(async () => {
         if (disposed) return;
         setReady(true);
@@ -388,29 +444,79 @@ export function App() {
   const runtime = useExternalStoreRuntime({
     convertMessage,
     messages: chat.messages,
-    isRunning: busy,
-    isSendDisabled: !ready || !configured,
+    isRunning: chat.isRunning || sending,
+    isSendDisabled: !ready || cartLoading || game.booting,
     onNew: async (m) => {
-      setError("");
-      setSending(true);
-      try {
-        await agentRef.current.send(
-          m.content
-            .filter((p) => p.type === "text")
-            .map((p) => p.text)
-            .join("\n"),
-        );
-      } catch (e) {
-        setError(readableError(e, config.apiKey));
-      } finally {
-        setSending(false);
+      const text = m.content
+        .filter((p) => p.type === "text")
+        .map((p) => p.text)
+        .join("\n");
+      if (!configured) {
+        pendingRef.current = text;
+        setPending(text);
+        persist({ draft: text });
+        setSettings(true);
+        return;
       }
+      await sendMessage(text);
     },
     onCancel: async () => {
       await agentRef.current.abort();
       setSending(false);
     },
   });
+  useEffect(() => {
+    if (project.current.draft)
+      runtime.thread.composer.setText(project.current.draft);
+  }, []);
+  async function selectCart(cart) {
+    if (cartLock.current || !ready || chat.isRunning || sending) return;
+    cartLock.current = true;
+    setCartLoading(true);
+    setError("");
+    try {
+      await gameRef.current.previewCart(cart);
+    } catch (e) {
+      setError(`Could not play ${cart.title}: ${e.message}`);
+    } finally {
+      cartLock.current = false;
+      setCartLoading(false);
+    }
+  }
+  async function playCurrent() {
+    if (!workspace && !game.activeCart) return selectCart(carts[5]);
+    return gameRef.current.play();
+  }
+  async function sendMessage(text) {
+    if (sendLock.current || !text.trim()) return;
+    sendLock.current = true;
+    setError("");
+    setSending(true);
+    setWorkspace(true);
+    persist({
+      active: true,
+      draft: "",
+      title: project.current.transcript.length
+        ? project.current.title
+        : text.trim().slice(0, 24),
+    });
+    runtime.thread.composer.setText("");
+    try {
+      await gameRef.current.restoreProject();
+      await agentRef.current.send(text);
+    } catch (e) {
+      setError(readableError(e, config.apiKey));
+    } finally {
+      sendLock.current = false;
+      setSending(false);
+    }
+  }
+  function closeSettings() {
+    setSettings(false);
+    if (pendingRef.current) runtime.thread.composer.setText(pendingRef.current);
+    pendingRef.current = "";
+    setPending("");
+  }
   async function saveConfig(next) {
     await agentRef.current.configure(next);
     if (next.remember)
@@ -419,23 +525,53 @@ export function App() {
     setConfig(next);
     setConfigured(true);
     setSettings(false);
+    const text = pendingRef.current;
+    pendingRef.current = "";
+    setPending("");
+    if (text) void sendMessage(text);
   }
   const playing = game.state === "running" && !game.testFrame;
   return (
     <AssistantRuntimeProvider runtime={runtime}>
-      <div className="app">
+      <div className={`app ${workspace ? "studio-mode" : "home-mode"}`}>
         <header className="topbar">
-          <span className="app-title">
-            PICO-8 <span>Demo</span>
-          </span>
+          <button
+            className="app-title"
+            disabled={busy}
+            onClick={() => {
+              setWorkspace(false);
+              persist({ active: false });
+            }}
+            aria-label="返回创作首页"
+          >
+            <span className="pixel-spark">✦</span> PICO
+            <span className="brand-slash">/</span>MAKER{" "}
+            <span className="brand-caption">FANTASY GAME MAKER</span>
+          </button>
           <div className="top-actions">
+            {!workspace && chat.messages.length > 0 && (
+              <button
+                className="resume-button"
+                disabled={busy}
+                onClick={async () => {
+                  await gameRef.current.restoreProject();
+                  setWorkspace(true);
+                  persist({ active: true });
+                }}
+              >
+                Continue making <ChevronRight size={14} />
+              </button>
+            )}
+            {workspace && (
+              <span className="project-label">{project.current.title}</span>
+            )}
             <button
               className="settings-button"
               disabled={!ready || busy}
               onClick={() => setSettings(true)}
             >
               <Settings size={16} />
-              <span>{configured ? "模型已配置" : "模型设置"}</span>
+              <span>{configured ? "Model connected" : "Connect model"}</span>
               {configured && <i />}
             </button>
             <details className="more">
@@ -471,8 +607,114 @@ export function App() {
             </details>
           </div>
         </header>
-        <main className="workspace">
+        <main className="workspace" style={{ "--chat-width": `${split}%` }}>
+          {!workspace && (
+            <>
+              <section className="home-intro">
+                <div className="hero-brand">
+                  <img
+                    src={`${import.meta.env.BASE_URL}assets/pico8-logo.png`}
+                    alt="PICO-8"
+                  />
+                  <button
+                    className="make-badge"
+                    onClick={() => {
+                      const input = document.getElementById("game-prompt");
+                      input?.scrollIntoView({ block: "nearest" });
+                      input?.focus();
+                    }}
+                  >
+                    ✦ MAKE A GAME
+                  </button>
+                </div>
+                <div className="hero-copy">
+                  {game.activeCart ? (
+                    <>
+                      <span>NOW PLAYING</span>
+                      <strong>{game.activeCart.title}</strong>
+                      <a
+                        href={game.activeCart.page}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        by {game.activeCart.author} ↗
+                      </a>
+                    </>
+                  ) : (
+                    <>
+                      Play a tiny game.
+                      <br />
+                      Make your own with AI.
+                      <small>
+                        Pick a cartridge or describe your idea below.
+                      </small>
+                    </>
+                  )}
+                </div>
+                <div className="cart-grid left-carts">
+                  {carts.slice(0, 6).map((cart) => (
+                    <Cart
+                      key={cart.id}
+                      cart={cart}
+                      onSelect={selectCart}
+                      disabled={busy || !ready}
+                      active={game.activeCart?.id === cart.id}
+                    />
+                  ))}
+                </div>
+                <p className="gallery-caption">
+                  CLICK A CARTRIDGE TO PLAY <span>↑</span>
+                </p>
+              </section>
+              <section className="home-gallery" aria-label="社区卡带灵感">
+                <div className="cart-grid right-carts">
+                  <div className="mobile-only-carts">
+                    {carts.slice(0, 6).map((cart) => (
+                      <Cart
+                        key={cart.id}
+                        cart={cart}
+                        onSelect={selectCart}
+                        disabled={busy || !ready}
+                        active={game.activeCart?.id === cart.id}
+                      />
+                    ))}
+                  </div>
+                  {carts.slice(6).map((cart) => (
+                    <Cart
+                      key={cart.id}
+                      cart={cart}
+                      onSelect={selectCart}
+                      disabled={busy || !ready}
+                      active={game.activeCart?.id === cart.id}
+                    />
+                  ))}
+                  <a
+                    className="more-carts"
+                    href="https://www.lexaloffle.com/bbs/?cat=7&carts_tab=1#mode=carts&sub=2"
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    MORE
+                    <br />
+                    CARTS<span>→</span>
+                  </a>
+                </div>
+              </section>
+            </>
+          )}
           <ThreadPrimitive.Root className="chat-panel">
+            {workspace && (
+              <div className="panel-heading">
+                <span>01 / CHAT</span>
+                <span>{busy ? "● 正在制作" : "● 创作空间"}</span>
+              </div>
+            )}
+            {!workspace && (
+              <div className="make-heading">
+                <h1>What will you make?</h1>
+                <p>A little idea. A tiny game. A whole world of your own.</p>
+              </div>
+            )}
             <ThreadPrimitive.Viewport className="chat-viewport">
               <ThreadPrimitive.Empty>
                 <div className="welcome">
@@ -525,27 +767,23 @@ export function App() {
                   </button>
                 </div>
               )}
-              {!configured && (
-                <button
-                  className="connect-hint"
-                  disabled={!ready}
-                  onClick={() => setSettings(true)}
-                >
-                  {ready ? "连接模型后开始创作" : "正在加载游戏运行时…"}
-                  <ChevronRight size={13} />
-                </button>
-              )}
               <ComposerPrimitive.Root className="composer">
                 <ComposerPrimitive.Input
-                  placeholder="描述游戏，或告诉 AI 想改什么…"
+                  id="game-prompt"
+                  placeholder={
+                    workspace
+                      ? "继续描述你想修改的地方…"
+                      : "A fishing game on the moon, where every fish glows…"
+                  }
+                  onChange={(e) => persist({ draft: e.target.value })}
                   aria-label="消息"
                   rows={2}
                 />
                 <div className="composer-footer">
                   <span>
-                    {configured ? config.model : "使用你自己的 API Key"}
+                    {configured ? config.model : "Bring your own API key"}
                   </span>
-                  {busy ? (
+                  {chat.isRunning || sending ? (
                     <ComposerPrimitive.Cancel
                       aria-label="停止生成"
                       className="send"
@@ -557,17 +795,106 @@ export function App() {
                       aria-label="发送消息"
                       className="send"
                     >
-                      <ArrowUp size={20} />
+                      {workspace ? (
+                        <ArrowUp size={20} />
+                      ) : (
+                        <>
+                          MAKE <Play size={14} fill="currentColor" />
+                        </>
+                      )}
                     </ComposerPrimitive.Send>
                   )}
                 </div>
               </ComposerPrimitive.Root>
               <div className="composer-note">
-                Enter 发送 · Shift + Enter 换行
+                {storageError
+                  ? "本地保存失败，请导出卡带以免丢失。"
+                  : workspace
+                    ? "自动保存到此设备 · Enter 发送 · Shift + Enter 换行"
+                    : "Play for free. Connect your model when you’re ready to create."}
               </div>
             </div>
+            {!workspace && (
+              <div className="prompt-examples">
+                {["Platformer", "Space shooter", "Moon fishing"].map(
+                  (label, i) => (
+                    <button
+                      key={label}
+                      onClick={() => {
+                        const text = [
+                          "Make a platformer with coins and a double jump.",
+                          "Make a space shooter with upgradeable weapons.",
+                          "Make a tiny fishing game set on the moon.",
+                        ][i];
+                        runtime.thread.composer.setText(text);
+                        persist({ draft: text });
+                      }}
+                    >
+                      ＋ {label}
+                    </button>
+                  ),
+                )}
+              </div>
+            )}
+            {workspace && saved?.interrupted && (
+              <p className="restore-note">
+                上次生成已中断，已恢复保存的对话与游戏，可继续发送消息。
+              </p>
+            )}
           </ThreadPrimitive.Root>
+          {workspace && (
+            <div
+              className="panel-divider"
+              role="separator"
+              aria-label="调整聊天宽度"
+              aria-orientation="vertical"
+              aria-valuemin={28}
+              aria-valuemax={55}
+              aria-valuenow={split}
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+                  e.preventDefault();
+                  setSplit((v) =>
+                    Math.max(
+                      28,
+                      Math.min(55, v + (e.key === "ArrowRight" ? 2 : -2)),
+                    ),
+                  );
+                }
+              }}
+              onPointerDown={(e) => {
+                e.currentTarget.setPointerCapture(e.pointerId);
+              }}
+              onPointerMove={(e) => {
+                if (e.currentTarget.hasPointerCapture(e.pointerId)) {
+                  const box =
+                    e.currentTarget.parentElement.getBoundingClientRect();
+                  setSplit(
+                    Math.max(
+                      28,
+                      Math.min(55, ((e.clientX - box.left) / box.width) * 100),
+                    ),
+                  );
+                }
+              }}
+            />
+          )}
           <section className="player-panel" aria-label="游戏试玩">
+            {workspace && (
+              <div className="preview-heading">
+                <span>02 / LIVE PREVIEW</span>
+                <span>
+                  {busy
+                    ? "AI 正在制作 / 测试"
+                    : game.testFrame
+                      ? "新版本已就绪"
+                      : playing
+                        ? "正在试玩"
+                        : "点击播放试玩"}
+                </span>
+              </div>
+            )}
             <div className="console-group" ref={stage}>
               <div className="console">
                 <div className="screen-backdrop" />
@@ -582,33 +909,36 @@ export function App() {
                       aria-label="AI 实际测试画面"
                     />
                   )}
+                  {game.booting && <BootScreen />}
                   {!playing && !busy && (
                     <button
                       disabled={!ready}
                       className={`play-overlay ${game.testFrame ? "over-frame" : ""}`}
                       aria-label="开始试玩"
-                      onClick={safe(() => gameRef.current.play())}
+                      onClick={safe(playCurrent)}
                     >
                       {ready ? (
-                        <Play size={55} fill="currentColor" />
+                        <img
+                          src={`${import.meta.env.BASE_URL}assets/pico8-play.png`}
+                          alt=""
+                        />
                       ) : (
                         <LoaderCircle className="spin" size={28} />
                       )}
                     </button>
                   )}
                 </div>
-                <img
-                  className="shell"
-                  src={`${import.meta.env.BASE_URL}assets/pico8-shell.png`}
-                  alt="PICO-8 像素游戏机外壳"
-                  draggable="false"
+                <div
+                  className="shell official-shell"
+                  role="img"
+                  aria-label="Original PICO-8 pixel television"
                 />
               </div>
               <div className="player-controls">
                 <button
                   aria-label={playing ? "暂停游戏" : "播放游戏"}
                   disabled={!ready || busy}
-                  onClick={safe(() => gameRef.current.play())}
+                  onClick={safe(playCurrent)}
                 >
                   {playing ? <Pause size={20} /> : <Play size={20} />}
                 </button>
@@ -646,19 +976,32 @@ export function App() {
               </div>
               <p className="player-help">
                 {busy
-                  ? "AI 正在操作游戏"
+                  ? game.booting
+                    ? "POWERING ON…"
+                    : cartLoading
+                      ? "LOADING CARTRIDGE…"
+                      : "AI IS PLAYTESTING"
                   : game.testFrame
-                    ? "AI 测试画面 · 点击播放亲自试玩"
-                    : "方向键移动 · X / Z 跳跃"}
+                    ? "AI TEST FRAME · PRESS PLAY TO TRY"
+                    : "ARROWS TO MOVE · Z / X TO PLAY"}
               </p>
             </div>
           </section>
         </main>
+        {!workspace && (
+          <footer className="home-footer">
+            <span>128 × 128 PIXELS. A WORLD OF YOUR OWN.</span>
+            <span>
+              Community games by their original creators · An independent maker
+            </span>
+          </footer>
+        )}
       </div>
       {settings && (
         <ModelSettings
           initial={config}
-          onClose={() => setSettings(false)}
+          onClose={closeSettings}
+          pending={!!pending}
           onSave={saveConfig}
         />
       )}{" "}
@@ -683,5 +1026,28 @@ function SourceDialog({ source, onClose }) {
       </div>
       <pre>{source}</pre>
     </dialog>
+  );
+}
+
+function Cart({ cart, onSelect, disabled, active }) {
+  return (
+    <button
+      className={`cart ${active ? "selected" : ""}`}
+      onClick={() => onSelect(cart)}
+      disabled={disabled}
+      aria-label={`Play ${cart.title}`}
+      aria-pressed={active}
+      title={`${cart.title} · ${cart.author}`}
+    >
+      <img
+        src={cartridgeImage(cart.id)}
+        alt={`${cart.title} — ${cart.author}`}
+        draggable="false"
+      />
+      <span className="cart-credit">
+        {cart.title}
+        <small>{cart.author}</small>
+      </span>
+    </button>
   );
 }
