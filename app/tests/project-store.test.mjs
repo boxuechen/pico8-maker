@@ -5,9 +5,6 @@ import { Agent } from "../src/agent.js";
 import {
   compactTranscript,
   recoverTranscript,
-  readProject,
-  writeProject,
-  readLegacyVersions,
 } from "../src/project-store.js";
 const user = { role: "user", content: "把小猫变成蓝色", timestamp: 1 };
 const call = {
@@ -32,40 +29,6 @@ const result = {
   isError: false,
   timestamp: 3,
 };
-test("project snapshot restores chat, draft and game versions together; handles unavailable storage", () => {
-  const values = new Map();
-  const storage = {
-    getItem: (k) => values.get(k) ?? null,
-    setItem: (k, v) => values.set(k, v),
-  };
-  const project = {
-    id: "project-1",
-    active: true,
-    draft: "继续",
-    transcript: [user],
-    versions: ["cls(0)", "cls(1)"],
-  };
-  assert.equal(writeProject(project, storage), true);
-  assert.deepEqual(readProject(storage), { ...project, schema: 1 });
-  assert.equal(
-    writeProject(project, {
-      setItem() {
-        throw new Error("quota");
-      },
-    }),
-    false,
-  );
-  assert.equal(
-    readProject({
-      getItem() {
-        return "broken";
-      },
-    }),
-    null,
-  );
-  storage.setItem("pico-demo-versions-v1", JSON.stringify(["old game"]));
-  assert.deepEqual(readLegacyVersions(storage), ["old game"]);
-});
 test("snapshot omits screenshots and repairs interrupted tools without replaying them", () => {
   const compact = compactTranscript([{ model: [user, call, result] }]);
   assert.equal(JSON.stringify(compact).includes("large-image"), false);

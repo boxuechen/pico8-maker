@@ -55,3 +55,15 @@ export function cartFileName(title = "") {
     .replace(/^-+|-+$/g, "");
   return `${slug || "my-game"}.p8`;
 }
+
+/** Download a cart as a .p8 file (browser only). */
+export function downloadCart(source, { title, label } = {}) {
+  const url = URL.createObjectURL(
+    new Blob([cartText(source, label)], { type: "text/plain" }),
+  );
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = cartFileName(title);
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}

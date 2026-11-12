@@ -1,8 +1,6 @@
 export const interruptedToolResult =
   "上次操作因页面关闭而中断，结果未知。请读取当前源码并重新验证。";
 
-export const projectKey = "pico-maker-project-v1";
-
 // Persist transcript text/tool results, never screenshots or model credentials.
 export function compactTranscript(entries = []) {
   return entries
@@ -54,46 +52,4 @@ export function recoverTranscript(messages = []) {
     }
   }
   return result;
-}
-
-export function readProject(storage) {
-  try {
-    storage ??= globalThis.localStorage;
-    const data = JSON.parse(storage.getItem(projectKey));
-    if (
-      data?.schema !== 1 ||
-      typeof data.id !== "string" ||
-      !Array.isArray(data.transcript) ||
-      !Array.isArray(data.versions) ||
-      !data.versions.length ||
-      !data.versions.every((v) => typeof v === "string" && v.length <= 100000)
-    )
-      return null;
-    return data;
-  } catch {
-    return null;
-  }
-}
-export function writeProject(project, storage) {
-  try {
-    storage ??= globalThis.localStorage;
-    storage.setItem(projectKey, JSON.stringify({ ...project, schema: 1 }));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-export function readLegacyVersions(storage) {
-  try {
-    storage ??= globalThis.localStorage;
-    const versions = JSON.parse(storage.getItem("pico-demo-versions-v1"));
-    return Array.isArray(versions) &&
-      versions.length &&
-      versions.every((v) => typeof v === "string" && v.length <= 100000)
-      ? versions.slice(-12)
-      : null;
-  } catch {
-    return null;
-  }
 }

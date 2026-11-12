@@ -34,13 +34,18 @@ import {
   Copy,
 } from "lucide-react";
 import {
-  readProject,
-  writeProject,
-  readLegacyVersions,
-} from "./project-store.js";
+  openCartStore,
+  memoryBackend,
+  newCart,
+  isOnShelf,
+  sortCarts,
+  duplicateCart,
+  requestPersistence,
+} from "./cart-store.js";
+import { CartShelf, CartBody, ago } from "./CartShelf.jsx";
+import { downloadCart } from "./pico8/cart.js";
 import { currentTool, describeTool, formatButtons } from "./workbench-state.js";
 import { countTokens } from "./pico8/tokens.js";
-import { sampleSource } from "./sample.js";
 import carts from "./assets/carts.json";
 import { Game } from "./game.js";
 import { Agent } from "./agent.js";
@@ -337,15 +342,6 @@ const homeIdeas = [
   ["Space shooter", "#29adff", "Make a space shooter with upgradeable weapons."],
   ["Moon fishing", "#ffa300", "Make a tiny fishing game set on the moon."],
 ];
-function ago(time) {
-  if (!time) return "";
-  const minutes = Math.round((Date.now() - time) / 60000);
-  if (minutes < 1) return "just now";
-  if (minutes < 60) return `${minutes} min ago`;
-  const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours} h ago`;
-  return `${Math.round(hours / 24)} d ago`;
-}
 function rgbaToUrl(rgba) {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 128;
@@ -370,20 +366,34 @@ function urlToRgba(url) {
   });
 }
 
+// Opens the browser-only cart shelf first; the studio renders once it is ready.
 export function App() {
-  const [saved] = useState(readProject);
-  const project = useRef(
-    saved ?? {
-      schema: 1,
-      id: crypto.randomUUID(),
-      title: "Untitled cartridge",
-      transcript: [],
-      versions: readLegacyVersions() ?? [sampleSource],
-      active: false,
-      draft: "",
-    },
+  const [store, setStore] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    openCartStore()
+      .catch(() => openCartStore({ backend: memoryBackend() }))
+      .then((s) => !cancelled && setStore(s))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  return store ? <Studio store={store} /> : <div className="app home-mode" />;
+}
+
+const contentKeys = ["transcript", "versions", "revision", "label", "title"];
+const upsert = (list, cart) =>
+  sortCarts([{ ...cart }, ...list.filter((c) => c.id !== cart.id)]);
+
+function Studio({ store }) {
+  const [saved] = useState(
+    () => store.carts.find((c) => c.id === store.session.currentId) ?? null,
   );
-  const [workspace, setWorkspace] = useState(!!saved?.active);
+  const project = useRef(saved ?? newCart());
+  const [shelf, setShelf] = useState(() => store.carts.filter(isOnShelf));
+  const [switching, setSwitching] = useState(false);
+  const [workspace, setWorkspace] = useState(!!(saved && store.session.active));
   const [pending, setPending] = useState("");
   const pendingRef = useRef("");
   const sendLock = useRef(false);
@@ -395,27 +405,47 @@ export function App() {
   const [showRestore, setShowRestore] = useState(!!saved?.interrupted);
   const saveTimer = useRef(null);
   function persist(patch) {
-    Object.assign(project.current, patch, { updatedAt: Date.now() });
-    clearTimeout(saveTimer.current);
-    saveTimer.current = setTimeout(
-      () => setStorageError(!writeProject(project.current)),
-      180,
+    if ("active" in patch)
+      void store
+        .setSession({ currentId: project.current.id, active: patch.active })
+        .catch(() => {});
+    // Only real content changes reorder the shelf; opening or typing does not.
+    const touched = contentKeys.some(
+      (k) => k in patch && JSON.stringify(patch[k]) !== JSON.stringify(project.current[k]),
     );
+    Object.assign(project.current, patch);
+    if (touched) project.current.updatedAt = Date.now();
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(flush, 180);
+  }
+  // Write the current cart; it joins the shelf once it has real content.
+  async function flush() {
+    clearTimeout(saveTimer.current);
+    const cart = project.current;
+    if (cart.deleted) return;
+    if (isOnShelf(cart)) setShelf((list) => upsert(list, cart));
+    try {
+      await store.put(cart);
+      setStorageError(false);
+    } catch {
+      setStorageError(true);
+    }
   }
   useEffect(() => {
-    const flush = () => writeProject(project.current);
-    window.addEventListener("pagehide", flush);
+    const onHide = () => void flush();
+    window.addEventListener("pagehide", onHide);
     return () => {
       clearTimeout(saveTimer.current);
-      flush();
-      window.removeEventListener("pagehide", flush);
+      onHide();
+      window.removeEventListener("pagehide", onHide);
     };
   }, []);
   const mount = useRef(null),
     stage = useRef(null),
     testCanvas = useRef(null),
     gameRef = useRef(null),
-    agentRef = useRef(null);
+    agentRef = useRef(null),
+    agentGeneration = useRef(0);
   const [game, setGame] = useState({
     state: "loading",
     source: project.current.versions.at(-1),
@@ -438,7 +468,7 @@ export function App() {
   const [cartLoading, setCartLoading] = useState(false);
   const cartLock = useRef(false);
   const running = chat.isRunning || sending;
-  const busy = running || cartLoading || game.booting;
+  const busy = running || cartLoading || game.booting || switching;
   useEffect(() => {
     let disposed = false;
     const g = new Game(
@@ -455,31 +485,44 @@ export function App() {
       },
     );
     gameRef.current = g;
-    const a = new Agent(g, (s, transcript) => {
-      if (!disposed) {
-        setChat(s);
-        persist({ transcript, interrupted: s.isRunning });
-      }
-    });
-    agentRef.current = a;
-    Promise.all([g.mount(mount.current), a.open(project.current.transcript)])
-      .then(async () => {
-        if (disposed) return;
-        setReady(true);
-        if (config.apiKey && config.model && config.baseUrl) {
-          await a.configure(config);
-          setConfigured(true);
-        }
+    Promise.all([g.mount(mount.current), connectAgent(project.current.transcript)])
+      .then(() => {
+        if (!disposed) setReady(true);
       })
       .catch((e) => {
         if (!disposed) setError(e.message);
       });
     return () => {
       disposed = true;
-      void a.dispose().catch(() => {});
+      agentGeneration.current++;
+      void agentRef.current?.dispose().catch(() => {});
       void g.dispose().catch(() => {});
     };
   }, []);
+  const configRef = useRef(config);
+  configRef.current = config;
+  // One agent per cart: switching carts replaces it with the next transcript.
+  // Late updates from a replaced agent are ignored so they cannot leak into
+  // another cart.
+  async function connectAgent(transcript) {
+    const generation = ++agentGeneration.current;
+    const previous = agentRef.current;
+    agentRef.current = null;
+    if (previous) await previous.dispose().catch(() => {});
+    const a = new Agent(gameRef.current, (s, nextTranscript) => {
+      if (generation !== agentGeneration.current) return;
+      setChat(s);
+      persist({ transcript: nextTranscript, interrupted: s.isRunning });
+    });
+    agentRef.current = a;
+    await a.open(transcript);
+    if (generation !== agentGeneration.current) return;
+    const c = configRef.current;
+    if (c.apiKey && c.model && c.baseUrl) {
+      await a.configure(c);
+      setConfigured(true);
+    }
+  }
   // Each AI observation: draw it on the TV, add it to the timeline, keep it as the cart label.
   useEffect(() => {
     const frame = game.testFrame;
@@ -520,7 +563,7 @@ export function App() {
     convertMessage,
     messages: chat.messages,
     isRunning: running,
-    isSendDisabled: !ready || cartLoading || game.booting,
+    isSendDisabled: !ready || cartLoading || game.booting || switching,
     onNew: async (m) => {
       const text = m.content
         .filter((p) => p.type === "text")
@@ -565,6 +608,20 @@ export function App() {
   async function sendMessage(text) {
     if (sendLock.current || !text.trim()) return;
     sendLock.current = true;
+    // On the home page a new idea always starts a new cart; existing carts
+    // stay untouched on the shelf.
+    if (!workspace && isOnShelf(project.current)) {
+      // The home draft belongs to the new cart, not the one left on the shelf.
+      persist({ draft: "" });
+      try {
+        await openCart(newCart(), { enter: true });
+      } catch (e) {
+        sendLock.current = false;
+        setError(e.message);
+        return;
+      }
+    }
+    if (!project.current.transcript.length) void requestPersistence();
     setError("");
     setSending(true);
     setShowRestore(false);
@@ -620,14 +677,86 @@ export function App() {
     setConfig({ ...defaultConfig });
     setConfigured(false);
   }
-  async function resume() {
-    await gameRef.current.restoreProject();
-    setWorkspace(true);
-    persist({ active: true });
+  /** Load another cart into the player and chat, optionally entering the workbench. */
+  async function openCart(next, { enter = true } = {}) {
+    if (next.id === project.current.id) {
+      await gameRef.current.restoreProject();
+      setWorkspace(enter);
+      persist({ active: enter });
+      return;
+    }
+    setSwitching(true);
+    try {
+      await flush();
+      const previous = project.current;
+      // A cart that never got content is not worth keeping.
+      if (!previous.deleted && !isOnShelf(previous))
+        void store.remove(previous.id).catch(() => {});
+      project.current = next;
+      setFrames([]);
+      setLabel(next.label ?? null);
+      setShowRestore(!!next.interrupted);
+      setView("preview");
+      setError("");
+      runtime.thread.composer.setText(next.draft ?? "");
+      await gameRef.current.switchProject(next.versions, next.revision);
+      await connectAgent(next.transcript);
+      setWorkspace(enter);
+      persist({ active: enter });
+    } finally {
+      setSwitching(false);
+    }
+  }
+  async function resume(cart = shelf[0]) {
+    if (cart) await openCart(cart, { enter: true });
+  }
+  async function newBlankCart() {
+    if (isOnShelf(project.current)) await openCart(newCart(), { enter: false });
+    document.getElementById("game-prompt")?.focus();
+  }
+  function markSaved(cart) {
+    const savedAt = Date.now();
+    if (cart.id === project.current.id) {
+      Object.assign(project.current, { savedRevision: cart.revision, savedAt });
+      void flush();
+    } else {
+      const next = { ...cart, savedRevision: cart.revision, savedAt };
+      setShelf((list) => list.map((c) => (c.id === next.id ? next : c)));
+      void store.put(next).catch(() => setStorageError(true));
+    }
   }
   async function saveCart() {
     const rgba = frames.at(-1)?.rgba ?? (label ? await urlToRgba(label) : null);
-    gameRef.current.export({ title: conversationTitle, label: rgba });
+    gameRef.current.export({ title: cartTitle, label: rgba });
+    markSaved({ ...project.current, revision: game.revision });
+  }
+  async function saveShelfCart(cart) {
+    const live = cart.id === project.current.id ? project.current : cart;
+    downloadCart(live.versions.at(-1), {
+      title: live.title,
+      label: live.label ? await urlToRgba(live.label) : null,
+    });
+    markSaved(live);
+  }
+  async function duplicateShelfCart(cart) {
+    const live = cart.id === project.current.id ? project.current : cart;
+    const copy = duplicateCart(live);
+    try {
+      await store.put(copy);
+      setShelf((list) => upsert(list, copy));
+    } catch {
+      setStorageError(true);
+    }
+  }
+  async function deleteShelfCart(cart) {
+    setShelf((list) => list.filter((c) => c.id !== cart.id));
+    await store.remove(cart.id).catch(() => setStorageError(true));
+    if (cart.id === project.current.id) {
+      // Keep the player valid: fall back to a fresh, unsaved cart.
+      const blank = newCart();
+      project.current.deleted = true;
+      await openCart(blank, { enter: false });
+    }
   }
   function setPrompt(text) {
     runtime.thread.composer.setText(text);
@@ -643,7 +772,12 @@ export function App() {
       .join(" ")
       .replace(/\s+/g, " ")
       .trim() || project.current.title;
+  const cartTitle =
+    project.current.title && project.current.title !== "Untitled cartridge"
+      ? project.current.title
+      : conversationTitle;
   const hasConversation = chat.messages.length > 0;
+  const lastCart = shelf[0] ?? null;
   const tokens = useMemo(() => countTokens(game.source ?? ""), [game.source]);
   const modelName =
     providers
@@ -709,7 +843,7 @@ export function App() {
             <WorkbenchHeader
               busy={busy}
               ready={ready}
-              title={conversationTitle}
+              title={cartTitle}
               revision={game.revision}
               saveFailed={storageError}
               tokens={tokens}
@@ -727,7 +861,7 @@ export function App() {
           ) : (
             <HomeHeader
               busy={busy}
-              canResume={hasConversation}
+              canResume={!!lastCart}
               onResume={safe(resume)}
             />
           )}
@@ -771,39 +905,24 @@ export function App() {
                     <button
                       className="your-cart-art"
                       aria-label={
-                        hasConversation
-                          ? `Continue ${conversationTitle}`
-                          : "Make your own cart"
+                        lastCart ? `Continue ${lastCart.title}` : "Make your own cart"
                       }
                       disabled={busy}
                       onClick={
-                        hasConversation
+                        lastCart
                           ? safe(resume)
                           : () => document.getElementById("game-prompt")?.focus()
                       }
                     >
-                      <span className="cart-body">
-                        <span className="cart-window">
-                          {hasConversation && label ? (
-                            <img src={label} alt="" />
-                          ) : (
-                            <span className="cart-empty">
-                              {hasConversation ? "" : "?"}
-                            </span>
-                          )}
-                        </span>
-                        <span className="cart-strip" />
-                      </span>
+                      <CartBody label={lastCart?.label} />
                     </button>
                     <div className="your-cart-text">
-                      <span className="kicker">YOUR CART</span>
-                      {hasConversation ? (
+                      <span className="kicker">{lastCart ? "LAST CART" : "YOUR CART"}</span>
+                      {lastCart ? (
                         <>
-                          <strong title={conversationTitle}>
-                            {conversationTitle}
-                          </strong>
+                          <strong title={lastCart.title}>{lastCart.title}</strong>
                           <small>
-                            v{game.revision} · saved {ago(project.current.updatedAt)}
+                            v{lastCart.revision} · {ago(lastCart.updatedAt)}
                           </small>
                           <button
                             className="continue-button"
@@ -952,7 +1071,7 @@ export function App() {
                           </>
                         ) : (
                           <>
-                            MAKE <PixelPlay />
+                            {lastCart ? "MAKE NEW CART" : "MAKE"} <PixelPlay />
                           </>
                         )}
                       </ComposerPrimitive.Send>
@@ -975,6 +1094,12 @@ export function App() {
                     </button>
                   ))}
                 </div>
+              )}
+              {!workspace && lastCart && (
+                <p className="new-cart-hint">
+                  A new idea always starts a new cart — your carts stay on the
+                  shelf below.
+                </p>
               )}
             </ThreadPrimitive.Root>
             {workspace && (
@@ -1193,6 +1318,19 @@ export function App() {
               )}
             </section>
           </main>
+          {!workspace && (
+            <CartShelf
+              carts={shelf}
+              currentId={project.current.id}
+              persistent={store.persistent}
+              disabled={busy || !ready || switching}
+              onOpen={(cart) => safe(() => openCart(cart, { enter: true }))()}
+              onNew={safe(newBlankCart)}
+              onSave={(cart) => safe(() => saveShelfCart(cart))()}
+              onDuplicate={(cart) => safe(() => duplicateShelfCart(cart))()}
+              onDelete={(cart) => safe(() => deleteShelfCart(cart))()}
+            />
+          )}
           {!workspace && <HowItWorks />}
           {!workspace && <HomeFooter />}
         </div>

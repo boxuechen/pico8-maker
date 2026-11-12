@@ -6,26 +6,13 @@ import {
 } from "./pico8/observation.js";
 import { cartridgeBytes } from "./cartridges.js";
 import { sampleSource, cartBytes } from "./sample.js";
-import { cartText, cartFileName } from "./pico8/cart.js";
+import { downloadCart } from "./pico8/cart.js";
 
-const storageKey = "pico-demo-versions-v1";
 export class Game {
   constructor(onChange, { versions, revision, onSave } = {}) {
     this.onSave = onSave;
     this.onChange = onChange;
-    this.versions = [sampleSource];
-    try {
-      const saved = JSON.parse(localStorage.getItem(storageKey));
-      if (
-        Array.isArray(saved) &&
-        saved.length &&
-        saved.every((x) => typeof x === "string" && x.length < 100000)
-      )
-        this.versions = saved.slice(-12);
-    } catch {
-      /* A demo still works when local storage is unavailable. */
-    }
-    if (versions?.length) this.versions = versions.slice(-12);
+    this.versions = versions?.length ? versions.slice(-12) : [sampleSource];
     // A user-facing version number survives the 12-entry undo window.
     this.revision = Math.max(revision ?? this.versions.length, this.versions.length);
     this.pending = new Map();
@@ -191,13 +178,7 @@ export class Game {
     this.player.root.querySelector('[data-action="mute"]').click();
   }
   save() {
-    if (this.onSave) {
-      this.onSave([...this.versions], this.revision);
-      return;
-    }
-    try {
-      localStorage.setItem(storageKey, JSON.stringify(this.versions));
-    } catch {}
+    this.onSave?.([...this.versions], this.revision);
   }
   async undo() {
     if (this.versions.length < 2) return;
@@ -212,14 +193,20 @@ export class Game {
   }
   /** Save the current source as a .p8 cart, labelled with an RGBA frame. */
   export({ title, label } = {}) {
-    const url = URL.createObjectURL(
-      new Blob([cartText(this.source, label)], { type: "text/plain" }),
-    );
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = cartFileName(title);
-    a.click();
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    downloadCart(this.source, { title, label });
+  }
+  /** Swap in another cart's versions without rebooting the player. */
+  async switchProject(versions, revision) {
+    this.cancelTests("Switched to another cart.");
+    this.versions = versions?.length ? versions.slice(-12) : [sampleSource];
+    this.revision = Math.max(revision ?? this.versions.length, this.versions.length);
+    this.activeCart = null;
+    this.testFrame = null;
+    if (this.player)
+      await this.player.loadCart(cartBytes(this.source), {
+        displayName: "my-game.p8",
+      });
+    this.changed();
   }
   execute(action, args, signal) {
     const job = this.queue.then(async () => {
