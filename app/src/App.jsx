@@ -382,7 +382,7 @@ export function App() {
   return store ? <Studio store={store} /> : <div className="app home-mode" />;
 }
 
-const contentKeys = ["transcript", "versions", "revision", "label", "title"];
+const contentKeys = ["transcript", "versions", "revision", "workspace", "label", "title"];
 const upsert = (list, cart) =>
   sortCarts([{ ...cart }, ...list.filter((c) => c.id !== cart.id)]);
 
@@ -481,7 +481,9 @@ function Studio({ store }) {
       {
         versions: project.current.versions,
         revision: project.current.revision,
+        draft: project.current.workspace,
         onSave: (versions, revision) => persist({ versions, revision }),
+        onDraft: (text) => persist({ workspace: text }),
       },
     );
     gameRef.current = g;
@@ -699,7 +701,7 @@ function Studio({ store }) {
       setView("preview");
       setError("");
       runtime.thread.composer.setText(next.draft ?? "");
-      await gameRef.current.switchProject(next.versions, next.revision);
+      await gameRef.current.switchProject(next.versions, next.revision, next.workspace);
       await connectAgent(next.transcript);
       setWorkspace(enter);
       persist({ active: enter });

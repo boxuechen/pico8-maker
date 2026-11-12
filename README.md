@@ -146,3 +146,12 @@ Qwen 普通百炼与 Token Plan 分开，并区分中国/国际入口。普通�
 - 首页输入新想法一律新建卡带（按钮显示 MAKE NEW CART），旧卡带不会被修改；工作台内发送仍继续当前卡带。只打开或输入草稿不会改变排序。
 - 切换卡带时播放器不重启，聊天 Agent 按卡带重建，旧 Agent 的迟到更新会被丢弃。
 - 多个标签页同时编辑同一张卡带时以最后写入为准。
+
+## 卡带工作区与局部修改（2026-11-12）
+
+- Agent 在一个单文件虚拟工作区里工作：`/cart/main.lua`（`src/pico8/workspace.js`，实现 pi-durable 的 ExecutionEnv 文件系统部分，没有 shell、没有其它文件）。
+- 新增 pi-durable 内置 `edit` 工具（精确文本替换，带 diff），固定作用于当前卡带。修复和小改动按“read_game → edit → load_game（不带 source）”进行，不再整份重发源码；新游戏或大改仍可给 `load_game` 传完整源码。
+- 工作稿与已提交版本分开：编辑只改工作稿，`load_game` 编译通过后才成为新版本；编译失败时工作稿保留、不提交，测试会话仍运行上一个版本。`reset_game`、导出和玩家试玩都用已提交版本。工作稿按卡带存入 IndexedDB 的 `workspace` 字段，撤销时重置。
+- 界面：进度卡显示“Edited main.lua · n changes”，展开可见 `- 旧 / + 新`；版本卡只在真正提交新版本时出现并显示版本号。
+- 未引入 just-bash：单文件卡带用不上 shell。以后若工作区变成多文件，可把它作为同一 ExecutionEnv 的 Shell 部分接入。
+

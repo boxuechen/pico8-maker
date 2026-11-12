@@ -49,9 +49,7 @@ function Step({ step, running }) {
           <div key={tool.toolCallId}>
             <span>INPUT · {tool.toolName}</span>
             <pre>
-              {tool.toolName === "load_game"
-                ? `${String(tool.args?.source ?? "").split("\n").length} lines of Lua`
-                : JSON.stringify(tool.args, null, 2)}
+              {toolInput(tool)}
             </pre>
             <span>RESULT</span>
             <pre>{resultText(tool, running)}</pre>
@@ -94,9 +92,31 @@ function ToolActivity({ tools, running }) {
     </section>
   );
 }
-function VersionCard({ tool, isLast }) {
+// Compact, readable tool input: line counts for whole sources, -/+ for edits.
+function toolInput(tool) {
+  const args = tool.args ?? {};
+  if (tool.toolName === "load_game")
+    return typeof args.source === "string"
+      ? `${args.source.split("\n").length} lines of Lua`
+      : "main.lua (current edits)";
+  if (tool.toolName === "edit" && Array.isArray(args.edits))
+    return args.edits
+      .map((e) =>
+        [
+          ...String(e.oldText ?? "").split("\n").map((l) => `- ${l}`),
+          ...String(e.newText ?? "").split("\n").map((l) => `+ ${l}`),
+        ].join("\n"),
+      )
+      .join("\n…\n");
+  return JSON.stringify(args, null, 2);
+}
+function VersionCard({ tool, edits, isLast }) {
   const { canUndo, onUndo, onViewCode, busy } = useContext(ActivityContext);
-  const lines = String(tool.args?.source ?? "").split("\n").length;
+  const detail =
+    typeof tool.args?.source === "string"
+      ? `${tool.args.source.split("\n").length} lines`
+      : `${edits} ${edits === 1 ? "edit" : "edits"}`;
+  const version = String(tool.result ?? "").match(/Committed as version (\d+)/)?.[1];
   return (
     <div className="version-card">
       <svg className="pixel-icon mini-cart" viewBox="0 0 16 20" aria-hidden="true">
@@ -109,8 +129,11 @@ function VersionCard({ tool, isLast }) {
         <path d="M3 16h6v1H3z" fill="#fff1e8" />
       </svg>
       <div className="version-text">
-        <strong>Cart updated</strong>
-        <code>{lines} lines · passed load check</code>
+        <strong>
+          Cart updated
+          {version ? ` · v${version}` : ""}
+        </strong>
+        <code>{detail} · passed load check</code>
       </div>
       <button onClick={onViewCode}>View code</button>
       {isLast && (
@@ -142,7 +165,8 @@ export function AssistantMessage() {
     : tools.findLast(
         (t) =>
           t.toolName === "load_game" &&
-          toolState(t, false) === "completed",
+          toolState(t, false) === "completed" &&
+          /Committed as version \d+/.test(String(t.result ?? "")),
       );
   return (
     <MessagePrimitive.Root className="message assistant">
@@ -159,7 +183,13 @@ export function AssistantMessage() {
           />
         ),
       )}
-      {update && <VersionCard tool={update} isLast={isLast} />}
+      {update && (
+        <VersionCard
+          tool={update}
+          edits={tools.filter((t) => t.toolName === "edit").length}
+          isLast={isLast}
+        />
+      )}
       <ActionBarPrimitive.Root
         className="message-actions"
         hideWhenRunning

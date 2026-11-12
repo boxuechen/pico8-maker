@@ -1,0 +1,148 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { BACKGROUND_CONTEXT as context } from "@earendil-works/chord/context";
+import { CartWorkspace, mainPath } from "../src/pico8/workspace.js";
+import { createPico8Extension } from "../src/pico8/extension.js";
+import { Game } from "../src/game.js";
+import knowledge from "../src/generated/pico8-knowledge.js";
+
+function memoryWorkspace(text = "", maxLength) {
+  const box = { text, writes: 0 };
+  const ws = new CartWorkspace({
+    read: () => box.text,
+    write: (t) => {
+      box.text = t;
+      box.writes++;
+    },
+    maxLength,
+  });
+  return { box, ws };
+}
+
+test("the workspace exposes exactly one writable file", async () => {
+  const { box, ws } = memoryWorkspace("print(1)");
+  assert.equal((await ws.absolutePath("main.lua", context)).value, mainPath);
+  assert.equal((await ws.absolutePath("./x/../main.lua", context)).value, mainPath);
+  assert.equal((await ws.readTextFile("main.lua", context)).value, "print(1)");
+  assert.equal((await ws.fileInfo("/cart", context)).value.kind, "directory");
+  assert.equal((await ws.fileInfo("other.lua", context)).error.code, "not_found");
+  assert.equal(
+    (await ws.writeFile("/etc/passwd", "x", context)).error.code,
+    "permission_denied",
+  );
+  assert.equal((await ws.exec("ls", undefined, context)).error.code, "shell_unavailable");
+  assert.equal((await ws.writeFile("main.lua", "print(2)", context)).ok, true);
+  assert.equal(box.text, "print(2)");
+  const small = memoryWorkspace("", 4).ws;
+  assert.equal((await small.writeFile("main.lua", "12345", context)).error.code, "invalid");
+});
+
+test("the agent's edit tool changes only the targeted block of main.lua", async () => {
+  const { box, ws } = memoryWorkspace(
+    "jump_speed=-3\nfunction _update() end\nfunction _draw() cls(1) end\n",
+  );
+  const ext = createPico8Extension({ game: { workspace: ws }, knowledge });
+  const edit = ext.tools.find((t) => t.name === "edit");
+  assert.ok(edit.description.includes(mainPath));
+  const result = await edit.execute(
+    {
+      path: "main.lua",
+      edits: [{ oldText: "jump_speed=-3", newText: "jump_speed=-4.5" }],
+    },
+    {},
+    context,
+  );
+  assert.equal(result.isError, undefined);
+  assert.equal(
+    box.text,
+    "jump_speed=-4.5\nfunction _update() end\nfunction _draw() cls(1) end\n",
+  );
+  assert.match(result.details.diff, /-4\.5/);
+  await assert.rejects(() =>
+    edit.execute(
+      { path: "main.lua", edits: [{ oldText: "not here", newText: "x" }] },
+      {},
+      context,
+    ),
+  );
+  await assert.rejects(() =>
+    edit.execute(
+      { path: "other.lua", edits: [{ oldText: "a", newText: "b" }] },
+      {},
+      context,
+    ),
+  );
+  const load = ext.tools.find((t) => t.name === "load_game");
+  assert.deepEqual(load.parameters.required ?? [], []);
+});
+
+// A Game with a scripted test session: "bad" sources fault on load.
+function scriptedGame(options) {
+  const loads = [];
+  const drafts = [];
+  const game = new Game(() => {}, {
+    versions: ["v1"],
+    onSave: () => {},
+    onDraft: (t) => drafts.push(t),
+    ...options,
+  });
+  game.ensureWorker = async () => {};
+  game.player = { pause: async () => {}, loadCart: async () => {} };
+  const ok = { state: "running", frame: null, diagnostics: [] };
+  game.rpc = async (action, args) => {
+    if (action === "load") {
+      loads.push(args.source);
+      return args.source.includes("bad") ? { state: "faulted", diagnostics: [] } : ok;
+    }
+    return { observation: ok };
+  };
+  game.output = (observation) => ({
+    output: [{ type: "text", text: observation.state }],
+    isError: observation.state === "faulted",
+  });
+  return { game, loads, drafts };
+}
+
+test("load_game commits the working file; failed loads keep edits uncommitted", async () => {
+  const { game, loads, drafts } = scriptedGame();
+  assert.equal(game.draft, "v1");
+  await game.workspace.writeFile("main.lua", "v2", context);
+  assert.equal((await game.execute("read_game", {})).output[0].text, "v2");
+  assert.equal(game.source, "v1");
+  // reset_game runs the committed version, not the draft.
+  await game.execute("reset_game", {});
+  assert.equal(loads.at(-1), "v1");
+
+  const loaded = await game.execute("load_game", {});
+  assert.equal(loaded.isError, false);
+  assert.match(loaded.output[0].text, /Committed as version 2/);
+  assert.deepEqual(game.versions, ["v1", "v2"]);
+
+  const same = await game.execute("load_game", {});
+  assert.match(same.output[0].text, /unchanged/);
+  assert.equal(game.versions.length, 2);
+
+  const bad = await game.execute("load_game", { source: "bad code" });
+  assert.equal(bad.isError, true);
+  assert.match(bad.output[0].text, /Not committed/);
+  assert.equal(game.draft, "bad code");
+  assert.equal(game.source, "v2");
+  assert.equal(loads.at(-1), "v2");
+
+  await game.execute("load_game", { source: "v3" });
+  assert.equal(game.revision, 3);
+  await game.undo();
+  assert.equal(game.source, "v2");
+  assert.equal(game.draft, "v2");
+  assert.deepEqual(drafts, ["v2", "bad code", "v3", "v2"]);
+});
+
+test("a stored draft survives reopening and switching carts", async () => {
+  const { game } = scriptedGame({ draft: "edited" });
+  assert.equal(game.draft, "edited");
+  assert.equal(game.source, "v1");
+  await game.switchProject(["a", "b"], 2);
+  assert.equal(game.draft, "b");
+  await game.switchProject(["a"], 1, "a + edits");
+  assert.equal(game.draft, "a + edits");
+});

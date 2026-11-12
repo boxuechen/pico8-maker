@@ -11,7 +11,7 @@
     "prepare:player": "node scripts/prepare-player.mjs",
     "predev": "npm run prepare:knowledge && npm run prepare:player",
     "prebuild": "npm run prepare:knowledge && npm run prepare:player",
-    "test": "node --test tests/runtime.test.mjs tests/model-connection.test.mjs tests/model-store.test.mjs tests/project-store.test.mjs tests/cartridges.test.mjs tests/workbench-state.test.mjs tests/cart-tools.test.mjs tests/cart-store.test.mjs tests/pico8-extension.test.mjs tests/observation.test.mjs",
+    "test": "node --test tests/runtime.test.mjs tests/model-connection.test.mjs tests/model-store.test.mjs tests/project-store.test.mjs tests/cartridges.test.mjs tests/workbench-state.test.mjs tests/cart-tools.test.mjs tests/cart-store.test.mjs tests/workspace.test.mjs tests/pico8-extension.test.mjs tests/observation.test.mjs",
     "test:model": "node tests/mock-model.mjs",
     "prepare:knowledge": "node scripts/prepare-knowledge.mjs",
     "pretest": "npm run prepare:knowledge"

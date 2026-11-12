@@ -7,14 +7,23 @@ import {
 import { cartridgeBytes } from "./cartridges.js";
 import { sampleSource, cartBytes } from "./sample.js";
 import { downloadCart } from "./pico8/cart.js";
+import { CartWorkspace } from "./pico8/workspace.js";
 
 export class Game {
-  constructor(onChange, { versions, revision, onSave } = {}) {
+  constructor(onChange, { versions, revision, draft, onSave, onDraft } = {}) {
     this.onSave = onSave;
+    this.onDraft = onDraft;
     this.onChange = onChange;
     this.versions = versions?.length ? versions.slice(-12) : [sampleSource];
     // A user-facing version number survives the 12-entry undo window.
     this.revision = Math.max(revision ?? this.versions.length, this.versions.length);
+    // The agent's working copy (/cart/main.lua). Versions are what load_game committed.
+    this.draft = typeof draft === "string" ? draft : this.source;
+    this.workspace = new CartWorkspace({
+      read: () => this.draft,
+      write: (text) => this.setDraft(text),
+      maxLength: capabilities.maxSourceLength,
+    });
     this.pending = new Map();
     this.nextId = 0;
     this.queue = Promise.resolve();
@@ -24,6 +33,11 @@ export class Game {
   }
   get source() {
     return this.versions.at(-1);
+  }
+  setDraft(text) {
+    if (text === this.draft) return;
+    this.draft = text;
+    this.onDraft?.(text);
   }
   changed(extra = {}) {
     this.onChange({
@@ -188,6 +202,7 @@ export class Game {
     this.activeCart = null;
     this.versions.pop();
     this.revision = Math.max(1, this.revision - 1);
+    this.setDraft(this.source);
     this.save();
     this.changed();
   }
@@ -196,10 +211,11 @@ export class Game {
     downloadCart(this.source, { title, label });
   }
   /** Swap in another cart's versions without rebooting the player. */
-  async switchProject(versions, revision) {
+  async switchProject(versions, revision, draft) {
     this.cancelTests("Switched to another cart.");
     this.versions = versions?.length ? versions.slice(-12) : [sampleSource];
     this.revision = Math.max(revision ?? this.versions.length, this.versions.length);
+    this.draft = typeof draft === "string" ? draft : this.source;
     this.activeCart = null;
     this.testFrame = null;
     if (this.player)
@@ -234,37 +250,48 @@ export class Game {
     )
       throw new Error(`未知游戏工具：${action}`);
     if (action === "read_game")
-      return { output: [{ type: "text", text: this.source }] };
+      return { output: [{ type: "text", text: this.draft }] };
     const options = observationOptions(action === "observe_game" ? args : {});
     await this.ensureWorker();
     await this.player.pause();
     let observation;
+    let note = "";
     if (action === "load_game") {
       if (
-        typeof args.source !== "string" ||
-        args.source.length > capabilities.maxSourceLength
+        args.source !== undefined &&
+        (typeof args.source !== "string" ||
+          args.source.length > capabilities.maxSourceLength)
       )
         throw new Error("源码应为不超过 100 KB 的 Lua 文本");
-      observation = await this.rpc("load", { source: args.source });
+      // A full source replaces the working file first; otherwise load the edits.
+      if (args.source !== undefined) this.setDraft(args.source);
+      const source = this.draft;
+      observation = await this.rpc("load", { source });
       if (observation.state !== "faulted")
         observation = (await this.rpc("advance", { frames: 1, buttons: 0 }))
           .observation;
       if (observation.state === "faulted") {
         const result = this.output(observation);
         await this.rpc("load", { source: this.source });
+        result.output[0].text +=
+          "\nNot committed: main.lua keeps this failing source. Fix it with edit, then call load_game again. The test session still runs the last loaded version.";
         return { ...result, isError: true };
       }
       signal?.throwIfAborted();
-      try {
-        await this.player.loadCart(cartBytes(args.source));
-      } catch (error) {
-        await this.rpc("load", { source: this.source });
-        throw error;
+      if (source === this.source) note = "\nmain.lua is unchanged since the last load; no new version.";
+      else {
+        try {
+          await this.player.loadCart(cartBytes(source));
+        } catch (error) {
+          await this.rpc("load", { source: this.source });
+          throw error;
+        }
+        this.versions.push(source);
+        this.versions = this.versions.slice(-12);
+        this.revision++;
+        this.save();
+        note = `\nCommitted as version ${this.revision}.`;
       }
-      this.versions.push(args.source);
-      this.versions = this.versions.slice(-12);
-      this.revision++;
-      this.save();
     } else if (action === "press_buttons") {
       if (
         !Number.isInteger(args.frames) ||
@@ -286,7 +313,9 @@ export class Game {
     } else observation = await this.rpc("observe");
     if (observation.frame) this.testFrame = observation.frame;
     this.changed();
-    return this.output(observation, options);
+    const result = this.output(observation, options);
+    if (note) result.output[0].text += note;
+    return result;
   }
   output(observation, options = observationOptions()) {
     const { frame } = observation;

@@ -103,7 +103,26 @@ const server = http.createServer(async (req, res) => {
             .map((x) => x.text)
             .join("\n");
     const observationFixture = body.model === "fixture-observation";
-    const operations = observationFixture
+    // Repair through the workspace: targeted edit, then load the edited file.
+    const editFixture = body.model === "fixture-edit";
+    const operations = editFixture
+      ? [
+          ["read_game", {}],
+          [
+            "edit",
+            {
+              path: "main.lua",
+              edits: [{ oldText: "jump_speed=-3", newText: "jump_speed=-4.5" }],
+            },
+          ],
+          ["load_game", {}],
+          ["reset_game", {}],
+          ["press_buttons", { frames: 24, buttons: 2 }],
+          ["press_buttons", { frames: 1, buttons: 34 }],
+          ["press_buttons", { frames: 45, buttons: 2 }],
+          ["observe_game", {}],
+        ]
+      : observationFixture
       ? [
           [
             "load_game",

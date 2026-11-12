@@ -61,7 +61,8 @@ test("actual provider requests replace legacy rules and preserve references acro
     assert.ok(system.includes("case/celeste-classic"));
     assert.ok(!system.includes("## Observed implementation"));
     assert.ok(!system.includes("LEGACY_JUMP_ONLY"));
-    assert.equal(body.tools.length, 6);
+    assert.equal(body.tools.length, 7);
+    assert.ok(body.tools.some((t) => t.function.name === "edit"));
     assert.ok(body.tools.some((t) => t.function.name === "read_reference"));
     if (bodies.length === 1)
       return response(

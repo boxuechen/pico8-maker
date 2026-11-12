@@ -55,7 +55,8 @@ export function formatButtons(mask = 0) {
 const toolLabels = {
   read_reference: "Read the PICO-8 reference",
   read_game: "Read the cart source",
-  load_game: "Updated the cart",
+  load_game: "Loaded the cart",
+  edit: "Edited main.lua",
   press_buttons: "Pressed",
   observe_game: "Looked at the screen",
   reset_game: "Restarted the test",
@@ -70,10 +71,16 @@ export function describeTool(tool) {
       meta: Number.isInteger(args.frames) ? `${args.frames}f` : "",
     };
   if (tool?.toolName === "load_game")
-    return {
-      label: toolLabels.load_game,
-      meta: `${String(args.source ?? "").split("\n").length} lines`,
-    };
+    return typeof args.source === "string"
+      ? {
+          label: "Wrote the whole cart",
+          meta: `${args.source.split("\n").length} lines`,
+        }
+      : { label: toolLabels.load_game, meta: "" };
+  if (tool?.toolName === "edit") {
+    const n = Array.isArray(args.edits) ? args.edits.length : 1;
+    return { label: toolLabels.edit, meta: `${n} ${n === 1 ? "change" : "changes"}` };
+  }
   return { label: toolLabels[tool?.toolName] ?? tool?.toolName ?? "Tool", meta: "" };
 }
 /** Merge consecutive calls of the same tool into one display step. */

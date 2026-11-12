@@ -19,6 +19,8 @@ export function newCart(patch = {}) {
     versions: [sampleSource],
     revision: 1,
     label: null,
+    // Agent's working copy of main.lua; null means "same as the latest version".
+    workspace: null,
     draft: "",
     interrupted: false,
     savedRevision: null,
@@ -41,6 +43,8 @@ export function normalizeCart(data) {
     return null;
   const cart = { ...newCart(), ...data };
   cart.versions = cart.versions.slice(-12);
+  if (typeof cart.workspace !== "string" || cart.workspace.length > maxSource)
+    cart.workspace = null;
   cart.revision = Math.max(Number(cart.revision) || 0, cart.versions.length);
   if (typeof cart.title !== "string" || !cart.title.trim())
     cart.title = "Untitled cartridge";

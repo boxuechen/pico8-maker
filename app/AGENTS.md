@@ -29,7 +29,7 @@ Homepage MAKE A GAME button: use explicit line height and comfortable horizontal
 Unified workbench header: chat title and Preview/status share the same 52px top row, aligned to the draggable content split. Extend the divider through the header, keep project actions at the far right, and remove any separate player heading. The player starts directly below with the same 20px top inset as chat. On narrow stacked layouts keep Preview in the compact top row and hide only the secondary status text.
 
 
-PICO-8 knowledge: model-facing rules and references are English, compiled from docs/pico8-agent via prepare:knowledge. Keep replies in the user’s language. Preserve the pico8 extension sections, six tools, versioned reference output and legacy-history migration. observe_game supports png/ascii/both and validated screen-region crops. Other game tools keep PNG. Preserve full pixel grids and frame identity across tool output and history; observation must not advance time.
+PICO-8 knowledge: model-facing rules and references are English, compiled from docs/pico8-agent via prepare:knowledge. Keep replies in the user’s language. Preserve the pico8 extension sections, six tools (plus the workspace edit tool), versioned reference output and legacy-history migration. observe_game supports png/ascii/both and validated screen-region crops. Other game tools keep PNG. Preserve full pixel grids and frame identity across tool output and history; observation must not advance time.
 
 ## PICO-8 Maker redesign (2026-11-12, supersedes conflicting notes above)
 
@@ -44,3 +44,12 @@ Workbench: full-width top bar with back + official logo, title, version badge, a
 ## Cart shelf and storage (2026-11-12)
 
 Static site only, never a server: carts live in the browser. `src/cart-store.js` stores every cart in IndexedDB (`pico8-maker`: `carts` keyed by id, `meta.session` with currentId/active), and falls back to memory (with a visible warning) when IndexedDB is unavailable. There is no migration from the old single-project localStorage snapshot. Home shows a "My carts" shelf (continue, save .p8, duplicate, delete with confirmation, SAVED / NOT SAVED YET status, persistent browser-only notice) and LAST CART top right. A home prompt always starts a new cart; workbench prompts continue the current one. Switching carts reuses the player and recreates the agent per cart; stale agent updates are ignored. Only content changes (transcript, versions, revision, label, title) bump `updatedAt`.
+
+## Cart workspace (2026-11-12)
+
+The agent works in a one-file virtual workspace, `/cart/main.lua` (`src/pico8/workspace.js`, a FileSystem-only pi-durable ExecutionEnv; no shell, no other files). The pico8 extension adds pi-durable's built-in `edit` tool, always bound to the game's workspace. `Game.draft` is the working file; `versions` are what `load_game` committed. `load_game` takes optional complete source (replaces the file first); without it, it compiles the edited file and commits a version, or reports "unchanged". A failed compile keeps the draft uncommitted and the test session on the last committed version. `reset_game`, export and the live player use the committed version. The draft persists per cart as `workspace` in IndexedDB and resets on undo. The version card appears only when a load reports "Committed as version N". just-bash is intentionally not used; it could later implement the Shell half of the same env.
+
+## Workspace and session product direction (2026-11-12)
+
+The workbench activates only one project workspace at a time. Workspace creation and selection can remain on the home/project list; do not add an in-workbench workspace switcher. Allow the design to support multiple conversation sessions within one workspace, sharing that workspace's game source and committed versions while keeping conversation histories separate. This is product direction, not a claim that multi-session persistence is implemented. A product workspace owns the game environment and session records; do not equate it with one pi-durable Harness (the current Harness runs over one Session). The current `CartWorkspace` is the virtual filesystem adapter, while the `workspace` page-mode boolean and stored source draft are separate legacy uses of the same word.
+

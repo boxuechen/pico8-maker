@@ -3,7 +3,9 @@ import {
   defineTool,
   section,
 } from "@earendil-works/pi-durable";
+import { createEditTool } from "@earendil-works/pi-durable/tools";
 import { capabilities } from "./capabilities.js";
+import { mainPath } from "./workspace.js";
 const schema = (properties = {}, required = []) => ({
   type: "object",
   properties,
@@ -15,11 +17,11 @@ export function createPico8Extension({ game, knowledge }) {
     throw new Error("PICO-8 knowledge is required");
   const descriptions = {
     read_game:
-      "Read the complete current Lua source before modifying it. This is not a live-variable snapshot.",
+      `Read the complete working source, the workspace file ${mainPath} (path main.lua for edit). Read it before editing. This is not a live-variable snapshot.`,
     load_game:
-      "Replace the game with complete Lua source, including procedural sprite/map/audio initialization. Compile and run one frame before committing. Returns PNG and diagnostics; startup success is not gameplay verification.",
+      `Compile ${mainPath}, run one frame and commit it as a new version. Omit source after targeted edit calls; pass complete Lua source (including procedural sprite/map/audio initialization) to replace the whole file for a new game or a rewrite. A failed compile keeps the file unchanged and uncommitted so it can be fixed with edit. Returns PNG and diagnostics; startup success is not gameplay verification.`,
     reset_game:
-      "Reload the current source into the independent test session and advance one frame. This does not promise to erase cartdata.",
+      "Reload the last committed version into the independent test session and advance one frame. Uncommitted edits are not loaded. This does not promise to erase cartdata.",
     press_buttons:
       "Hold a button mask for 1–120 logical frames and return the actual PNG. Left=1, right=2, up=4, down=8, O/Z=16, X=32. Add bits for combinations; 0 releases all buttons. These masks differ from Lua button indices.",
     observe_game:
@@ -47,10 +49,13 @@ export function createPico8Extension({ game, knowledge }) {
           "Optional crop at original pixel resolution. Must fit within 128x128; omitted means full screen. Applies to every requested format.",
       },
     }),
-    load_game: schema(
-      { source: { type: "string", maxLength: capabilities.maxSourceLength } },
-      ["source"],
-    ),
+    load_game: schema({
+      source: {
+        type: "string",
+        maxLength: capabilities.maxSourceLength,
+        description: `Optional complete Lua source that replaces ${mainPath} before loading. Omit to load the current file.`,
+      },
+    }),
     press_buttons: schema(
       {
         frames: {
@@ -64,6 +69,17 @@ export function createPico8Extension({ game, knowledge }) {
     ),
   };
   const references = knowledge.references;
+  // pi-durable's edit tool, always pointed at this cart's workspace rather than
+  // whatever environment the harness has (it has none).
+  const edit = createEditTool();
+  const editTool = {
+    ...edit,
+    description: `${edit.description} Only ${mainPath} exists (relative path main.lua). Changes are not live until load_game.`,
+    execute: (args, api, ctx) => {
+      if (!game.workspace) throw new Error("No cart workspace is available");
+      return edit.execute(args, withEnv(api, game.workspace), ctx);
+    },
+  };
   return defineExtension({
     name: "pico8",
     sections: [
@@ -73,7 +89,7 @@ export function createPico8Extension({ game, knowledge }) {
       section(
         "pico8_host",
         () =>
-          `Submit complete Lua source (maximum ${capabilities.maxSourceLength} characters); initialize art, map and sound data in Lua. Game tools run sequentially. Test input: player 0, at most ${capabilities.maxInputFrames} frames. Default observation: ${capabilities.observation}. observe_game supports ${capabilities.observationFormats.join(", ")} and optional pixel-region cropping. Use PNG for overall appearance and cropped ASCII with the actual palette for precise pixels. Other game tools return PNG. No live-variable query or audio return. Test persistence: ${capabilities.persistence}; destroying its Worker loses that instance. Test and live player are separate. Historical frames are past evidence, not the current session state; establish a new baseline after restore. read_reference reads bundled documentation without operating the game. Source exports retain procedural initialization.`,
+          `The cart is one workspace file, ${mainPath} (maximum ${capabilities.maxSourceLength} characters); initialize art, map and sound data in Lua. For repairs and focused changes, read_game, then edit main.lua with exact unique oldText blocks, then load_game without source; this preserves unrelated code and avoids resending the whole cart. For a new game or a rewrite of most of the file, pass the complete source to load_game. Edits take effect only after load_game succeeds. There is no shell and no other file. Game tools run sequentially. Test input: player 0, at most ${capabilities.maxInputFrames} frames. Default observation: ${capabilities.observation}. observe_game supports ${capabilities.observationFormats.join(", ")} and optional pixel-region cropping. Use PNG for overall appearance and cropped ASCII with the actual palette for precise pixels. Other game tools return PNG. No live-variable query or audio return. Test persistence: ${capabilities.persistence}; destroying its Worker loses that instance. Test and live player are separate. Historical frames are past evidence, not the current session state; establish a new baseline after restore. read_reference reads bundled documentation without operating the game. Source exports retain procedural initialization.`,
       ),
       section(
         "pico8_knowledge",
@@ -101,6 +117,7 @@ export function createPico8Extension({ game, knowledge }) {
             game.execute(name, args, ctx.abortSignal),
         }),
       ),
+      editTool,
       defineTool({
         name: "read_reference",
         description:
@@ -136,5 +153,15 @@ export function createPico8Extension({ game, knowledge }) {
         },
       }),
     ],
+  });
+}
+
+function withEnv(api, env) {
+  return new Proxy(api ?? {}, {
+    get(target, key) {
+      if (key === "env") return env;
+      const value = Reflect.get(target, key);
+      return typeof value === "function" ? value.bind(target) : value;
+    },
   });
 }
