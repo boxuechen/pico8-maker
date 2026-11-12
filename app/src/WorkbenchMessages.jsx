@@ -94,11 +94,6 @@ function ToolActivity({ tools, running }) {
 export function UserMessage() {
   return (
     <MessagePrimitive.Root className="message user">
-      <div className="post-heading">
-        <span className="post-avatar user-avatar">U</span>
-        <span>YOU</span>
-        <small>REQUEST</small>
-      </div>
       <div className="user-bubble">
         <MessagePrimitive.Parts />
       </div>
@@ -114,11 +109,6 @@ export function AssistantMessage() {
   const firstTool = parts.findIndex((p) => p.type === "tool-call");
   return (
     <MessagePrimitive.Root className="message assistant">
-      <div className="post-heading">
-        <span className="post-avatar maker-avatar">✦</span>
-        <span>PICO MAKER</span>
-        <small>{running ? "WORKING" : "REPLY"}</small>
-      </div>
       {parts.map((part, index) =>
         part.type === "tool-call" ? (
           index === firstTool ? (
@@ -132,7 +122,11 @@ export function AssistantMessage() {
           />
         ),
       )}
-      <ActionBarPrimitive.Root className="message-actions">
+      <ActionBarPrimitive.Root
+        className="message-actions"
+        hideWhenRunning
+        autohide="not-last"
+      >
         <ActionBarPrimitive.Copy title="Copy reply" aria-label="Copy reply">
           <Copy size={13} />
           <span>Copy</span>

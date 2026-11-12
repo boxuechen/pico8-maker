@@ -1,79 +1,73 @@
-/* BBS-inspired workspace; the gallery keeps its established homepage theme. */
+/* One canvas, two surface levels. Keep the homepage theme independent. */
 .studio-mode {
-  --post-font: Proggy, "PingFang SC", "Microsoft YaHei", monospace;
-  font-family: var(--post-font);
+  --workbench-font: Proggy, "PingFang SC", "Microsoft YaHei", monospace;
+  --canvas: #11141d;
+  --surface: #1e222d;
+  --edge: #303542;
+  --text: #dadce3;
+  --muted: #9298a8;
+  font-family: var(--workbench-font);
+  background: var(--canvas);
+  color: var(--text);
+}
+.studio-mode .workspace,
+.studio-mode .topbar,
+.studio-mode .chat-panel,
+.studio-mode .player-panel,
+.studio-mode .panel-heading,
+.studio-mode .preview-heading,
+.studio-mode .composer-area {
+  background: var(--canvas);
+}
+.studio-mode .topbar {
+  border-bottom: 1px solid var(--edge);
 }
 .studio-mode .workspace {
-  background: #20232b;
+  grid-template-columns: var(--chat-width, 55%) 5px minmax(0, 1fr);
 }
-.studio-mode .chat-panel {
-  background: #24262f;
-}
-.studio-mode .panel-heading {
-  background: #1c1f29;
-  border-bottom: 1px solid #49414f;
+.studio-mode .panel-heading,
+.studio-mode .preview-heading {
   height: 43px;
-  padding: 0 24px;
-  font: 13px var(--post-font);
+  padding: 0 28px;
+  border: 0;
+  font: 14px var(--workbench-font);
   letter-spacing: 0;
+  color: var(--muted);
 }
-.studio-mode .panel-heading span:last-child {
-  font: 12px var(--post-font);
-  color: #ac9eaf;
+.studio-mode .panel-heading span {
+  font: inherit;
+  color: inherit;
+}
+.studio-mode .preview-heading span:last-child {
+  font: 12px var(--workbench-font);
+  color: var(--muted);
 }
 .studio-mode .chat-viewport {
-  padding: 8px 24px 22px;
-  scrollbar-color: #655968 transparent;
+  padding: 20px 28px 24px;
+  scrollbar-color: var(--edge) transparent;
 }
 .studio-mode .message {
-  font: 16px/1.5 var(--post-font);
-  margin: 0;
-  padding: 24px 0 22px;
-  border-bottom: 1px solid #49414e;
+  font: 16px/1.5 var(--workbench-font);
+  margin: 0 0 26px;
+  padding: 0;
+  border: 0;
   overflow-wrap: anywhere;
 }
 .studio-mode .message.user {
-  display: block;
-}
-.post-heading {
   display: flex;
-  align-items: center;
-  gap: 9px;
-  margin-bottom: 12px;
-  font: 13px/1 var(--post-font);
-  color: #fff1e8;
-}
-.post-heading small {
-  margin-left: auto;
-  color: #9b92a1;
-  font-size: 11px;
-}
-.post-avatar {
-  width: 23px;
-  height: 23px;
-  display: grid;
-  place-items: center;
-  font-size: 14px;
-  background: #48404d;
-}
-.user-avatar {
-  background: #684051;
-  color: #ff9fbd;
-}
-.maker-avatar {
-  color: #ffcfaf;
-  background: #443c52;
-}
-.user .post-heading > span:nth-child(2) {
-  color: #ff91b6;
+  justify-content: flex-end;
 }
 .studio-mode .user-bubble {
-  max-width: none;
+  max-width: 80%;
   border: 0;
-  border-radius: 0;
-  background: transparent;
-  padding: 0;
-  color: #e4d6df;
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 12px 16px;
+  color: var(--text);
+}
+.studio-mode .assistant {
+  color: var(--text);
+  padding-right: 20px;
 }
 .studio-mode .message p {
   margin: 8px 0;
@@ -84,20 +78,17 @@
 .studio-mode .message p:last-child {
   margin-bottom: 0;
 }
-.studio-mode .assistant {
-  color: #d7d3d9;
-}
 .studio-mode .assistant ul,
 .studio-mode .assistant ol {
   padding-left: 23px;
 }
 .studio-mode .assistant a {
-  color: #ff9fbd;
+  color: #ff91b6;
 }
 .studio-mode .assistant pre {
-  border: 1px solid #4e4557;
-  border-radius: 0;
-  background: #191e29;
+  border: 1px solid var(--edge);
+  border-radius: 8px;
+  background: var(--surface);
   font:
     12px/1.5 ui-monospace,
     SFMono-Regular,
@@ -112,8 +103,8 @@
 }
 .studio-mode .message-actions {
   margin-top: 12px;
-  color: #b4a4b7;
-  font: 11px var(--post-font);
+  color: var(--muted);
+  font: 12px var(--workbench-font);
 }
 .studio-mode .message-actions button {
   display: flex;
@@ -121,163 +112,172 @@
   align-items: center;
   padding: 3px 0;
 }
+.studio-mode .message-actions button:hover {
+  color: var(--text);
+}
 .studio-mode .working {
-  font: 12px var(--post-font);
-  color: #c7acbd;
-  margin: 14px 0 0;
+  font: 13px var(--workbench-font);
+  color: var(--muted);
+  margin: 14px 0;
 }
 .studio-mode .composer-area {
-  padding: 16px 20px 13px;
-  background: #20232c;
-  border-top: 1px solid #4e4353;
+  padding: 12px 28px 16px;
+  border: 0;
 }
 .studio-mode .composer {
-  background: #fff1e8;
-  border: 1px solid #b9a7a5;
+  background: var(--surface);
+  border: 1px solid var(--edge);
+  border-radius: 10px;
   box-shadow: none;
-  padding: 13px 15px 11px;
+  padding: 14px 16px 12px;
 }
 .studio-mode .composer:focus-within {
-  border-color: #ff77a8;
-  outline: 2px solid #ff77a844;
-  outline-offset: 0;
+  border-color: #816174;
+  outline: none;
   box-shadow: none;
 }
 .studio-mode .composer textarea {
-  color: #302b35;
-  font: 16px/1.5 var(--post-font);
-  min-height: 72px;
+  color: var(--text);
+  font: 16px/1.5 var(--workbench-font);
+  min-height: 48px;
   max-height: 180px;
-  caret-color: #8b285a;
+  caret-color: #ff77a8;
 }
 .studio-mode .composer textarea::placeholder {
-  color: #85777d;
+  color: var(--muted);
 }
 .studio-mode .composer-footer {
   margin-top: 8px;
 }
 .studio-mode .composer-footer > span {
-  color: #75616f;
-  font: 11px var(--post-font);
+  color: var(--muted);
+  font: 12px var(--workbench-font);
 }
 .studio-mode .send {
   display: flex;
   align-items: center;
   justify-content: center;
   width: auto;
-  min-width: 90px;
+  min-width: 80px;
   height: 32px;
   padding: 0 12px;
-  gap: 9px;
-  background: #b73067;
-  color: #fff1e8;
-  font: 14px var(--post-font);
+  gap: 8px;
+  border-radius: 6px;
+  background: #ff77a8;
+  color: #11141d;
+  font: 14px var(--workbench-font);
 }
 .studio-mode .send:hover:not(:disabled) {
-  background: #932452;
-  color: white;
+  background: #ff91b6;
+  color: #11141d;
 }
 .studio-mode .send:disabled {
-  background: #dcc5ca;
-  color: #8e747e;
+  background: var(--edge);
+  color: var(--muted);
   opacity: 1;
 }
 .studio-mode .composer-note {
-  font: 11px var(--post-font);
-  color: #a99bae;
-  margin-top: 9px;
+  font: 11px var(--workbench-font);
+  color: var(--muted);
+  margin-top: 10px;
 }
 .studio-mode .error,
 .studio-mode .restore-note {
-  font: 13px/1.5 var(--post-font);
+  font: 13px/1.5 var(--workbench-font);
 }
 .studio-mode .player-panel {
-  background: #080f1c;
-  padding-top: 58px;
+  padding: 58px 24px 24px;
 }
+/* 360px shell contains the original 128px screen at exactly 2x. */
 .studio-mode .console {
-  width: min(100%, calc((100dvh - 240px) * 180 / 210));
+  width: min(360px, 100%, calc((100dvh - 240px) * 180 / 210));
 }
-.studio-mode .preview-heading {
-  height: 43px;
-  font: 13px var(--post-font);
-  letter-spacing: 0;
-  background: #101520;
+.studio-mode .console-group:fullscreen {
+  background: var(--canvas);
 }
-.studio-mode .preview-heading span:last-child,
+.studio-mode .console-group:fullscreen .console {
+  width: min(80vw, calc((100dvh - 120px) * 180 / 210));
+}
 .studio-mode .player-help {
-  font: 12px var(--post-font);
+  font: 12px var(--workbench-font);
+  color: var(--muted);
   letter-spacing: 0;
+}
+.studio-mode .player-controls {
+  color: var(--muted);
 }
 .studio-mode .project-label {
-  font: 13px var(--post-font);
+  font: 13px var(--workbench-font);
   max-width: 260px;
+  color: var(--muted);
 }
 .studio-mode .settings-button,
 .studio-mode .more-menu {
-  font-family: var(--post-font);
+  font-family: var(--workbench-font);
+}
+.studio-mode .settings-button {
+  border-color: var(--edge);
+  color: var(--text);
 }
 .studio-mode .panel-divider {
   width: 5px;
-  background: #49404e;
+  background: linear-gradient(
+    to right,
+    transparent 2px,
+    var(--edge) 2px,
+    var(--edge) 3px,
+    transparent 3px
+  );
 }
 .studio-mode .panel-divider:hover,
 .studio-mode .panel-divider:focus-visible {
   background: #ff77a8;
 }
-.tool-activity {
-  margin: 16px 0;
-  border: 1px solid #64566b;
-  background: #1f222d;
+.studio-mode .tool-activity {
+  margin: 0 0 14px;
+  border: 0;
+  background: none;
 }
-.activity-toggle {
+.studio-mode .activity-toggle {
   width: 100%;
-  padding: 12px;
+  padding: 6px 0;
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   text-align: left;
-  color: #e3c9dc;
-  font:
-    14px Proggy,
-    "PingFang SC",
-    monospace;
+  color: var(--muted);
+  font: 14px var(--workbench-font);
 }
-.activity-toggle > span {
-  flex: 1;
+.studio-mode .activity-toggle:hover {
+  color: var(--text);
 }
-.activity-toggle small {
-  display: block;
-  font-size: 11px;
-  margin-top: 5px;
-  color: #a69aac;
+.studio-mode .activity-toggle > span {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px;
 }
-.activity-toggle .expanded {
+.studio-mode .activity-toggle small {
+  font-size: 12px;
+}
+.studio-mode .activity-toggle small::before {
+  content: "· ";
+}
+.studio-mode .activity-toggle .expanded {
   transform: rotate(90deg);
 }
-.activity-failed .activity-toggle > svg:first-child {
-  color: #ff879a;
-}
-.activity-interrupted .activity-toggle > svg:first-child {
-  color: #ffcf9c;
-}
-.activity-completed .activity-toggle > svg:first-child {
-  color: #b9c9b1;
-}
-.activity-steps {
-  border-top: 1px solid #493e52;
-  padding: 2px 12px 9px;
+.studio-mode .activity-steps {
+  margin-top: 8px;
+  border-left: 1px solid var(--edge);
+  padding: 0 0 0 16px;
 }
 .studio-mode .tool {
   margin: 0;
   padding: 10px 0;
   border: 0;
-  border-bottom: 1px solid #ffffff0c;
+  border-bottom: 1px solid #30354280;
   background: none;
-  font:
-    13px Proggy,
-    "PingFang SC",
-    monospace;
+  font: 13px var(--workbench-font);
 }
 .studio-mode .tool summary {
   gap: 8px;
@@ -286,26 +286,26 @@
   flex: 1;
 }
 .studio-mode .tool small {
-  color: #9e93a6;
-  font-size: 10px;
+  color: var(--muted);
+  font-size: 11px;
 }
 .studio-mode .tool-completed summary > svg:first-child {
-  color: #b9c9b1;
+  color: var(--muted);
 }
+.studio-mode .activity-failed .activity-toggle > svg:first-child,
 .studio-mode .tool-failed summary > svg:first-child {
   color: #ff879a;
 }
+.studio-mode .activity-interrupted .activity-toggle > svg:first-child,
 .studio-mode .tool-interrupted summary > svg:first-child {
   color: #ffcf9c;
 }
-.tool-detail {
+.studio-mode .tool-detail {
   padding: 12px 0 0 22px;
 }
-.tool-detail > span {
-  font:
-    10px Proggy,
-    monospace;
-  color: #a899b2;
+.studio-mode .tool-detail > span {
+  font: 11px var(--workbench-font);
+  color: var(--muted);
 }
 .studio-mode .tool pre {
   font-size: 11px;
@@ -313,11 +313,8 @@
   margin: 6px 0 12px;
 }
 .studio-mode .activity-note {
-  font:
-    11px/1.5 Proggy,
-    "PingFang SC",
-    monospace;
-  color: #998ba4;
+  font: 12px/1.5 var(--workbench-font);
+  color: var(--muted);
   margin-top: 9px;
 }
 dialog {
@@ -338,37 +335,156 @@ dialog {
   font-size: 12px;
 }
 @media (max-width: 800px) {
+  .studio-mode .workspace {
+    grid-template-columns: 1fr;
+  }
   .studio-mode .chat-viewport {
-    padding: 0 17px 14px;
+    padding: 12px 17px 14px;
   }
   .studio-mode .message {
-    padding: 18px 0;
-    font-size: 15px;
+    margin-bottom: 22px;
+  }
+  .studio-mode .assistant {
+    padding-right: 0;
   }
   .studio-mode .panel-heading,
   .studio-mode .preview-heading {
     height: 34px;
     padding: 0 17px;
-    font-size: 11px;
+    font-size: 13px;
   }
   .studio-mode .composer-area {
     padding: 10px 12px;
   }
   .studio-mode .composer textarea {
-    min-height: 54px;
+    min-height: 48px;
     max-height: 108px;
-    font-size: 15px;
   }
   .studio-mode .composer {
     padding: 10px 12px;
   }
   .studio-mode .player-panel {
-    padding-top: 35px;
+    padding: 35px 12px 7px;
   }
   .studio-mode .console {
     width: min(210px, calc((40dvh - 120px) * 180 / 210));
   }
-  .activity-toggle {
-    padding: 10px;
-  }
+}
+
+/* Clip the original banner to its pixel silhouette, keeping the shared canvas visible. */
+.studio-mode .shell.official-shell {
+  clip-path: polygon(
+    19.4444% 6.1905%,
+    19.4444% 6.6667%,
+    18.3333% 6.6667%,
+    18.3333% 7.1429%,
+    17.7778% 7.1429%,
+    17.7778% 7.619%,
+    17.2222% 7.619%,
+    17.2222% 8.0952%,
+    16.6667% 8.0952%,
+    16.6667% 8.5714%,
+    16.1111% 8.5714%,
+    16.1111% 9.0476%,
+    15.5556% 9.0476%,
+    15.5556% 9.5238%,
+    15% 9.5238%,
+    15% 10%,
+    14.4444% 10%,
+    14.4444% 10.4762%,
+    13.8889% 10.4762%,
+    13.8889% 10.9524%,
+    7.7778% 10.9524%,
+    7.7778% 11.4286%,
+    6.6667% 11.4286%,
+    6.6667% 11.9048%,
+    5.5556% 11.9048%,
+    5.5556% 12.381%,
+    5% 12.381%,
+    5% 12.8571%,
+    4.4444% 12.8571%,
+    4.4444% 13.3333%,
+    3.8889% 13.3333%,
+    3.8889% 13.8095%,
+    3.3333% 13.8095%,
+    3.3333% 14.2857%,
+    2.7778% 14.2857%,
+    2.7778% 14.7619%,
+    2.2222% 14.7619%,
+    2.2222% 15.2381%,
+    1.6667% 15.2381%,
+    1.6667% 15.7143%,
+    1.1111% 15.7143%,
+    1.1111% 16.6667%,
+    0.5556% 16.6667%,
+    0.5556% 18.0952%,
+    0% 18.0952%,
+    0% 90%,
+    0.5556% 90%,
+    0.5556% 90.9524%,
+    1.1111% 90.9524%,
+    1.1111% 91.4286%,
+    2.2222% 91.4286%,
+    2.2222% 91.9048%,
+    2.7778% 91.9048%,
+    2.7778% 92.381%,
+    3.8889% 92.381%,
+    3.8889% 92.8571%,
+    95.5556% 92.8571%,
+    95.5556% 92.381%,
+    96.1111% 92.381%,
+    96.1111% 91.9048%,
+    97.7778% 91.9048%,
+    97.7778% 91.4286%,
+    98.8889% 91.4286%,
+    98.8889% 90.9524%,
+    99.4444% 90.9524%,
+    99.4444% 90%,
+    100% 90%,
+    100% 18.0952%,
+    99.4444% 18.0952%,
+    99.4444% 16.6667%,
+    98.8889% 16.6667%,
+    98.8889% 15.7143%,
+    98.3333% 15.7143%,
+    98.3333% 15.2381%,
+    97.7778% 15.2381%,
+    97.7778% 14.7619%,
+    97.2222% 14.7619%,
+    97.2222% 14.2857%,
+    96.6667% 14.2857%,
+    96.6667% 13.8095%,
+    96.1111% 13.8095%,
+    96.1111% 13.3333%,
+    95.5556% 13.3333%,
+    95.5556% 12.8571%,
+    95% 12.8571%,
+    95% 12.381%,
+    94.4444% 12.381%,
+    94.4444% 11.9048%,
+    93.3333% 11.9048%,
+    93.3333% 11.4286%,
+    92.2222% 11.4286%,
+    92.2222% 10.9524%,
+    86.1111% 10.9524%,
+    86.1111% 10.4762%,
+    85.5556% 10.4762%,
+    85.5556% 10%,
+    85% 10%,
+    85% 9.5238%,
+    84.4444% 9.5238%,
+    84.4444% 9.0476%,
+    83.8889% 9.0476%,
+    83.8889% 8.5714%,
+    83.3333% 8.5714%,
+    83.3333% 8.0952%,
+    82.7778% 8.0952%,
+    82.7778% 7.619%,
+    82.2222% 7.619%,
+    82.2222% 7.1429%,
+    81.6667% 7.1429%,
+    81.6667% 6.6667%,
+    80.5556% 6.6667%,
+    80.5556% 6.1905%
+  );
 }

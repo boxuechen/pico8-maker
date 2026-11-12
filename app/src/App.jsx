@@ -284,7 +284,7 @@ export function App() {
   const pendingRef = useRef("");
   const sendLock = useRef(false);
   const [storageError, setStorageError] = useState(false);
-  const [split, setSplit] = useState(42);
+  const [split, setSplit] = useState(55);
   const saveTimer = useRef(null);
   function persist(patch) {
     Object.assign(project.current, patch, { updatedAt: Date.now() });
@@ -483,7 +483,6 @@ export function App() {
       <ActivityContext.Provider
         value={{
           running: chat.isRunning || sending,
-          lastId: chat.messages.at(-1)?.id,
         }}
       >
         <div className={`app ${workspace ? "studio-mode" : "home-mode"}`}>
@@ -664,8 +663,7 @@ export function App() {
             <ThreadPrimitive.Root className="chat-panel">
               {workspace && (
                 <div className="panel-heading">
-                  <span>01 / CHAT</span>
-                  <span>{busy ? "● Working" : "● Ready"}</span>
+                  <span>Chat</span>
                 </div>
               )}
               {!workspace && (
@@ -731,7 +729,7 @@ export function App() {
                     }
                     onChange={(e) => persist({ draft: e.target.value })}
                     aria-label="Message"
-                    rows={workspace ? 3 : 2}
+                    rows={2}
                   />
                   <div className="composer-footer">
                     <span>
@@ -806,8 +804,8 @@ export function App() {
                 role="separator"
                 aria-label="Resize chat panel"
                 aria-orientation="vertical"
-                aria-valuemin={28}
-                aria-valuemax={55}
+                aria-valuemin={35}
+                aria-valuemax={65}
                 aria-valuenow={split}
                 tabIndex={0}
                 onKeyDown={(e) => {
@@ -815,8 +813,8 @@ export function App() {
                     e.preventDefault();
                     setSplit((v) =>
                       Math.max(
-                        28,
-                        Math.min(55, v + (e.key === "ArrowRight" ? 2 : -2)),
+                        35,
+                        Math.min(65, v + (e.key === "ArrowRight" ? 2 : -2)),
                       ),
                     );
                   }
@@ -830,9 +828,9 @@ export function App() {
                       e.currentTarget.parentElement.getBoundingClientRect();
                     setSplit(
                       Math.max(
-                        28,
+                        35,
                         Math.min(
-                          55,
+                          65,
                           ((e.clientX - box.left) / box.width) * 100,
                         ),
                       ),
@@ -844,7 +842,7 @@ export function App() {
             <section className="player-panel" aria-label="Game preview">
               {workspace && (
                 <div className="preview-heading">
-                  <span>02 / LIVE PREVIEW</span>
+                  <span>Preview</span>
                   <span>
                     {busy
                       ? "AI playtesting"
