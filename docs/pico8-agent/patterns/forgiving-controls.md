@@ -22,4 +22,4 @@ Too-long windows create surprise jumps; stale buffers can jump after respawn. Cl
 
 Replay early press before landing, a late press after an edge, release/repress and continuous hold. Check failure outside the window as well as success inside it.
 
-Read through read_reference: case/celeste-classic; recipe/spring-courier.
+Related references (optional): case/celeste-classic; recipe/spring-courier.

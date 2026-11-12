@@ -1,5 +1,20 @@
 # Input, time, system and menus
 
+## Button indices and test masks
+
+| Action | Lua button | Tool bit mask |
+| --- | --- | --- |
+| Left | 0 | 1 |
+| Right | 1 | 2 |
+| Up | 2 | 4 |
+| Down | 3 | 8 |
+| O / Z | 4 | 16 |
+| X | 5 | 32 |
+
+btn tests held state; btnp includes new presses and automatic repeats. Right plus X is tool mask 34, not btn(34). Player defaults to 0; current tools supply only player 0.
+
+## System API
+
 | Call | Behavior |
 | --- | --- |
 | btn([i,p]) | Held button boolean; no button can return a bitfield; player defaults to 0 |
@@ -23,3 +38,5 @@ Useful local stat selectors: 0 memory KiB, 1 CPU fraction; 16–19 or 46–49 ch
 There is no model tool for arbitrary live stat queries. A game may render a diagnostic HUD; development verification can instrument assertions. Neither implies a general live-variable tool exists.
 
 For a fresh btnp edge, advance a release frame with buttons=0 before pressing again. Held movement uses btn; menu/grid input using btnp must account for repeats. To ignore automatic repeats, compare current btn with previous-frame state yourself. Test reset/focus/pause boundaries where relevant.
+
+Optional API details: api/input, api/system and api/menu.

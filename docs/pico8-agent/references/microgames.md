@@ -1,6 +1,6 @@
 # Original playable microgames
 
-These complete, deliberately small Lua games are learning material for this host. Code, sprite rows and note sequences were newly authored for the knowledge pack. They do not contain the studied classics' code, maps, sprites or music. Read one recipe and adapt its design to the user request; do not make every game resemble these examples.
+These complete, deliberately small Lua games are learning material for this host. Code, sprite rows and note sequences were newly authored for the knowledge pack. They do not contain the studied classics' code, maps, sprites or music. Use a recipe when a runnable example would help, and adapt it to the request. These examples are optional; their mechanics and features are not requirements for new games.
 
 Each recipe rebuilds assets in _init, runs at 60 updates per second, has a title, a visible objective, success/failure and X-button restart. Submit the complete source through load_game. The player's keyboard maps arrows to movement, Z (the O button) to Lua button 4, and X to Lua button 5. Tool input masks are different from Lua indices; consult guide/playtest.
 
@@ -38,7 +38,7 @@ Retrieve the relic at the upper right and return to the lower-left exit. Arrow p
 
 Each recipe contains two original 8x8 pixel-row sprites, drawn with sset during initialization: green courier and yellow collectible. Geometry handles platforms, grids, markers and overlays. Contrast and symbols distinguish the warning, active attack, goal and player; sound is not the only event cue. Persistent resources are sprite IDs 1 and 2, SFX slots 0..4, music pattern 0, music channel 0 and feedback channel 3. Adapt these allocations before combining recipes.
 
-The original music uses an eight-note loop in SFX 0. SFX 1..4 are three-note event contours for action/collection, damage, success and warning/rejection. The recipes write packed notes and pattern bytes before playing them. Read guide/audio for bit layout and guide/sprites-maps for pixel-row conventions. These compact sounds demonstrate resource authoring and channel separation; PCM checks do not establish musical quality.
+The original music uses an eight-note loop in SFX 0. SFX 1..4 are three-note event contours for action/collection, damage, success and warning/rejection. The recipes write packed notes and pattern bytes before playing them. Optional details: guide/audio covers bit layout and guide/sprites-maps covers pixel-row conventions. These compact sounds demonstrate resource authoring and channel separation; PCM checks do not establish musical quality.
 
 ## Validation and scope
 

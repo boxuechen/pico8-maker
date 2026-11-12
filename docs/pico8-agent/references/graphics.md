@@ -27,3 +27,5 @@ Draw remapping affects subsequent writes, not previously drawn pixels. Display r
 palt(c,transparent) changes sprite/map transparency; palt() restores the default (slot 0 transparent). A single mask argument is also available. Shape drawing with color 0 is black, not transparent.
 
 Use shapes for particles/HUD, sprites for fixed pixel artwork, maps for repeated tiles. Mix these as appropriate. Choose clear foreground/background contrast and silhouettes; using all 16 colors is unnecessary. Hitboxes are gameplay data, not automatically derived from transparent pixels. CSS scaling does not change the 128 by 128 logical screen.
+
+Optional lookups: palette/full for RGB values and extended colors; guide/sprites-maps for sprite/map resources; api/graphics for the local API coverage.

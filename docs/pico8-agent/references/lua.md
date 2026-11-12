@@ -1,6 +1,6 @@
 # P8 Lua, tables, math and strings
 
-Optional parameters appear in brackets below. Use PICO-8 APIs rather than assuming a general-purpose Lua standard library or host filesystem.
+Optional parameters appear in brackets below. Use PICO-8 APIs rather than assuming a general-purpose Lua standard library or host filesystem. Math functions such as max, flr and rnd are globals, not math.* functions.
 
 ## Language
 
@@ -59,3 +59,5 @@ Bit functions: band, bor, bxor, bnot; shl, shr (arithmetic), lshr (logical), rot
 Metatables: setmetatable/getmetatable. Raw operations: rawget/rawset/rawequal/rawlen. Coroutines: cocreate/coresume/costatus/yield. Ordinary games should prefer callbacks; Lua suspension does not imply host operations such as flip or cart switching are valid in nested coroutines.
 
 Use ASCII hex digits for pixel rows. Default game text uses P8SCII, not an arbitrary Unicode font. A Chinese conversation does not mean the built-in game font supports Chinese text.
+
+Optional lookups: api/lua, api/table, api/math, api/string and api/bitwise list the local API coverage. guide/input-system covers callbacks, input and system facilities.

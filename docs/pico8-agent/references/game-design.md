@@ -1,29 +1,22 @@
-# Designing a small game worth replaying
+# Optional game-design references
 
-Start with one sentence: the player does ACTION to reach GOAL, while choosing between TRADEOFFS. Name the source of pressure and the feedback that makes progress visible. A functioning input loop is not enough; identify the decision a player will repeat.
+Use these references for a specific design question or when you want an example. Your own design can stand on its own; there is no prerequisite case, pattern or recipe to read. Adapt any useful ideas to the requested game.
 
-## Build and critique loop
+## Find a relevant example
 
-1. Pick a small scope: one main action, one challenge family and an explicit ending/retry. State what should be enjoyable as a hypothesis, not a proven fact.
-2. Read one relevant case and one or two patterns. Use cases to understand tradeoffs, not to clone characters, maps or music. Read an original microgame recipe when a runnable starting point is useful.
-3. Build a short complete loop with a visible objective, coherent art, event sounds, success/failure and immediate retry. Encode all assets in Lua initialization for this host.
-4. Test a sensible policy, a deliberately poor policy, the failure path and restart. If waiting or holding one button always wins, determine whether that matches the intended game.
-5. Identify the largest obstacle to the intended experience: unclear objective, unresponsive controls, unavoidable damage, trivial choice, long downtime or unreadable feedback. Change one relevant parameter, rerun the same test, then explore a fresh case.
-6. Report what actually improved and what still needs human playtesting. Never convert successful compilation, screenshots, star rankings or model self-ratings into a claim that a game is fun.
+| Question | Optional references |
+| --- | --- |
+| How can a precision platformer feel forgiving? | case/celeste-classic; pattern/forgiving-controls |
+| How can attacks communicate their timing? | case/just-one-boss; pattern/telegraph-attack-recovery |
+| How can turn costs and routes create decisions? | case/porklike; pattern/turn-economy; pattern/resource-pressure |
+| How can players understand and choose optional risk? | case/high-stakes; pattern/risk-reward; pattern/information-before-commitment |
+| How can a game introduce and communicate its mechanics? | pattern/teach-vary-combine; pattern/event-feedback |
+| Would a runnable implementation help? | guide/microgames describes three original examples and their recipe IDs. |
 
-## Select a reference
+Cases discuss classic games; patterns suggest reusable techniques; microgames provide small working implementations. They are alternatives to consult as needed, not successive steps. Original classic-game code and assets are not included in the model library.
 
-- Platforming precision: case/celeste-classic, pattern/forgiving-controls, recipe/spring-courier.
-- Timing and attacks: case/just-one-boss, pattern/telegraph-attack-recovery, recipe/signal-arena.
-- Turn decisions and routes: case/porklike, pattern/turn-economy, recipe/lantern-vault.
-- Optional risk and information: case/high-stakes, pattern/risk-reward, pattern/information-before-commitment.
-- Teaching and feedback: pattern/teach-vary-combine, pattern/event-feedback, pattern/resource-pressure.
-- Example controls, parameters and design limits: guide/microgames.
+## Questions for an iteration
 
-## Assess the experience
+When reviewing an unclear or unsatisfying interaction, consider what the player can understand, decide and improve: is the objective visible, is feedback readable, is the result connected to an action, and does another attempt offer something worthwhile? Relevant checks might include a normal strategy, a risky alternative, or simply waiting or repeating one button. Choose checks that fit the intended rules.
 
-Can a new player identify the objective and act within the first few seconds? Can they describe why they failed? Does a second attempt allow a different choice or better execution? Are relevant objects distinguishable at 128x128? Does sound confirm events without being required to understand them? Does retry return to meaningful play quickly?
-
-Use PNG for overall visual readability, cropped ASCII for exact pixels, and reproducible input traces for behavior. Audio data and PCM tests cannot replace listening. Record human feedback separately from automated checks and from the author's design hypothesis.
-
-For a comparison, keep model/version, prompt, budget and tools fixed; use matched tasks, several runs and blinded human preferences. Log failures and unfinished games as well as attractive successes. The research package has not yet demonstrated a measured improvement in model-generated game quality.
+A title screen, fixed number of phases, loss condition, persistent score or particular art style is not a universal requirement. Judge the implementation against the request and the experience it is meant to create. Observed behavior can support that judgment; compilation, screenshots and model self-ratings alone do not establish human enjoyment.

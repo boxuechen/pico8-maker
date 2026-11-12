@@ -1,8 +1,10 @@
 # Pixel art, animation and maps without an editor
 
-Read recipe/sprite-from-rows and recipe/map-from-rows for complete verified Lua programs.
+Optional examples: recipe/sprite-from-rows and recipe/map-from-rows are complete verified Lua programs.
 
 ## Resource planning
+
+The default sprite sheet is 128 by 128 pixels: 256 tiles of 8 by 8. The default map is 128 tiles wide, with 32 independent rows and 32 rows sharing the lower sprite sheet.
 
 Assign sprite ranges and flags explicitly: e.g. 1–15 actors, 16–31 terrain, bit 0 solid, bit 1 collectible. Flags are data, not physics. Reserve tile 0 for empty map cells.
 
@@ -37,3 +39,5 @@ Map rows 32–63 share RAM 0x1000–0x1fff with sprite-sheet rows 64–127 (spri
 mset changes this run's RAM. Reset reconstructs the original level. To preserve collected items, store progress separately with cartdata and apply it after rebuilding the map.
 
 Verify actual transparent pixels, frame changes, wall blocking, coin disappearance/count, and resource reconstruction after source reload.
+
+Optional API details: api/map; sprite drawing signatures are also in api/graphics.

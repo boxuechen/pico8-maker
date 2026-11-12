@@ -1,5 +1,26 @@
 # Memory, asset reconstruction and saves
 
+## Default Base RAM layout
+
+| Inclusive range | Use |
+| --- | --- |
+| 0x0000–0x0fff | Upper sprite sheet |
+| 0x1000–0x1fff | Lower sprite sheet / lower map, shared |
+| 0x2000–0x2fff | Upper map |
+| 0x3000–0x30ff | Sprite flags |
+| 0x3100–0x31ff | Music: 64 patterns of 4 bytes |
+| 0x3200–0x42ff | SFX: 64 slots of 68 bytes |
+| 0x4300–0x55ff | User data |
+| 0x5600–0x5dff | User data / custom font when defined |
+| 0x5e00–0x5eff | Persistent cart data: 64 fixed-point values |
+| 0x5f00–0x5f3f | Draw state |
+| 0x5f40–0x5f7f | Hardware state |
+| 0x5f80–0x5fff | GPIO; external meaning depends on host |
+| 0x6000–0x7fff | Screen |
+| 0x8000–0xffff | Extended user data |
+
+Advanced remapping can change graphics, map and screen addresses. RAM, cart data and Lua variables are separate.
+
 ## Memory API
 
 | Call | Behavior |
@@ -29,7 +50,7 @@ Use a stable distinctive ID of at most 64 lowercase letters, digits or underscor
 
 Slots store numbers, not arbitrary tables/strings. Document the layout, e.g. slot 0 schema version, slot 1 best score, remaining slots reserved. Bound scores to the numeric range. Unit/encoding changes require a schema migration.
 
-Read recipe/save-high-score. It migrates schema 0 to 1 while preserving the old best, bounds best to 0–30000, and treats newer unknown schemas as read-only. X scores; O restarts the round without clearing best. It does not zero every slot or write every draw frame.
+Optional example: recipe/save-high-score migrates schema 0 to 1 while preserving the old best, bounds best to 0–30000, and treats newer unknown schemas as read-only. X scores; O restarts the round without clearing best. It does not zero every slot or write every draw frame.
 
 Migrate stepwise and preserve unknown slots. Do not erase user progress as a default repair. Handle corrupted data with a deliberate policy.
 
@@ -37,4 +58,13 @@ Migrate stepwise and preserve unknown slots. Do not erase user progress as a def
 
 Distinguish round restart, same-session reset, same-session source reload, new session and browser refresh. Default manual sessions use memory persistence: same-instance reset can preserve data, destroying the instance does not. IndexedDB requires separate host configuration and browser lifecycle testing.
 
-Project-source localStorage, game cartdata and Pi conversation storage are distinct. Verified recipe tests cover memory-session reset/reload, fresh-instance isolation, legacy migration and future-schema preservation, not browser refresh persistence.
+Project-source storage, game cartdata and Pi conversation storage are distinct. Verified recipe tests cover memory-session reset/reload, fresh-instance isolation, legacy migration and future-schema preservation, not browser refresh persistence.
+
+## Cartridge budgets
+
+
+Official cartridge design targets include 8192 code tokens, a 32 KiB cart data model and roughly 4M VM instructions/second. Lua heap is separate from Base RAM. PNG/ROM export also constrains compressed code size. Source character count is not a substitute for token or compressed-size measurement; the host does not necessarily enforce every export constraint.
+
+Avoid rebuilding assets each frame, large temporary tables, unbounded loops and unnecessary full-map scans. Measure actual runtime diagnostics rather than inferring correctness from a visible frame.
+
+Optional API details: api/memory, api/persistence and api/gpio.

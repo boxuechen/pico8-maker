@@ -1,48 +1,14 @@
-# Reference index
+# Optional reference entry points
 
-Bundled English references are available through read_reference({"id":"..."}). Core behavior, machine definitions and default color labels are supplied as persistent sections.
+Use read_reference({"id":"..."}) when a particular question needs documentation. Start directly from your existing knowledge when it is sufficient. There is no required reading order; related references within a guide are optional.
 
-- `guide/lua`: P8 Lua, tables, math and strings
-- `guide/graphics`: Drawing and palettes
-- `guide/sprites-maps`: Pixel art, animation and maps
-- `guide/audio`: SFX and music encoding
-- `guide/memory-storage`: RAM, asset lifetime and saves
-- `guide/input-system`: Input, time and menus
-- `guide/playtest`: Gameplay verification
-- `palette/full`: Default and extended display colors
-- `recipe/sprite-from-rows`: sprite from rows
-- `recipe/map-from-rows`: map from rows
-- `recipe/sfx-from-notes`: sfx from notes
-- `recipe/music-from-patterns`: music from patterns
-- `recipe/save-high-score`: save high score
-- `api/system`: API catalog: system
-- `api/graphics`: API catalog: graphics
-- `api/table`: API catalog: table
-- `api/input`: API catalog: input
-- `api/audio`: API catalog: audio
-- `api/map`: API catalog: map
-- `api/memory`: API catalog: memory
-- `api/math`: API catalog: math
-- `api/bitwise`: API catalog: bitwise
-- `api/menu`: API catalog: menu
-- `api/string`: API catalog: string
-- `api/persistence`: API catalog: persistence
-- `api/gpio`: API catalog: gpio
-- `api/lua`: API catalog: lua
-- `guide/game-design`: Designing a replayable small game
-- `guide/microgames`: Original microgames: controls, tuning and limits
-- `case/celeste-classic`: Celeste Classic: forgiving precision
-- `case/just-one-boss`: Just One Boss: readable attack phases
-- `case/porklike`: Porklike: turn and resource decisions
-- `case/high-stakes`: High Stakes: information and optional risk
-- `pattern/forgiving-controls`: Input forgiveness and consistent controls
-- `pattern/telegraph-attack-recovery`: Readable attack phases
-- `pattern/risk-reward`: Optional risk and visible reward
-- `pattern/teach-vary-combine`: Teach, vary, then combine
-- `pattern/turn-economy`: Action costs and turn resolution
-- `pattern/resource-pressure`: Resources that change decisions
-- `pattern/event-feedback`: Coherent visual and audio event feedback
-- `pattern/information-before-commitment`: Useful information before commitment
-- `recipe/spring-courier`: Spring Courier: complete platform microgame
-- `recipe/signal-arena`: Signal Arena: complete timing microgame
-- `recipe/lantern-vault`: Lantern Vault: complete turn microgame
+| Need | Entry point |
+| --- | --- |
+| P8 Lua semantics, math or table operations | guide/lua |
+| Drawing, palettes, sprites or maps | guide/graphics; guide/sprites-maps |
+| SFX/music encoding or playback | guide/audio |
+| RAM, resource lifetime or saved progress | guide/memory-storage |
+| Input/system APIs or interpreting playtest tools | guide/input-system; guide/playtest |
+| Design inspiration or an example of a small game | guide/game-design |
+
+Use a known reference ID directly. Each topic provides more specific API or example IDs when needed. Examples illustrate possibilities; they do not prescribe a theme, feature list or workflow.

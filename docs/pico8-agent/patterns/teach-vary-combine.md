@@ -22,4 +22,4 @@ Changing enemy speed, range and controls at once makes failure hard to diagnose.
 
 Ask a new player to describe the rule after the first encounter. Reuse an input trace to verify that the variation actually changes the challenge.
 
-Read through read_reference: case/just-one-boss; case/celeste-classic.
+Related references (optional): case/just-one-boss; case/celeste-classic.

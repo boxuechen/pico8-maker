@@ -22,4 +22,4 @@ More particles can hide hazards. Loud repeating steps can mask damage. PCM activ
 
 Disable sound and verify critical states remain readable; inspect audio channel continuity and non-silent PCM. Have a human compare feedback intensity and perceived clarity.
 
-Read through read_reference: case/just-one-boss; guide/audio; all three microgame recipes.
+Related references (optional): case/just-one-boss; guide/audio; all three microgame recipes.

@@ -1,6 +1,6 @@
 # Current host
 
-The application now installs the pico8 extension with English knowledge sections and read_reference. Host capability text is generated from app/src/pico8/capabilities.js.
+The application now installs the pico8 extension with English knowledge sections and read_reference. Host capability text is generated from app/src/pico8/capabilities.js. This document is a maintainer description, not a registered reference or an additional persistent model section. Workspace operations, tool schemas and session limits belong in the host section and tool descriptions, rather than being repeated in AGENT.md.
 
 - Complete Lua submissions may initialize sprites, maps, SFX and music; exported source retains this initialization.
 - Five game tools remain: read_game, load_game, reset_game, press_buttons and observe_game.
