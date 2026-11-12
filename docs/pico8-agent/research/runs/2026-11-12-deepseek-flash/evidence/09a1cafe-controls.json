@@ -1,0 +1,210 @@
+{
+  "id": "09a1cafe",
+  "task": "platform-delivery",
+  "condition": "A",
+  "label": "controls",
+  "findings": {
+    "before": {
+      "state": "[nil]",
+      "x": "16",
+      "y": "112"
+    },
+    "after": {
+      "state": "[nil]",
+      "x": "16",
+      "y": "112"
+    },
+    "verdict": "No playable state: all six controls and moving-jump combinations leave the player stationary; state is never initialized."
+  },
+  "frames": 489,
+  "sourceSha256": "aa8ad3138673c8c61c7ed5c1c92fff73e9028c7acd7734ff2bdc6dcfb5f62be3",
+  "fields": {
+    "state": "state",
+    "x": "p.x",
+    "y": "p.y"
+  },
+  "trace": [
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 1,
+      "state": {
+        "state": "[nil]",
+        "x": "16",
+        "y": "112"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 2,
+      "state": {
+        "state": "[nil]",
+        "x": "16",
+        "y": "112"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 60,
+      "at": 62,
+      "state": {
+        "state": "[nil]",
+        "x": "16",
+        "y": "112"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 63,
+      "state": {
+        "state": "[nil]",
+        "x": "16",
+        "y": "112"
+      }
+    },
+    {
+      "buttons": 32,
+      "frames": 60,
+      "at": 123,
+      "state": {
+        "state": "[nil]",
+        "x": "16",
+        "y": "112"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 124,
+      "state": {
+        "state": "[nil]",
+        "x": "16",
+        "y": "112"
+      }
+    },
+    {
+      "buttons": 1,
+      "frames": 60,
+      "at": 184,
+      "state": {
+        "state": "[nil]",
+        "x": "16",
+        "y": "112"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 185,
+      "state": {
+        "state": "[nil]",
+        "x": "16",
+        "y": "112"
+      }
+    },
+    {
+      "buttons": 2,
+      "frames": 60,
+      "at": 245,
+      "state": {
+        "state": "[nil]",
+        "x": "16",
+        "y": "112"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 246,
+      "state": {
+        "state": "[nil]",
+        "x": "16",
+        "y": "112"
+      }
+    },
+    {
+      "buttons": 4,
+      "frames": 60,
+      "at": 306,
+      "state": {
+        "state": "[nil]",
+        "x": "16",
+        "y": "112"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 307,
+      "state": {
+        "state": "[nil]",
+        "x": "16",
+        "y": "112"
+      }
+    },
+    {
+      "buttons": 8,
+      "frames": 60,
+      "at": 367,
+      "state": {
+        "state": "[nil]",
+        "x": "16",
+        "y": "112"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 368,
+      "state": {
+        "state": "[nil]",
+        "x": "16",
+        "y": "112"
+      }
+    },
+    {
+      "buttons": 18,
+      "frames": 60,
+      "at": 428,
+      "state": {
+        "state": "[nil]",
+        "x": "16",
+        "y": "112"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 429,
+      "state": {
+        "state": "[nil]",
+        "x": "16",
+        "y": "112"
+      }
+    },
+    {
+      "buttons": 34,
+      "frames": 60,
+      "at": 489,
+      "state": {
+        "state": "[nil]",
+        "x": "16",
+        "y": "112"
+      }
+    }
+  ],
+  "pcmBytes": 359414,
+  "nonSilentPcm": true,
+  "pcmSha256": "04143b60c2387288c1ff463baf9e9ed9a3dbbcd7e86dfce82a3b458759ed4c8b",
+  "instrumentation": "Read-only copies of state into scratch RAM after _draw; no changes to game variables",
+  "humanReview": false,
+  "unmodifiedReplay": {
+    "state": "paused",
+    "diagnostics": [],
+    "rgbaSha256": "1bbd9bdf30fae1e4dc1a285800783f5b37ee7cdd3f425e4ac67ab393cd8e5bce",
+    "instrumentedRgbaSha256": "1bbd9bdf30fae1e4dc1a285800783f5b37ee7cdd3f425e4ac67ab393cd8e5bce",
+    "pixelExact": true
+  }
+}

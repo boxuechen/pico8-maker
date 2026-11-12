@@ -1,0 +1,73 @@
+{
+  "id": "85f23650",
+  "task": "turn-gardening",
+  "condition": "A",
+  "repeat": 1,
+  "prompt": "Create a turn-based PICO-8 garden puzzle. Grow and harvest plants by deciding how to spend limited water over a short season. Waiting must have an understandable consequence. Include at least two viable strategies, an ending, retry, and original art and sound. Do not use a dungeon, relic or extraction route.",
+  "promptSha256": "59b09ef3684d49eeff56acf438f3bb321504dba57daa04c5b9ca93836e0db075",
+  "packVersion": "pico8-en-v1-55771f27a9c0d418",
+  "model": "deepseek-flash",
+  "finishedAt": "2026-11-12T11:01:02.370Z",
+  "budget": {
+    "limits": {
+      "tokens": 200000,
+      "tools": 80,
+      "milliseconds": 720000
+    },
+    "elapsedMs": 56439,
+    "reportedTokens": 201776,
+    "toolCalls": 21,
+    "stopReason": "token_budget",
+    "tokenOvershoot": 1776
+  },
+  "requests": 15,
+  "terminalError": null,
+  "lastFailure": {
+    "taskId": 80,
+    "inputs": [
+      8
+    ],
+    "reason": "aborted",
+    "first": 7
+  },
+  "sourceSha256": "cb0e21f29db1e082a46d1049ea22bd40b0121635969ae1881a47109d349e95e8",
+  "sourceBytes": 8613,
+  "checks": {
+    "createdGame": true,
+    "exportLoad": true,
+    "diagnostics": [],
+    "idle120": true
+  },
+  "toolCounts": {
+    "read_game": 1,
+    "read_reference": 14,
+    "load_game": 2,
+    "press_buttons": 3,
+    "observe_game": 1
+  },
+  "readReferences": [
+    "guide/audio",
+    "recipe/sfx-from-notes",
+    "recipe/map-from-rows",
+    "recipe/save-high-score",
+    "guide/playtest",
+    "guide/sprites-maps",
+    "api/graphics",
+    "recipe/sprite-from-rows",
+    "api/input",
+    "guide/input-system",
+    "api/audio",
+    "api/math",
+    "api/persistence",
+    "guide/lua"
+  ],
+  "readsBeforeFirstLoad": 14,
+  "errors": [],
+  "providerUsage": {
+    "input": 192643,
+    "output": 9133,
+    "cached": 180736,
+    "total": 201776
+  },
+  "estimatedUsd": 0.015616116
+}

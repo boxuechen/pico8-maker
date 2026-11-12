@@ -1,0 +1,80 @@
+{
+  "id": "497113b1",
+  "task": "turn-extraction",
+  "condition": "B",
+  "repeat": 1,
+  "prompt": "Create a small turn-based PICO-8 exploration game. Retrieve an object and return before a visible resource runs out. Include an optional reward detour, predictable hazards, clear action costs, success, failure, quick retry, and original art and sound.",
+  "promptSha256": "93a9d5d357c904c4f4ead4dcc89c7ca2c33f430b7cba0f61e516f57fb668cd00",
+  "packVersion": "pico8-en-v1-dbd39418b5619724",
+  "model": "deepseek-flash",
+  "finishedAt": "2026-11-12T11:00:20.739Z",
+  "budget": {
+    "limits": {
+      "tokens": 200000,
+      "tools": 80,
+      "milliseconds": 720000
+    },
+    "elapsedMs": 41247,
+    "reportedTokens": 229484,
+    "toolCalls": 26,
+    "stopReason": "token_budget",
+    "tokenOvershoot": 29484
+  },
+  "requests": 16,
+  "terminalError": null,
+  "lastFailure": {
+    "taskId": 92,
+    "inputs": [
+      8
+    ],
+    "reason": "aborted",
+    "first": 7
+  },
+  "sourceSha256": "6356cf959427164a6eba0907ea965c1cb5f011e999e4e433f03d24b8374d9292",
+  "sourceBytes": 9575,
+  "checks": {
+    "createdGame": true,
+    "exportLoad": true,
+    "diagnostics": [],
+    "idle120": true
+  },
+  "toolCounts": {
+    "read_game": 1,
+    "read_reference": 22,
+    "load_game": 1,
+    "observe_game": 2
+  },
+  "readReferences": [
+    "recipe/lantern-vault",
+    "case/porklike",
+    "pattern/telegraph-attack-recovery",
+    "pattern/turn-economy",
+    "guide/game-design",
+    "pattern/risk-reward",
+    "recipe/save-high-score",
+    "guide/input-system",
+    "guide/audio",
+    "recipe/music-from-patterns",
+    "recipe/sfx-from-notes",
+    "pattern/event-feedback",
+    "pattern/resource-pressure",
+    "guide/sprites-maps",
+    "guide/graphics",
+    "api/persistence",
+    "guide/microgames",
+    "guide/playtest",
+    "recipe/sprite-from-rows",
+    "api/audio",
+    "api/persistence",
+    "api/graphics"
+  ],
+  "readsBeforeFirstLoad": 22,
+  "errors": [],
+  "providerUsage": {
+    "input": 223579,
+    "output": 5905,
+    "cached": 202112,
+    "total": 229484
+  },
+  "estimatedUsd": 0.014738771999999999
+}

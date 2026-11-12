@@ -1,0 +1,81 @@
+{
+  "id": "85f23650",
+  "task": "turn-gardening",
+  "condition": "A",
+  "label": "actions",
+  "findings": {
+    "verdict": "Real input triggers a runtime fault.",
+    "error": {
+      "code": "E_VM_RUNTIME",
+      "message": "cart.p8:257: attempt to index local 'b' (a nil value)",
+      "phase": "draw",
+      "line": 257,
+      "trace": "cart.p8:257: attempt to index local 'b' (a nil value)\nstack traceback:\n\tcart.p8:304: in function 'draw_garden'\n\tcart.p8:336: in function 'audit_draw'\n\tcart.p8:340: in function <cart.p8:339>",
+      "recoverable": false
+    }
+  },
+  "frames": 1,
+  "sourceSha256": "cb0e21f29db1e082a46d1049ea22bd40b0121635969ae1881a47109d349e95e8",
+  "fields": {
+    "state": "state",
+    "day": "day",
+    "water": "water",
+    "seeds": "seeds",
+    "sel": "sel",
+    "plant1": "beds and beds[1].kind",
+    "plant2": "beds and beds[2].kind",
+    "plant3": "beds and beds[3].kind"
+  },
+  "trace": [
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 1,
+      "state": {
+        "state": "title",
+        "day": "[nil]",
+        "water": "[nil]",
+        "seeds": "[nil]",
+        "sel": "1",
+        "plant1": "[nil]",
+        "plant2": "[nil]",
+        "plant3": "[nil]"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 2,
+      "error": {
+        "code": "E_VM_RUNTIME",
+        "message": "cart.p8:257: attempt to index local 'b' (a nil value)",
+        "phase": "draw",
+        "line": 257,
+        "trace": "cart.p8:257: attempt to index local 'b' (a nil value)\nstack traceback:\n\tcart.p8:304: in function 'draw_garden'\n\tcart.p8:336: in function 'audit_draw'\n\tcart.p8:340: in function <cart.p8:339>",
+        "recoverable": false
+      }
+    }
+  ],
+  "pcmBytes": 1470,
+  "nonSilentPcm": false,
+  "pcmSha256": "c52a371f4755fe771a3b7ec1a282126e3290463a9fd27a0d1f204521a10200e2",
+  "instrumentation": "Read-only copies of state into scratch RAM after _draw; no changes to game variables",
+  "humanReview": false,
+  "unmodifiedReplay": {
+    "state": "faulted",
+    "diagnostics": [
+      {
+        "code": "E_VM_RUNTIME",
+        "message": "cart.p8:257: attempt to index local 'b' (a nil value)",
+        "phase": "draw",
+        "line": 257,
+        "trace": "cart.p8:257: attempt to index local 'b' (a nil value)\nstack traceback:\n\tcart.p8:304: in function 'draw_garden'\n\tcart.p8:336: in function <cart.p8:308>",
+        "recoverable": false
+      }
+    ],
+    "rgbaSha256": "b7dc00a7585d4449dcfc19b2aab6a0fc2b3c75bc2db8ec5caadca7cd1161b8cd",
+    "instrumentedRgbaSha256": "b7dc00a7585d4449dcfc19b2aab6a0fc2b3c75bc2db8ec5caadca7cd1161b8cd",
+    "pixelExact": true,
+    "sameFault": true
+  }
+}

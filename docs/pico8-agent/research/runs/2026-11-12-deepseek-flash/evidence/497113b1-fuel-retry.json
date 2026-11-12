@@ -1,0 +1,895 @@
+{
+  "id": "497113b1",
+  "task": "turn-extraction",
+  "condition": "B",
+  "label": "fuel-retry",
+  "findings": {
+    "lost": {
+      "state": "lost",
+      "x": "4",
+      "y": "8",
+      "fuel": "0",
+      "hp": "3",
+      "key": "false",
+      "turn": "26",
+      "danger": "6"
+    },
+    "retry": {
+      "state": "play",
+      "x": "4",
+      "y": "8",
+      "fuel": "26",
+      "hp": "3",
+      "key": "false",
+      "turn": "0",
+      "danger": "7"
+    },
+    "verdict": "Waiting exhausts fuel; X retries."
+  },
+  "frames": 56,
+  "sourceSha256": "6356cf959427164a6eba0907ea965c1cb5f011e999e4e433f03d24b8374d9292",
+  "fields": {
+    "state": "state",
+    "x": "px",
+    "y": "py",
+    "fuel": "fuel",
+    "hp": "hp",
+    "key": "have_key",
+    "turn": "turn",
+    "danger": "danger"
+  },
+  "trace": [
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 1,
+      "state": {
+        "state": "title",
+        "x": "4",
+        "y": "8",
+        "fuel": "26",
+        "hp": "3",
+        "key": "false",
+        "turn": "0",
+        "danger": "7"
+      }
+    },
+    {
+      "buttons": 32,
+      "frames": 1,
+      "at": 2,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "26",
+        "hp": "3",
+        "key": "false",
+        "turn": "0",
+        "danger": "7"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 3,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "26",
+        "hp": "3",
+        "key": "false",
+        "turn": "0",
+        "danger": "7"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 4,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "25",
+        "hp": "3",
+        "key": "false",
+        "turn": "1",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 5,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "25",
+        "hp": "3",
+        "key": "false",
+        "turn": "1",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 6,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "24",
+        "hp": "3",
+        "key": "false",
+        "turn": "2",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 7,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "24",
+        "hp": "3",
+        "key": "false",
+        "turn": "2",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 8,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "23",
+        "hp": "3",
+        "key": "false",
+        "turn": "3",
+        "danger": "7"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 9,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "23",
+        "hp": "3",
+        "key": "false",
+        "turn": "3",
+        "danger": "7"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 10,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "22",
+        "hp": "3",
+        "key": "false",
+        "turn": "4",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 11,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "22",
+        "hp": "3",
+        "key": "false",
+        "turn": "4",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 12,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "21",
+        "hp": "3",
+        "key": "false",
+        "turn": "5",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 13,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "21",
+        "hp": "3",
+        "key": "false",
+        "turn": "5",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 14,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "20",
+        "hp": "3",
+        "key": "false",
+        "turn": "6",
+        "danger": "7"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 15,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "20",
+        "hp": "3",
+        "key": "false",
+        "turn": "6",
+        "danger": "7"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 16,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "19",
+        "hp": "3",
+        "key": "false",
+        "turn": "7",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 17,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "19",
+        "hp": "3",
+        "key": "false",
+        "turn": "7",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 18,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "18",
+        "hp": "3",
+        "key": "false",
+        "turn": "8",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 19,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "18",
+        "hp": "3",
+        "key": "false",
+        "turn": "8",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 20,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "17",
+        "hp": "3",
+        "key": "false",
+        "turn": "9",
+        "danger": "7"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 21,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "17",
+        "hp": "3",
+        "key": "false",
+        "turn": "9",
+        "danger": "7"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 22,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "16",
+        "hp": "3",
+        "key": "false",
+        "turn": "10",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 23,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "16",
+        "hp": "3",
+        "key": "false",
+        "turn": "10",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 24,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "15",
+        "hp": "3",
+        "key": "false",
+        "turn": "11",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 25,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "15",
+        "hp": "3",
+        "key": "false",
+        "turn": "11",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 26,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "14",
+        "hp": "3",
+        "key": "false",
+        "turn": "12",
+        "danger": "7"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 27,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "14",
+        "hp": "3",
+        "key": "false",
+        "turn": "12",
+        "danger": "7"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 28,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "13",
+        "hp": "3",
+        "key": "false",
+        "turn": "13",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 29,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "13",
+        "hp": "3",
+        "key": "false",
+        "turn": "13",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 30,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "12",
+        "hp": "3",
+        "key": "false",
+        "turn": "14",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 31,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "12",
+        "hp": "3",
+        "key": "false",
+        "turn": "14",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 32,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "11",
+        "hp": "3",
+        "key": "false",
+        "turn": "15",
+        "danger": "7"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 33,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "11",
+        "hp": "3",
+        "key": "false",
+        "turn": "15",
+        "danger": "7"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 34,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "10",
+        "hp": "3",
+        "key": "false",
+        "turn": "16",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 35,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "10",
+        "hp": "3",
+        "key": "false",
+        "turn": "16",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 36,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "9",
+        "hp": "3",
+        "key": "false",
+        "turn": "17",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 37,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "9",
+        "hp": "3",
+        "key": "false",
+        "turn": "17",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 38,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "8",
+        "hp": "3",
+        "key": "false",
+        "turn": "18",
+        "danger": "7"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 39,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "8",
+        "hp": "3",
+        "key": "false",
+        "turn": "18",
+        "danger": "7"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 40,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "7",
+        "hp": "3",
+        "key": "false",
+        "turn": "19",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 41,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "7",
+        "hp": "3",
+        "key": "false",
+        "turn": "19",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 42,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "6",
+        "hp": "3",
+        "key": "false",
+        "turn": "20",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 43,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "6",
+        "hp": "3",
+        "key": "false",
+        "turn": "20",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 44,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "5",
+        "hp": "3",
+        "key": "false",
+        "turn": "21",
+        "danger": "7"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 45,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "5",
+        "hp": "3",
+        "key": "false",
+        "turn": "21",
+        "danger": "7"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 46,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "4",
+        "hp": "3",
+        "key": "false",
+        "turn": "22",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 47,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "4",
+        "hp": "3",
+        "key": "false",
+        "turn": "22",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 48,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "3",
+        "hp": "3",
+        "key": "false",
+        "turn": "23",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 49,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "3",
+        "hp": "3",
+        "key": "false",
+        "turn": "23",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 50,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "2",
+        "hp": "3",
+        "key": "false",
+        "turn": "24",
+        "danger": "7"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 51,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "2",
+        "hp": "3",
+        "key": "false",
+        "turn": "24",
+        "danger": "7"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 52,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "1",
+        "hp": "3",
+        "key": "false",
+        "turn": "25",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 53,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "1",
+        "hp": "3",
+        "key": "false",
+        "turn": "25",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 54,
+      "state": {
+        "state": "lost",
+        "x": "4",
+        "y": "8",
+        "fuel": "0",
+        "hp": "3",
+        "key": "false",
+        "turn": "26",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 55,
+      "state": {
+        "state": "lost",
+        "x": "4",
+        "y": "8",
+        "fuel": "0",
+        "hp": "3",
+        "key": "false",
+        "turn": "26",
+        "danger": "6"
+      }
+    },
+    {
+      "buttons": 32,
+      "frames": 1,
+      "at": 56,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "8",
+        "fuel": "26",
+        "hp": "3",
+        "key": "false",
+        "turn": "0",
+        "danger": "7"
+      }
+    }
+  ],
+  "pcmBytes": 41160,
+  "nonSilentPcm": true,
+  "pcmSha256": "c99cce99c480f0c22d3642378b08d6a7ea820972e0b299ce891047e8c7d982af",
+  "instrumentation": "Read-only copies of state into scratch RAM after _draw; no changes to game variables",
+  "humanReview": false,
+  "unmodifiedReplay": {
+    "state": "paused",
+    "diagnostics": [],
+    "rgbaSha256": "cf31801c123b56bc681335adddb150fe7ff471761ddb3ba53280f7683a46d9bd",
+    "instrumentedRgbaSha256": "cf31801c123b56bc681335adddb150fe7ff471761ddb3ba53280f7683a46d9bd",
+    "pixelExact": true
+  }
+}

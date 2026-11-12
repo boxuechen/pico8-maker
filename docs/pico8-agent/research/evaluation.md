@@ -1,6 +1,6 @@
 # Paired game-quality evaluation
 
-Status: planned; no model-generation comparison or human enjoyment study has been run. Runtime checks and source analysis are available now. Do not report their pass counts as evidence of increased fun.
+Status: the [first real-model pilot](runs/2026-11-12-deepseek-flash/README.md) completed twelve generations and an independent agent audit on 2026-11-12. Human enjoyment review remains pending. It used one repetition and a 200,000 cumulative-token target by user agreement; actual budget overshoot is reported. Do not interpret startup pass counts as evidence of increased fun. The protocol below retains the proposed fuller study.
 
 ## Question and conditions
 

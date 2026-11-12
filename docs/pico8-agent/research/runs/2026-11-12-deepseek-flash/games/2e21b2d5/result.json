@@ -1,0 +1,105 @@
+{
+  "id": "2e21b2d5",
+  "task": "platform-moving-hazards",
+  "condition": "B",
+  "repeat": 1,
+  "prompt": "Create a PICO-8 rooftop repair game. The player fixes three antennas while avoiding moving hazards. Use jump timing and route choice, teach the controls through play, provide an ending and quick retry, and include original art and sound. Do not use a parcel-delivery theme.",
+  "promptSha256": "5bb5cedfdd570fd93498edc2b8ba03415be0705e8cc890ba47be9902338cacc7",
+  "packVersion": "pico8-en-v1-dbd39418b5619724",
+  "model": "deepseek-flash",
+  "finishedAt": "2026-11-12T10:56:23.812Z",
+  "budget": {
+    "limits": {
+      "tokens": 200000,
+      "tools": 80,
+      "milliseconds": 720000
+    },
+    "elapsedMs": 118823,
+    "reportedTokens": 225191,
+    "toolCalls": 15,
+    "stopReason": "token_budget",
+    "tokenOvershoot": 25191
+  },
+  "requests": 13,
+  "terminalError": null,
+  "lastFailure": {
+    "taskId": 64,
+    "inputs": [
+      8
+    ],
+    "reason": "aborted",
+    "first": 7
+  },
+  "sourceSha256": "5e41d21539fa1e027b2bb5fc8992acc764b3d8c38a6cb8a36f3b6efd5ae4d327",
+  "sourceBytes": 55,
+  "checks": {
+    "createdGame": false
+  },
+  "toolCounts": {
+    "read_game": 1,
+    "read_reference": 10,
+    "load_game": 4
+  },
+  "readReferences": [
+    "guide/game-design",
+    "pattern/forgiving-controls",
+    "pattern/telegraph-attack-recovery",
+    "recipe/spring-courier",
+    "guide/audio",
+    "guide/graphics",
+    "recipe/sfx-from-notes",
+    "guide/microgames",
+    "recipe/spring-courier",
+    "guide/playtest"
+  ],
+  "readsBeforeFirstLoad": 8,
+  "errors": [
+    {
+      "number": 10,
+      "name": "load_game",
+      "output": [
+        {
+          "type": "text",
+          "text": "{\"v\":1,\"sessionId\":\"f49e5615-ce21-4545-83e2-7b43ed35050f\",\"revision\":2,\"generation\":2,\"state\":\"faulted\",\"diagnostics\":[{\"code\":\"E_VM_RUNTIME\",\"message\":\"cart.p8:318: attempt to index local 'a' (a nil value)\",\"phase\":\"draw\",\"line\":318,\"trace\":\"cart.p8:318: attempt to index local 'a' (a nil value)\\nstack traceback:\",\"recoverable\":false}],\"format\":\"png\",\"region\":{\"x\":0,\"y\":0,\"width\":128,\"height\":128},\"frame\":null}\nNo completed test frame is available. Use reset_game or press_buttons to establish a frame; observe_game does not advance time."
+        }
+      ]
+    },
+    {
+      "number": 13,
+      "name": "load_game",
+      "output": [
+        {
+          "type": "text",
+          "text": "{\"v\":1,\"sessionId\":\"f49e5615-ce21-4545-83e2-7b43ed35050f\",\"revision\":4,\"generation\":4,\"state\":\"faulted\",\"diagnostics\":[{\"code\":\"E_VM_RUNTIME\",\"message\":\"cart.p8:68: attempt to index local 'na' (a nil value)\",\"phase\":\"init\",\"line\":68,\"trace\":\"cart.p8:68: attempt to index local 'na' (a nil value)\\nstack traceback:\\n\\tcart.p8:79: in function 'build'\\n\\tcart.p8:112: in function 'startrun'\\n\\tcart.p8:103: in function <cart.p8:98>\",\"recoverable\":false}],\"format\":\"png\",\"region\":{\"x\":0,\"y\":0,\"width\":128,\"height\":128},\"frame\":null}\nNo completed test frame is available. Use reset_game or press_buttons to establish a frame; observe_game does not advance time."
+        }
+      ]
+    },
+    {
+      "number": 14,
+      "name": "load_game",
+      "output": [
+        {
+          "type": "text",
+          "text": "{\"v\":1,\"sessionId\":\"f49e5615-ce21-4545-83e2-7b43ed35050f\",\"revision\":6,\"generation\":6,\"state\":\"faulted\",\"diagnostics\":[{\"code\":\"E_VM_RUNTIME\",\"message\":\"cart.p8:68: attempt to index local 'na' (a nil value)\",\"phase\":\"init\",\"line\":68,\"trace\":\"cart.p8:68: attempt to index local 'na' (a nil value)\\nstack traceback:\\n\\tcart.p8:79: in function 'build'\\n\\tcart.p8:111: in function 'startrun'\\n\\tcart.p8:103: in function <cart.p8:98>\",\"recoverable\":false}],\"format\":\"png\",\"region\":{\"x\":0,\"y\":0,\"width\":128,\"height\":128},\"frame\":null}\nNo completed test frame is available. Use reset_game or press_buttons to establish a frame; observe_game does not advance time."
+        }
+      ]
+    },
+    {
+      "number": 15,
+      "name": "load_game",
+      "output": [
+        {
+          "type": "text",
+          "text": "{\"v\":1,\"sessionId\":\"f49e5615-ce21-4545-83e2-7b43ed35050f\",\"revision\":8,\"generation\":8,\"state\":\"faulted\",\"diagnostics\":[{\"code\":\"E_VM_RUNTIME\",\"message\":\"cart.p8:60: attempt to index local 'na' (a nil value)\",\"phase\":\"init\",\"line\":60,\"trace\":\"cart.p8:60: attempt to index local 'na' (a nil value)\\nstack traceback:\\n\\tcart.p8:69: in function 'build'\\n\\tcart.p8:101: in function 'startrun'\\n\\tcart.p8:93: in function <cart.p8:88>\",\"recoverable\":false}],\"format\":\"png\",\"region\":{\"x\":0,\"y\":0,\"width\":128,\"height\":128},\"frame\":null}\nNo completed test frame is available. Use reset_game or press_buttons to establish a frame; observe_game does not advance time."
+        }
+      ]
+    }
+  ],
+  "providerUsage": {
+    "input": 197125,
+    "output": 28066,
+    "cached": 181120,
+    "total": 225191
+  },
+  "estimatedUsd": 0.03956742
+}

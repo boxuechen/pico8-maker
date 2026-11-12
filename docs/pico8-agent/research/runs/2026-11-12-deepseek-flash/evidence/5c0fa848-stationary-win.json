@@ -1,0 +1,248 @@
+{
+  "id": "5c0fa848",
+  "task": "timing-rescue",
+  "condition": "B",
+  "label": "stationary-win",
+  "findings": {
+    "start": {
+      "mode": "play",
+      "x": "34",
+      "y": "64",
+      "banked": "0",
+      "stranded": "4",
+      "carrying": "0",
+      "hearts": "3"
+    },
+    "final": {
+      "mode": "clear",
+      "x": "34",
+      "y": "64",
+      "banked": "6",
+      "stranded": "4",
+      "carrying": "0",
+      "hearts": "3"
+    },
+    "verdict": "Six O presses at the starting position win without crossing. Stranded creatures remain; del(table,1) does not remove a creature table."
+  },
+  "frames": 14,
+  "sourceSha256": "7506f1fe2a0b2cc94f946437bce725a7d4bfdadf95cee2c2d30389e2e6422137",
+  "fields": {
+    "mode": "mode",
+    "x": "px",
+    "y": "py",
+    "banked": "banked",
+    "stranded": "#stranded",
+    "carrying": "nc",
+    "hearts": "hearts"
+  },
+  "trace": [
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 1,
+      "state": {
+        "mode": "title",
+        "x": "34",
+        "y": "64",
+        "banked": "0",
+        "stranded": "4",
+        "carrying": "0",
+        "hearts": "3"
+      }
+    },
+    {
+      "buttons": 32,
+      "frames": 1,
+      "at": 2,
+      "state": {
+        "mode": "play",
+        "x": "34",
+        "y": "64",
+        "banked": "0",
+        "stranded": "4",
+        "carrying": "0",
+        "hearts": "3"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 3,
+      "state": {
+        "mode": "play",
+        "x": "34",
+        "y": "64",
+        "banked": "0",
+        "stranded": "4",
+        "carrying": "0",
+        "hearts": "3"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 4,
+      "state": {
+        "mode": "play",
+        "x": "34",
+        "y": "64",
+        "banked": "1",
+        "stranded": "4",
+        "carrying": "0",
+        "hearts": "3"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 5,
+      "state": {
+        "mode": "play",
+        "x": "34",
+        "y": "64",
+        "banked": "1",
+        "stranded": "4",
+        "carrying": "0",
+        "hearts": "3"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 6,
+      "state": {
+        "mode": "play",
+        "x": "34",
+        "y": "64",
+        "banked": "2",
+        "stranded": "4",
+        "carrying": "0",
+        "hearts": "3"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 7,
+      "state": {
+        "mode": "play",
+        "x": "34",
+        "y": "64",
+        "banked": "2",
+        "stranded": "4",
+        "carrying": "0",
+        "hearts": "3"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 8,
+      "state": {
+        "mode": "play",
+        "x": "34",
+        "y": "64",
+        "banked": "3",
+        "stranded": "4",
+        "carrying": "0",
+        "hearts": "3"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 9,
+      "state": {
+        "mode": "play",
+        "x": "34",
+        "y": "64",
+        "banked": "3",
+        "stranded": "4",
+        "carrying": "0",
+        "hearts": "3"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 10,
+      "state": {
+        "mode": "play",
+        "x": "34",
+        "y": "64",
+        "banked": "4",
+        "stranded": "4",
+        "carrying": "0",
+        "hearts": "3"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 11,
+      "state": {
+        "mode": "play",
+        "x": "34",
+        "y": "64",
+        "banked": "4",
+        "stranded": "4",
+        "carrying": "0",
+        "hearts": "3"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 12,
+      "state": {
+        "mode": "play",
+        "x": "34",
+        "y": "64",
+        "banked": "5",
+        "stranded": "4",
+        "carrying": "0",
+        "hearts": "3"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 13,
+      "state": {
+        "mode": "play",
+        "x": "34",
+        "y": "64",
+        "banked": "5",
+        "stranded": "4",
+        "carrying": "0",
+        "hearts": "3"
+      }
+    },
+    {
+      "buttons": 16,
+      "frames": 1,
+      "at": 14,
+      "state": {
+        "mode": "clear",
+        "x": "34",
+        "y": "64",
+        "banked": "6",
+        "stranded": "4",
+        "carrying": "0",
+        "hearts": "3"
+      }
+    }
+  ],
+  "pcmBytes": 10290,
+  "nonSilentPcm": true,
+  "pcmSha256": "b267fdb2d70606718c20561fd2b4888d48cbcc8e979320c75da96bdb7b93f97c",
+  "instrumentation": "Read-only copies of state into scratch RAM after _draw; no changes to game variables",
+  "humanReview": false,
+  "unmodifiedReplay": {
+    "state": "paused",
+    "diagnostics": [],
+    "rgbaSha256": "7ce985f80d4ffe0d3115b3f89ee71930f549759f2241310bf57dce2122940e6e",
+    "instrumentedRgbaSha256": "7ce985f80d4ffe0d3115b3f89ee71930f549759f2241310bf57dce2122940e6e",
+    "pixelExact": true
+  }
+}

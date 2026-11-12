@@ -1,0 +1,371 @@
+<!doctype html>
+<html lang="zh-CN">
+  <meta charset="utf-8" /><meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  /><title>PICO-8 游戏对照试玩</title>
+  <link rel="stylesheet" href="/player/player.css" />
+  <style>
+    :root {
+      font:
+        16px/1.6 system-ui,
+        sans-serif;
+      background: #0a1020;
+      color: #fff1e8;
+    }
+    body {
+      display: block;
+      max-width: 1100px;
+      padding: 24px;
+      margin: 0 auto;
+      min-height: 0;
+      background: none;
+    }
+    h1 {
+      font-size: 26px;
+      margin: 0;
+    }
+    p {
+      color: #c2c3c7;
+    }
+    select,
+    input,
+    button,
+    textarea {
+      font: inherit;
+      background: #182238;
+      color: #fff1e8;
+      border: 1px solid #4c566a;
+      padding: 8px;
+      border-radius: 4px;
+    }
+    button {
+      cursor: pointer;
+    }
+    button:disabled {
+      opacity: 0.45;
+      cursor: default;
+    }
+    label {
+      display: block;
+      margin: 12px 0 4px;
+    }
+    .top {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .pair {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin: 24px 0;
+    }
+    .card {
+      padding: 16px;
+      background: #121a2c;
+      border: 1px solid #303c55;
+      border-radius: 8px;
+    }
+    .card h2 {
+      font-size: 19px;
+      margin: 0 0 12px;
+    }
+    .screen {
+      max-width: 384px;
+      width: 100%;
+      margin: auto;
+    }
+    .controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .state {
+      color: #00e436;
+      font-size: 14px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 16px 0;
+    }
+    th,
+    td {
+      padding: 8px;
+      text-align: left;
+      border-bottom: 1px solid #303c55;
+    }
+    textarea {
+      width: 100%;
+      box-sizing: border-box;
+    }
+    #save {
+      background: #ff77a8;
+      color: #11141d;
+      font-weight: bold;
+      margin: 18px 0;
+    }
+    a {
+      color: #ffccaa;
+    }
+    #prompt {
+      font-size: 14px;
+    }
+    #message {
+      min-height: 28px;
+      color: #00e436;
+    }
+    .note {
+      font-size: 14px;
+    }
+    @media (max-width: 720px) {
+      .pair {
+        grid-template-columns: 1fr;
+      }
+      body {
+        padding: 16px;
+      }
+    }
+  </style>
+  <h1>PICO-8 游戏对照试玩</h1>
+  <p>
+    同一个题目、同一个真实模型，左右两份作品使用不同参考资料。顺序已随机化，页面不显示分组。请每份试玩约
+    5 分钟，再凭体验评分；没有通关不等于游戏无法通关。
+  </p>
+  <div class="top">
+    <label
+      >题目
+      <select id="task" aria-label="题目"></select></label
+    ><label
+      >匿名评审代号
+      <input id="reviewer" placeholder="例如 player-01" autocomplete="off"
+    /></label>
+  </div>
+  <p id="prompt"></p>
+  <p class="note">
+    点击「开始」后聚焦画面：方向键移动，Z = O，X =
+    X。具体规则以游戏提示为准。可随时暂停、重置或静音。评分保存在本机，不会发送给模型服务。
+  </p>
+  <div class="pair">
+    <section class="card">
+      <h2>左侧作品</h2>
+      <div class="screen" id="left-player"></div>
+      <div class="controls">
+        <button id="left-start">开始 / 继续</button
+        ><button id="left-pause">暂停</button
+        ><button id="left-reset">重置</button
+        ><button id="left-mute">静音</button
+        ><span class="state" id="left-state">等待生成</span>
+      </div>
+    </section>
+    <section class="card">
+      <h2>右侧作品</h2>
+      <div class="screen" id="right-player"></div>
+      <div class="controls">
+        <button id="right-start">开始 / 继续</button
+        ><button id="right-pause">暂停</button
+        ><button id="right-reset">重置</button
+        ><button id="right-mute">静音</button
+        ><span class="state" id="right-state">等待生成</span>
+      </div>
+    </section>
+  </div>
+  <form id="ratings">
+    <table>
+      <thead>
+        <tr>
+          <th>维度（1 很差 — 5 很好）</th>
+          <th>左侧</th>
+          <th>右侧</th>
+        </tr>
+      </thead>
+      <tbody id="scores"></tbody>
+    </table>
+    <label
+      >总体更愿意再玩哪一个？<select id="preference" required>
+        <option value="">请选择</option>
+        <option value="left">左侧</option>
+        <option value="right">右侧</option>
+        <option value="tie">差不多</option>
+        <option value="unable">无法判断</option>
+      </select></label
+    >
+    <label
+      >具体哪里让你想重玩，或让你感到挫折？<textarea
+        id="notes"
+        rows="3"
+        maxlength="4000"
+      ></textarea>
+    </label>
+    <button id="save" type="submit">保存这一组评分</button
+    ><output id="message" aria-live="polite"></output>
+  </form>
+  <script type="module">
+    import { createPico8WebPlayer } from "/player/main/player.mjs";
+    const $ = (s) => document.querySelector(s),
+      sides = ["left", "right"],
+      players = {},
+      ready = {},
+      seconds = { left: 0, right: 0 },
+      state = {};
+    let manifest, pair;
+    const dimensions = {
+      clarity: "目标与失败原因是否清楚",
+      control: "操作是否稳定、跟手",
+      choice: "决策或技巧是否有意义",
+      pacing: "节奏与难度是否连贯",
+      presentation: "画面与声音是否清楚协调",
+      replay: "是否想再玩一次",
+    };
+    for (const [key, label] of Object.entries(dimensions)) {
+      const row = document.createElement("tr");
+      const name = document.createElement("td");
+      name.textContent = label;
+      row.append(name);
+      for (const side of sides) {
+        const cell = document.createElement("td"),
+          select = document.createElement("select");
+        select.id = side + "-" + key;
+        select.required = true;
+        select.setAttribute(
+          "aria-label",
+          (side === "left" ? "左侧" : "右侧") + label,
+        );
+        select.append(new Option("—", ""));
+        select.append(new Option("无法评价", "na"));
+        for (let n = 1; n <= 5; n++)
+          select.append(new Option(String(n), String(n)));
+        cell.append(select);
+        row.append(cell);
+      }
+      $("#scores").append(row);
+    }
+    try {
+      manifest = await (await fetch("/manifest")).json();
+      for (const p of manifest.pairs)
+        $("#task").append(
+          new Option(p.number + ". " + p.task, String(p.number)),
+        );
+      for (const side of sides) {
+        const player = (players[side] = await createPico8WebPlayer({
+          root: $("#" + side + "-player"),
+          shell: "hosted",
+          execution: "worker",
+          commandTimeoutMs: 12000,
+        }));
+        player.on("state", (e) => {
+          state[side] = e.state;
+          $("#" + side + "-state").textContent =
+            e.state + " · " + seconds[side] + "s";
+          $("#" + side + "-mute").textContent =
+            player.root
+              .querySelector('[data-action="mute"]')
+              .getAttribute("aria-pressed") === "true"
+              ? "恢复声音"
+              : "静音";
+        });
+        player.on("fault", (e) => {
+          $("#" + side + "-state").textContent = "运行错误：" + e.error.message;
+        });
+        $("#" + side + "-start").onclick = async () => {
+          try {
+            if (!ready[side]) return;
+            await players[side === "left" ? "right" : "left"].pause();
+            if (player.state === "paused") await player.resume();
+            else await player.start();
+            player.canvas.focus();
+          } catch (e) {
+            $("#message").textContent = e.message;
+          }
+        };
+        $("#" + side + "-pause").onclick = () => player.pause();
+        $("#" + side + "-reset").onclick = () => player.reset();
+        $("#" + side + "-mute").onclick = () => {
+          const btn = player.root.querySelector('[data-action="mute"]');
+          btn.click();
+          $("#" + side + "-mute").textContent =
+            btn.getAttribute("aria-pressed") === "true" ? "恢复声音" : "静音";
+        };
+      }
+      async function load() {
+        $("#task").disabled = true;
+        pair = manifest.pairs.find(
+          (p) => p.number === Number($("#task").value),
+        );
+        $("#prompt").textContent = pair.prompt;
+        $("#message").textContent = "";
+        $("#ratings").reset();
+        for (const [index, side] of sides.entries()) {
+          const p = players[side];
+          await p.pause();
+          ready[side] = false;
+          seconds[side] = 0;
+          const card = pair.cards[index];
+          for (const name of ["start", "pause", "reset", "mute"])
+            $("#" + side + "-" + name).disabled = !card.ready;
+          if (!card.ready) {
+            await p.stop();
+            $("#" + side + "-state").textContent = "未生成可运行作品";
+            continue;
+          }
+          await p.loadCart(
+            new Uint8Array(
+              await (await fetch("/cart/" + card.id + ".p8")).arrayBuffer(),
+            ),
+            { displayName: side === "left" ? "左侧作品" : "右侧作品" },
+          );
+          ready[side] = true;
+        }
+        $("#task").disabled = false;
+      }
+      $("#task").onchange = load;
+      await load();
+      setInterval(() => {
+        for (const side of sides)
+          if (state[side] === "running") {
+            seconds[side]++;
+            $("#" + side + "-state").textContent =
+              "运行中 · " + seconds[side] + "s";
+          }
+      }, 1000);
+      $("#ratings").onsubmit = async (e) => {
+        e.preventDefault();
+        const reviewer = $("#reviewer").value.trim();
+        if (!reviewer) {
+          $("#message").textContent = "请先填写匿名评审代号";
+          return;
+        }
+        const rating = {
+          reviewer,
+          pair: pair.number,
+          preference: $("#preference").value,
+          notes: $("#notes").value,
+          playedSeconds: { ...seconds },
+        };
+        for (const side of sides)
+          rating[side] = Object.fromEntries(
+            Object.keys(dimensions).map((k) => [
+              k,
+              $("#" + side + "-" + k).value === "na"
+                ? null
+                : Number($("#" + side + "-" + k).value),
+            ]),
+          );
+        const response = await fetch("/ratings", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(rating),
+        });
+        $("#message").textContent = response.ok
+          ? "已保存到本机。可切换下一组。"
+          : "保存失败，请检查评分是否完整。";
+      };
+    } catch (e) {
+      $("#message").textContent = e.message;
+    }
+  </script>
+</html>

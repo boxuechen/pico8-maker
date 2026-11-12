@@ -32,4 +32,4 @@ The compiler validates English model content, recipe receipts and output limits.
 
 Local checks on 2026-11-12: the edited sources compiled successfully in a temporary copy; all four existing extension integration tests passed, including reference delivery and history/ASCII recovery. All 44 references are reachable from the compact entry points, the complete catalog matches the registry, and edited file links resolve. Workspace code, generated modules, recipe sources, manifest and palette data were unchanged. These checks used no real model requests.
 
-The [paired evaluation protocol](research/evaluation.md) separates gameplay correctness from human judgments of quality. No new model comparison is part of this documentation pass.
+The [first paired pilot](research/runs/2026-11-12-deepseek-flash/README.md) completed real generation and an agent audit; human enjoyment review remains pending. It predates this simplification and does not establish its effect. No new model comparison is part of this pass.

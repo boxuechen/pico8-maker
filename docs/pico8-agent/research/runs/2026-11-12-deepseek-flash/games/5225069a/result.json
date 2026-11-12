@@ -1,0 +1,89 @@
+{
+  "id": "5225069a",
+  "task": "timing-boss",
+  "condition": "B",
+  "repeat": 1,
+  "prompt": "Create a small PICO-8 arena boss game. Give the player a readable warning, an attack to dodge and an opening to counterattack. Develop the challenge across three phases. Include a visible objective, failure, quick retry, and original art and sound.",
+  "promptSha256": "35389c4262e483c00da40968ff889fc6b7d59ce793acae42bd258b4aa401a2f0",
+  "packVersion": "pico8-en-v1-dbd39418b5619724",
+  "model": "deepseek-flash",
+  "finishedAt": "2026-11-12T10:57:14.954Z",
+  "budget": {
+    "limits": {
+      "tokens": 200000,
+      "tools": 80,
+      "milliseconds": 720000
+    },
+    "elapsedMs": 71901,
+    "reportedTokens": 212001,
+    "toolCalls": 17,
+    "stopReason": "token_budget",
+    "tokenOvershoot": 12001
+  },
+  "requests": 13,
+  "terminalError": null,
+  "lastFailure": {
+    "taskId": 68,
+    "inputs": [
+      8
+    ],
+    "reason": "aborted",
+    "first": 7
+  },
+  "sourceSha256": "8e11f796fb90ef3a389b67ca74765f9bd7d28f7615fb69d62d7aef658dbd75d1",
+  "sourceBytes": 8539,
+  "checks": {
+    "createdGame": true,
+    "exportLoad": true,
+    "diagnostics": [],
+    "idle120": true
+  },
+  "toolCounts": {
+    "read_game": 1,
+    "read_reference": 9,
+    "load_game": 4,
+    "press_buttons": 2,
+    "observe_game": 1
+  },
+  "readReferences": [
+    "case/just-one-boss",
+    "recipe/signal-arena",
+    "pattern/telegraph-attack-recovery",
+    "guide/audio",
+    "recipe/sfx-from-notes",
+    "recipe/music-from-patterns",
+    "recipe/save-high-score",
+    "guide/input-system",
+    "recipe/lantern-vault"
+  ],
+  "readsBeforeFirstLoad": 9,
+  "errors": [
+    {
+      "number": 12,
+      "name": "load_game",
+      "output": [
+        {
+          "type": "text",
+          "text": "{\"v\":1,\"sessionId\":\"3f665ae2-1507-408f-8597-26193c78743d\",\"revision\":3,\"generation\":3,\"state\":\"faulted\",\"diagnostics\":[{\"code\":\"E_VM_SYNTAX\",\"message\":\"cart.p8:320: 'end' expected (to close 'function' at line 268) near <eof>\",\"phase\":\"compile\",\"line\":320,\"trace\":\"cart.p8:320: 'end' expected (to close 'function' at line 268) near <eof>\\nstack traceback:\",\"recoverable\":true}],\"format\":\"png\",\"region\":{\"x\":0,\"y\":0,\"width\":128,\"height\":128},\"frame\":null}\nNo completed test frame is available. Use reset_game or press_buttons to establish a frame; observe_game does not advance time."
+        }
+      ]
+    },
+    {
+      "number": 13,
+      "name": "load_game",
+      "output": [
+        {
+          "type": "text",
+          "text": "{\"v\":1,\"sessionId\":\"3f665ae2-1507-408f-8597-26193c78743d\",\"revision\":5,\"generation\":5,\"state\":\"faulted\",\"diagnostics\":[{\"code\":\"E_VM_SYNTAX\",\"message\":\"cart.p8:280: 'end' expected (to close 'function' at line 244) near <eof>\",\"phase\":\"compile\",\"line\":280,\"trace\":\"cart.p8:280: 'end' expected (to close 'function' at line 244) near <eof>\\nstack traceback:\",\"recoverable\":true}],\"format\":\"png\",\"region\":{\"x\":0,\"y\":0,\"width\":128,\"height\":128},\"frame\":null}\nNo completed test frame is available. Use reset_game or press_buttons to establish a frame; observe_game does not advance time."
+        }
+      ]
+    }
+  ],
+  "providerUsage": {
+    "input": 197477,
+    "output": 14524,
+    "cached": 184832,
+    "total": 212001
+  },
+  "estimatedUsd": 0.022331292000000003
+}

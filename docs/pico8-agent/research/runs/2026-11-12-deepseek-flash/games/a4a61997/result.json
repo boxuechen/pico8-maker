@@ -1,0 +1,68 @@
+{
+  "id": "a4a61997",
+  "task": "turn-extraction",
+  "condition": "A",
+  "repeat": 1,
+  "prompt": "Create a small turn-based PICO-8 exploration game. Retrieve an object and return before a visible resource runs out. Include an optional reward detour, predictable hazards, clear action costs, success, failure, quick retry, and original art and sound.",
+  "promptSha256": "93a9d5d357c904c4f4ead4dcc89c7ca2c33f430b7cba0f61e516f57fb668cd00",
+  "packVersion": "pico8-en-v1-55771f27a9c0d418",
+  "model": "deepseek-flash",
+  "finishedAt": "2026-11-12T11:00:05.929Z",
+  "budget": {
+    "limits": {
+      "tokens": 200000,
+      "tools": 80,
+      "milliseconds": 720000
+    },
+    "elapsedMs": 102918,
+    "reportedTokens": 225864,
+    "toolCalls": 16,
+    "stopReason": "token_budget",
+    "tokenOvershoot": 25864
+  },
+  "requests": 12,
+  "terminalError": null,
+  "lastFailure": {
+    "taskId": 64,
+    "inputs": [
+      8
+    ],
+    "reason": "aborted",
+    "first": 7
+  },
+  "sourceSha256": "f2e7888813bee6b45ea9a4f9fc453d14e2b2726927ac8315527ffd4d5e649ea5",
+  "sourceBytes": 11463,
+  "checks": {
+    "createdGame": true,
+    "exportLoad": true,
+    "diagnostics": [],
+    "idle120": true
+  },
+  "toolCounts": {
+    "read_game": 1,
+    "read_reference": 9,
+    "load_game": 3,
+    "press_buttons": 1,
+    "observe_game": 2
+  },
+  "readReferences": [
+    "guide/audio",
+    "recipe/sfx-from-notes",
+    "recipe/sprite-from-rows",
+    "recipe/map-from-rows",
+    "recipe/save-high-score",
+    "guide/playtest",
+    "guide/input-system",
+    "guide/graphics",
+    "guide/sprites-maps"
+  ],
+  "readsBeforeFirstLoad": 9,
+  "errors": [],
+  "providerUsage": {
+    "input": 204791,
+    "output": 21073,
+    "cached": 187264,
+    "total": 225864
+  },
+  "estimatedUsd": 0.031669284
+}

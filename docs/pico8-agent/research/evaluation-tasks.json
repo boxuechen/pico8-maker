@@ -1,5 +1,5 @@
 {
-  "status": "not_run",
+  "status": "pilot_generation_and_agent_audit_complete_human_review_pending",
   "language": "English",
   "tasks": [
     {
@@ -32,5 +32,6 @@
       "kind": "far_transfer",
       "prompt": "Create a turn-based PICO-8 garden puzzle. Grow and harvest plants by deciding how to spend limited water over a short season. Waiting must have an understandable consequence. Include at least two viable strategies, an ending, retry, and original art and sound. Do not use a dungeon, relic or extraction route."
     }
-  ]
+  ],
+  "latestReport": "runs/2026-11-12-deepseek-flash/README.md"
 }

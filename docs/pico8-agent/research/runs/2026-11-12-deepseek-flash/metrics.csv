@@ -1,0 +1,13 @@
+id,task,condition,created,tokens,overshoot,tool_calls,reference_calls,press_calls,seconds,estimated_usd
+09a1cafe,platform-delivery,A,true,208050,8050,15,7,1,77.821,0.025047
+0df805f9,platform-delivery,B,false,206428,6428,14,6,0,91.573,0.030000
+81a86279,platform-moving-hazards,A,true,211013,11013,15,6,2,84.266,0.025668
+2e21b2d5,platform-moving-hazards,B,false,225191,25191,15,10,0,118.823,0.039567
+5225069a,timing-boss,B,true,212001,12001,17,9,2,71.901,0.022331
+5feacc7d,timing-rescue,A,true,206087,6087,17,6,8,54.190,0.013826
+bdedfb71,timing-boss,A,true,217045,17045,15,8,1,119.197,0.039753
+5c0fa848,timing-rescue,B,true,217404,17404,18,11,1,90.345,0.027296
+a4a61997,turn-extraction,A,true,225864,25864,16,9,1,102.918,0.031669
+497113b1,turn-extraction,B,true,229484,29484,26,22,0,41.247,0.014739
+85f23650,turn-gardening,A,true,201776,1776,21,14,3,56.439,0.015616
+d45dc10f,turn-gardening,B,true,227310,27310,18,11,1,88.934,0.025811

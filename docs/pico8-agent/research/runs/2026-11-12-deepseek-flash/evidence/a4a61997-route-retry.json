@@ -1,0 +1,485 @@
+{
+  "id": "a4a61997",
+  "task": "turn-extraction",
+  "condition": "A",
+  "label": "route-retry",
+  "findings": {
+    "final": {
+      "state": "lose",
+      "x": "8",
+      "y": "5",
+      "hp": "0",
+      "fuel": "37",
+      "relic": "false",
+      "gate": "false",
+      "turn": "11",
+      "reason": "the demon"
+    },
+    "terminal": {
+      "state": "lose",
+      "x": "8",
+      "y": "5",
+      "hp": "0",
+      "fuel": "37",
+      "relic": "false",
+      "gate": "false",
+      "turn": "11",
+      "reason": "the demon"
+    },
+    "retry": {
+      "state": "play",
+      "x": "1",
+      "y": "1",
+      "hp": "3",
+      "fuel": "48",
+      "relic": "false",
+      "gate": "false",
+      "turn": "0",
+      "reason": "[nil]"
+    },
+    "verdict": "Shortest spatial route plus waits was exercised, but no victory established by this policy. Failure and retry verified; existence of another winning route remains unknown."
+  },
+  "frames": 26,
+  "sourceSha256": "f2e7888813bee6b45ea9a4f9fc453d14e2b2726927ac8315527ffd4d5e649ea5",
+  "fields": {
+    "state": "state",
+    "x": "px",
+    "y": "py",
+    "hp": "hp",
+    "fuel": "clock",
+    "relic": "have_relic",
+    "gate": "gate_open",
+    "turn": "turn",
+    "reason": "lose_reason"
+  },
+  "trace": [
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 1,
+      "state": {
+        "state": "title",
+        "x": "1",
+        "y": "1",
+        "hp": "[nil]",
+        "fuel": "48",
+        "relic": "false",
+        "gate": "false",
+        "turn": "0",
+        "reason": "[nil]"
+      }
+    },
+    {
+      "buttons": 32,
+      "frames": 1,
+      "at": 2,
+      "state": {
+        "state": "play",
+        "x": "1",
+        "y": "1",
+        "hp": "3",
+        "fuel": "48",
+        "relic": "false",
+        "gate": "false",
+        "turn": "0",
+        "reason": "[nil]"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 3,
+      "state": {
+        "state": "play",
+        "x": "1",
+        "y": "1",
+        "hp": "3",
+        "fuel": "48",
+        "relic": "false",
+        "gate": "false",
+        "turn": "0",
+        "reason": "[nil]"
+      }
+    },
+    {
+      "buttons": 2,
+      "frames": 1,
+      "at": 4,
+      "state": {
+        "state": "play",
+        "x": "2",
+        "y": "1",
+        "hp": "3",
+        "fuel": "47",
+        "relic": "false",
+        "gate": "false",
+        "turn": "1",
+        "reason": "[nil]"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 5,
+      "state": {
+        "state": "play",
+        "x": "2",
+        "y": "1",
+        "hp": "3",
+        "fuel": "47",
+        "relic": "false",
+        "gate": "false",
+        "turn": "1",
+        "reason": "[nil]"
+      }
+    },
+    {
+      "buttons": 2,
+      "frames": 1,
+      "at": 6,
+      "state": {
+        "state": "play",
+        "x": "3",
+        "y": "1",
+        "hp": "2",
+        "fuel": "46",
+        "relic": "false",
+        "gate": "false",
+        "turn": "2",
+        "reason": "[nil]"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 7,
+      "state": {
+        "state": "play",
+        "x": "3",
+        "y": "1",
+        "hp": "2",
+        "fuel": "46",
+        "relic": "false",
+        "gate": "false",
+        "turn": "2",
+        "reason": "[nil]"
+      }
+    },
+    {
+      "buttons": 2,
+      "frames": 1,
+      "at": 8,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "1",
+        "hp": "2",
+        "fuel": "45",
+        "relic": "false",
+        "gate": "false",
+        "turn": "3",
+        "reason": "[nil]"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 9,
+      "state": {
+        "state": "play",
+        "x": "4",
+        "y": "1",
+        "hp": "2",
+        "fuel": "45",
+        "relic": "false",
+        "gate": "false",
+        "turn": "3",
+        "reason": "[nil]"
+      }
+    },
+    {
+      "buttons": 2,
+      "frames": 1,
+      "at": 10,
+      "state": {
+        "state": "play",
+        "x": "5",
+        "y": "1",
+        "hp": "2",
+        "fuel": "44",
+        "relic": "false",
+        "gate": "false",
+        "turn": "4",
+        "reason": "[nil]"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 11,
+      "state": {
+        "state": "play",
+        "x": "5",
+        "y": "1",
+        "hp": "2",
+        "fuel": "44",
+        "relic": "false",
+        "gate": "false",
+        "turn": "4",
+        "reason": "[nil]"
+      }
+    },
+    {
+      "buttons": 2,
+      "frames": 1,
+      "at": 12,
+      "state": {
+        "state": "play",
+        "x": "6",
+        "y": "1",
+        "hp": "2",
+        "fuel": "43",
+        "relic": "false",
+        "gate": "false",
+        "turn": "5",
+        "reason": "[nil]"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 13,
+      "state": {
+        "state": "play",
+        "x": "6",
+        "y": "1",
+        "hp": "2",
+        "fuel": "43",
+        "relic": "false",
+        "gate": "false",
+        "turn": "5",
+        "reason": "[nil]"
+      }
+    },
+    {
+      "buttons": 8,
+      "frames": 1,
+      "at": 14,
+      "state": {
+        "state": "play",
+        "x": "6",
+        "y": "2",
+        "hp": "2",
+        "fuel": "42",
+        "relic": "false",
+        "gate": "false",
+        "turn": "6",
+        "reason": "[nil]"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 15,
+      "state": {
+        "state": "play",
+        "x": "6",
+        "y": "2",
+        "hp": "2",
+        "fuel": "42",
+        "relic": "false",
+        "gate": "false",
+        "turn": "6",
+        "reason": "[nil]"
+      }
+    },
+    {
+      "buttons": 8,
+      "frames": 1,
+      "at": 16,
+      "state": {
+        "state": "play",
+        "x": "6",
+        "y": "3",
+        "hp": "2",
+        "fuel": "41",
+        "relic": "false",
+        "gate": "false",
+        "turn": "7",
+        "reason": "[nil]"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 17,
+      "state": {
+        "state": "play",
+        "x": "6",
+        "y": "3",
+        "hp": "2",
+        "fuel": "41",
+        "relic": "false",
+        "gate": "false",
+        "turn": "7",
+        "reason": "[nil]"
+      }
+    },
+    {
+      "buttons": 8,
+      "frames": 1,
+      "at": 18,
+      "state": {
+        "state": "play",
+        "x": "6",
+        "y": "4",
+        "hp": "2",
+        "fuel": "40",
+        "relic": "false",
+        "gate": "false",
+        "turn": "8",
+        "reason": "[nil]"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 19,
+      "state": {
+        "state": "play",
+        "x": "6",
+        "y": "4",
+        "hp": "2",
+        "fuel": "40",
+        "relic": "false",
+        "gate": "false",
+        "turn": "8",
+        "reason": "[nil]"
+      }
+    },
+    {
+      "buttons": 8,
+      "frames": 1,
+      "at": 20,
+      "state": {
+        "state": "play",
+        "x": "6",
+        "y": "5",
+        "hp": "2",
+        "fuel": "39",
+        "relic": "false",
+        "gate": "false",
+        "turn": "9",
+        "reason": "[nil]"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 21,
+      "state": {
+        "state": "play",
+        "x": "6",
+        "y": "5",
+        "hp": "2",
+        "fuel": "39",
+        "relic": "false",
+        "gate": "false",
+        "turn": "9",
+        "reason": "[nil]"
+      }
+    },
+    {
+      "buttons": 2,
+      "frames": 1,
+      "at": 22,
+      "state": {
+        "state": "play",
+        "x": "7",
+        "y": "5",
+        "hp": "1",
+        "fuel": "38",
+        "relic": "false",
+        "gate": "false",
+        "turn": "10",
+        "reason": "[nil]"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 23,
+      "state": {
+        "state": "play",
+        "x": "7",
+        "y": "5",
+        "hp": "1",
+        "fuel": "38",
+        "relic": "false",
+        "gate": "false",
+        "turn": "10",
+        "reason": "[nil]"
+      }
+    },
+    {
+      "buttons": 2,
+      "frames": 1,
+      "at": 24,
+      "state": {
+        "state": "lose",
+        "x": "8",
+        "y": "5",
+        "hp": "0",
+        "fuel": "37",
+        "relic": "false",
+        "gate": "false",
+        "turn": "11",
+        "reason": "the demon"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 25,
+      "state": {
+        "state": "lose",
+        "x": "8",
+        "y": "5",
+        "hp": "0",
+        "fuel": "37",
+        "relic": "false",
+        "gate": "false",
+        "turn": "11",
+        "reason": "the demon"
+      }
+    },
+    {
+      "buttons": 32,
+      "frames": 1,
+      "at": 26,
+      "state": {
+        "state": "play",
+        "x": "1",
+        "y": "1",
+        "hp": "3",
+        "fuel": "48",
+        "relic": "false",
+        "gate": "false",
+        "turn": "0",
+        "reason": "[nil]"
+      }
+    }
+  ],
+  "pcmBytes": 19110,
+  "nonSilentPcm": true,
+  "pcmSha256": "81641b80b68e0a2e5e7b8c59203723b422bd241f98c723b5d5b0d9fb4fd30d49",
+  "instrumentation": "Read-only copies of state into scratch RAM after _draw; no changes to game variables",
+  "humanReview": false,
+  "unmodifiedReplay": {
+    "state": "paused",
+    "diagnostics": [],
+    "rgbaSha256": "93a4457f5005f6d088a1f207593b97c0864951e332a8869c18eaae41abd4c5a6",
+    "instrumentedRgbaSha256": "93a4457f5005f6d088a1f207593b97c0864951e332a8869c18eaae41abd4c5a6",
+    "pixelExact": true
+  }
+}

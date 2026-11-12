@@ -1,0 +1,8170 @@
+{
+  "id": "5225069a",
+  "task": "timing-boss",
+  "condition": "B",
+  "label": "loss-retry",
+  "findings": {
+    "lost": {
+      "state": "dead",
+      "mode": "attack",
+      "x": "16",
+      "y": "104",
+      "hp": "0",
+      "hits": "0",
+      "phase": "1",
+      "kind": "1",
+      "index": "3",
+      "t": "17"
+    },
+    "retry": {
+      "state": "play",
+      "mode": "warn",
+      "x": "16",
+      "y": "104",
+      "hp": "3",
+      "hits": "0",
+      "phase": "1",
+      "kind": "1",
+      "index": "1",
+      "t": "46"
+    },
+    "verdict": "Taking repeated attacks causes defeat; X resets HP, hits and phase."
+  },
+  "frames": 477,
+  "sourceSha256": "8e11f796fb90ef3a389b67ca74765f9bd7d28f7615fb69d62d7aef658dbd75d1",
+  "fields": {
+    "state": "state",
+    "mode": "mode",
+    "x": "px",
+    "y": "py",
+    "hp": "hp",
+    "hits": "hits",
+    "phase": "phase",
+    "kind": "zone and zone.kind",
+    "index": "zone and zone.index",
+    "t": "t"
+  },
+  "trace": [
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 1,
+      "state": {
+        "state": "title",
+        "mode": "title",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "[nil]",
+        "index": "[nil]",
+        "t": "0"
+      }
+    },
+    {
+      "buttons": 32,
+      "frames": 1,
+      "at": 2,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "46"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 3,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "45"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 4,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "44"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 5,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "43"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 6,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "42"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 7,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "41"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 8,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "40"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 9,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "39"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 10,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "38"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 11,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "37"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 12,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "36"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 13,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "35"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 14,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "34"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 15,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "33"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 16,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "32"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 17,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "31"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 18,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "30"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 19,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "29"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 20,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "28"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 21,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "27"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 22,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "26"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 23,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "25"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 24,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "24"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 25,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "23"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 26,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "22"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 27,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "21"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 28,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "20"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 29,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "19"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 30,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "18"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 31,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "17"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 32,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "16"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 33,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "15"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 34,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "14"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 35,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "13"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 36,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "12"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 37,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "11"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 38,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "10"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 39,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "9"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 40,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "8"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 41,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "7"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 42,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 43,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "5"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 44,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "4"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 45,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "3"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 46,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "2"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 47,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "1"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 48,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "18"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 49,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "17"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 50,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "16"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 51,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "15"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 52,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "14"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 53,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "13"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 54,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "12"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 55,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "11"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 56,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "10"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 57,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "9"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 58,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "8"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 59,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "7"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 60,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 61,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "5"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 62,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "4"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 63,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "3"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 64,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "2"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 65,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "1"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 66,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "78"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 67,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "77"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 68,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "76"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 69,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "75"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 70,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "74"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 71,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "73"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 72,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "72"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 73,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "71"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 74,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "70"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 75,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "69"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 76,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "68"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 77,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "67"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 78,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "66"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 79,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "65"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 80,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "64"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 81,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "63"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 82,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "62"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 83,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "61"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 84,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "60"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 85,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "59"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 86,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "58"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 87,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "57"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 88,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "56"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 89,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "55"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 90,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "54"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 91,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "53"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 92,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "52"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 93,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "51"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 94,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "50"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 95,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "49"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 96,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "48"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 97,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "47"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 98,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "46"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 99,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "45"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 100,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "44"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 101,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "43"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 102,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "42"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 103,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "41"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 104,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "40"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 105,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "39"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 106,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "38"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 107,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "37"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 108,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "36"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 109,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "35"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 110,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "34"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 111,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "33"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 112,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "32"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 113,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "31"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 114,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "30"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 115,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "29"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 116,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "28"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 117,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "27"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 118,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "26"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 119,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "25"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 120,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "24"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 121,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "23"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 122,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "22"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 123,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "21"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 124,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "20"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 125,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "19"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 126,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "18"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 127,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "17"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 128,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "16"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 129,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "15"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 130,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "14"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 131,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "13"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 132,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "12"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 133,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "11"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 134,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "10"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 135,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "9"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 136,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "8"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 137,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "7"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 138,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 139,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "5"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 140,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "4"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 141,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "3"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 142,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "2"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 143,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "1"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 144,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "46"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 145,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "45"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 146,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "44"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 147,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "43"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 148,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "42"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 149,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "41"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 150,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "40"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 151,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "39"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 152,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "38"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 153,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "37"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 154,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "36"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 155,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "35"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 156,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "34"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 157,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "33"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 158,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "32"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 159,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "31"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 160,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "30"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 161,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "29"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 162,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "28"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 163,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "27"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 164,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "26"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 165,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "25"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 166,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "24"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 167,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "23"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 168,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "22"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 169,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "21"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 170,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "20"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 171,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "19"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 172,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "18"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 173,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "17"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 174,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "16"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 175,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "15"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 176,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "14"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 177,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "13"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 178,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "12"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 179,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "11"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 180,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "10"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 181,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "9"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 182,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "8"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 183,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "7"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 184,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 185,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "5"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 186,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "4"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 187,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "3"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 188,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "2"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 189,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "1"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 190,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "18"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 191,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "17"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 192,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "16"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 193,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "15"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 194,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "14"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 195,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "13"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 196,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "12"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 197,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "11"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 198,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "10"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 199,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "9"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 200,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "8"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 201,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "7"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 202,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 203,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "5"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 204,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "4"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 205,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "3"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 206,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "2"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 207,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "1"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 208,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "78"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 209,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "77"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 210,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "76"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 211,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "75"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 212,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "74"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 213,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "73"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 214,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "72"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 215,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "71"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 216,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "70"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 217,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "69"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 218,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "68"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 219,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "67"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 220,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "66"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 221,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "65"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 222,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "64"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 223,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "63"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 224,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "62"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 225,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "61"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 226,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "60"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 227,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "59"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 228,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "58"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 229,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "57"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 230,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "56"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 231,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "55"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 232,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "54"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 233,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "53"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 234,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "52"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 235,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "51"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 236,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "50"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 237,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "49"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 238,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "48"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 239,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "47"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 240,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "46"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 241,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "45"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 242,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "44"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 243,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "43"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 244,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "42"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 245,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "41"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 246,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "40"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 247,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "39"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 248,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "38"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 249,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "37"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 250,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "36"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 251,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "35"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 252,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "34"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 253,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "33"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 254,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "32"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 255,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "31"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 256,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "30"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 257,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "29"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 258,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "28"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 259,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "27"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 260,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "26"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 261,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "25"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 262,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "24"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 263,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "23"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 264,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "22"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 265,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "21"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 266,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "20"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 267,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "19"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 268,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "18"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 269,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "17"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 270,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "16"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 271,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "15"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 272,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "14"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 273,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "13"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 274,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "12"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 275,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "11"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 276,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "10"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 277,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "9"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 278,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "8"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 279,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "7"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 280,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 281,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "5"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 282,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "4"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 283,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "3"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 284,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "2"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 285,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "1"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 286,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "46"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 287,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "45"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 288,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "44"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 289,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "43"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 290,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "42"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 291,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "41"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 292,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "40"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 293,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "39"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 294,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "38"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 295,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "37"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 296,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "36"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 297,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "35"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 298,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "34"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 299,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "33"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 300,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "32"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 301,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "31"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 302,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "30"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 303,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "29"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 304,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "28"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 305,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "27"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 306,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "26"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 307,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "25"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 308,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "24"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 309,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "23"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 310,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "22"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 311,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "21"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 312,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "20"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 313,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "19"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 314,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "18"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 315,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "17"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 316,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "16"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 317,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "15"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 318,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "14"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 319,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "13"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 320,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "12"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 321,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "11"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 322,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "10"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 323,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "9"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 324,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "8"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 325,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "7"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 326,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 327,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "5"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 328,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "4"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 329,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "3"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 330,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "2"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 331,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "1"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 332,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "2",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "18"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 333,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "17"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 334,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "16"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 335,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "15"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 336,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "14"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 337,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "13"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 338,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "12"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 339,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "11"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 340,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "10"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 341,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "9"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 342,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "8"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 343,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "7"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 344,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 345,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "5"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 346,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "4"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 347,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "3"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 348,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "2"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 349,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "1"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 350,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "78"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 351,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "77"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 352,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "76"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 353,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "75"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 354,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "74"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 355,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "73"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 356,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "72"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 357,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "71"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 358,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "70"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 359,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "69"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 360,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "68"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 361,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "67"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 362,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "66"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 363,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "65"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 364,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "64"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 365,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "63"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 366,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "62"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 367,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "61"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 368,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "60"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 369,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "59"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 370,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "58"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 371,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "57"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 372,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "56"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 373,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "55"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 374,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "54"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 375,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "53"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 376,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "52"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 377,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "51"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 378,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "50"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 379,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "49"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 380,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "48"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 381,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "47"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 382,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "46"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 383,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "45"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 384,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "44"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 385,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "43"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 386,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "42"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 387,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "41"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 388,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "40"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 389,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "39"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 390,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "38"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 391,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "37"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 392,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "36"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 393,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "35"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 394,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "34"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 395,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "33"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 396,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "32"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 397,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "31"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 398,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "30"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 399,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "29"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 400,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "28"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 401,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "27"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 402,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "26"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 403,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "25"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 404,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "24"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 405,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "23"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 406,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "22"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 407,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "21"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 408,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "20"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 409,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "19"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 410,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "18"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 411,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "17"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 412,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "16"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 413,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "15"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 414,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "14"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 415,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "13"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 416,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "12"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 417,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "11"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 418,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "10"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 419,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "9"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 420,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "8"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 421,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "7"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 422,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 423,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "5"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 424,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "4"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 425,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "3"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 426,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "2"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 427,
+      "state": {
+        "state": "play",
+        "mode": "open",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "0",
+        "index": "0",
+        "t": "1"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 428,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "46"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 429,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "45"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 430,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "44"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 431,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "43"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 432,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "42"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 433,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "41"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 434,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "40"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 435,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "39"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 436,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "38"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 437,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "37"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 438,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "36"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 439,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "35"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 440,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "34"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 441,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "33"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 442,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "32"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 443,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "31"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 444,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "30"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 445,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "29"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 446,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "28"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 447,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "27"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 448,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "26"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 449,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "25"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 450,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "24"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 451,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "23"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 452,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "22"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 453,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "21"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 454,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "20"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 455,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "19"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 456,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "18"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 457,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "17"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 458,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "16"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 459,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "15"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 460,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "14"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 461,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "13"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 462,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "12"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 463,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "11"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 464,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "10"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 465,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "9"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 466,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "8"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 467,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "7"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 468,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "6"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 469,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "5"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 470,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "4"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 471,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "3"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 472,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "2"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 473,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "1"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 474,
+      "state": {
+        "state": "play",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "1",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "18"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 475,
+      "state": {
+        "state": "dead",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "0",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "17"
+      }
+    },
+    {
+      "buttons": 0,
+      "frames": 1,
+      "at": 476,
+      "state": {
+        "state": "dead",
+        "mode": "attack",
+        "x": "16",
+        "y": "104",
+        "hp": "0",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "3",
+        "t": "17"
+      }
+    },
+    {
+      "buttons": 32,
+      "frames": 1,
+      "at": 477,
+      "state": {
+        "state": "play",
+        "mode": "warn",
+        "x": "16",
+        "y": "104",
+        "hp": "3",
+        "hits": "0",
+        "phase": "1",
+        "kind": "1",
+        "index": "1",
+        "t": "46"
+      }
+    }
+  ],
+  "pcmBytes": 350594,
+  "nonSilentPcm": true,
+  "pcmSha256": "ddc51da3d3b6835eb09a0280a67bec70b523f4ae8223996923d19d8e64ff8899",
+  "instrumentation": "Read-only copies of state into scratch RAM after _draw; no changes to game variables",
+  "humanReview": false,
+  "unmodifiedReplay": {
+    "state": "paused",
+    "diagnostics": [],
+    "rgbaSha256": "be4b9ffd9c9e39c08c44d7da0ed33f8bcb6423976e0375bc9aa7acb015fe6b4d",
+    "instrumentedRgbaSha256": "be4b9ffd9c9e39c08c44d7da0ed33f8bcb6423976e0375bc9aa7acb015fe6b4d",
+    "pixelExact": true
+  }
+}
