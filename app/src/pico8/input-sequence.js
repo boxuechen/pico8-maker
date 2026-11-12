@@ -4,6 +4,16 @@ const maxFrames = capabilities.maxInputFrames;
 const stepProperties = {
   frames: { type: "integer", minimum: 1, maximum: maxFrames },
   buttons: { type: "integer", minimum: 0, maximum: 63 },
+  tap: {
+    type: "boolean",
+    description:
+      "Release for one frame before and after this held input. Both release frames count toward the total.",
+  },
+  capture: {
+    type: "boolean",
+    description:
+      "Capture at this step's end, after any tap release. Avoids calculating a cumulative offset.",
+  },
 };
 export const inputSchema = {
   type: "object",
@@ -13,7 +23,7 @@ export const inputSchema = {
       type: "array",
       minItems: 1,
       maxItems: capabilities.maxInputSteps,
-      description: `1–${capabilities.maxInputSteps} ordered held-button steps, at most ${maxFrames} frames in total. Use instead of top-level frames/buttons. No implicit release between steps. Split longer routes across calls.`,
+      description: `1–${capabilities.maxInputSteps} ordered inputs, at most ${maxFrames} frames including tap releases. No implicit release unless tap is true.`,
       items: {
         type: "object",
         properties: stepProperties,
@@ -27,13 +37,44 @@ export const inputSchema = {
       items: { type: "integer", minimum: 1, maximum: maxFrames },
       description: `At most ${capabilities.maxInputCaptures - 1} strictly increasing cumulative frame offsets from this call's start, each between 1 and the sum of its step frames. Final frame is always included. Omit or use [] for only the final frame; request intermediate frames to verify transitions or separate outcomes.`,
     },
+    replay: {
+      type: "object",
+      description:
+        "Replay one recorded call after reset_game, in order from call 0. Inspect each returned frame before continuing. Read /cart/playtests.json for runs.",
+      properties: {
+        run: { type: "string" },
+        call: { type: "integer", minimum: 0 },
+      },
+      required: ["run", "call"],
+      additionalProperties: false,
+    },
   },
   additionalProperties: false,
   oneOf: [
-    { required: ["frames", "buttons"], not: { required: ["steps"] } },
+    {
+      required: ["frames", "buttons"],
+      not: { anyOf: [{ required: ["steps"] }, { required: ["replay"] }] },
+    },
     {
       required: ["steps"],
-      not: { anyOf: [{ required: ["frames"] }, { required: ["buttons"] }] },
+      not: {
+        anyOf: ["frames", "buttons", "tap", "capture", "replay"].map((k) => ({
+          required: [k],
+        })),
+      },
+    },
+    {
+      required: ["replay"],
+      not: {
+        anyOf: [
+          "frames",
+          "buttons",
+          "tap",
+          "capture",
+          "steps",
+          "captureFrames",
+        ].map((k) => ({ required: [k] })),
+      },
     },
   ],
 };
@@ -46,7 +87,15 @@ export function inputPlan(args) {
     typeof args !== "object" ||
     Array.isArray(args) ||
     Object.keys(args).some(
-      (k) => !["frames", "buttons", "steps", "captureFrames"].includes(k),
+      (k) =>
+        ![
+          "frames",
+          "buttons",
+          "tap",
+          "capture",
+          "steps",
+          "captureFrames",
+        ].includes(k),
     )
   )
     throw invalid(
@@ -54,10 +103,17 @@ export function inputPlan(args) {
     );
   if (
     args.steps !== undefined &&
-    (args.frames !== undefined || args.buttons !== undefined)
+    ["frames", "buttons", "tap", "capture"].some((k) => args[k] !== undefined)
   )
     throw invalid("Use steps or frames/buttons, not both");
-  const steps = args.steps ?? [{ frames: args.frames, buttons: args.buttons }];
+  const steps = args.steps ?? [
+    {
+      frames: args.frames,
+      buttons: args.buttons,
+      tap: args.tap,
+      capture: args.capture,
+    },
+  ];
   if (
     !Array.isArray(steps) ||
     !steps.length ||
@@ -67,12 +123,17 @@ export function inputPlan(args) {
       `steps must contain 1–${capabilities.maxInputSteps} entries${Array.isArray(steps) ? `; received ${steps.length}` : ""}. Split longer routes across calls`,
     );
   let total = 0;
+  const expanded = [],
+    stepCaptures = [];
   for (const [index, step] of steps.entries()) {
     const field = args.steps ? `steps[${index}]` : "input";
     if (
       !step ||
       typeof step !== "object" ||
-      Object.keys(step).some((k) => !["frames", "buttons"].includes(k)) ||
+      Array.isArray(step) ||
+      Object.keys(step).some(
+        (k) => !["frames", "buttons", "tap", "capture"].includes(k),
+      ) ||
       !Number.isInteger(step.frames) ||
       step.frames < 1 ||
       step.frames > maxFrames
@@ -84,7 +145,16 @@ export function inputPlan(args) {
       step.buttons > 63
     )
       throw invalid(`${field}.buttons must be an integer 0–63`);
-    total += step.frames;
+    for (const key of ["tap", "capture"])
+      if (step[key] !== undefined && typeof step[key] !== "boolean")
+        throw invalid(`${field}.${key} must be boolean`);
+    if (step.tap && step.buttons === 0)
+      throw invalid(`${field}.tap needs a nonzero button mask`);
+    if (step.tap) expanded.push({ frames: 1, buttons: 0 });
+    expanded.push({ frames: step.frames, buttons: step.buttons });
+    if (step.tap) expanded.push({ frames: 1, buttons: 0 });
+    total += step.frames + (step.tap ? 2 : 0);
+    if (step.capture) stepCaptures.push(total);
   }
   if (total > maxFrames)
     throw invalid(
@@ -110,10 +180,17 @@ export function inputPlan(args) {
         );
     }
   }
+  const captures = [
+    ...new Set([...(requested ?? []), ...stepCaptures, total]),
+  ].sort((a, b) => a - b);
+  if (captures.length > capabilities.maxInputCaptures)
+    throw invalid(
+      `At most ${capabilities.maxInputCaptures} distinct captures including the final frame`,
+    );
   return {
-    steps: steps.map((s) => ({ ...s })),
+    steps: expanded,
     total,
-    captures: [...new Set([...(requested ?? []), total])],
+    captures,
   };
 }
 

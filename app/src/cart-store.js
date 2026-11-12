@@ -3,6 +3,7 @@
 // falling back to memory when the browser refuses storage.
 import { newSession, newId } from "./sessions.js";
 import { validSnapshot } from "./pico8/assets.js";
+import { normalizePlaytests } from "./pico8/playtests.js";
 
 const dbName = "pico8-maker";
 
@@ -17,6 +18,7 @@ export function newCart(patch = {}) {
     activeSessionId: session.id,
     contentVersion: 0,
     versions: [],
+    playtests: [],
     revision: 0,
     label: null,
     // Source and resource draft; null means same as the latest complete version.
@@ -47,6 +49,7 @@ export function normalizeCart(data) {
     return null;
   const cart = { ...newCart(), ...data };
   cart.versions = cart.versions.slice(-12);
+  cart.playtests = normalizePlaytests(cart.playtests);
   cart.contentVersion = Math.max(0, Number(cart.contentVersion) || 0);
   cart.sessions = cart.sessions.map((s) => ({
     ...newSession(),

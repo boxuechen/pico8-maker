@@ -624,6 +624,8 @@ function Studio({ store }) {
         versions: project.current.versions,
         revision: project.current.revision,
         draft: project.current.workingDraft,
+        playtests: project.current.playtests,
+        onPlaytests: (playtests) => persist({ playtests }),
         onSave: (versions, revision) =>
           persist({ versions, revision, savedRevision: null }),
         onDraft: (text) => persist({ workingDraft: text }),
@@ -935,6 +937,7 @@ function Studio({ store }) {
           next.versions,
           next.revision,
           next.workingDraft,
+          next.playtests,
         );
         await connectAgent(activeSession(next));
         setInWorkbench(enter);

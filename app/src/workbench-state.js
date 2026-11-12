@@ -65,10 +65,15 @@ const toolLabels = {
 };
 export function describeTool(tool) {
   const args = tool?.args ?? {};
+  if (tool?.toolName === "press_buttons" && args.replay)
+    return {
+      label: "Replayed recorded input",
+      meta: `${args.replay.run} · ${args.replay.call + 1}`,
+    };
   if (tool?.toolName === "press_buttons" && Array.isArray(args.steps))
     return {
       label: "Played an input sequence",
-      meta: `${args.steps.length} steps · ${args.steps.reduce((n, s) => n + (s.frames ?? 0), 0)}f`,
+      meta: `${args.steps.length} steps · ${args.steps.reduce((n, s) => n + (s.frames ?? 0) + (s.tap ? 2 : 0), 0)}f`,
     };
   if (tool?.toolName === "read_assets" && ["png", "both"].includes(args.format))
     return {
@@ -81,9 +86,11 @@ export function describeTool(tool) {
   if (tool?.toolName === "press_buttons")
     return {
       label: args.buttons
-        ? `${toolLabels.press_buttons} ${formatButtons(args.buttons)}`
+        ? `${args.tap ? "Tapped" : toolLabels.press_buttons} ${formatButtons(args.buttons)}`
         : "Let the game run",
-      meta: Number.isInteger(args.frames) ? `${args.frames}f` : "",
+      meta: Number.isInteger(args.frames)
+        ? `${args.frames + (args.tap ? 2 : 0)}f`
+        : "",
     };
   if (tool?.toolName === "load_game")
     return typeof args.source === "string"

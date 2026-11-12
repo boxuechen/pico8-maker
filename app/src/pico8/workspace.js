@@ -41,10 +41,18 @@ const dirs = new Set(["/", cartDir]);
  * than `maxLength` characters are rejected.
  */
 export class CartWorkspace {
-  constructor({ read, write, maxLength = Infinity }) {
+  constructor({
+    read,
+    write,
+    maxLength = Infinity,
+    readOnly,
+    readOnlyPaths = () => [],
+  }) {
     this.read = read;
     this.write = write;
     this.maxLength = maxLength;
+    this.readOnly = readOnly;
+    this.readOnlyPaths = readOnlyPaths;
     this.id = "pico8-cart";
     this.cwd = cartDir;
   }
@@ -54,15 +62,19 @@ export class CartWorkspace {
     );
   }
   info(path) {
-    if (path === mainPath)
+    const text = path === mainPath ? this.read() : this.readOnly?.(path);
+    if (text !== undefined)
       return {
-        name: "main.lua",
+        name: path.split("/").at(-1),
         path,
         kind: "file",
-        size: new TextEncoder().encode(this.read()).length,
+        size: new TextEncoder().encode(text).length,
         mtimeMs: 0,
       };
-    if (dirs.has(path))
+    if (
+      dirs.has(path) ||
+      this.readOnlyPaths().some((p) => p.startsWith(path + "/"))
+    )
       return {
         name: path.split("/").pop() || "/",
         path,
@@ -93,7 +105,14 @@ export class CartWorkspace {
   async listDir(path) {
     const p = this.resolve(path);
     if (p === "/") return ok([this.info(cartDir)]);
-    if (p === cartDir) return ok([this.info(mainPath)]);
+    if (this.info(p)?.kind === "directory") {
+      const children = new Set(
+        [mainPath, ...this.readOnlyPaths()]
+          .filter((f) => f.startsWith(p + "/"))
+          .map((f) => p + "/" + f.slice(p.length + 1).split("/")[0]),
+      );
+      return ok([...children].map((f) => this.info(f)));
+    }
     return p === mainPath
       ? err(new FileError("not_directory", "Not a directory", p))
       : notFound(p);
@@ -101,6 +120,8 @@ export class CartWorkspace {
   async readTextFile(path) {
     const p = this.resolve(path);
     if (p === mainPath) return ok(this.read());
+    const text = this.readOnly?.(p);
+    if (text !== undefined) return ok(text);
     return dirs.has(p)
       ? err(new FileError("is_directory", "Is a directory", p))
       : notFound(p);

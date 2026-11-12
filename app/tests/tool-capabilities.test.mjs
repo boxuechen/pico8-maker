@@ -15,6 +15,8 @@ import { createPico8Session } from "../public/player/main/player.mjs";
 import { describeTool } from "../src/workbench-state.js";
 import { Agent } from "./helpers/knowledge.mjs";
 import { defaultConfig } from "../src/model-config.js";
+import { Playtests, normalizePlaytests } from "../src/pico8/playtests.js";
+import { newCart, normalizeCart } from "../src/cart-store.js";
 
 const headers = (r) =>
   r.output
@@ -27,6 +29,140 @@ function gameFor(t, snapshot = fixtureSnapshot()) {
   t.after(() => g.dispose());
   return g;
 }
+
+test("tap inputs release repeated buttons and capture logical step ends in the real runtime", async (t) => {
+  const g = gameFor(
+    t,
+    emptySnapshot(`function _init() n=0 end
+function _update() if btnp(4) then n+=1 end end
+function _draw() cls(0) rectfill(0,0,n,2,8) end`),
+  );
+  await g.execute("reset_game", { purpose: "normal" });
+  const result = await g.execute("press_buttons", {
+    steps: [
+      { frames: 1, buttons: 16, tap: true, capture: true },
+      { frames: 1, buttons: 16, tap: true, capture: true },
+    ],
+  });
+  assert.deepEqual(
+    headers(result).map((m) => m.checkpoint.afterFrames),
+    [3, 6],
+  );
+  assert.equal(headers(result)[0].execution.completedFrames, 6);
+  assert.deepEqual([...g.testFrame.rgba.slice(2 * 4, 2 * 4 + 3)], [255, 0, 77]);
+  assert.deepEqual([...g.testFrame.rgba.slice(3 * 4, 3 * 4 + 3)], [0, 0, 0]);
+  assert.equal(headers(result)[0].playtest.purpose, "normal");
+  for (const args of [
+    { frames: 599, buttons: 16, tap: true },
+    { frames: 1, buttons: 0, tap: true },
+    { frames: 1, buttons: 16, tap: 1 },
+    { steps: [{ frames: 1, buttons: 0 }], capture: true },
+    {
+      steps: [
+        { frames: 9, buttons: 0, capture: true },
+        { frames: 1, buttons: 0 },
+      ],
+      captureFrames: [1, 2, 3, 4, 5, 6, 7],
+    },
+  ]) {
+    const before = g.session.observe().frame.frameId;
+    await assert.rejects(g.execute("press_buttons", args));
+    assert.equal(g.session.observe().frame.frameId, before);
+  }
+});
+
+test("recorded routes persist, replay exact frames, and reject out-of-order calls without input", async (t) => {
+  const g = gameFor(t);
+  await g.execute("reset_game", { purpose: "normal" });
+  await g.execute("press_buttons", {
+    frames: 8,
+    buttons: 2,
+    tap: true,
+    capture: true,
+  });
+  await g.execute("press_buttons", { frames: 3, buttons: 1 });
+  const expected = g.testFrame.rgba.slice(),
+    saved = normalizeCart(newCart({ playtests: g.playtests.runs })).playtests;
+  assert.equal(saved[0].calls.length, 2);
+  assert.equal(saved[0].calls[0].frames.length, 1);
+  assert.equal(JSON.stringify(saved).includes('"rgba"'), false);
+  g.playtests = new Playtests(saved);
+  await assert.rejects(
+    g.execute("press_buttons", { replay: { run: "r1", call: 0 } }),
+    /reset_game/,
+  );
+  await g.execute("reset_game", { purpose: "normal" });
+  let before = g.session.observe().frame.frameId;
+  await assert.rejects(
+    g.execute("press_buttons", { replay: { run: "r1", call: 1 } }),
+    /order/,
+  );
+  assert.equal(g.session.observe().frame.frameId, before);
+  for (let call = 0; call < 2; call++) {
+    const result = await g.execute("press_buttons", {
+      replay: { run: "r1", call },
+    });
+    assert.equal(headers(result)[0].playtest.matchesRecordedFrame, true);
+    assert.equal(headers(result)[0].playtest.sameCart, true);
+  }
+  assert.deepEqual(g.testFrame.rgba, expected);
+  const index = await g.workspace.readTextFile("playtests.json");
+  assert.equal(JSON.parse(index.value).runs.length, 2);
+  assert.equal(
+    (await g.workspace.writeFile("playtests/r1.json", "{}")).ok,
+    false,
+  );
+  assert.equal(
+    JSON.parse((await g.workspace.readTextFile("playtests/r1.json")).value)
+      .calls.length,
+    2,
+  );
+});
+
+test("changed carts get new replay evidence and ordinary input breaks continuity", async (t) => {
+  const g = gameFor(t);
+  await g.execute("reset_game", { purpose: "debug" });
+  await g.execute("press_buttons", { frames: 2, buttons: 2 });
+  await g.execute("press_buttons", { frames: 2, buttons: 1 });
+  const old = g.playtests.runs[0];
+  await g.execute("load_game", { source: "function _draw() cls(8) end" });
+  await g.execute("reset_game", { purpose: "normal" });
+  const r = await g.execute("press_buttons", {
+    replay: { run: old.id, call: 0 },
+  });
+  assert.equal(headers(r)[0].playtest.sameCart, false);
+  assert.equal(headers(r)[0].playtest.matchesRecordedFrame, false);
+  assert.equal(old.purpose, "debug");
+  assert.equal(g.playtests.active.purpose, "normal");
+  await g.execute("press_buttons", { frames: 1, buttons: 0 });
+  await assert.rejects(
+    g.execute("press_buttons", { replay: { run: old.id, call: 1 } }),
+    /breaks/,
+  );
+  assert.deepEqual(
+    normalizePlaytests([
+      { ...old, calls: [{ input: { frames: 900, buttons: 0 } }] },
+    ]),
+    [],
+  );
+});
+
+test("failed loads and worker loss cannot extend an old route", async (t) => {
+  const g = gameFor(t);
+  await g.execute("reset_game", { purpose: "normal" });
+  await g.execute("press_buttons", { frames: 1, buttons: 0 });
+  const before = JSON.stringify(g.playtests.runs);
+  await g.execute("load_game", { source: "this is not lua" });
+  assert.equal(g.playtests.active, null);
+  await g.execute("press_buttons", { frames: 1, buttons: 0 });
+  assert.equal(JSON.stringify(g.playtests.runs), before);
+  await g.execute("reset_game", {});
+  Game.prototype.cancelTests.call(g);
+  assert.equal(g.playtests.active, null);
+  const invalid = new Game(() => {}, { versions: [fixtureSnapshot()] });
+  invalid.ensureWorker = () => assert.fail("invalid reset started worker");
+  await assert.rejects(invalid.execute("reset_game", { purpose: "passed" }));
+});
 test("invalid complete input plans have no player or runtime side effects", async () => {
   const g = new Game(() => {}, { versions: [fixtureSnapshot()] });
   g.ensureWorker = () => assert.fail("invalid request initialized the Worker");

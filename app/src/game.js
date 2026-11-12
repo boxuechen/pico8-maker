@@ -14,14 +14,20 @@ import {
 import { downloadCart, cartBytes } from "./pico8/cart.js";
 import { CartWorkspace } from "./pico8/workspace.js";
 import { sourceBudget } from "./pico8/source-budget.js";
-import { inputPlan, runInputs } from "./pico8/input-sequence.js";
+import { runInputs } from "./pico8/input-sequence.js";
 import { assetPreview, assetChanges } from "./pico8/asset-preview.js";
+import { Playtests, fingerprint, resetPurpose } from "./pico8/playtests.js";
 
 export class Game {
-  constructor(onChange, { versions, revision, draft, onSave, onDraft } = {}) {
+  constructor(
+    onChange,
+    { versions, revision, draft, onSave, onDraft, playtests, onPlaytests } = {},
+  ) {
     this.onSave = onSave;
     this.onDraft = onDraft;
     this.onChange = onChange;
+    this.onPlaytests = onPlaytests;
+    this.playtests = new Playtests(playtests, onPlaytests);
     this.versions = versions?.slice(-12) ?? [];
     // A user-facing version number survives the 12-entry undo window.
     this.revision = Math.max(
@@ -33,6 +39,8 @@ export class Game {
     this.workspace = new CartWorkspace({
       read: () => this.draft.source,
       write: (text) => this.setDraft(text),
+      readOnly: (path) => this.playtests.file(path),
+      readOnlyPaths: () => this.playtests.paths(),
     });
     this.pending = new Map();
     this.nextId = 0;
@@ -164,6 +172,7 @@ export class Game {
     });
   }
   cancelTests(message = "测试已停止") {
+    this.playtests.stop();
     this.worker?.terminate();
     this.worker = null;
     for (const item of this.pending.values()) {
@@ -262,8 +271,9 @@ export class Game {
     downloadCart(this.snapshot, { title, label });
   }
   /** Swap in another cart's versions without rebooting the player. */
-  async switchProject(versions, revision, draft) {
+  async switchProject(versions, revision, draft, playtests) {
     this.cancelTests("Switched to another cart.");
+    this.playtests = new Playtests(playtests, this.onPlaytests);
     this.versions = versions?.slice(-12) ?? [];
     this.revision = Math.max(
       revision ?? this.versions.length,
@@ -385,7 +395,10 @@ export class Game {
         "No game has been loaded yet. Write main.lua and call load_game first.",
       );
     const options = observationOptions(action === "observe_game" ? args : {});
-    const plan = action === "press_buttons" ? inputPlan(args) : null;
+    const resolved =
+      action === "press_buttons" ? this.playtests.resolve(args) : null;
+    const purpose =
+      action === "reset_game" ? resetPurpose(args) : "unspecified";
     await this.ensureWorker();
     await this.player.pause();
     let observation;
@@ -402,6 +415,7 @@ export class Game {
         throw new Error(
           "main.lua is empty. Write game source before loading it.",
         );
+      this.playtests.stop();
       observation = await this.rpc("load", { cart: cartBytes(snapshot) });
       if (observation.state !== "faulted") {
         ({ observation, ...execution } = await this.rpc("advance", {
@@ -448,12 +462,21 @@ export class Game {
         this.save();
         note = `\nCommitted as version ${this.revision}.`;
       }
+      this.playtests.start({
+        revision: this.revision,
+        cartHash: await fingerprint(cartBytes(snapshot)),
+        purpose,
+        origin: "load",
+        frame: observation.frame,
+      });
     } else if (action === "press_buttons") {
       const run = await runInputs(
-        plan,
+        resolved.plan,
         (args) => this.rpc("advance", args),
         signal,
       );
+      const playtest = await this.playtests.record(resolved, run);
+      signal?.throwIfAborted();
       this.testFrames = run.captures.flatMap((c) =>
         c.observation.frame ? [c.observation.frame] : [],
       );
@@ -470,7 +493,7 @@ export class Game {
             ...c.observation,
             cart,
             checkpoint: c.checkpoint,
-            ...(i === 0 ? { execution: run.execution } : {}),
+            ...(i === 0 ? { execution: run.execution, playtest } : {}),
           }).output,
       );
       return {
@@ -480,11 +503,20 @@ export class Game {
         ),
       };
     } else if (action === "reset_game") {
+      this.playtests.stop();
       await this.rpc("load", { cart: cartBytes(this.snapshot) });
       ({ observation, ...execution } = await this.rpc("advance", {
         frames: 1,
         buttons: 0,
       }));
+      if (observation.state !== "faulted")
+        this.playtests.start({
+          revision: this.revision,
+          cartHash: await fingerprint(cartBytes(this.snapshot)),
+          purpose,
+          origin: "reset",
+          frame: observation.frame,
+        });
     } else observation = await this.rpc("observe");
     this.testFrame = observation.frame;
     this.testFrames = observation.frame ? [observation.frame] : [];
@@ -494,6 +526,7 @@ export class Game {
         ...observation,
         ...(execution ? { execution } : {}),
         cart: this.cartStatus("committed"),
+        ...(this.playtests.active ? { playtest: this.playtests.summary() } : {}),
       },
       options,
     );
