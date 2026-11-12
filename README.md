@@ -32,7 +32,7 @@ npm run dev -- --host 127.0.0.1 --port 5173
 - `pico8-web-player`：完整 standalone release。实时试玩使用 WebPlayer 的 Worker 执行；AI 手动步进使用独立 Worker 内的 `createPico8Session`。
 - `design/simple-demo/`：当前设计目标；像素机壳图片放在 `app/public/assets/`。
 
-游戏工具：`read_game`、`load_game`、`reset_game`、`press_buttons`、`observe_game`。截图将实际 RGBA 编码成 PNG image content 交给模型。修改先编译并执行一帧，通过后才替换用户游戏。模型调用最多 24 轮；每次输入 1–120 帧；测试 Worker 超时会被终止。
+游戏工具：`read_game`、`load_game`、`reset_game`、`press_buttons`、`observe_game`；知识工具：`read_reference`。截图将实际 RGBA 编码成 PNG image content 交给模型。修改先编译并执行一帧，通过后才替换用户游戏。模型调用最多 24 轮；每次输入 1–120 帧；测试 Worker 超时会被终止。
 
 ## 存储与范围
 
@@ -112,3 +112,11 @@ Qwen 普通百炼与 Token Plan 分开，并区分中国/国际入口。普通�
 本轮 23 项应用测试、4 项 Sites 测试与生产构建通过；桌面 1440×900 和窄屏 390×844 完成 UI 检查。截图：`app/qa/pico-maker-composer-model.jpg`、`app/qa/pico-maker-model-settings.jpg`。
 
 工作台页头调整（2026-11-12）：首页与工作台使用独立的 HomeHeader / WorkbenchHeader 组件。工作台标题移到顶部图标旁的 52px 导航行，移除聊天区重复标题栏；长标题视觉省略并保留完整 tooltip。底层会话与播放器保持共享，切换保留草稿和游戏。生产构建、23 项应用测试通过，桌面与手机布局及页面往返已验证。截图：`app/qa/pico-maker-workbench-header.jpg`。
+
+### PICO-8 knowledge integration
+
+模型可见的[知识包](docs/pico8-agent/README.md)采用英文，回复仍跟随用户语言。`pico8` extension 常驻创作规则、机器定义、16 色文字表、参考索引、宿主能力和知识版本；`read_reference` 按 ID 返回 27 份指南、完整 Lua 示例或 API 分类参考。已移除旧的固定跳墙任务及只用基本图形的提示词。美术、音频、存储示例通过 Lua 初始化，可随源码一起导出。
+
+在 `app` 中执行 `npm run prepare:knowledge` 生成知识模块；dev、build、test 自动生成。构建检查英文内容、示例验证哈希和工具输出大小，知识输出携带版本及 SHA-256。修改源文档，不要编辑生成文件。
+
+本轮验证：25 项应用测试、15 项知识示例检查、4 项 Sites 测试及生产构建通过。历史恢复使用真实 Pi 适配器和模拟模型响应检查请求内容：新 sections 替换旧提示词，读取资料的工具记录保留，游戏操作不重放。本轮未调用真实模型服务。观察仍为 PNG，ASCII 后续接入。

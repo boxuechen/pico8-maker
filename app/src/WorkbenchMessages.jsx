@@ -16,6 +16,7 @@ import {
 import { summarizeTools, toolState } from "./workbench-state.js";
 export const ActivityContext = createContext({ running: false });
 const names = {
+  read_reference: "Read reference",
   read_game: "Read source",
   load_game: "Update game",
   press_buttons: "Test controls",

@@ -1,3 +1,4 @@
+import { capabilities } from "./pico8/capabilities.js";
 import { cartridgeBytes } from "./cartridges.js";
 import { sampleSource, cartBytes } from "./sample.js";
 
@@ -240,7 +241,10 @@ export class Game {
     await this.player.pause();
     let observation;
     if (action === "load_game") {
-      if (typeof args.source !== "string" || args.source.length > 100000)
+      if (
+        typeof args.source !== "string" ||
+        args.source.length > capabilities.maxSourceLength
+      )
         throw new Error("源码应为不超过 100 KB 的 Lua 文本");
       observation = await this.rpc("load", { source: args.source });
       if (observation.state !== "faulted")
@@ -265,7 +269,7 @@ export class Game {
       if (
         !Number.isInteger(args.frames) ||
         args.frames < 1 ||
-        args.frames > 120
+        args.frames > capabilities.maxInputFrames
       )
         throw new Error("frames 必须为 1–120");
       if (

@@ -9,3 +9,5 @@ app/.vite/
 .env.*
 !.env.example
 *.log
+
+/app/src/generated/pico8-knowledge.js

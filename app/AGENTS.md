@@ -27,3 +27,6 @@ Model settings: the entry lives in the composer footer next to SEND / MAKE, show
 Homepage MAKE A GAME button: use explicit line height and comfortable horizontal padding, keep the button from flex-shrinking, and center it against the PICO-8 logo. Let the logo scale to available space so the CTA never looks clipped on narrower layouts.
 
 Unified workbench header: chat title and Preview/status share the same 52px top row, aligned to the draggable content split. Extend the divider through the header, keep project actions at the far right, and remove any separate player heading. The player starts directly below with the same 20px top inset as chat. On narrow stacked layouts keep Preview in the compact top row and hide only the secondary status text.
+
+
+PICO-8 knowledge: model-facing rules and references are English, compiled from docs/pico8-agent via prepare:knowledge. Keep replies in the user’s language. Preserve the pico8 extension sections, six tools, versioned reference output and legacy-history migration. ASCII observation remains deferred.
