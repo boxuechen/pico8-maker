@@ -62,6 +62,79 @@ test("invalid complete input plans have no player or runtime side effects", asyn
   );
 });
 
+test("invalid input errors locate the bad field and explain recovery without advancing", async () => {
+  const g = new Game(() => {}, { versions: [fixtureSnapshot()] });
+  g.ensureWorker = () => assert.fail("invalid request initialized the Worker");
+  g.player = { pause: () => assert.fail("invalid request paused the player") };
+  for (const [args, message] of [
+    [
+      { steps: Array.from({ length: 9 }, () => ({ frames: 1, buttons: 0 })) },
+      /received 9.*Split/,
+    ],
+    [
+      {
+        steps: [
+          { frames: 2, buttons: 0 },
+          { frames: 0, buttons: 0 },
+        ],
+      },
+      /steps\[1\]\.frames/,
+    ],
+    [
+      {
+        steps: [
+          { frames: 2, buttons: 0 },
+          { frames: 2, buttons: 64 },
+        ],
+      },
+      /steps\[1\]\.buttons/,
+    ],
+    [
+      {
+        steps: [
+          { frames: 500, buttons: 0 },
+          { frames: 101, buttons: 0 },
+        ],
+      },
+      /received 601.*Split/,
+    ],
+    [
+      { frames: 20, buttons: 0, captureFrames: [10, 25] },
+      /captureFrames\[1\].*1–20/,
+    ],
+    [
+      { frames: 20, buttons: 0, captureFrames: [10, 10] },
+      /captureFrames\[1\].*greater.*cumulative/,
+    ],
+    [
+      { frames: 20, buttons: 0, captureFrames: [10, 5] },
+      /captureFrames\[1\].*greater.*cumulative/,
+    ],
+  ]) {
+    await assert.rejects(g.execute("press_buttons", args), (error) => {
+      assert.match(error.message, message);
+      assert.match(error.message, /No input was executed/);
+      return true;
+    });
+  }
+});
+
+test("fixed-point warning reaches real load evidence without rewriting or blocking the cart", async (t) => {
+  const g = gameFor(t);
+  const source = `function _init() best=99999 end
+function _draw() cls(0) pset(0,0,best<0 and 8 or 11) end`;
+  const result = await g.execute("load_game", { source });
+  assert.equal(result.isError, false);
+  assert.equal(g.source, source);
+  const warning = headers(result)[0].cart.draftSourceBudget.warnings[0];
+  assert.match(warning, /Line 1.*99999.*16.16/);
+  assert.deepEqual(
+    [...g.testFrame.rgba.slice(0, 3)],
+    [255, 0, 77],
+    "the unchanged literal wraps negative in the actual runtime",
+  );
+});
+
 test("real input sequences preserve checkpoints, exact movement and runtime statistics", async (t) => {
   const g = gameFor(t);
   await g.execute("reset_game", {});

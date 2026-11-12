@@ -13,7 +13,7 @@ export const inputSchema = {
       type: "array",
       minItems: 1,
       maxItems: capabilities.maxInputSteps,
-      description: `Ordered held-button steps, at most ${maxFrames} frames in total. Use instead of top-level frames/buttons. No implicit release between steps.`,
+      description: `1–${capabilities.maxInputSteps} ordered held-button steps, at most ${maxFrames} frames in total. Use instead of top-level frames/buttons. No implicit release between steps. Split longer routes across calls.`,
       items: {
         type: "object",
         properties: stepProperties,
@@ -25,8 +25,7 @@ export const inputSchema = {
       type: "array",
       maxItems: capabilities.maxInputCaptures - 1,
       items: { type: "integer", minimum: 1, maximum: maxFrames },
-      description:
-        "Optional strictly increasing frame offsets from this call's start, within its total frames. Final frame is always included. Omit or use [] for only the final frame; request intermediate frames to verify transitions or separate outcomes.",
+      description: `At most ${capabilities.maxInputCaptures - 1} strictly increasing cumulative frame offsets from this call's start, each between 1 and the sum of its step frames. Final frame is always included. Omit or use [] for only the final frame; request intermediate frames to verify transitions or separate outcomes.`,
     },
   },
   additionalProperties: false,
@@ -41,6 +40,7 @@ export const inputSchema = {
 
 // Validate the entire request before any input, player pause or Worker creation.
 export function inputPlan(args) {
+  const invalid = (message) => new Error(`${message}. No input was executed.`);
   if (
     !args ||
     typeof args !== "object" ||
@@ -49,25 +49,26 @@ export function inputPlan(args) {
       (k) => !["frames", "buttons", "steps", "captureFrames"].includes(k),
     )
   )
-    throw new Error(
+    throw invalid(
       "press_buttons accepts frames/buttons or steps, plus captureFrames",
     );
   if (
     args.steps !== undefined &&
     (args.frames !== undefined || args.buttons !== undefined)
   )
-    throw new Error("Use steps or frames/buttons, not both");
+    throw invalid("Use steps or frames/buttons, not both");
   const steps = args.steps ?? [{ frames: args.frames, buttons: args.buttons }];
   if (
     !Array.isArray(steps) ||
     !steps.length ||
     steps.length > capabilities.maxInputSteps
   )
-    throw new Error(
-      `steps must contain 1–${capabilities.maxInputSteps} entries`,
+    throw invalid(
+      `steps must contain 1–${capabilities.maxInputSteps} entries${Array.isArray(steps) ? `; received ${steps.length}` : ""}. Split longer routes across calls`,
     );
   let total = 0;
-  for (const step of steps) {
+  for (const [index, step] of steps.entries()) {
+    const field = args.steps ? `steps[${index}]` : "input";
     if (
       !step ||
       typeof step !== "object" ||
@@ -76,32 +77,39 @@ export function inputPlan(args) {
       step.frames < 1 ||
       step.frames > maxFrames
     )
-      throw new Error(`frames must be an integer 1–${maxFrames}`);
+      throw invalid(`${field}.frames must be an integer 1–${maxFrames}`);
     if (
       !Number.isInteger(step.buttons) ||
       step.buttons < 0 ||
       step.buttons > 63
     )
-      throw new Error("buttons must be an integer 0–63");
+      throw invalid(`${field}.buttons must be an integer 0–63`);
     total += step.frames;
   }
-  if (total > maxFrames) throw new Error(`Total frames must be 1–${maxFrames}`);
-  const requested = args.captureFrames;
-  if (
-    requested !== undefined &&
-    (!Array.isArray(requested) ||
-      requested.length >= capabilities.maxInputCaptures ||
-      requested.some(
-        (n, i) =>
-          !Number.isInteger(n) ||
-          n < 1 ||
-          n > total ||
-          (i && n <= requested[i - 1]),
-      ))
-  )
-    throw new Error(
-      `captureFrames must contain at most ${capabilities.maxInputCaptures - 1} increasing offsets within the requested frames`,
+  if (total > maxFrames)
+    throw invalid(
+      `Total frames must be 1–${maxFrames}; received ${total}. Split this route across calls`,
     );
+  const requested = args.captureFrames;
+  if (requested !== undefined) {
+    if (
+      !Array.isArray(requested) ||
+      requested.length >= capabilities.maxInputCaptures
+    )
+      throw invalid(
+        `captureFrames accepts at most ${capabilities.maxInputCaptures - 1} cumulative offsets; omit it or use [] for only the final frame`,
+      );
+    for (const [index, offset] of requested.entries()) {
+      if (!Number.isInteger(offset) || offset < 1 || offset > total)
+        throw invalid(
+          `captureFrames[${index}] must be an integer 1–${total}, the cumulative frame count for this call`,
+        );
+      if (index && offset <= requested[index - 1])
+        throw invalid(
+          `captureFrames[${index}] must be greater than captureFrames[${index - 1}] (${requested[index - 1]}). Use strictly increasing cumulative offsets, not per-step durations`,
+        );
+    }
+  }
   return {
     steps: steps.map((s) => ({ ...s })),
     total,

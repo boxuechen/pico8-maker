@@ -14,6 +14,16 @@
 
 Runtime observations include frame identity, cart revision, draft status and approximate source budgets. Instruction counts describe the local WASM runtime. The playback and test Workers have separate state. Test saves use memory, so restored conversations should establish a fresh observation baseline. Detailed contracts are in [playtest](references/playtest.md) and [asset authoring](references/asset-authoring.md).
 
+## Creation and repair guidance
+
+Create starts with a repeated action, a player choice/skill or expressive payoff, and a small playable loop. Inspect its actual frame and input feedback before expanding content, then finish the requested scope. The normal start, completion and retry must be verified for a short finite game; seeded-progress checks are separate evidence. Focused edits retain their narrower verification scope. The optional design guide contains compact patterns and failure signs, not mandatory features or an automated fun score.
+
+Source reads and runtime observations carry advisory warnings for decimal literal magnitudes greater than 32768, including likely oversized distance sentinels. The shared token scanner excludes comments, strings, identifiers and hex/binary bit patterns. Advice is bounded to four locations plus an omitted count; it does not rewrite or reject the cart. This is a lexical check, not a parser or overflow proof: it does not evaluate expressions, infer material types, or resolve the +/-32768 boundary.
+
+Input validation names invalid fields and cumulative checkpoint bounds before any input executes. Native edit matching remains atomic; a missing or ambiguous block explains that the batch was not applied and asks for a fresh source read. The edit tool retains its upstream same-original-source and non-overlap contract.
+
+Validation for this update: 103 automated tests, the production build and four Sites checks passed. Regression coverage includes string/comment exclusions and bounded numeric advice, an unchanged large literal wrapping in the actual WASM runtime, input rejection before side effects, and atomic edit recovery. The browser preview loaded without captured warnings or errors. No new real-model creation or comparison run was performed; these checks establish implementation behavior, not improved game quality.
+
 ## Publication and validation
 
 `manifest.json` is the publication allowlist. The compiler publishes Markdown and Lua under `app/public/extensions/pico8/<version>/` and emits only paths, sizes, hashes and section mappings in the browser index. Files are verified and cached on demand. The `/extensions/pico8/` mount is read-only. The app owns the static skill catalog and registers capabilities through the [Pi Durable extension](../../app/src/pico8/extension.js).

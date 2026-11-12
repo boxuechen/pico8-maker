@@ -18,7 +18,8 @@ const keywords = new Set([
 const endsValue = (prev) =>
   /^[0"')\]}]$/.test(prev) || (/^[A-Za-z_]/.test(prev) && !keywords.has(prev));
 
-export function countTokens(source = "") {
+// The optional visitor shares string/comment skipping with advisory source checks.
+export function countTokens(source = "", { onNumber } = {}) {
   const s = String(source);
   let count = 0;
   let i = 0;
@@ -60,6 +61,7 @@ export function countTokens(source = "") {
       s.slice(i, i + 64),
     );
     if (number) {
+      onNumber?.(number[0], i);
       i += number[0].length;
       count++;
       prev = "0";

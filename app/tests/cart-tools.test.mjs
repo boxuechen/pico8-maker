@@ -2,6 +2,7 @@ import { emptySnapshot } from "../src/pico8/assets.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { countTokens } from "../src/pico8/tokens.js";
+import { sourceBudget } from "../src/pico8/source-budget.js";
 import { cartText, cartFileName, labelLines } from "../src/pico8/cart.js";
 import { formatButtons, mergeSteps } from "../src/workbench-state.js";
 
@@ -14,6 +15,41 @@ test("token counter follows the manual's free-token rules", () => {
   assert.equal(countTokens("a.b=c"), 4);
   assert.equal(countTokens("return -1"), 2);
   assert.equal(countTokens("p.vy+=gravity"), 4);
+});
+
+test("large decimal advice skips comments, strings, identifiers and bit patterns", () => {
+  const source = [
+    "-- 99999",
+    "// 99999",
+    "--[=[ 99999\n99999 ]=]",
+    'local label="escaped \\"99999"',
+    "local other='99999'",
+    "local long=[==[99999\n99999]==]",
+    "local id99999=0xffff local bits=0b1111111111111111",
+    "local minimum=-32768 local maximum=32767.99",
+    "local best=99999",
+    "local counter=-1e5",
+    "local value=99_999",
+  ].join("\n");
+  const advice = sourceBudget(source);
+  assert.equal(advice.codeTokensApprox, countTokens(source));
+  assert.equal(advice.warnings.length, 3);
+  assert.match(advice.warnings[0], /Line 11: decimal literal 99999/);
+  assert.match(advice.warnings[1], /Line 12: decimal literal 1e5/);
+  assert.match(advice.warnings[2], /Line 13: decimal literal 99_999/);
+  assert.ok(
+    advice.warnings.every((w) => w.includes("16.16") && w.includes("nil")),
+  );
+});
+
+test("decimal advice remains bounded and clears when source is repaired", () => {
+  const source = Array.from({ length: 100 }, (_, i) => `v${i}=99999`).join(
+    "\n",
+  );
+  const advice = sourceBudget(source);
+  assert.equal(advice.warnings.length, 5);
+  assert.match(advice.warnings.at(-1), /96 more/);
+  assert.deepEqual(sourceBudget("local best=nil").warnings, []);
 });
 
 test("saved carts carry a 128×128 label using palette digits", () => {

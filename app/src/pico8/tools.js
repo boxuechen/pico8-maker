@@ -27,8 +27,7 @@ export function createPico8Tools({ game, knowledge }) {
       "Compile the source and resource drafts, run one frame and commit them on success. Returns PNG and diagnostics. Failure retains the draft and last playable cart.",
     reset_game:
       "Reload the committed cart in the test Worker and advance one frame. Treat cartdata as potentially retained.",
-    press_buttons:
-      "Advance player 0 input in the test Worker. Button masks are left=1, right=2, up=4, down=8, O/Z=16, X=32. Add masks for combinations. Zero releases all buttons. Returns actual progress and PNG checkpoints, stopping early on runtime faults or stops.",
+    press_buttons: `Advance player 0 input in the test Worker: at most ${capabilities.maxInputSteps} steps and ${capabilities.maxInputFrames} total frames. Button masks are left=1, right=2, up=4, down=8, O/Z=16, X=32. Add masks for combinations. Zero releases all buttons. Returns actual progress and PNG checkpoints, stopping early on runtime faults or stops.`,
     observe_game:
       "Read the last completed test frame without advancing time. Use a small ASCII crop to inspect exact pixels with the frame's palette. Reset or advance if no frame exists.",
   };
@@ -103,10 +102,24 @@ export function createPico8Tools({ game, knowledge }) {
   const edit = createEditTool();
   const editTool = {
     ...edit,
-    description: `Apply exact text replacements to ${mainPath} (main.lua). Changes stay in the draft until load_game.`,
-    execute: (args, api, ctx) => {
+    description: `${edit.description} Target ${mainPath} (main.lua); changes stay in the draft until load_game. Reread the current block after a matching failure.`,
+    execute: async (args, api, ctx) => {
       if (!game.workspace) throw new Error("No cart workspace is available");
-      return edit.execute(args, withEnv(api, game.workspace), ctx);
+      try {
+        return await edit.execute(args, withEnv(api, game.workspace), ctx);
+      } catch (error) {
+        if (
+          error instanceof Error &&
+          /^(Could not find (the exact text|edits\[)|Found \d+ occurrences)/.test(
+            error.message,
+          )
+        )
+          throw new Error(
+            `${error.message}\nNo edits in this batch were applied. Use read on ${mainPath} for the current block, then retry with unique oldText copied from that read. All replacements in a batch must match the same original source.`,
+            { cause: error },
+          );
+        throw error;
+      }
     },
   };
   return [

@@ -89,6 +89,47 @@ test("the agent's edit tool changes only the targeted block of main.lua", async 
   assert.deepEqual(load.parameters.required ?? [], []);
 });
 
+test("failed matching gives recovery guidance and leaves the entire edit batch unchanged", async () => {
+  const original = "speed=1\nscore=0\nscore=0\n";
+  const { box, ws } = memoryWorkspace(original);
+  const edit = createPico8Extension({
+    game: { workspace: ws },
+    knowledge,
+  }).tools.find((t) => t.name === "edit");
+  for (const block of ["not in this source", "score=0"]) {
+    await assert.rejects(
+      edit.execute(
+        {
+          path: "main.lua",
+          edits: [
+            { oldText: "speed=1", newText: "speed=2" },
+            { oldText: block, newText: "score=1" },
+          ],
+        },
+        {},
+        context,
+      ),
+      (error) => {
+        assert.match(error.message, /No edits in this batch were applied/);
+        assert.match(error.message, /read on \/cart\/main.lua/);
+        assert.ok(error.cause instanceof Error);
+        return true;
+      },
+    );
+    assert.equal(box.text, original);
+    assert.equal(box.writes, 0);
+  }
+  await edit.execute(
+    {
+      path: "main.lua",
+      edits: [{ oldText: "speed=1\nscore=0", newText: "speed=2\nscore=1" }],
+    },
+    {},
+    context,
+  );
+  assert.equal(box.text, "speed=2\nscore=1\nscore=0\n");
+});
+
 // A Game with a scripted test session: "bad" sources fault on load.
 function scriptedGame(options) {
   const loads = [];
