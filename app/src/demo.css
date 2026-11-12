@@ -1472,22 +1472,29 @@ dialog {
 }
 .hero-brand {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   gap: 14px;
 }
 .hero-brand img {
   width: 53%;
   max-width: 195px;
+  min-width: 0;
+  height: auto;
 }
 .hero-brand .make-badge {
   font:
-    14px Proggy,
+    14px/20px Proggy,
     monospace;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-height: 44px;
   letter-spacing: 0;
   background: #ff5c98;
   color: #fff1e8;
-  padding: 10px;
-  margin: 0 0 5px;
+  padding: 12px 20px;
+  margin: 0;
   white-space: nowrap;
 }
 .hero-copy {
@@ -1665,8 +1672,8 @@ dialog {
     display: none;
   }
   .hero-brand .make-badge {
-    font-size: 11px;
-    padding: 8px;
+    font-size: 12px;
+    padding: 10px 16px;
   }
   .hero-copy {
     min-height: 0;
@@ -1704,7 +1711,7 @@ dialog {
   }
   .hero-brand .make-badge {
     font-size: 12px;
-    padding: 9px;
+    padding: 10px 16px;
   }
   .hero-copy {
     display: block;
