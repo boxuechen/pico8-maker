@@ -9,7 +9,7 @@ self.onmessage = async ({ data }) => {
     }
     let result;
     if (data.action === "load")
-      result = await session.loadSource(data.source);
+      result = await session.loadCart(data.cart);
     else if (data.action === "reset") result = await session.reset();
     else if (data.action === "observe") result = session.observe();
     else if (data.action === "advance")

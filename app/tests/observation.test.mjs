@@ -1,3 +1,4 @@
+import { emptySnapshot } from "../src/pico8/assets.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createPico8Session } from "../public/player/main/player.mjs";
@@ -193,7 +194,7 @@ test("Game validates before side effects; ASCII does not require DOM or advance 
   const session = await createPico8Session();
   t.after(() => session.dispose());
   await session.loadSource(source("extended"));
-  const game = new Game(() => {}, { versions: [source("extended")] });
+  const game = new Game(() => {}, { versions: [emptySnapshot(source("extended"))] });
   let initialized = 0;
   const actions = [];
   game.ensureWorker = async () => {
@@ -257,7 +258,7 @@ test("PNG remains default and both uses one snapshot/region for image and text",
       else globalThis[key] = originals[key];
     }
   });
-  const game = new Game(() => {}, { versions: [source("extended")] });
+  const game = new Game(() => {}, { versions: [emptySnapshot(source("extended"))] });
   game.ensureWorker = async () => {};
   game.player = { pause: async () => {} };
   let reads = 0;

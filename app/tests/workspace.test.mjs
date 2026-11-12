@@ -1,3 +1,4 @@
+import { emptySnapshot } from "../src/pico8/assets.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { BACKGROUND_CONTEXT as context } from "@earendil-works/chord/context";
@@ -93,7 +94,7 @@ function scriptedGame(options) {
   const loads = [];
   const drafts = [];
   const game = new Game(() => {}, {
-    versions: ["v1"],
+    versions: [emptySnapshot("v1")],
     onSave: () => {},
     onDraft: (t) => drafts.push(t),
     ...options,
@@ -103,8 +104,12 @@ function scriptedGame(options) {
   const ok = { state: "running", frame: null, diagnostics: [] };
   game.rpc = async (action, args) => {
     if (action === "load") {
-      loads.push(args.source);
-      return args.source.includes("bad")
+      const source = new TextDecoder()
+        .decode(args.cart)
+        .split("__lua__\n")[1]
+        .split("\n__gfx__")[0];
+      loads.push(source);
+      return source.includes("bad")
         ? { state: "faulted", diagnostics: [] }
         : ok;
     }
@@ -119,7 +124,7 @@ function scriptedGame(options) {
 
 test("load_game commits the working file; failed loads keep edits uncommitted", async () => {
   const { game, loads, drafts } = scriptedGame();
-  assert.equal(game.draft, "v1");
+  assert.equal(game.draft.source, "v1");
   await game.workspace.writeFile("main.lua", "v2", context);
   assert.equal((await game.execute("read_game", {})).output[0].text, "v2");
   assert.equal(game.source, "v1");
@@ -130,7 +135,10 @@ test("load_game commits the working file; failed loads keep edits uncommitted", 
   const loaded = await game.execute("load_game", {});
   assert.equal(loaded.isError, false);
   assert.match(loaded.output[0].text, /Committed as version 2/);
-  assert.deepEqual(game.versions, ["v1", "v2"]);
+  assert.deepEqual(
+    game.versions.map((s) => s.source),
+    ["v1", "v2"],
+  );
 
   const same = await game.execute("load_game", {});
   assert.match(same.output[0].text, /unchanged/);
@@ -139,7 +147,7 @@ test("load_game commits the working file; failed loads keep edits uncommitted", 
   const bad = await game.execute("load_game", { source: "bad code" });
   assert.equal(bad.isError, true);
   assert.match(bad.output[0].text, /Not committed/);
-  assert.equal(game.draft, "bad code");
+  assert.equal(game.draft.source, "bad code");
   assert.equal(game.source, "v2");
   assert.equal(loads.at(-1), "v2");
 
@@ -147,18 +155,21 @@ test("load_game commits the working file; failed loads keep edits uncommitted", 
   assert.equal(game.revision, 3);
   await game.undo();
   assert.equal(game.source, "v2");
-  assert.equal(game.draft, "v2");
-  assert.deepEqual(drafts, ["v2", "bad code", "v3", "v2"]);
+  assert.equal(game.draft.source, "v2");
+  assert.deepEqual(
+    drafts.map((s) => s.source),
+    ["v2", "bad code", "v3", "v2"],
+  );
 });
 
 test("a stored draft survives reopening and switching carts", async () => {
-  const { game } = scriptedGame({ draft: "edited" });
-  assert.equal(game.draft, "edited");
+  const { game } = scriptedGame({ draft: emptySnapshot("edited") });
+  assert.equal(game.draft.source, "edited");
   assert.equal(game.source, "v1");
-  await game.switchProject(["a", "b"], 2);
-  assert.equal(game.draft, "b");
-  await game.switchProject(["a"], 1, "a + edits");
-  assert.equal(game.draft, "a + edits");
+  await game.switchProject(["a", "b"].map(emptySnapshot), 2);
+  assert.equal(game.draft.source, "b");
+  await game.switchProject([emptySnapshot("a")], 1, emptySnapshot("a + edits"));
+  assert.equal(game.draft.source, "a + edits");
 });
 
 test("game tools allow the player frame range and large source without an app cap", async () => {
@@ -167,7 +178,7 @@ test("game tools allow the player frame range and large source without an app ca
   await game.execute("load_game", { source });
   assert.equal(game.source, source);
   await game.workspace.writeFile("main.lua", source + "-- edit", context);
-  assert.equal(game.draft, source + "-- edit");
+  assert.equal(game.draft.source, source + "-- edit");
   await game.execute("press_buttons", { frames: 600, buttons: 0 });
   await assert.rejects(
     () => game.execute("press_buttons", { frames: 601, buttons: 0 }),
@@ -178,7 +189,7 @@ test("game tools allow the player frame range and large source without an app ca
 test("empty projects do not play a demo and first successful load creates v1", async () => {
   const { game } = scriptedGame({ versions: [] });
   assert.equal(game.source, "");
-  assert.equal(game.draft, "");
+  assert.equal(game.draft.source, "");
   assert.equal(game.hasGame, false);
   assert.equal(game.revision, 0);
   await game.play();
@@ -189,14 +200,14 @@ test("empty projects do not play a demo and first successful load creates v1", a
   assert.equal(failed.isError, true);
   assert.equal(game.hasGame, false);
   assert.equal(game.revision, 0);
-  assert.equal(game.draft, "bad code");
+  assert.equal(game.draft.source, "bad code");
   await game.execute("load_game", { source: "function _draw() cls(1) end" });
   assert.equal(game.hasGame, true);
   assert.equal(game.revision, 1);
   assert.equal(game.versions.length, 1);
   await game.switchProject([], 0);
   assert.equal(game.source, "");
-  assert.equal(game.draft, "");
+  assert.equal(game.draft.source, "");
   assert.equal(game.hasGame, false);
   assert.equal(game.revision, 0);
 });

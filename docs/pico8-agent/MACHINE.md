@@ -7,7 +7,7 @@ Target: PICO-8 v0.2.7. Host and tool descriptions define the available submissio
 - P8 Lua numbers use signed 16.16 fixed point, approximately -32768 to 32767.99998; intermediate arithmetic can overflow. PICO-8 functions such as max, flr and rnd are globals, not math.* functions.
 - Angles use turns: cos(0)=1, sin(0.25)=-1; atan2 takes (dx,dy). Arrays conventionally start at 1; sprite, sound and button IDs start at 0.
 - Graphics state persists. Restore camera/clip for screen-space HUDs. Sprite color 0 is transparent by default; shape color 0 still draws black. Lower sprite-sheet and lower map storage overlap.
-- Audio slots require initialized note/pattern data before sfx/music playback. Music and event SFX share four channels.
+- Native authored resources are loaded before _init. Audio slots require note/pattern data before sfx/music playback. Music and event SFX share four channels.
 - cartdata selects a save namespace; dget/dset access numeric slots 0–63. Preserve existing progress during repairs. Reset and persistence lifetime depend on the host.
 
 Detailed APIs, memory layouts and resource examples are available on demand through the reference library.

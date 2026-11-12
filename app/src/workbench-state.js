@@ -57,6 +57,8 @@ const toolLabels = {
   read_game: "Read the cart source",
   load_game: "Loaded the cart",
   edit: "Edited main.lua",
+  read_assets: "Read resources",
+  edit_assets: "Edited resources",
   press_buttons: "Pressed",
   observe_game: "Looked at the screen",
   reset_game: "Restarted the test",
@@ -73,15 +75,21 @@ export function describeTool(tool) {
   if (tool?.toolName === "load_game")
     return typeof args.source === "string"
       ? {
-          label: "Wrote the whole cart",
+          label: "Loaded source and resources",
           meta: `${args.source.split("\n").length} lines`,
         }
       : { label: toolLabels.load_game, meta: "" };
-  if (tool?.toolName === "edit") {
+  if (tool?.toolName === "edit" || tool?.toolName === "edit_assets") {
     const n = Array.isArray(args.edits) ? args.edits.length : 1;
-    return { label: toolLabels.edit, meta: `${n} ${n === 1 ? "change" : "changes"}` };
+    return {
+      label: toolLabels[tool.toolName],
+      meta: `${n} ${n === 1 ? "change" : "changes"}`,
+    };
   }
-  return { label: toolLabels[tool?.toolName] ?? tool?.toolName ?? "Tool", meta: "" };
+  return {
+    label: toolLabels[tool?.toolName] ?? tool?.toolName ?? "Tool",
+    meta: "",
+  };
 }
 /** Merge consecutive calls of the same tool into one display step. */
 export function mergeSteps(tools, running) {
@@ -107,7 +115,8 @@ export function currentTool(messages, running) {
   const last = messages.at(-1);
   if (last?.role !== "assistant") return null;
   return (
-    last.content.findLast((p) => p.type === "tool-call" && p.result === undefined) ??
-    null
+    last.content.findLast(
+      (p) => p.type === "tool-call" && p.result === undefined,
+    ) ?? null
   );
 }

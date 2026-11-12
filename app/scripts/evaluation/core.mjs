@@ -1,3 +1,5 @@
+import { emptySnapshot } from "../../src/pico8/assets.js";
+import { cartBytes } from "../../src/pico8/cart.js";
 import { createHash } from "node:crypto";
 import { deflateSync } from "node:zlib";
 import { Game } from "../../src/game.js";
@@ -60,7 +62,7 @@ export function png(rgba, width = 128, height = 128) {
 // rendering/storage/Worker transport are replaced; tools and observations remain.
 export class EvaluationGame extends Game {
   constructor(onVersion = () => {}) {
-    super(() => {}, { versions: [blankSource] });
+    super(() => {}, { versions: [emptySnapshot(blankSource)] });
     this.onVersion = onVersion;
     this.player = {
       pause: async () => {},
@@ -74,12 +76,12 @@ export class EvaluationGame extends Game {
   async ensureWorker() {
     if (!this.session) {
       this.session = await createPico8Session();
-      await this.rpc("load", { source: this.source });
+      await this.rpc("load", { cart: cartBytes(this.snapshot) });
     }
   }
   async rpc(action, args = {}) {
     if (action === "load")
-      return this.session.loadSource(args.source, {
+      return this.session.loadCart(args.cart, {
         instructionBudget: 1000000,
       });
     if (action === "advance")
@@ -91,7 +93,7 @@ export class EvaluationGame extends Game {
     throw Error("Unsupported evaluation transport action " + action);
   }
   save() {
-    this.onVersion(this.source, this.revision);
+    this.onVersion(this.snapshot, this.revision);
   }
   cancelTests() {
     /* guest execution is instruction-bounded; disposal follows abort */

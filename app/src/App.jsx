@@ -1,6 +1,8 @@
+import { ResourcesView } from "./ResourcesView.jsx";
 import {
   HomeHeader,
   WorkbenchHeader,
+  WorkspaceViewSwitch,
   PixelPlay,
   PixelArrow,
 } from "./PageHeaders.jsx";
@@ -56,6 +58,7 @@ import { downloadCart } from "./pico8/cart.js";
 import { currentTool, describeTool, formatButtons } from "./workbench-state.js";
 import { countTokens } from "./pico8/tokens.js";
 import carts from "./assets/carts.json";
+import { emptySnapshot } from "./pico8/assets.js";
 import { Game } from "./game.js";
 import { Agent } from "./agent.js";
 import {
@@ -464,7 +467,7 @@ export function App() {
   return store ? <Studio store={store} /> : <div className="app home-mode" />;
 }
 
-const contentKeys = ["versions", "revision", "sourceDraft", "label", "title"];
+const contentKeys = ["versions", "revision", "workingDraft", "label", "title"];
 const upsert = (list, cart) =>
   sortCarts([{ ...cart }, ...list.filter((c) => c.id !== cart.id)]);
 
@@ -518,11 +521,12 @@ function Studio({ store }) {
         JSON.stringify(patch[k]) !== JSON.stringify(project.current[k]),
     );
     if (
-      ("sourceDraft" in patch &&
-        patch.sourceDraft !== project.current.sourceDraft) ||
+      ("workingDraft" in patch &&
+        JSON.stringify(patch.workingDraft) !==
+          JSON.stringify(project.current.workingDraft)) ||
       ("revision" in patch && patch.revision !== project.current.revision)
     )
-      project.current.sourceVersion++;
+      project.current.contentVersion++;
     const { active: _pageMode, ...content } = patch;
     Object.assign(project.current, content);
     if (touched) project.current.updatedAt = Date.now();
@@ -578,7 +582,12 @@ function Studio({ store }) {
     agentGeneration = useRef(0);
   const [game, setGame] = useState({
     state: "loading",
-    source: project.current.versions.at(-1) ?? "",
+    source: project.current.versions.at(-1)?.source ?? "",
+    draft:
+      project.current.workingDraft ??
+      project.current.versions.at(-1) ??
+      emptySnapshot(),
+    snapshot: project.current.versions.at(-1) ?? emptySnapshot(),
     hasGame: project.current.versions.length > 0,
     canUndo: false,
     revision: project.current.revision ?? project.current.versions.length,
@@ -612,9 +621,10 @@ function Studio({ store }) {
       {
         versions: project.current.versions,
         revision: project.current.revision,
-        draft: project.current.sourceDraft,
-        onSave: (versions, revision) => persist({ versions, revision }),
-        onDraft: (text) => persist({ sourceDraft: text }),
+        draft: project.current.workingDraft,
+        onSave: (versions, revision) =>
+          persist({ versions, revision, savedRevision: null }),
+        onDraft: (text) => persist({ workingDraft: text }),
       },
     );
     g.workspace.id = project.current.id;
@@ -846,7 +856,7 @@ function Studio({ store }) {
       setError(readableError(e, config.apiKey));
     } finally {
       persistSession({
-        lastSourceVersion: project.current.sourceVersion,
+        lastContentVersion: project.current.contentVersion,
         interrupted: false,
       });
       await flush();
@@ -920,7 +930,7 @@ function Studio({ store }) {
         await gameRef.current.switchProject(
           next.versions,
           next.revision,
-          next.sourceDraft,
+          next.workingDraft,
         );
         await connectAgent(activeSession(next));
         setInWorkbench(enter);
@@ -1037,18 +1047,20 @@ function Studio({ store }) {
         ? ["accent", game.hasGame ? "AI PLAYTESTING" : "CREATING GAME"]
         : !hasPlayable
           ? ["neutral", "NO GAME YET"]
-        : game.testFrame
-          ? ["success", "READY TO PLAY"]
-          : playing
-            ? ["info", "PLAYING"]
-            : ["neutral", "PRESS PLAY"];
+          : game.testFrame
+            ? ["success", "READY TO PLAY"]
+            : playing
+              ? ["info", "PLAYING"]
+              : ["neutral", "PRESS PLAY"];
   const readout = running
     ? pressing
       ? `input ${formatButtons(pressing.buttons)} · ${pressing.frames ?? "?"} frames`
       : tool
         ? describeTool(tool).label.toLowerCase()
         : "thinking…"
-    : game.hasGame ? `v${game.revision}${game.testFrame ? " · latest AI test frame" : ""}` : "";
+    : game.hasGame
+      ? `v${game.revision}${game.testFrame ? " · latest AI test frame" : ""}`
+      : "";
   const hint = running
     ? "Your controls unlock when testing ends"
     : game.testFrame
@@ -1196,7 +1208,10 @@ function Studio({ store }) {
                             {lastCart.title}
                           </strong>
                           <small>
-                            {lastCart.versions.length ? `v${lastCart.revision}` : "Empty cart"} · {ago(lastCart.updatedAt)}
+                            {lastCart.versions.length
+                              ? `v${lastCart.revision}`
+                              : "Empty cart"}{" "}
+                            · {ago(lastCart.updatedAt)}
                           </small>
                           <button
                             className="continue-button"
@@ -1263,12 +1278,16 @@ function Studio({ store }) {
                     </span>
                     <h1>
                       {inWorkbench
-                        ? game.hasGame ? "Keep building this cart." : "Make your first game."
+                        ? game.hasGame
+                          ? "Keep building this cart."
+                          : "Make your first game."
                         : "Your idea. Your cartridge."}
                     </h1>
                     <p>
                       {inWorkbench
-                        ? game.hasGame ? "This session has its own conversation. Your game and source are shared across sessions." : "Describe what you want to play. Your first version will appear in Preview."
+                        ? game.hasGame
+                          ? "This session has its own conversation. Your game and source are shared across sessions."
+                          : "Describe what you want to play. Your first version will appear in Preview."
                         : "Describe a game to create your own cartridge."}
                     </p>
                   </div>
@@ -1460,10 +1479,15 @@ function Studio({ store }) {
                   </span>
                   <span className="readout">{readout}</span>
                   {hint && <span className="preview-hint">{hint}</span>}
+                  <WorkspaceViewSwitch
+                    view={view}
+                    onView={setView}
+                    className="mobile-view-switch"
+                  />
                 </div>
               )}
               <div
-                className={`stage ${inWorkbench && view === "code" ? "show-code" : ""}`}
+                className={`stage ${inWorkbench && view !== "preview" ? "show-code" : ""}`}
               >
                 <div className="console-group" ref={stage}>
                   <div className="console">
@@ -1472,7 +1496,11 @@ function Studio({ store }) {
                       {!hasPlayable && !game.booting && (
                         <div className="empty-preview" role="status">
                           <span>YOUR GAME GOES HERE</span>
-                          <small>{running ? "Creating your first version…" : "Describe a game to get started."}</small>
+                          <small>
+                            {running
+                              ? "Creating your first version…"
+                              : "Describe a game to get started."}
+                          </small>
                         </div>
                       )}
                       {game.testFrame && (
@@ -1561,9 +1589,9 @@ function Studio({ store }) {
                           ? "LOADING CARTRIDGE…"
                           : !hasPlayable
                             ? "WAITING FOR YOUR GAME"
-                          : running
-                            ? "AI IS PLAYTESTING"
-                            : "ARROWS TO MOVE · Z / X TO PLAY"}
+                            : running
+                              ? "AI IS PLAYTESTING"
+                              : "ARROWS TO MOVE · Z / X TO PLAY"}
                     </p>
                   </div>
                   {inWorkbench && running && (
@@ -1572,6 +1600,15 @@ function Studio({ store }) {
                 </div>
                 {inWorkbench && view === "code" && (
                   <CodeView source={game.source ?? ""} tokens={tokens} />
+                )}
+                {inWorkbench && view === "resources" && (
+                  <ResourcesView
+                    key={project.current.id}
+                    draft={game.draft}
+                    snapshot={game.snapshot}
+                    revision={game.revision}
+                    hasGame={game.hasGame}
+                  />
                 )}
               </div>
               {inWorkbench && (

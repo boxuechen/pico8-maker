@@ -1,7 +1,9 @@
+import { emptySnapshot } from "../src/pico8/assets.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createPico8Session } from "../public/player/main/player.mjs";
-import { sampleSource, cartBytes } from "../src/sample.js";
+import { sampleSource } from "../src/sample.js";
+import { cartBytes } from "../src/pico8/cart.js";
 const input = (buttons) => ({
   controllers: [buttons, 0, 0, 0, 0, 0, 0, 0],
   devkit: {
@@ -58,7 +60,7 @@ test("invalid Lua is diagnosed and a valid .p8 export loads again", async (t) =>
   t.after(() => session.dispose());
   assert.equal((await session.loadSource("function broken(")).state, "faulted");
   assert.equal(
-    (await session.loadCart(cartBytes(sampleSource))).state,
+    (await session.loadCart(cartBytes(emptySnapshot(sampleSource)))).state,
     "ready",
   );
   assert.equal((await session.advance({ frames: 1 })).outcome, "completed");
@@ -104,13 +106,17 @@ test("actual test worker uses player safety defaults and advances 600 frames", a
     (await limited.loadSource(source, { instructionBudget: 1000000 })).state,
     "faulted",
   );
-  assert.equal((await send({ action: "load", source })).state, "ready");
+  assert.equal(
+    (await send({ action: "load", cart: cartBytes(emptySnapshot(source)) }))
+      .state,
+    "ready",
+  );
   const advanced = await send({ action: "advance", frames: 600, buttons: 0 });
   assert.equal(advanced.outcome, "completed");
   assert.equal(advanced.completedFrames, 600);
   const infinite = await send({
     action: "load",
-    source: "function _init() while true do end end",
+    cart: cartBytes(emptySnapshot("function _init() while true do end end")),
   });
   assert.equal(
     infinite.state,

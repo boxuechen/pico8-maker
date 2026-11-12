@@ -92,6 +92,7 @@ const server = http.createServer(async (req, res) => {
     ])
       if (!offered.has(name))
         throw new Error(`Missing registered game tool: ${name}`);
+    const resourceFixture = body.model === "fixture-resources";
     const toolResults = body.messages.filter((m) => m.role === "tool");
     const step = toolResults.length;
     const first = toolResults[0]?.content;
@@ -105,55 +106,139 @@ const server = http.createServer(async (req, res) => {
     const observationFixture = body.model === "fixture-observation";
     // Repair through the workspace: targeted edit, then load the edited file.
     const editFixture = body.model === "fixture-edit";
-    const operations = editFixture
+    const operations = resourceFixture
       ? [
-          ["read_game", {}],
+          ["read_assets", {}],
           [
-            "edit",
+            "edit_assets",
             {
-              path: "main.lua",
-              edits: [{ oldText: "jump_speed=-3", newText: "jump_speed=-4.5" }],
+              edits: [
+                {
+                  kind: "sprite",
+                  id: 1,
+                  rows: [
+                    "00088000",
+                    "00888800",
+                    "08888880",
+                    "08800880",
+                    "08888880",
+                    "00888800",
+                    "00800800",
+                    "08000080",
+                  ],
+                  flags: 1,
+                },
+                {
+                  kind: "sprite",
+                  id: 2,
+                  rows: Array(8).fill("33333333"),
+                  flags: 1,
+                },
+                { kind: "map", x: 0, y: 12, rows: [Array(16).fill(2)] },
+                {
+                  kind: "sfx",
+                  id: 0,
+                  speed: 8,
+                  notes: [
+                    { pitch: 24, waveform: 0, volume: 5, effect: 0 },
+                    { pitch: 28, waveform: 0, volume: 5, effect: 0 },
+                    { pitch: 31, waveform: 0, volume: 5, effect: 0 },
+                  ],
+                },
+                {
+                  kind: "music",
+                  id: 0,
+                  channels: [0, null, null, null],
+                  loopStart: true,
+                  loopEnd: true,
+                },
+              ],
             },
           ],
-          ["load_game", {}],
-          ["reset_game", {}],
-          ["press_buttons", { frames: 24, buttons: 2 }],
-          ["press_buttons", { frames: 1, buttons: 34 }],
-          ["press_buttons", { frames: 45, buttons: 2 }],
-          ["observe_game", {}],
-        ]
-      : observationFixture
-      ? [
           [
             "load_game",
             {
               source:
-                "function _draw()\n cls(0) pal(8,136,1)\n for y=0,127 do for x=0,127 do pset(x,y,(x+y)%16) end end\nend",
+                "function _init() x=60 assert(mget(0,12)==2) assert(fget(1,0)) music(0) end\nfunction _update() if btn(0) then x-=1 end if btn(1) then x+=1 end end\nfunction _draw() cls(1) map(0,0,0,0,16,16) spr(1,x,88) print('resource test',36,20,7) end",
             },
           ],
-          ["observe_game", { format: "ascii" }],
+          ["press_buttons", { frames: 10, buttons: 2 }],
           [
-            "observe_game",
-            { format: "both", region: { x: 1, y: 3, width: 7, height: 5 } },
+            "edit_assets",
+            {
+              edits: [
+                {
+                  kind: "sprite",
+                  id: 1,
+                  rows: [
+                    "000bb000",
+                    "00bbbb00",
+                    "0bbbbbb0",
+                    "0bb00bb0",
+                    "0bbbbbb0",
+                    "00bbbb00",
+                    "00b00b00",
+                    "0b0000b0",
+                  ],
+                },
+              ],
+            },
           ],
+          ["load_game", {}],
+          ["read_assets", { kind: "sprite", id: 1 }],
           ["observe_game", {}],
         ]
-      : [
-          ["read_game", {}],
-          ["reset_game", {}],
-          ["press_buttons", { frames: 24, buttons: 2 }],
-          ["press_buttons", { frames: 1, buttons: 34 }],
-          ["press_buttons", { frames: 45, buttons: 2 }],
-          [
-            "load_game",
-            { source: source.replace("jump_speed=-3", "jump_speed=-4.5") },
-          ],
-          ["reset_game", {}],
-          ["press_buttons", { frames: 24, buttons: 2 }],
-          ["press_buttons", { frames: 1, buttons: 34 }],
-          ["press_buttons", { frames: 45, buttons: 2 }],
-          ["observe_game", {}],
-        ];
+      : editFixture
+        ? [
+            ["read_game", {}],
+            [
+              "edit",
+              {
+                path: "main.lua",
+                edits: [
+                  { oldText: "jump_speed=-3", newText: "jump_speed=-4.5" },
+                ],
+              },
+            ],
+            ["load_game", {}],
+            ["reset_game", {}],
+            ["press_buttons", { frames: 24, buttons: 2 }],
+            ["press_buttons", { frames: 1, buttons: 34 }],
+            ["press_buttons", { frames: 45, buttons: 2 }],
+            ["observe_game", {}],
+          ]
+        : observationFixture
+          ? [
+              [
+                "load_game",
+                {
+                  source:
+                    "function _draw()\n cls(0) pal(8,136,1)\n for y=0,127 do for x=0,127 do pset(x,y,(x+y)%16) end end\nend",
+                },
+              ],
+              ["observe_game", { format: "ascii" }],
+              [
+                "observe_game",
+                { format: "both", region: { x: 1, y: 3, width: 7, height: 5 } },
+              ],
+              ["observe_game", {}],
+            ]
+          : [
+              ["read_game", {}],
+              ["reset_game", {}],
+              ["press_buttons", { frames: 24, buttons: 2 }],
+              ["press_buttons", { frames: 1, buttons: 34 }],
+              ["press_buttons", { frames: 45, buttons: 2 }],
+              [
+                "load_game",
+                { source: source.replace("jump_speed=-3", "jump_speed=-4.5") },
+              ],
+              ["reset_game", {}],
+              ["press_buttons", { frames: 24, buttons: 2 }],
+              ["press_buttons", { frames: 1, buttons: 34 }],
+              ["press_buttons", { frames: 45, buttons: 2 }],
+              ["observe_game", {}],
+            ];
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
@@ -203,9 +288,11 @@ const server = http.createServer(async (req, res) => {
           );
       }
       send({
-        content: observationFixture
-          ? "联调模拟响应：完整 ASCII、实际扩展调色板、7×5 同帧裁剪和默认 128×128 PNG 已收到。此响应来自本地测试服务，不是实际模型推理。"
-          : "联调模拟响应：已执行读取、修复前测试、修改和修复后测试。此响应来自本地测试服务，不是实际模型推理。",
+        content: resourceFixture
+          ? "资源联调完成：源码与资源已提交两版，仅资源变化也生成了版本。此响应来自本地测试服务，不是实际模型推理。"
+          : observationFixture
+            ? "联调模拟响应：完整 ASCII、实际扩展调色板、7×5 同帧裁剪和默认 128×128 PNG 已收到。此响应来自本地测试服务，不是实际模型推理。"
+            : "联调模拟响应：已执行读取、修复前测试、修改和修复后测试。此响应来自本地测试服务，不是实际模型推理。",
       });
       send({}, "stop");
     }
@@ -215,6 +302,7 @@ const server = http.createServer(async (req, res) => {
     res.end(error.message);
   }
 });
-server.listen(8788, "127.0.0.1", () =>
-  console.log("Test-only model fixture: http://127.0.0.1:8788/v1"),
+const port = Number(process.env.MOCK_MODEL_PORT || 8788);
+server.listen(port, "127.0.0.1", () =>
+  console.log(`Test-only model fixture: http://127.0.0.1:${port}/v1`),
 );

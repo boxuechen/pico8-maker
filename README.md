@@ -32,13 +32,13 @@ npm run dev -- --host 127.0.0.1 --port 5173
 - `pico8-web-player`：完整 standalone release。实时试玩使用 WebPlayer 的 Worker 执行；AI 手动步进使用独立 Worker 内的 `createPico8Session`。
 - `design/simple-demo/`：当前设计目标；像素机壳图片放在 `app/public/assets/`。
 
-游戏工具：`read_game`、`load_game`、`reset_game`、`press_buttons`、`observe_game`；文件工具：`read`（读取 `/extensions/pico8/` 文档和当前源码）、`edit`（仅修改 `/cart/main.lua`）。截图将实际 RGBA 编码成 PNG image content 交给模型。修改先编译并执行一帧，通过后才替换用户游戏。模型调用最多 24 轮；每次输入 1–120 帧；测试 Worker 超时会被终止。
+游戏工具：`read_game`、`load_game`、`reset_game`、`press_buttons`、`observe_game`；资源工具：`read_assets`、`edit_assets`；文件工具：`read`（读取 `/extensions/pico8/` 文档和当前源码）、`edit`（仅修改 `/cart/main.lua`）。截图将实际 RGBA 编码成 PNG image content 交给模型。修改先编译并执行一帧，通过后才替换用户游戏。交互 Agent 不设工具轮数上限，可手动停止；每次输入 1–600 帧；测试 Worker 超时会被终止。
 
 ## 存储与范围
 
 - 按用户要求，默认将所选模型、接口与 API Key 保存到当前浏览器 localStorage，刷新后恢复。可取消 Remember settings 使用内存模式，或用 Clear saved settings 清除本机模型配置（保留游戏与聊天）。没有业务后端，不内置服务密钥，请求直接发送到所选模型服务。不同站点/端口的浏览器存储彼此独立。
-- 最近 12 个源码版本保存在本机，可撤销；当前项目的对话、输入草稿和最近 12 个源码版本一起保存在本机。刷新会恢复模型可读的历史和当前卡带；不自动恢复正在执行的任务。历史截图用文字占位，待验证时重新观察游戏。
-- 首版通过 Lua 绘图函数创作，未做 sprite/map/music 素材编辑、通用变量调试或自动测试判定器。模型依据实际截图与错误判断结果。DeepSeek 复用 Pi 的兼容参数，演示默认关闭思考模式，每次输出上限 12K tokens；模型请求超时 120 秒，连接测试总超时 60 秒。
+- 最近 12 个源码与资源完整版本保存在本机，可撤销；当前项目的对话、输入草稿和最近 12 个源码与资源完整版本一起保存在本机。刷新会恢复模型可读的历史和当前卡带；不自动恢复正在执行的任务。历史截图用文字占位，待验证时重新观察游戏。
+- 支持通过结构化工具创作 sprite/map/SFX/music 静态资源，以及 Lua 绘图和程序化生成。Resources 页提供只读预览，未实现手动资源编辑器、通用变量调试或自动测试判定器。模型依据实际截图与错误判断结果。DeepSeek 复用 Pi 的兼容参数，演示默认关闭思考模式，每次输出上限 12K tokens；模型请求超时 120 秒，连接测试总超时 60 秒。
 - “模型已配置”只表示保存了配置，不能代表已验证视觉和工具能力。
 - 运行目标为桌面 Chrome/Chromium；窄屏能查看布局，但首版游戏控制以键盘为主。
 
@@ -55,7 +55,7 @@ npm run test:sites
 
 真实 WASM 测试覆盖：固定操作修改前失败、修改后越墙落地；语法错误及重新加载；无限循环的指令预算。
 
-`npm run test:model` 可启动 **仅用于联调的模拟模型接口**（127.0.0.1:8788/v1）。模型名 `fixture-tools` 会发出预定工具调用，`fixture-error` 返回 401，`fixture-slow` 延迟响应以测试停止；填任意非空测试 Key，不要使用真实密钥。该接口不进行 AI 推理，不是正常应用的 fallback，应用也不会自动连接它。浏览器联调验证了工具链、停止、错误反馈、撤销和导出。该模拟接口仅用于本地回归。2026-11-12 已用用户在页面内填写的 DeepSeek 配置完成真实模型测试，见下文。
+`npm run test:model` 可启动 **仅用于联调的模拟模型接口**（127.0.0.1:8788/v1）。模型名 `fixture-resources` 创建原生资源并连续提交两版（第二版仅改变精灵），`fixture-tools` 会发出预定源码工具调用，`fixture-error` 返回 401，`fixture-slow` 延迟响应以测试停止；填任意非空测试 Key，不要使用真实密钥。该接口不进行 AI 推理，不是正常应用的 fallback，应用也不会自动连接它。浏览器联调验证了工具链、停止、错误反馈、撤销和导出。该模拟接口仅用于本地回归；可用 `MOCK_MODEL_PORT` 指定其它端口。2026-11-12 已用用户在页面内填写的 DeepSeek 配置完成真实模型测试，见下文。
 
 静态发布目录为 `app/dist/client/`，可部署 GitHub Pages。无需部署模板附带的 `dist/server`；默认使用相对资源路径。必须通过 HTTP(S) 访问，不支持双击 file://。
 
@@ -164,6 +164,17 @@ Qwen 普通百炼与 Token Plan 分开，并区分中国/国际入口。普通�
 
 首页每张 cart 对应一个 workspace。工作台标题显示 cart 名称，聊天区的 SESSION 下拉框与 NEW SESSION 管理当前 cart 的独立对话，不增加 workspace 切换入口。会话独立保存历史、草稿、中断状态与标题，共享源码、版本和封面；切换不会回退游戏。运行期间锁定会话切换，旧 Agent 关闭后才激活新 Agent。刷新恢复当前 cart 和上次活动会话，但不会重放中断任务。
 
-存储使用 `sessions` / `activeSessionId`，原 `workspace` 源码草稿字段改为 `sourceDraft`；已有单对话 cart 会在读取时一次性升级。首页输入草稿独立存放，不覆盖会话草稿。复制 cart 为会话分配新 ID。恢复旧会话时，项目上下文提示共享源码变化，要求读取当前工作文件。Pi 仍由应用持久化会话快照到 IndexedDB，不自动恢复执行中的工具。
+存储使用 `sessions` / `activeSessionId`，草稿为 `workingDraft: {source, assets}`，历史版本使用同样的完整快照；仅接受 schemaVersion 3，不迁移旧 cart。首页输入草稿独立存放，不覆盖会话草稿。复制 cart 为会话分配新 ID。恢复旧会话时，项目上下文提示共享源码变化，要求读取当前工作文件。Pi 仍由应用持久化会话快照到 IndexedDB，不自动恢复执行中的工具。
 
 验证：54 项应用测试与 4 项 Sites 测试、生产构建通过；使用本地模拟模型和真实 WASM 验证两条会话的独立历史、草稿、刷新恢复、首页往返以及两张 cart 的隔离，390px 窄屏无横向溢出。未调用付费模型。
+
+
+### 原生卡带资源（第一阶段）
+
+游戏仍只有 `/cart/main.lua` 一个可写代码文件。静态精灵、标记、地图、音效和音乐由 `read_assets` / `edit_assets` 工具独立读写。资源工具按精灵、地图矩形、SFX 槽和音乐模式修改数据，批次校验失败不会部分写入。`load_game` 将源码和资源草稿一起验证并提交，资源单独变化也产生版本。失败保留草稿与上一个可玩版本，撤销恢复完整快照。
+
+资源以原生 0x0000–0x42ff 数据的规范十六进制字符串保存。预览、独立测试 Worker、重启、切换 cart、首页返回和 `.p8` 导出使用同一完整卡带组装器。导出包含 `__lua__` / `__gfx__` / `__gff__` / `__map__` / `__sfx__` / `__music__` 与可选封面；不导出未提交草稿。`contentVersion` 同时跟踪代码和资源，恢复会话时要求读取当前共享内容。
+
+Resources 标签页只读展示草稿或已提交版本：256 个精灵、分房间地图、SFX 音符/速度/循环及音乐声道引用。第一阶段只允许编辑地图前 32 行，避免覆写与精灵下半区共享的地图内存；Lua 仍可使用原生共享内存。音效创作暂不支持自定义乐器和滤波标记，没有绘图工具、地图刷子或音序器。
+
+源码初始化资源的示例仍可作为程序化生成范例，新的静态资源优先使用资源工具。模型接口与示例见 `docs/pico8-agent/references/asset-authoring.md`。测试执行 `cd app && npm test`，其中资源回归包含原生编码、真实 WASM 加载/重启、整版撤销、失败恢复和存储。

@@ -1,10 +1,12 @@
+import { emptySnapshot } from "../src/pico8/assets.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { createPico8Session } from "../public/player/main/player.mjs";
 import config from "../vite.config.mjs";
 import { Game } from "../src/game.js";
-import { sampleSource, cartBytes } from "../src/sample.js";
+import { sampleSource } from "../src/sample.js";
+import { cartBytes } from "../src/pico8/cart.js";
 const carts = JSON.parse(
   await readFile(new URL("../src/assets/carts.json", import.meta.url)),
 );
@@ -43,7 +45,7 @@ test("leaving gallery restores project cartridge without changing saved versions
   let saved = false,
     loaded;
   const game = new Game(() => {}, {
-    versions: [sampleSource],
+    versions: [emptySnapshot(sampleSource)],
     onSave: () => {
       saved = true;
     },
@@ -55,7 +57,7 @@ test("leaving gallery restores project cartridge without changing saved versions
     },
   };
   await game.restoreProject();
-  assert.deepEqual(loaded, cartBytes(sampleSource));
+  assert.deepEqual(loaded, cartBytes(emptySnapshot(sampleSource)));
   assert.equal(game.activeCart, null);
   assert.equal(game.source, sampleSource);
   assert.equal(saved, false);

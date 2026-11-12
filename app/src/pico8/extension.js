@@ -1,3 +1,4 @@
+import { readAssetsSchema, editAssetsSchema } from "./asset-tools.js";
 import {
   defineExtension,
   defineTool,
@@ -20,16 +21,21 @@ export function createPico8Extension({ game, knowledge }) {
   if (!knowledge?.version || !knowledge.sections || !knowledge.read)
     throw new Error("PICO-8 knowledge is required");
   const descriptions = {
+    read_assets:
+      "Read authored resource drafts. Omit all arguments for used-slot inventory. Use kind/id/count for sprite, sfx or music; kind=map requires x,y,width,height (max 32×32). Does not read live RAM or advance the game.",
+    edit_assets:
+      "Atomically edit native cartridge resources. Sprites use eight 8-pixel hex rows (0–f), optional flags. Map patches use rectangular tile-id rows, within 128×32. SFX replaces one slot; omitted tail notes are silent, loops default off. Music replaces one pattern; four SFX ids or null, flags default false. A sprite edit requires rows or flags; omitted fields preserve that sprite's other data. Resources are loaded before _init. Edits affect only the draft until load_game; invalid batches apply nothing. Read occupied slots before allocating ids. All 256 sprites are available; map rows 32–63 share sprite memory and are not editable by this tool.",
     read_game: `Read the complete working source, the workspace file ${mainPath} (path main.lua for edit). Read it before editing. This is not a live-variable snapshot.`,
-    load_game: `Compile ${mainPath}, run one frame and commit it as a new version. Omit source after targeted edit calls; pass complete Lua source (including procedural sprite/map/audio initialization) to replace the whole file for a new game or a rewrite. A failed compile keeps the file unchanged and uncommitted so it can be fixed with edit. Returns PNG and diagnostics; startup success is not gameplay verification.`,
+    load_game: `Compile ${mainPath} with the current resource draft, run one frame and commit both as a new version. Omit source after targeted edit calls; pass complete Lua source (game logic; static resources are edited separately with edit_assets) to replace the whole file for a new game or a rewrite. Failure retains both drafts and the previous committed playable cart. Passing source never clears resource drafts. Returns PNG and diagnostics; startup success is not gameplay verification.`,
     reset_game:
       "Reload the last committed version into the independent test session and advance one frame. Uncommitted edits are not loaded. This does not promise to erase cartdata.",
-    press_buttons:
-      `Hold a button mask for 1–${capabilities.maxInputFrames} logical frames and return the actual PNG. Left=1, right=2, up=4, down=8, O/Z=16, X=32. Add bits for combinations; 0 releases all buttons. These masks differ from Lua button indices.`,
+    press_buttons: `Hold a button mask for 1–${capabilities.maxInputFrames} logical frames and return the actual PNG. Left=1, right=2, up=4, down=8, O/Z=16, X=32. Add bits for combinations; 0 releases all buttons. These masks differ from Lua button indices.`,
     observe_game:
       "Observe the latest completed test frame without advancing time. Default PNG for overall appearance; request ascii with a small region for exact pixels, or both for the same frame/region. ASCII uses screen slots 0-f and the actual frame's English palette legend. Coordinates are screen pixels from the top left. No live-variable or audio observation. A new test session may have no completed frame; reset or advance explicitly.",
   };
   const parameters = {
+    read_assets: readAssetsSchema,
+    edit_assets: editAssetsSchema,
     observe_game: schema({
       format: {
         type: "string",
@@ -96,7 +102,7 @@ export function createPico8Extension({ game, knowledge }) {
       section(
         "pico8_host",
         () =>
-          `The cart is one workspace file, ${mainPath}; initialize art, map and sound data in Lua. For repairs and focused changes, read_game, then edit main.lua with exact unique oldText blocks, then load_game without source; this preserves unrelated code and avoids resending the whole cart. For a new game or a rewrite of most of the file, pass the complete source to load_game. Edits take effect only after load_game succeeds. Read-only documentation is mounted at /extensions/pico8. Use read({path}) to consult Markdown or Lua examples; start with /extensions/pico8/REFERENCE_INDEX.md. There is no shell. Game tools run sequentially. Test input: player 0, at most ${capabilities.maxInputFrames} frames. Default observation: ${capabilities.observation}. observe_game supports ${capabilities.observationFormats.join(", ")} and optional pixel-region cropping. Use PNG for overall appearance and cropped ASCII with the actual palette for precise pixels. Other game tools return PNG. No live-variable query or audio return. Test persistence: ${capabilities.persistence}; destroying its Worker loses that instance. Test and live player are separate. Historical frames are past evidence, not the current session state; establish a new baseline after restore. Reading documentation does not operate the game. Source exports retain procedural initialization.`,
+          `The cart has one Lua workspace file, ${mainPath}, plus native resource data. Use read_assets/edit_assets for static sprites, sprite flags, map tiles, SFX and music; see /extensions/pico8/references/asset-authoring.md. Native resources are present before _init. Prefer these tools over Lua initialization of static resources; procedural generation remains supported. For repairs and focused changes, read_game, then edit main.lua with exact unique oldText blocks, then load_game without source; this preserves unrelated code and avoids resending the whole cart. For a new game or a rewrite of most of the file, pass the complete source to load_game. Source and resource edits take effect together only after load_game succeeds. Read-only documentation is mounted at /extensions/pico8. Use read({path}) to consult Markdown or Lua examples; start with /extensions/pico8/REFERENCE_INDEX.md. There is no shell. Game tools run sequentially. Test input: player 0, at most ${capabilities.maxInputFrames} frames. Default observation: ${capabilities.observation}. observe_game supports ${capabilities.observationFormats.join(", ")} and optional pixel-region cropping. Use PNG for overall appearance and cropped ASCII with the actual palette for precise pixels. Load/reset/input tools return PNG; resource tools return structured text. No live-variable query or audio return. Test persistence: ${capabilities.persistence}; destroying its Worker loses that instance. Test and live player are separate. Historical frames are past evidence, not the current session state; establish a new baseline after restore. Reading documentation does not operate the game. Exports contain committed Lua and native resources; uncommitted drafts are excluded.`,
       ),
       section(
         "pico8_knowledge",
@@ -110,7 +116,17 @@ export function createPico8Extension({ game, knowledge }) {
           name,
           description,
           parameters: parameters[name] ?? schema(),
-          replay: "unsafe",
+          replay:
+            name === "read_assets" || name === "read_game" ? "safe" : "unsafe",
+          ...(name === "read_assets"
+            ? {
+                outputLimits: {
+                  maxBytes: 32768,
+                  maxLines: 256,
+                  retain: "head",
+                },
+              }
+            : {}),
           ...(name === "observe_game"
             ? {
                 outputLimits: {

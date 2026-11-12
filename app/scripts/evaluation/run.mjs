@@ -194,8 +194,13 @@ async function run(item) {
       redact({ at: new Date().toISOString(), ...event }) + "\n",
     );
   };
-  const game = new EvaluationGame((source, revision) => {
-    pending.push(writeFile(join(folder, `version-${revision}.lua`), source));
+  const game = new EvaluationGame((snapshot, revision) => {
+    pending.push(
+      writeFile(join(folder, `version-${revision}.lua`), snapshot.source),
+    );
+    pending.push(
+      writeFile(join(folder, `version-${revision}.p8`), cartText(snapshot)),
+    );
   });
   const pending = [];
   await packs[item.condition].knowledge.prepare();
@@ -396,14 +401,14 @@ async function run(item) {
     await writeFile(join(folder, "final.lua"), final);
     await writeFile(
       join(folder, "final.p8"),
-      cartText(final, game.testFrame?.rgba),
+      cartText(game.snapshot, game.testFrame?.rgba),
     );
     const checks = { createdGame: final !== blankSource };
     if (checks.createdGame) {
       const s = await createPico8Session();
       try {
         const loaded = await s.loadCart(
-          new TextEncoder().encode(cartText(final)),
+          new TextEncoder().encode(cartText(game.snapshot)),
         );
         checks.exportLoad = loaded.state === "ready";
         checks.diagnostics = loaded.diagnostics;
@@ -434,6 +439,7 @@ async function run(item) {
       terminalError,
       lastFailure,
       sourceSha256: sha(final),
+      resourcesSha256: sha(game.snapshot.assets),
       sourceBytes: Buffer.byteLength(final),
       checks,
     };

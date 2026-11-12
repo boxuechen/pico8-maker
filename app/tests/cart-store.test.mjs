@@ -1,3 +1,4 @@
+import { emptySnapshot } from "../src/pico8/assets.js";
 import { newSession, activeSession } from "../src/sessions.js";
 import test from "node:test";
 import assert from "node:assert/strict";
@@ -68,9 +69,10 @@ test("records are validated; broken ones are skipped", async () => {
     null,
   );
   const fixed = normalizeCart({
+    schemaVersion: 3,
     id: "x",
     sessions: [newSession()],
-    versions: ["a", "b"],
+    versions: ["a", "b"].map(emptySnapshot),
     title: "",
   });
   assert.equal(fixed.title, "Untitled cartridge");
@@ -91,11 +93,15 @@ test("large source and draft survive a storage round trip without an app charact
   const draft = source + "-- working edit";
   const store = await openCartStore({ backend });
   await store.put(
-    newCart({ id: "large", versions: [source], sourceDraft: draft }),
+    newCart({
+      id: "large",
+      versions: [emptySnapshot(source)],
+      workingDraft: emptySnapshot(draft),
+    }),
   );
   const reopened = await openCartStore({ backend });
-  assert.equal(reopened.carts[0].versions[0], source);
-  assert.equal(reopened.carts[0].sourceDraft, draft);
+  assert.equal(reopened.carts[0].versions[0].source, source);
+  assert.equal(reopened.carts[0].workingDraft.source, draft);
 });
 
 test("shelf membership, save status and duplicates", () => {
@@ -164,23 +170,4 @@ test("new empty carts persist without demo source or a version", async () => {
   assert.deepEqual(restored.versions, []);
   assert.equal(restored.revision, 0);
   assert.equal(isOnShelf(restored), true);
-});
-
-test("only untouched legacy demo seeds become empty carts", async () => {
-  const { sampleSource } = await import("../src/sample.js");
-  const seed = newCart({ versions: [sampleSource], revision: 1 });
-  assert.deepEqual(normalizeCart(seed).versions, []);
-  assert.deepEqual(normalizeCart({ ...seed, savedRevision: 1 }).versions, [
-    sampleSource,
-  ]);
-  const edited = { ...seed, sourceDraft: "-- my edit" };
-  assert.equal(normalizeCart(edited).sourceDraft, "-- my edit");
-  assert.deepEqual(normalizeCart(edited).versions, [sampleSource]);
-  const authored = {
-    ...seed,
-    sessions: [
-      newSession({ transcript: [{ role: "user", content: "make this game" }] }),
-    ],
-  };
-  assert.deepEqual(normalizeCart(authored).versions, [sampleSource]);
 });

@@ -6,6 +6,11 @@
   },
   "references": [
     {
+      "id": "guide/asset-authoring",
+      "title": "Native cartridge resource tools and workflow",
+      "file": "references/asset-authoring.md"
+    },
+    {
       "id": "guide/lua",
       "title": "P8 Lua, tables, math and strings",
       "file": "references/lua.md"

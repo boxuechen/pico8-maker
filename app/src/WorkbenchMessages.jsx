@@ -6,7 +6,12 @@ import {
 } from "@assistant-ui/react";
 import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
 import { Check, X, Square, ChevronRight, Copy } from "lucide-react";
-import { summarizeTools, toolState, mergeSteps, describeTool } from "./workbench-state.js";
+import {
+  summarizeTools,
+  toolState,
+  mergeSteps,
+  describeTool,
+} from "./workbench-state.js";
 export const ActivityContext = createContext({ running: false });
 
 function StateIcon({ state }) {
@@ -48,9 +53,7 @@ function Step({ step, running }) {
         {step.tools.map((tool) => (
           <div key={tool.toolCallId}>
             <span>INPUT · {tool.toolName}</span>
-            <pre>
-              {toolInput(tool)}
-            </pre>
+            <pre>{toolInput(tool)}</pre>
             <span>RESULT</span>
             <pre>{resultText(tool, running)}</pre>
           </div>
@@ -85,7 +88,11 @@ function ToolActivity({ tools, running }) {
       {open && (
         <div className="activity-steps">
           {steps.map((step) => (
-            <Step key={step.tools[0].toolCallId} step={step} running={running} />
+            <Step
+              key={step.tools[0].toolCallId}
+              step={step}
+              running={running}
+            />
           ))}
         </div>
       )}
@@ -97,14 +104,18 @@ function toolInput(tool) {
   const args = tool.args ?? {};
   if (tool.toolName === "load_game")
     return typeof args.source === "string"
-      ? `${args.source.split("\n").length} lines of Lua`
-      : "main.lua (current edits)";
+      ? `${args.source.split("\n").length} lines of Lua + resource draft`
+      : "main.lua + resource draft";
   if (tool.toolName === "edit" && Array.isArray(args.edits))
     return args.edits
       .map((e) =>
         [
-          ...String(e.oldText ?? "").split("\n").map((l) => `- ${l}`),
-          ...String(e.newText ?? "").split("\n").map((l) => `+ ${l}`),
+          ...String(e.oldText ?? "")
+            .split("\n")
+            .map((l) => `- ${l}`),
+          ...String(e.newText ?? "")
+            .split("\n")
+            .map((l) => `+ ${l}`),
         ].join("\n"),
       )
       .join("\n…\n");
@@ -116,10 +127,16 @@ function VersionCard({ tool, edits, isLast }) {
     typeof tool.args?.source === "string"
       ? `${tool.args.source.split("\n").length} lines`
       : `${edits} ${edits === 1 ? "edit" : "edits"}`;
-  const version = String(tool.result ?? "").match(/Committed as version (\d+)/)?.[1];
+  const version = String(tool.result ?? "").match(
+    /Committed as version (\d+)/,
+  )?.[1];
   return (
     <div className="version-card">
-      <svg className="pixel-icon mini-cart" viewBox="0 0 16 20" aria-hidden="true">
+      <svg
+        className="pixel-icon mini-cart"
+        viewBox="0 0 16 20"
+        aria-hidden="true"
+      >
         <path d="M1 0h14v1h1v18h-1v1H1v-1H0V1h1z" fill="#5f574f" />
         <path d="M2 2h12v11H2z" fill="#1d2b53" />
         <path d="M2 10h12v3H2z" fill="#7e2553" />
@@ -186,7 +203,11 @@ export function AssistantMessage() {
       {update && (
         <VersionCard
           tool={update}
-          edits={tools.filter((t) => t.toolName === "edit").length}
+          edits={
+            tools.filter(
+              (t) => t.toolName === "edit" || t.toolName === "edit_assets",
+            ).length
+          }
           isLast={isLast}
         />
       )}

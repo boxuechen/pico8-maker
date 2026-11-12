@@ -1,3 +1,4 @@
+import { emptySnapshot } from "../src/pico8/assets.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { countTokens } from "../src/pico8/tokens.js";
@@ -24,11 +25,15 @@ test("saved carts carry a 128×128 label using palette digits", () => {
   assert.ok(lines.every((line) => line.length === 128));
   assert.equal(lines[0][0], "g");
   assert.equal(lines[0][1], "e");
-  const text = cartText("print(1)", rgba);
+  const text = cartText(emptySnapshot("print(1)"), rgba);
   assert.match(text, /^pico-8 cartridge/);
-  assert.match(text, /__lua__\nprint\(1\)\n__label__\n/);
-  assert.equal(cartText("x=1"), cartText("x=1", null));
-  assert.doesNotMatch(cartText("x=1"), /__label__/);
+  assert.match(text, /__lua__\nprint\(1\)\n__gfx__\n/);
+  assert.match(text, /__label__\n/);
+  assert.equal(
+    cartText(emptySnapshot("x=1")),
+    cartText(emptySnapshot("x=1"), null),
+  );
+  assert.doesNotMatch(cartText(emptySnapshot("x=1")), /__label__/);
 });
 
 test("cart file names are short, safe slugs", () => {

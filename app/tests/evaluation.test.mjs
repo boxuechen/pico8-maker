@@ -54,7 +54,7 @@ test("evaluation transport uses real Game validation, rollback and non-advancing
   );
   assert.equal(g.source, source);
   await assert.rejects(() =>
-    g.execute("press_buttons", { frames: 121, buttons: 0 }),
+    g.execute("press_buttons", { frames: 601, buttons: 0 }),
   );
 });
 test("PNG encodes exact RGBA and budgets count cached tokens and tool calls", () => {

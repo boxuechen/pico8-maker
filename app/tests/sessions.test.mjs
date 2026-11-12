@@ -1,3 +1,4 @@
+import { emptySnapshot } from "../src/pico8/assets.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
@@ -21,10 +22,10 @@ test("sessions round-trip independently while source and versions stay shared", 
     store = await openCartStore({ backend });
   const cart = newCart({
     title: "Frog",
-    versions: ["v1", "v2"],
+    versions: ["v1", "v2"].map(emptySnapshot),
     revision: 2,
-    sourceDraft: "v2 + edits",
-    sourceVersion: 3,
+    workingDraft: emptySnapshot("v2 + edits"),
+    contentVersion: 3,
   });
   const first = activeSession(cart);
   updateSession(cart, cart.id, first.id, {
@@ -52,8 +53,11 @@ test("sessions round-trip independently while source and versions stay shared", 
   restored.activeSessionId = first.id;
   assert.equal(activeSession(restored).draft, "first draft");
   assert.equal(activeSession(restored).interrupted, true);
-  assert.equal(restored.sourceDraft, "v2 + edits");
-  assert.deepEqual(restored.versions, ["v1", "v2"]);
+  assert.equal(restored.workingDraft.source, "v2 + edits");
+  assert.deepEqual(
+    restored.versions.map((s) => s.source),
+    ["v1", "v2"],
+  );
   const copy = duplicateCart(restored);
   assert.notEqual(copy.id, restored.id);
   assert.ok(
@@ -66,36 +70,14 @@ test("sessions round-trip independently while source and versions stay shared", 
   copy.sessions[0].transcript.push({ role: "assistant", content: "copy" });
   assert.equal(restored.sessions[0].transcript.length, 1);
 });
-test("single-conversation carts upgrade once without losing drafts or working source", async () => {
-  const backend = memoryBackend();
-  await backend.put("carts", {
-    id: "old",
-    title: "Older game",
-    transcript: [{ role: "user", content: "hello" }],
-    versions: ["v1"],
-    revision: 1,
-    workspace: "uncommitted code",
-    draft: "unfinished request",
-    interrupted: true,
-  });
-  const a = (await openCartStore({ backend })).carts[0];
-  assert.equal(a.sourceDraft, "uncommitted code");
-  assert.equal(activeSession(a).draft, "unfinished request");
-  assert.equal(activeSession(a).interrupted, true);
-  const stored = await backend.get("carts", "old");
-  assert.equal("transcript" in stored, false);
-  assert.equal("workspace" in stored, false);
-  const b = (await openCartStore({ backend })).carts[0];
-  assert.equal(b.activeSessionId, a.activeSessionId);
-});
 test("source context detects edits from other sessions even before a commit", () => {
   const cart = newCart();
   const a = activeSession(cart);
-  a.lastSourceVersion = 0;
+  a.lastContentVersion = 0;
   addSession(cart);
-  cart.sourceVersion++;
-  cart.sourceDraft = "edited";
-  assert.match(sessionContext(cart, a), /shared source changed/);
+  cart.contentVersion++;
+  cart.workingDraft = emptySnapshot("edited");
+  assert.match(sessionContext(cart, a), /shared cart content changed/);
   assert.match(
     sessionContext(cart, a),
     /never restore source from conversation history/,
@@ -139,17 +121,17 @@ test("real Pi conversations isolate histories and read the current shared game o
     }
   }
   await run(first, "SESSION_A_ONLY");
-  first.lastSourceVersion = 0;
+  first.lastContentVersion = 0;
   const second = addSession(cart);
   await game.workspace.writeFile("main.lua", "print('session B changes')");
-  cart.sourceVersion++;
+  cart.contentVersion++;
   await run(second, "SESSION_B_ONLY");
   assert.ok(!JSON.stringify(requests[1]).includes("SESSION_A_ONLY"));
   await run(first, "RESUME_A");
   const resumed = JSON.stringify(requests[2]);
   assert.ok(resumed.includes("SESSION_A_ONLY"));
   assert.ok(!resumed.includes("SESSION_B_ONLY"));
-  assert.ok(resumed.includes("shared source changed"));
+  assert.ok(resumed.includes("shared cart content changed"));
   assert.equal(
     (await game.workspace.readTextFile("main.lua")).value,
     "print('session B changes')",

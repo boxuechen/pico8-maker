@@ -1,3 +1,4 @@
+import { emptySnapshot } from "../src/pico8/assets.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { Agent } from "./helpers/knowledge.mjs";
@@ -62,7 +63,7 @@ test("actual provider requests replace legacy rules and preserve references acro
     assert.ok(system.includes("references/game-design.md"));
     assert.ok(!system.includes("## Observed implementation"));
     assert.ok(!system.includes("LEGACY_JUMP_ONLY"));
-    assert.equal(body.tools.length, 7);
+    assert.equal(body.tools.length, 9);
     assert.ok(body.tools.some((t) => t.function.name === "edit"));
     assert.ok(body.tools.some((t) => t.function.name === "read"));
     if (bodies.length === 1)
@@ -166,7 +167,7 @@ test("Pi delivers complete full/cropped ASCII and restores it without replaying 
   let reads = 0;
   let requests = 0;
   let saved;
-  const game = new Game(() => {}, { versions: [source] });
+  const game = new Game(() => {}, { versions: [emptySnapshot(source)] });
   game.ensureWorker = async () => {};
   game.player = { pause: async () => {} };
   game.rpc = async (action) => {

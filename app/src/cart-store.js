@@ -2,7 +2,7 @@
 // versions, independent conversation sessions and labels live in IndexedDB,
 // falling back to memory when the browser refuses storage.
 import { newSession, newId } from "./sessions.js";
-import { sampleSource } from "./sample.js";
+import { validSnapshot } from "./pico8/assets.js";
 
 const dbName = "pico8-maker";
 
@@ -12,15 +12,15 @@ export function newCart(patch = {}) {
   return {
     id: newId(),
     title: "Untitled cartridge",
-    schemaVersion: 2,
+    schemaVersion: 3,
     sessions: [session],
     activeSessionId: session.id,
-    sourceVersion: 0,
+    contentVersion: 0,
     versions: [],
     revision: 0,
     label: null,
-    // Agent's working copy of main.lua; null means "same as the latest version".
-    sourceDraft: null,
+    // Source and resource draft; null means same as the latest complete version.
+    workingDraft: null,
     savedRevision: null,
     createdAt: now,
     updatedAt: now,
@@ -32,6 +32,7 @@ export function newCart(patch = {}) {
 export function normalizeCart(data) {
   if (
     !data ||
+    data.schemaVersion !== 3 ||
     typeof data.id !== "string" ||
     !Array.isArray(data.sessions) ||
     !data.sessions.length ||
@@ -40,27 +41,13 @@ export function normalizeCart(data) {
     ) ||
     new Set(data.sessions.map((s) => s.id)).size !== data.sessions.length ||
     !Array.isArray(data.versions) ||
-    !data.versions.every((v) => typeof v === "string")
+    !data.versions.every(validSnapshot) ||
+    (data.workingDraft != null && !validSnapshot(data.workingDraft))
   )
     return null;
   const cart = { ...newCart(), ...data };
   cart.versions = cart.versions.slice(-12);
-  // Earlier empty carts were seeded with the demo. Remove only untouched seeds.
-  if (
-    cart.versions.length === 1 &&
-    cart.versions[0] === sampleSource &&
-    cart.revision === 1 &&
-    cart.savedRevision == null &&
-    !cart.label &&
-    (cart.sourceDraft == null || cart.sourceDraft === sampleSource) &&
-    cart.sessions.every((session) => session.transcript.length === 0)
-  ) {
-    cart.versions = [];
-    cart.revision = 0;
-    cart.sourceDraft = null;
-  }
-  if (typeof cart.sourceDraft !== "string") cart.sourceDraft = null;
-  cart.sourceVersion = Math.max(0, Number(cart.sourceVersion) || 0);
+  cart.contentVersion = Math.max(0, Number(cart.contentVersion) || 0);
   cart.sessions = cart.sessions.map((s) => ({
     ...newSession(),
     ...s,
@@ -81,7 +68,7 @@ export function isOnShelf(cart) {
     (cart.named === true ||
       cart.sessions.length > 1 ||
       cart.sessions.some((s) => s.transcript.length > 0 || s.draft.trim()) ||
-      cart.sourceDraft != null ||
+      cart.workingDraft != null ||
       cart.versions.length > 0 ||
       cart.revision > 0)
   );
@@ -117,28 +104,6 @@ export function duplicateCart(cart) {
     createdAt: now,
     updatedAt: now,
   });
-}
-
-// One-time record upgrade at the storage boundary. Runtime code uses only sessions.
-export function upgradeCart(data) {
-  if (!data || data.sessions || !Array.isArray(data.transcript)) return data;
-  const { transcript, draft, interrupted, workspace, ...shared } = data;
-  const session = newSession({
-    title: data.title || "First session",
-    transcript,
-    draft: draft ?? "",
-    interrupted: !!interrupted,
-    createdAt: data.createdAt,
-    updatedAt: data.updatedAt,
-  });
-  return {
-    ...shared,
-    schemaVersion: 2,
-    sessions: [session],
-    activeSessionId: session.id,
-    sourceDraft: workspace ?? null,
-    sourceVersion: 0,
-  };
 }
 
 // IndexedDB only accepts structured-cloneable values; JSON keeps it plain.
@@ -213,10 +178,8 @@ export async function openCartStore({ backend } = {}) {
   const navigation = (await backend.get("meta", "session"))?.value ?? {};
   const carts = [];
   for (const record of await backend.getAll("carts")) {
-    const upgraded = upgradeCart(record);
-    const cart = normalizeCart(upgraded);
+    const cart = normalizeCart(record);
     if (!cart) continue;
-    if (upgraded !== record) await backend.put("carts", cart);
     carts.push(cart);
   }
   return {

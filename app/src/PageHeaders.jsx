@@ -91,6 +91,28 @@ function Meter({ label, value, limit, format = String }) {
 const kilo = (n) =>
   n >= 1024 ? `${(n / 1024).toFixed(n >= 10240 ? 0 : 1)}K` : String(n);
 
+export function WorkspaceViewSwitch({ view, onView, className = "" }) {
+  return (
+    <div
+      className={`view-switch ${className}`}
+      role="tablist"
+      aria-label="Workspace view"
+    >
+      {["preview", "code", "resources"].map((v) => (
+        <button
+          key={v}
+          role="tab"
+          aria-selected={view === v}
+          className={view === v ? "active" : ""}
+          onClick={() => onView(v)}
+        >
+          {v === "preview" ? "Preview" : v === "code" ? "Code" : "Resources"}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export function WorkbenchHeader({
   busy,
   ready,
@@ -130,7 +152,8 @@ export function WorkbenchHeader({
           {title}
         </h1>
         <span className={`version-badge ${saveFailed ? "unsaved" : ""}`}>
-          {hasGame ? `v${revision}` : "Empty cart"} · {saveFailed ? "Not saved" : "Saved locally"}
+          {hasGame ? `v${revision}` : "Empty cart"} ·{" "}
+          {saveFailed ? "Not saved" : "Saved locally"}
         </span>
       </div>
       <div className="wb-actions">
@@ -141,19 +164,7 @@ export function WorkbenchHeader({
           <Meter label="TOKENS" value={tokens} limit={TOKEN_LIMIT} />
           <Meter label="CHARS" value={chars} limit={CHAR_LIMIT} format={kilo} />
         </div>
-        <div className="view-switch" role="tablist" aria-label="Workspace view">
-          {["preview", "code"].map((v) => (
-            <button
-              key={v}
-              role="tab"
-              aria-selected={view === v}
-              className={view === v ? "active" : ""}
-              onClick={() => onView(v)}
-            >
-              {v === "preview" ? "Preview" : "Code"}
-            </button>
-          ))}
-        </div>
+        <WorkspaceViewSwitch view={view} onView={onView} />
         <button
           className="icon-button"
           disabled={!ready || busy || !canUndo}

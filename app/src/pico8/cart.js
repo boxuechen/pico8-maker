@@ -1,11 +1,40 @@
-// .p8 text cartridges: Lua plus an optional 128×128 __label__ taken from the
+import { assetSections, validSnapshot } from "./assets.js";
+// .p8 text cartridges: Lua, native resources and an optional __label__ from the
 // AI playtest, so the saved cart carries a picture in PICO-8 and SPLORE.
 const palette = [
-  "000000", "1d2b53", "7e2553", "008751", "ab5236", "5f574f", "c2c3c7", "fff1e8",
-  "ff004d", "ffa300", "ffec27", "00e436", "29adff", "83769c", "ff77a8", "ffccaa",
+  "000000",
+  "1d2b53",
+  "7e2553",
+  "008751",
+  "ab5236",
+  "5f574f",
+  "c2c3c7",
+  "fff1e8",
+  "ff004d",
+  "ffa300",
+  "ffec27",
+  "00e436",
+  "29adff",
+  "83769c",
+  "ff77a8",
+  "ffccaa",
   // Secret palette 128–143, written as g–v in label data.
-  "291814", "111d35", "422136", "125359", "742f29", "49333b", "a28879", "f3ef7d",
-  "be1250", "ff6c24", "a8e72e", "00b543", "065ab5", "754665", "ff6e59", "ff9d81",
+  "291814",
+  "111d35",
+  "422136",
+  "125359",
+  "742f29",
+  "49333b",
+  "a28879",
+  "f3ef7d",
+  "be1250",
+  "ff6c24",
+  "a8e72e",
+  "00b543",
+  "065ab5",
+  "754665",
+  "ff6e59",
+  "ff9d81",
 ].map((hex) => [0, 2, 4].map((i) => parseInt(hex.slice(i, i + 2), 16)));
 const digits = "0123456789abcdefghijklmnopqrstuv";
 
@@ -39,9 +68,14 @@ export function labelLines(rgba) {
   return lines;
 }
 
-export function cartText(source, label) {
+export function cartText(snapshot, label) {
+  if (!validSnapshot(snapshot)) throw new Error("Invalid cart snapshot");
+  if (/^__[a-zA-Z0-9_]+__\s*$/m.test(snapshot.source))
+    throw new Error(
+      "main.lua must contain Lua only; use edit_assets for resources",
+    );
   const lines = Array.isArray(label) ? label : labelLines(label);
-  return `pico-8 cartridge // http://www.pico-8.com\nversion 43\n__lua__\n${source}\n${
+  return `pico-8 cartridge // http://www.pico-8.com\nversion 43\n__lua__\n${snapshot.source}\n${assetSections(snapshot.assets)}${
     lines ? `__label__\n${lines.join("\n")}\n` : ""
   }`;
 }
@@ -56,10 +90,14 @@ export function cartFileName(title = "") {
   return `${slug || "my-game"}.p8`;
 }
 
-/** Download a cart as a .p8 file (browser only). */
-export function downloadCart(source, { title, label } = {}) {
+/** Encode exactly the same complete cart used by export and both players. */
+export const cartBytes = (snapshot) =>
+  new TextEncoder().encode(cartText(snapshot));
+
+/** Download a committed cart as a .p8 file (browser only). */
+export function downloadCart(snapshot, { title, label } = {}) {
   const url = URL.createObjectURL(
-    new Blob([cartText(source, label)], { type: "text/plain" }),
+    new Blob([cartText(snapshot, label)], { type: "text/plain" }),
   );
   const a = document.createElement("a");
   a.href = url;

@@ -48,8 +48,3 @@ function _draw()
  print("little wall",4,4,7)
  if won then print("you made it!",38,22,10) end
 end`;
-
-export const cartBytes = (source) =>
-  new TextEncoder().encode(
-    `pico-8 cartridge // http://www.pico-8.com\nversion 43\n__lua__\n${source}\n`,
-  );

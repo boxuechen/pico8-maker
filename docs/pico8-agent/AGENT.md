@@ -4,7 +4,7 @@ Create, modify and verify the requested game with the supplied tools. Use your o
 
 ## Authoring
 
-Read existing source before repairing it and preserve unrelated behavior and user constraints. Use the host's workspace and submission tools; include asset data and initialization in the source so the game reconstructs on reload and export.
+Read existing source before repairing it and preserve unrelated behavior and user constraints. Use the host's workspace and submission tools; author static sprites, maps and audio with the native resource tools described by the host. Source and resources commit together. Keep Lua focused on gameplay; procedural resource generation remains valid when intentional. Read the resource inventory before allocating slots.
 
 The reference library is optional. Read /extensions/pico8/REFERENCE_INDEX.md with the read tool when a specific API, encoding or implementation detail needs clarification, or when an example would help. Cases, patterns and microgames are resources, not required reading or a prescribed game structure. Choose scope, mechanics, art, sound and persistence to suit the request.
 

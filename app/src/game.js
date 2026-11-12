@@ -5,8 +5,13 @@ import {
   cropRgba,
 } from "./pico8/observation.js";
 import { cartridgeBytes } from "./cartridges.js";
-import { cartBytes } from "./sample.js";
-import { downloadCart } from "./pico8/cart.js";
+import {
+  emptySnapshot,
+  sameSnapshot,
+  readAssets,
+  editAssets,
+} from "./pico8/assets.js";
+import { downloadCart, cartBytes } from "./pico8/cart.js";
 import { CartWorkspace } from "./pico8/workspace.js";
 
 export class Game {
@@ -20,10 +25,10 @@ export class Game {
       revision ?? this.versions.length,
       this.versions.length,
     );
-    // The agent's working copy (/cart/main.lua). Versions are what load_game committed.
-    this.draft = typeof draft === "string" ? draft : this.source;
+    // Immutable source/resource snapshots. Only main.lua is exposed as a file.
+    this.draft = { ...(draft ?? this.snapshot) };
     this.workspace = new CartWorkspace({
-      read: () => this.draft,
+      read: () => this.draft.source,
       write: (text) => this.setDraft(text),
     });
     this.pending = new Map();
@@ -34,20 +39,29 @@ export class Game {
     this.muted = false;
   }
   get source() {
-    return this.versions.at(-1) ?? "";
+    return this.snapshot.source;
+  }
+  get snapshot() {
+    return this.versions.at(-1) ?? emptySnapshot();
   }
   get hasGame() {
     return this.versions.length > 0;
   }
   setDraft(text) {
-    if (text === this.draft) return;
-    this.draft = text;
-    this.onDraft?.(text);
+    this.setWorking({ ...this.draft, source: text });
+  }
+  setWorking(snapshot) {
+    if (sameSnapshot(snapshot, this.draft)) return;
+    this.draft = { ...snapshot };
+    this.onDraft?.(this.draft);
+    this.changed();
   }
   changed(extra = {}) {
     this.onChange({
       state: this.state,
       source: this.source,
+      snapshot: this.snapshot,
+      draft: this.draft,
       hasGame: this.hasGame,
       canUndo: this.versions.length > 1,
       revision: this.revision,
@@ -89,7 +103,7 @@ export class Game {
     });
     syncMute();
     if (this.hasGame)
-      await this.player.loadCart(cartBytes(this.source), {
+      await this.player.loadCart(cartBytes(this.snapshot), {
         displayName: "my-game.p8",
       });
     if (!this.muted) this.mute();
@@ -111,7 +125,8 @@ export class Game {
     };
     this.worker.onerror = () => this.cancelTests("测试进程异常，已停止。");
     await this.rpc("init", { url: this.url });
-    if (this.hasGame) await this.rpc("load", { source: this.source });
+    if (this.hasGame)
+      await this.rpc("load", { cart: cartBytes(this.snapshot) });
   }
   rpc(action, args = {}) {
     const id = ++this.nextId;
@@ -171,7 +186,7 @@ export class Game {
   async restoreProject() {
     if (!this.activeCart) return;
     if (this.hasGame)
-      await this.player.loadCart(cartBytes(this.source), {
+      await this.player.loadCart(cartBytes(this.snapshot), {
         displayName: "my-game.p8",
       });
     else await this.player.pause();
@@ -213,14 +228,14 @@ export class Game {
     this.activeCart = null;
     this.versions.pop();
     this.revision = Math.max(1, this.revision - 1);
-    this.setDraft(this.source);
+    this.setWorking(this.snapshot);
     this.save();
     this.changed();
   }
   /** Save the current source as a .p8 cart, labelled with an RGBA frame. */
   export({ title, label } = {}) {
     if (!this.hasGame) return;
-    downloadCart(this.source, { title, label });
+    downloadCart(this.snapshot, { title, label });
   }
   /** Swap in another cart's versions without rebooting the player. */
   async switchProject(versions, revision, draft) {
@@ -230,12 +245,12 @@ export class Game {
       revision ?? this.versions.length,
       this.versions.length,
     );
-    this.draft = typeof draft === "string" ? draft : this.source;
+    this.draft = { ...(draft ?? this.snapshot) };
     this.activeCart = null;
     this.testFrame = null;
     if (this.player) {
       if (this.hasGame)
-        await this.player.loadCart(cartBytes(this.source), {
+        await this.player.loadCart(cartBytes(this.snapshot), {
           displayName: "my-game.p8",
         });
       else await this.player.pause();
@@ -259,6 +274,8 @@ export class Game {
   async perform(action, args, signal) {
     if (
       ![
+        "read_assets",
+        "edit_assets",
         "read_game",
         "load_game",
         "reset_game",
@@ -268,7 +285,31 @@ export class Game {
     )
       throw new Error(`未知游戏工具：${action}`);
     if (action === "read_game")
-      return { output: [{ type: "text", text: this.draft }] };
+      return { output: [{ type: "text", text: this.draft.source }] };
+    if (action === "read_assets")
+      return {
+        output: [
+          {
+            type: "text",
+            text: JSON.stringify(readAssets(this.draft.assets, args)),
+          },
+        ],
+      };
+    if (action === "edit_assets") {
+      const assets = editAssets(this.draft.assets, args.edits);
+      const changed = assets !== this.draft.assets;
+      this.setWorking({ ...this.draft, assets });
+      return {
+        output: [
+          {
+            type: "text",
+            text: changed
+              ? "Resource draft updated. Call load_game to commit source and resources together."
+              : "Resources unchanged.",
+          },
+        ],
+      };
+    }
     if (action !== "load_game" && !this.hasGame)
       throw new Error(
         "No game has been loaded yet. Write main.lua and call load_game first.",
@@ -283,38 +324,46 @@ export class Game {
         throw new Error("源码应为 Lua 文本");
       // A full source replaces the working file first; otherwise load the edits.
       if (args.source !== undefined) this.setDraft(args.source);
-      const source = this.draft;
+      const snapshot = { ...this.draft };
+      const source = snapshot.source;
       if (!source.trim())
         throw new Error(
           "main.lua is empty. Write game source before loading it.",
         );
-      observation = await this.rpc("load", { source });
+      observation = await this.rpc("load", { cart: cartBytes(snapshot) });
       if (observation.state !== "faulted")
         observation = (await this.rpc("advance", { frames: 1, buttons: 0 }))
           .observation;
       if (observation.state === "faulted") {
         const result = this.output(observation);
-        if (this.hasGame) await this.rpc("load", { source: this.source });
+        if (this.hasGame)
+          await this.rpc("load", { cart: cartBytes(this.snapshot) });
         else this.cancelTests();
         result.output[0].text +=
-          "\nNot committed: main.lua keeps this failing source. Fix it with edit, then call load_game again." +
+          "\nNot committed: source and resource drafts are retained. Fix the draft, then call load_game again." +
           (this.hasGame
             ? " The test session still runs the last loaded version."
             : " No playable version exists yet.");
         return { ...result, isError: true };
       }
       signal?.throwIfAborted();
-      if (source === this.source)
-        note = "\nmain.lua is unchanged since the last load; no new version.";
+      if (sameSnapshot(snapshot, this.snapshot))
+        note =
+          "\nSource and resources are unchanged since the last load; no new version.";
       else {
         try {
-          await this.player.loadCart(cartBytes(source));
+          await this.player.loadCart(cartBytes(snapshot));
+          signal?.throwIfAborted();
         } catch (error) {
-          if (this.hasGame) await this.rpc("load", { source: this.source });
-          else this.cancelTests();
+          // A rejected/cancelled live load may already have replaced its runtime.
+          // Never leave a playable uncommitted combination in either player.
+          this.cancelTests();
+          if (this.hasGame)
+            await this.player.loadCart(cartBytes(this.snapshot));
+          else await this.player.pause();
           throw error;
         }
-        this.versions.push(source);
+        this.versions.push(snapshot);
         this.versions = this.versions.slice(-12);
         this.revision++;
         this.save();
@@ -335,7 +384,7 @@ export class Game {
         throw new Error("buttons 必须为 0–63");
       observation = (await this.rpc("advance", args)).observation;
     } else if (action === "reset_game") {
-      await this.rpc("load", { source: this.source });
+      await this.rpc("load", { cart: cartBytes(this.snapshot) });
       observation = (await this.rpc("advance", { frames: 1, buttons: 0 }))
         .observation;
     } else observation = await this.rpc("observe");
