@@ -199,10 +199,23 @@
 .studio-mode .console-group:fullscreen .console {
   width: min(80vw, calc((100dvh - 120px) * 180 / 210));
 }
-.studio-mode .project-label {
-  font: 13px var(--workbench-font);
-  max-width: 260px;
-  color: var(--muted);
+/* The project title belongs to the conversation, not the global toolbar. */
+.studio-mode .app-title {
+  width: 36px;
+  height: 36px;
+  justify-content: center;
+}
+.studio-mode .app-title .pixel-spark {
+  margin: 0;
+}
+.studio-mode .conversation-title {
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font: 16px/1.5 var(--workbench-font);
+  color: var(--text);
 }
 .studio-mode .settings-button,
 .studio-mode .more-menu {

@@ -445,7 +445,7 @@ export function App() {
       draft: "",
       title: project.current.transcript.length
         ? project.current.title
-        : text.trim().slice(0, 24),
+        : text.trim().replace(/\s+/g, " ").slice(0, 120),
     });
     runtime.thread.composer.setText("");
     try {
@@ -478,6 +478,14 @@ export function App() {
     if (text) void sendMessage(text);
   }
   const playing = game.state === "running" && !game.testFrame;
+  const conversationTitle =
+    chat.messages
+      .find((message) => message.role === "user")
+      ?.content.filter((part) => part.type === "text")
+      .map((part) => part.text)
+      .join(" ")
+      .replace(/\s+/g, " ")
+      .trim() || project.current.title;
   return (
     <AssistantRuntimeProvider runtime={runtime}>
       <ActivityContext.Provider
@@ -495,10 +503,17 @@ export function App() {
                 persist({ active: false });
               }}
               aria-label="Back to home"
+              title="Back to home"
             >
-              <span className="pixel-spark">✦</span> PICO
-              <span className="brand-slash">/</span>MAKER{" "}
-              <span className="brand-caption">FANTASY GAME MAKER</span>
+              <span className="pixel-spark" aria-hidden="true">
+                ✦
+              </span>
+              {!workspace && (
+                <>
+                  PICO<span className="brand-slash">/</span>MAKER{" "}
+                  <span className="brand-caption">FANTASY GAME MAKER</span>
+                </>
+              )}
             </button>
             <div className="top-actions">
               {!workspace && chat.messages.length > 0 && (
@@ -513,9 +528,6 @@ export function App() {
                 >
                   Continue making <ChevronRight size={14} />
                 </button>
-              )}
-              {workspace && (
-                <span className="project-label">{project.current.title}</span>
               )}
               <button
                 className="settings-button"
@@ -663,7 +675,9 @@ export function App() {
             <ThreadPrimitive.Root className="chat-panel">
               {workspace && (
                 <div className="panel-heading">
-                  <span>Chat</span>
+                  <h1 className="conversation-title" title={conversationTitle}>
+                    {conversationTitle}
+                  </h1>
                 </div>
               )}
               {!workspace && (
