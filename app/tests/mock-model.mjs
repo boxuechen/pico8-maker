@@ -1,5 +1,25 @@
 // Local integration fixture, never an AI fallback. No real credentials needed.
 import http from "node:http";
+import { inflateSync } from "node:zlib";
+function probeColor(body) {
+  const part = body.messages
+    .flatMap((m) => (Array.isArray(m.content) ? m.content : []))
+    .find((p) => p.type === "image_url");
+  const png = Buffer.from(part.image_url.url.split(",")[1], "base64");
+  const idat = [];
+  for (let offset = 8; offset < png.length;) {
+    const length = png.readUInt32BE(offset);
+    if (png.toString("ascii", offset + 4, offset + 8) === "IDAT")
+      idat.push(png.subarray(offset + 8, offset + 8 + length));
+    offset += length + 12;
+  }
+  const first = inflateSync(Buffer.concat(idat));
+  return first[1] > first[2] && first[1] > first[3]
+    ? "red"
+    : first[2] > first[3]
+      ? "green"
+      : "blue";
+}
 const server = http.createServer(async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
@@ -38,6 +58,40 @@ const server = http.createServer(async (req, res) => {
       );
       return;
     }
+    if (body.tools?.some((t) => t.function.name === "report_screen")) {
+      const done = body.messages.some((m) => m.role === "tool");
+      const delta = done
+        ? { role: "assistant", content: "OK" }
+        : {
+            role: "assistant",
+            tool_calls: [
+              {
+                index: 0,
+                id: "probe",
+                type: "function",
+                function: {
+                  name: "report_screen",
+                  arguments: JSON.stringify({ color: probeColor(body) }),
+                },
+              },
+            ],
+          };
+      res.writeHead(200, { "Content-Type": "text/event-stream" });
+      res.end(
+        `data: ${JSON.stringify({ id: "fixture", object: "chat.completion.chunk", created: 1, model: body.model, choices: [{ index: 0, delta, finish_reason: done ? "stop" : "tool_calls" }] })}\n\ndata: [DONE]\n\n`,
+      );
+      return;
+    }
+    const offered = new Set(body.tools?.map((t) => t.function.name));
+    for (const name of [
+      "read_game",
+      "load_game",
+      "reset_game",
+      "press_buttons",
+      "observe_game",
+    ])
+      if (!offered.has(name))
+        throw new Error(`Missing registered game tool: ${name}`);
     const toolResults = body.messages.filter((m) => m.role === "tool");
     const step = toolResults.length;
     const first = toolResults[0]?.content;
@@ -62,6 +116,7 @@ const server = http.createServer(async (req, res) => {
       ["press_buttons", { frames: 24, buttons: 2 }],
       ["press_buttons", { frames: 1, buttons: 34 }],
       ["press_buttons", { frames: 45, buttons: 2 }],
+      ["observe_game", {}],
     ];
     res.writeHead(200, {
       "Content-Type": "text/event-stream",

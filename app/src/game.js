@@ -171,6 +171,16 @@ export class Game {
     return job;
   }
   async perform(action, args, signal) {
+    if (
+      ![
+        "read_game",
+        "load_game",
+        "reset_game",
+        "press_buttons",
+        "observe_game",
+      ].includes(action)
+    )
+      throw new Error(`未知游戏工具：${action}`);
     if (action === "read_game")
       return { output: [{ type: "text", text: this.source }] };
     await this.ensureWorker();

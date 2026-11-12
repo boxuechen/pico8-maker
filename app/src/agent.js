@@ -1,6 +1,6 @@
 import { BACKGROUND_CONTEXT as context } from "@earendil-works/chord/context";
-import { createModels, createProvider } from "@earendil-works/pi-ai/models";
-import { openAICompletionsApi } from "@earendil-works/pi-ai/api/openai-completions.lazy";
+import { createModels } from "@earendil-works/pi-ai/models";
+import { createConnection, readableError } from "./model-config.js";
 import {
   Harness,
   MemoryStorage,
@@ -143,62 +143,33 @@ export class Agent {
       context,
     );
     this.root = await this.harness.root(context, {
-      agent: { instructions, maxTurns: 12 },
+      agent: { instructions, maxTurns: 24, thinkingLevel: "off" },
     });
     this.watch = await this.root.watch(context, { min: 100, max: 200 });
-    this.onUpdate(projectView(this.watch.value));
+    this.publish(this.watch.value);
     this.watch.start((call) => {
-      if (call.kind === "value") this.onUpdate(projectView(call.value));
+      if (call.kind === "value") this.publish(call.value);
     });
   }
-  async configure(config) {
-    const api = openAICompletionsApi();
-    const baseUrl = config.baseUrl.trim().replace(/\/+$/, "");
-    const url = new URL(baseUrl);
-    if (
-      !["http:", "https:"].includes(url.protocol) ||
-      url.username ||
-      url.password ||
-      url.search ||
-      url.hash
-    )
-      throw new Error("请输入有效的 HTTP(S) 接口地址");
-    const model = {
-      id: config.model.trim(),
-      name: config.model.trim(),
-      api: "openai-completions",
-      provider: "byok",
-      baseUrl,
-      reasoning: false,
-      input: ["text", "image"],
-      contextWindow: 128000,
-      maxTokens: 12000,
-      cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
-      compat: { supportsStore: false },
-    };
-    this.models.setProvider(
-      createProvider({
-        id: "byok",
-        name: "用户模型",
-        baseUrl,
-        models: [model],
-        auth: {
-          apiKey: {
-            name: "用户密钥",
-            resolve: async () => ({ auth: { apiKey: config.apiKey } }),
-          },
-        },
-        api: {
-          stream: (m, t, o) => api.stream(m, t, { ...o, maxTokens: 12000 }),
-          streamSimple: (m, t, o) =>
-            api.streamSimple(m, t, { ...o, maxTokens: 12000 }),
-        },
-      }),
-    );
+  publish(value) {
+    const view = projectView(value);
+    const failure = value.docs?.["pi.live"]?.runFailure;
+    if (failure?.reason === "turn_limit")
+      view.error = "已达到本次工具调用上限，可发送“继续测试”接着验证。";
+    else if (view.error) view.error = readableError(view.error, this.apiKey);
+    this.onUpdate(view);
+  }
+  async configure(value) {
+    const { config, model, provider } = createConnection(value);
+    this.models.setProvider(provider);
     await this.root.configure(
-      { model: { provider: "byok", modelId: model.id } },
+      {
+        model: { provider: model.provider, modelId: model.id },
+        thinkingLevel: "off",
+      },
       context,
     );
+    this.apiKey = config.apiKey;
     this.configured = true;
   }
   async send(text) {

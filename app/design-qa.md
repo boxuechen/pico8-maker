@@ -30,7 +30,7 @@ Browser checks exercised real WASM startup/play, keyboard movement, chat focus, 
 
 Console checked: development HMR detach/recreate produced upstream ResizeObserver zero-size errors. No new errors were logged during the production-build startup, tool-flow, undo and reload checks. The embedded browser rejects native fullscreen; the app catches this and shows a Chinese explanation. Native full-screen behavior in desktop Chrome remains unverified.
 
-Real BYOK provider inference is unverified because no user key was supplied. Narrow layout is checked, but touch game controls are outside this keyboard-first demo.
+Initial handoff had no real BYOK inference validation; the follow-up below supersedes that gap. Narrow layout is checked, but touch game controls are outside this keyboard-first demo.
 
 ## Implementation checklist
 
@@ -39,3 +39,15 @@ Real BYOK provider inference is unverified because no user key was supplied. Nar
 - [x] Actual tool execution and frame capture.
 - [x] Build and WASM tests pass.
 - [x] Desktop/narrow screenshots saved and temporary viewport override reset.
+
+## Model connection follow-up — 2026-11-12
+
+The settings now reuse Pi catalog presets (DeepSeek and image-capable OpenRouter Chat Completions models), with a custom endpoint fallback. The same compact dark dialog remains; provider/model selects replace manual endpoint/model entry for presets. Browser inspection confirmed labels, dropdowns and buttons fit without clipping. No broader visual redesign.
+
+Actual DeepSeek `deepseek-flash` completed 13 game tool calls using all five tools. The displayed result was independently checked by exporting the real model-edited cart and replaying identical input through WASM: before `(58,100)`, after `(109,100)`, unchanged wall `(66,80,12,28)`. Evidence: `qa/deepseek-live.png`, `qa/deepseek-fixed.p8`, `qa/deepseek-live-result.json`. The user entered the key in the page; it was not read or saved to project files.
+
+The real service also passed the two-request image/tool connection probe. No credential values were inspected.
+
+Additional adapter tests cover model metadata, fragmented streamed arguments, tool result images, no-retry authentication failures and rejecting a text-only capability response. All seven runtime/adapter tests and four static packaging tests pass. Production build passes.
+
+final result: passed

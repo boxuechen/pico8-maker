@@ -30,6 +30,14 @@ import {
 } from "lucide-react";
 import { Game } from "./game.js";
 import { Agent } from "./agent.js";
+import {
+  providers,
+  defaultConfig,
+  normalizeConfig,
+  validateConfig,
+  probeConnection,
+  readableError,
+} from "./model-config.js";
 
 const convertMessage = (message) => message;
 const names = {
@@ -81,11 +89,7 @@ function AssistantMessage() {
         components={{ Text: MarkdownTextPrimitive, tools: { Fallback: Tool } }}
       />
       <ActionBarPrimitive.Root className="message-actions">
-        <ActionBarPrimitive.Copy
-          hideWhenDisabled
-          title="复制回复"
-          aria-label="复制回复"
-        >
+        <ActionBarPrimitive.Copy title="复制回复" aria-label="复制回复">
           <Copy size={15} />
         </ActionBarPrimitive.Copy>
       </ActionBarPrimitive.Root>
@@ -95,33 +99,33 @@ function AssistantMessage() {
 
 function ModelSettings({ initial, onSave, onClose }) {
   const dialog = useRef(null);
-  const [form, setForm] = useState(initial);
+  const [form, setForm] = useState(() => normalizeConfig(initial));
   const [remember, setRemember] = useState(initial.remember ?? false);
   const [busy, setBusy] = useState(false),
     [notice, setNotice] = useState("");
   useEffect(() => {
     dialog.current.showModal();
   }, []);
-  const valid = () => {
-    const url = new URL(form.baseUrl);
-    if (
-      !["http:", "https:"].includes(url.protocol) ||
-      url.username ||
-      url.password ||
-      url.search ||
-      url.hash
-    )
-      throw new Error("接口地址格式不正确");
-    if (!form.model.trim() || !form.apiKey.trim())
-      throw new Error("请填写 API Key 和模型名称");
-  };
+  const probeAbort = useRef(null);
+  useEffect(() => () => probeAbort.current?.abort(), []);
+  const preset = providers.find((p) => p.id === form.provider);
+  function selectProvider(id) {
+    const model = providers.find((p) => p.id === id)?.models[0];
+    // Credentials never follow the user across service origins.
+    setForm({
+      provider: id,
+      model: model?.id ?? "",
+      baseUrl: model?.baseUrl ?? "",
+      apiKey: "",
+    });
+    setNotice("");
+  }
   async function save(e) {
     e.preventDefault();
     setBusy(true);
     setNotice("");
     try {
-      valid();
-      await onSave({ ...form, remember });
+      await onSave({ ...validateConfig(form), remember });
     } catch (e) {
       setNotice(e.message);
     } finally {
@@ -131,38 +135,34 @@ function ModelSettings({ initial, onSave, onClose }) {
   async function test() {
     setBusy(true);
     setNotice("");
+    probeAbort.current = new AbortController();
     try {
-      valid();
-      const response = await fetch(
-        `${form.baseUrl.trim().replace(/\/+$/, "")}/chat/completions`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${form.apiKey}`,
-          },
-          body: JSON.stringify({
-            model: form.model.trim(),
-            messages: [{ role: "user", content: "Reply with OK." }],
-            max_tokens: 16,
-            stream: false,
-          }),
-          signal: AbortSignal.timeout(20000),
-        },
+      const config = validateConfig(form);
+      const colors = ["red", "green", "blue"];
+      const color = colors[crypto.getRandomValues(new Uint8Array(1))[0] % 3];
+      const canvas = document.createElement("canvas");
+      canvas.width = canvas.height = 128;
+      const ctx = canvas.getContext("2d");
+      ctx.fillStyle = color;
+      ctx.fillRect(0, 0, 128, 128);
+      const image = {
+        type: "image",
+        mimeType: "image/png",
+        data: canvas.toDataURL("image/png").split(",")[1],
+      };
+      const result = await probeConnection(
+        config,
+        image,
+        color,
+        setNotice,
+        AbortSignal.any([
+          probeAbort.current.signal,
+          AbortSignal.timeout(60000),
+        ]),
       );
-      if (!response.ok)
-        throw new Error(
-          `连接失败（HTTP ${response.status}），请检查地址、密钥和模型。`,
-        );
-      const data = await response.json();
-      if (!data.choices?.length) throw new Error("接口未返回有效回复");
-      setNotice("文字请求成功。游戏工具和图片能力将在实际对话中验证。");
+      setNotice(result);
     } catch (e) {
-      setNotice(
-        e instanceof TypeError
-          ? "无法连接：请检查网络、接口地址和服务的 CORS 设置。"
-          : e.message,
-      );
+      setNotice(readableError(e, form.apiKey));
     } finally {
       setBusy(false);
     }
@@ -170,7 +170,10 @@ function ModelSettings({ initial, onSave, onClose }) {
   return (
     <dialog
       ref={dialog}
-      onCancel={onClose}
+      onCancel={() => {
+        probeAbort.current?.abort();
+        onClose();
+      }}
       onClick={(e) => {
         if (e.target === dialog.current && !busy) onClose();
       }}
@@ -187,37 +190,82 @@ function ModelSettings({ initial, onSave, onClose }) {
             <X size={20} />
           </button>
         </div>
-        <p>使用兼容 Chat Completions 的接口，支持工具调用和图片输入。</p>
+        <p>从 Pi 模型目录选择，填入对应服务的 API Key。</p>
         <label>
-          接口地址
-          <input
-            required
-            type="url"
-            placeholder="https://你的服务地址/v1"
-            value={form.baseUrl}
-            onChange={(e) => setForm({ ...form, baseUrl: e.target.value })}
-          />
+          模型服务
+          <select
+            value={form.provider}
+            disabled={busy}
+            onChange={(e) => selectProvider(e.target.value)}
+          >
+            {providers.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+            <option value="custom">自定义兼容接口</option>
+          </select>
         </label>
+        {preset && (
+          <label>
+            模型
+            <select
+              value={form.model}
+              disabled={busy}
+              onChange={(e) => {
+                const model = preset.models.find(
+                  (m) => m.id === e.target.value,
+                );
+                setForm({ ...form, model: model.id, baseUrl: model.baseUrl });
+                setNotice("");
+              }}
+            >
+              {preset.models.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {preset && <p className="model-detail">{form.model} · 支持图片输入</p>}
+        {!preset && (
+          <label>
+            接口地址
+            <input
+              required
+              type="url"
+              disabled={busy}
+              placeholder="https://你的服务地址/v1"
+              value={form.baseUrl}
+              onChange={(e) => setForm({ ...form, baseUrl: e.target.value })}
+            />
+          </label>
+        )}
         <label>
           API Key
           <input
             required
             type="password"
+            disabled={busy}
             autoComplete="off"
             placeholder="输入你的 API Key"
             value={form.apiKey}
             onChange={(e) => setForm({ ...form, apiKey: e.target.value })}
           />
         </label>
-        <label>
-          模型名称
-          <input
-            required
-            placeholder="服务提供的模型 ID"
-            value={form.model}
-            onChange={(e) => setForm({ ...form, model: e.target.value })}
-          />
-        </label>
+        {!preset && (
+          <label>
+            模型名称
+            <input
+              required
+              placeholder="服务提供的模型 ID"
+              disabled={busy}
+              value={form.model}
+              onChange={(e) => setForm({ ...form, model: e.target.value })}
+            />
+          </label>
+        )}
         <label className="checkbox">
           <input
             type="checkbox"
@@ -227,7 +275,8 @@ function ModelSettings({ initial, onSave, onClose }) {
           在这台设备记住配置（含 Key）
         </label>
         <p className="fine-print">
-          请求由浏览器直连你的接口；默认仅在当前会话保存密钥。接口需允许跨域访问。
+          请求直连 {preset ? form.baseUrl : "你的接口"}，默认不保存
+          Key。测试会发送两次小型请求，验证图片与工具能力。
         </p>
         {notice && (
           <p role="status" className="notice">
@@ -253,15 +302,11 @@ function ModelSettings({ initial, onSave, onClose }) {
 }
 function readConfig() {
   try {
-    return (
-      JSON.parse(localStorage.getItem("pico-demo-model") ?? "null") ?? {
-        baseUrl: "",
-        apiKey: "",
-        model: "",
-      }
+    return normalizeConfig(
+      JSON.parse(localStorage.getItem("pico-demo-model") ?? "null"),
     );
   } catch {
-    return { baseUrl: "", apiKey: "", model: "" };
+    return { ...defaultConfig };
   }
 }
 
@@ -356,7 +401,7 @@ export function App() {
             .join("\n"),
         );
       } catch (e) {
-        setError(e.message);
+        setError(readableError(e, config.apiKey));
       } finally {
         setSending(false);
       }
