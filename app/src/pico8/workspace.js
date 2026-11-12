@@ -2,7 +2,13 @@
 // working source. The model edits it with pi-durable's built-in `edit` tool;
 // load_game compiles it and commits a version. There is no shell and no other
 // file, so nothing outside the cart can be read or written.
-import { ok, err, FileError, ExecutionError } from "@earendil-works/pi-durable/env";
+import {
+  ok,
+  err,
+  FileError,
+  ExecutionError,
+  LineScanner,
+} from "@earendil-works/pi-durable/env";
 
 export const cartDir = "/cart";
 export const mainPath = "/cart/main.lua";
@@ -17,7 +23,9 @@ function normalize(path) {
   return `/${parts.join("/")}`;
 }
 const notSupported = (path) =>
-  err(new FileError("not_supported", "Not supported in the cart workspace", path));
+  err(
+    new FileError("not_supported", "Not supported in the cart workspace", path),
+  );
 const notFound = (path) =>
   err(
     new FileError(
@@ -41,7 +49,9 @@ export class CartWorkspace {
     this.cwd = cartDir;
   }
   resolve(path) {
-    return normalize(String(path).startsWith("/") ? path : `${this.cwd}/${path}`);
+    return normalize(
+      String(path).startsWith("/") ? path : `${this.cwd}/${path}`,
+    );
   }
   info(path) {
     if (path === mainPath)
@@ -53,7 +63,13 @@ export class CartWorkspace {
         mtimeMs: 0,
       };
     if (dirs.has(path))
-      return { name: path.split("/").pop() || "/", path, kind: "directory", size: 0, mtimeMs: 0 };
+      return {
+        name: path.split("/").pop() || "/",
+        path,
+        kind: "directory",
+        size: 0,
+        mtimeMs: 0,
+      };
     return null;
   }
   async absolutePath(path) {
@@ -109,7 +125,8 @@ export class CartWorkspace {
           p,
         ),
       );
-    const text = typeof content === "string" ? content : new TextDecoder().decode(content);
+    const text =
+      typeof content === "string" ? content : new TextDecoder().decode(content);
     if (text.length > this.maxLength)
       return err(
         new FileError(
@@ -124,11 +141,14 @@ export class CartWorkspace {
   async appendFile(path, content) {
     const r = await this.readTextFile(path);
     if (!r.ok) return r;
-    const add = typeof content === "string" ? content : new TextDecoder().decode(content);
+    const add =
+      typeof content === "string" ? content : new TextDecoder().decode(content);
     return this.writeFile(path, r.value + add);
   }
   async flushFile(path) {
-    return (await this.fileInfo(path)).ok ? ok(undefined) : notFound(this.resolve(path));
+    return (await this.fileInfo(path)).ok
+      ? ok(undefined)
+      : notFound(this.resolve(path));
   }
   async truncateFile(path) {
     return notSupported(this.resolve(path));
@@ -139,8 +159,37 @@ export class CartWorkspace {
   async openTextLineReader(path) {
     return notSupported(this.resolve(path));
   }
-  async openBinaryReader(path) {
-    return notSupported(this.resolve(path));
+  async openBinaryReader(path, _options, context = {}) {
+    context.abortSignal?.throwIfAborted();
+    const result = await this.readBinaryFile(path);
+    if (!result.ok) return result;
+    // One immutable snapshot: line scans and byte ranges always agree.
+    const bytes = result.value;
+    const metadata = { ...this.info(this.resolve(path)), size: bytes.length };
+    let closed = false;
+    const check = (ctx) => {
+      ctx?.abortSignal?.throwIfAborted();
+      if (closed) throw new Error("Reader is closed");
+    };
+    return ok({
+      async info(ctx) {
+        check(ctx);
+        return ok(metadata);
+      },
+      async read(offset, length, ctx) {
+        check(ctx);
+        return ok(bytes.slice(offset, offset + length));
+      },
+      async scanLines(options, ctx) {
+        check(ctx);
+        const scan = new LineScanner(options.startLine, options.endLine);
+        scan.push(bytes);
+        return ok(scan.finish());
+      },
+      async close() {
+        closed = true;
+      },
+    });
   }
   async openDirReader(path) {
     return notSupported(this.resolve(path));

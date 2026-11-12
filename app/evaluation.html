@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>PICO-8 skills evaluation</title>
+    <style>
+      body {
+        font: 16px/1.5 system-ui;
+        background: #11141d;
+        color: #eee;
+        max-width: 1100px;
+        margin: 32px auto;
+        padding: 0 20px;
+      }
+      button {
+        font: inherit;
+        padding: 8px 16px;
+        margin-right: 12px;
+      }
+      #stage {
+        width: 400px;
+        height: 400px;
+      }
+      pre {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        font-size: 12px;
+        max-height: 500px;
+        overflow: auto;
+      }
+      a {
+        color: #ff77a8;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>PICO-8 skills evaluation</h1>
+    <p>
+      Uses this browser's saved model configuration. Twelve disposable attempts:
+      six tasks, twice each. Existing carts and conversations are untouched.
+      Calls the real provider and incurs normal API usage.
+    </p>
+    <p id="model"></p>
+    <button id="start">Run 12 evaluations</button
+    ><button id="stop" disabled>Stop evaluation</button>
+    <p id="status" role="status">Ready</p>
+    <p id="archive"></p>
+    <ol id="runs"></ol>
+    <div id="stage"></div>
+    <details>
+      <summary>Archived results and evidence</summary>
+      <pre id="result"></pre>
+    </details>
+    <script type="module" src="/scripts/evaluation/skills-browser.js"></script>
+  </body>
+</html>

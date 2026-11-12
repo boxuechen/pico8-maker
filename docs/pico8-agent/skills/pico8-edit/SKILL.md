@@ -7,7 +7,7 @@ description: Modify or repair an existing PICO-8 game while preserving unrelated
 
 ## Diagnose the requested change
 
-Read the current source with read_game, even when an older version appears in the conversation. Inspect only resources relevant to this change. Identify the expected behavior and the smallest affected part of the code. For a bug, use a reproducible input sequence and current diagnostics/frames where possible; an inconclusive automated attempt alone is not evidence of a code defect.
+Read the current source with read_game or read({path:"/cart/main.lua"}), even when an older version appears in the conversation. Follow returned offset or byteOffset continuations for any missing source needed by the edit; repeating read_game only rereads the first page. Inspect only resources relevant to this change. Identify the expected behavior and the smallest affected part of the code. For a bug, use a reproducible input sequence and current diagnostics/frames where possible; an inconclusive automated attempt alone is not evidence of a code defect.
 
 ## Make a focused change
 

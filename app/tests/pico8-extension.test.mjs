@@ -379,12 +379,13 @@ test("Pi delivers complete full/cropped ASCII and restores it without replaying 
   await session.loadSource(source);
   await session.advance({ frames: 1 });
   const crop = { format: "ascii", region: { x: 1, y: 3, width: 7, height: 5 } };
+  const game = new Game(() => {}, { versions: [emptySnapshot(source)] });
   const expectedFull = observationText(
-    session.observe(),
+    { ...session.observe(), cart: game.cartStatus("committed") },
     observationOptions({ format: "ascii" }),
   );
   const expectedCrop = observationText(
-    session.observe(),
+    { ...session.observe(), cart: game.cartStatus("committed") },
     observationOptions(crop),
   );
   assert.ok(
@@ -394,7 +395,6 @@ test("Pi delivers complete full/cropped ASCII and restores it without replaying 
   let reads = 0;
   let requests = 0;
   let saved;
-  const game = new Game(() => {}, { versions: [emptySnapshot(source)] });
   game.ensureWorker = async () => {};
   game.player = { pause: async () => {} };
   game.rpc = async (action) => {

@@ -43,7 +43,9 @@ Completion guidance remains partly in the compact shared router so a model canno
 
 ## Verification
 
-Tests cover skill metadata in the actual provider request, absence of bodies from system sections, delivery of the selected original SKILL.md through `read`, lazy/cached loading without game side effects, invalid metadata and broken-link rejection, restored prompt replacement, natural completion beyond 24 tool rounds, and cancellation. Mock provider tests verify integration, not a real model's choice of skill or convergence rate. Real-model behavior remains to be measured.
+Tests cover skill metadata in the actual provider request, absence of bodies from system sections, delivery of the selected original SKILL.md through `read`, lazy/cached loading without game side effects, invalid metadata and broken-link rejection, restored prompt replacement, natural completion beyond 24 tool rounds, and cancellation. Additional contract tests exercise source continuation through Harness, request-scoped project state, and draft budgets/version attribution through the real WASM runtime.
+
+The [2026-11-13 skills evaluation](pico8-agent/research/runs/2026-11-13-skills/README.md) ran six fixed tasks twice with the browser's saved DeepSeek configuration, then repeated the batch after strengthening the compact routing instructions. Automatic checks improved from 7/12 to 12/12; required skill reads improved from 5/10 to 10/10 action tasks. Both batches and their execution/document snapshots are archived. This is a small, single-model development evaluation, not a cross-model reliability or human gameplay-quality claim. The dev-only evaluator has its own cost/time limits; the interactive Agent remains uncapped.
 
 ## Sources
 

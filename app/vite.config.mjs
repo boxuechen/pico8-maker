@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { skillsRecorder } from "./scripts/evaluation/skills-recorder.mjs";
 
 export default defineConfig({
   base: "./",
@@ -18,6 +19,7 @@ export default defineConfig({
     },
   },
   plugins: [
+    skillsRecorder(),
     react(),
     {
       name: "embedded-pico-cartridges",

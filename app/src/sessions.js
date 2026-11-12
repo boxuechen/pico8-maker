@@ -49,8 +49,8 @@ export function sessionContext(cart, session) {
     session.lastContentVersion != null &&
     session.lastContentVersion !== cart.contentVersion;
   return `Current cart: ${JSON.stringify(cart.title)}. Workspace ID: ${cart.id}. Active session ID: ${session.id}.
-Shared cart revision: ${cart.revision}; source/resource change counter: ${cart.contentVersion}.
+At the start of this request: shared cart revision ${cart.revision}; source/resource change counter ${cart.contentVersion}. Tool results describe subsequent changes and current draft/committed state.
 ${cart.versions.length ? "A committed game exists in this cart." : "No game has been committed yet. The working file may be empty or contain an unfinished draft; create and load the first playable version before testing."}
-${session.lastContentVersion == null ? "This is a new conversation about the existing cart." : changed ? "The shared cart content changed since this conversation last ran. Previous source, resources and test results in this history are stale." : "This conversation shares its source and resources with the cart's other sessions."}
+${session.lastContentVersion == null ? "This is a new conversation about the existing cart." : changed ? "The shared cart content changed before this request, since this conversation last ran. Source, resources and test results from earlier requests are stale; this does not invalidate evidence gathered during this request." : "This conversation shares its source and resources with the cart's other sessions."}
 Read /cart/main.lua and read_assets before making changes. Resources are shared across conversations too. Use the current shared working draft, never restore source from conversation history. Starting or switching conversations does not reset the game. Re-establish current test state before relying on historical frames.`;
 }

@@ -15,7 +15,7 @@ description: Create a new PICO-8 game or substantially redesign its core loop. U
 
 Author the game in /cart/main.lua. For a new game or a rewrite of most of the file, load_game can accept complete source. For static sprites, maps or audio, read /extensions/pico8/skills/pico8-assets/SKILL.md when that phase is needed. Procedural resource generation is also valid when intentional.
 
-Load the complete source/resource draft. Inspect diagnostics and the returned PNG. Fix concrete startup failures before testing; failed loads retain the draft and last playable version. API details are in the reference index; do not browse all references in advance.
+Load the complete source/resource draft. Inspect diagnostics, draft code budget and the returned PNG. Ensure the player and first actionable goal are visible; for movement games, check that the required route is reachable from the start. Fix concrete startup failures before testing; failed loads retain the draft and last playable version. API details are in the reference index; do not browse all references in advance.
 
 ## Verify and deliver
 

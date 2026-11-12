@@ -14,6 +14,8 @@ Define the unresolved behavior, expected visible result and a reproducible start
 - Check the first actionable screen and main player action. Sample an outcome or retry relevant to the request. For a focused edit, test the changed behavior and nearby effects.
 - Use returned PNGs to judge gameplay, sprite alignment, feedback and HUD readability. Read /extensions/pico8/references/playtest.md only when observation formats, pixel crops, frame identity or persistence details need clarification.
 - Choose input sequences from the source's controls, timing and geometry. Use short batches near collisions/transitions, longer batches for predictable waiting/movement, and release buttons between distinct presses.
+- When relevant to the requested core loop, check goal reachability, resource accounting, and whether doing nothing or repeatedly pressing one button bypasses the challenge. Select the checks that apply; a focused edit does not require restarting every passed gameplay check.
+- Associate evidence with cart.observed.cartRevision and the runtime sessionId/generation/revision/frameId. cart.draftSourceBudget describes the working draft; a failed-draft observation is not evidence of a committed playable update.
 - load_game, reset_game and press_buttons already return PNG. observe_game does not advance time; repeating it cannot verify waiting or landing. Request a crop or alternate format only for a specific unresolved visual question.
 
 ## Repair or finish

@@ -100,7 +100,12 @@ export class Agent {
       knowledge: this.knowledge,
     });
     if (this.projectContext)
-      pico8.sections.push(section("pico8_project", this.projectContext));
+      pico8.sections.push(
+        section(
+          "pico8_project",
+          () => this.runProjectContext ?? this.projectContext(),
+        ),
+      );
     registry.install(pico8);
     this.harness = await Harness.open(
       new MemoryStorage(),
@@ -190,11 +195,18 @@ export class Agent {
   }
   async send(text) {
     if (!this.configured) throw new Error("Please connect a model first.");
-    const submission = await this.root.submit(
-      { type: "input", content: text },
-      context,
-    );
-    return submission.wait(context);
+    // A request owns its edits. Freeze the entry baseline so its own tools do
+    // not make fresh evidence look like a change by another conversation.
+    this.runProjectContext = this.projectContext?.();
+    try {
+      const submission = await this.root.submit(
+        { type: "input", content: text },
+        context,
+      );
+      return await submission.wait(context);
+    } finally {
+      this.runProjectContext = undefined;
+    }
   }
   async abort() {
     this.game.cancelTests();

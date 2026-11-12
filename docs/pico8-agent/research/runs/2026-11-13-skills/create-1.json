@@ -1,0 +1,76 @@
+{
+  "sourceSha256": "dd0830c3fddbe54f44728a7381a73ac486256641adb0acd8f8736ac5c7ebaec3",
+  "resourcesSha256": "e003dd13f75baf94bf01554ec326fcad5a92372c913a8946b06449e4ddd90e15",
+  "evidence": [
+    {
+      "name": "start",
+      "frames": 1,
+      "buttons": 0,
+      "diagnostics": [],
+      "state": "paused",
+      "frameId": 0,
+      "image": "create-1-start.png",
+      "rgbaSha256": "ac18f4e1dbd8db8c3e8c9a787b2c5a99b80dc88d786f153f10edb833c4447abf"
+    },
+    {
+      "name": "win",
+      "frames": 80,
+      "buttons": 2,
+      "diagnostics": [],
+      "state": "paused",
+      "frameId": 80,
+      "image": "create-1-win.png",
+      "rgbaSha256": "6cf4d16fe76487dba65d9a4f7763cb3ad9ee38b4bd7c4cfa4da25f5d588e77c2"
+    },
+    {
+      "name": "release",
+      "frames": 1,
+      "buttons": 0,
+      "diagnostics": [],
+      "state": "paused",
+      "frameId": 81,
+      "image": "create-1-release.png",
+      "rgbaSha256": "dc56330112d4ffc0cc187a628db7b45dc43ccc73a96f8bdfab0b1767a6148221"
+    },
+    {
+      "name": "win-retry",
+      "frames": 1,
+      "buttons": 16,
+      "diagnostics": [],
+      "state": "paused",
+      "frameId": 82,
+      "image": "create-1-win-retry.png",
+      "rgbaSha256": "264bdcc9333f8a6b8e8f62c60374084930de1aefbe86e2c55a2fe5be5626347e"
+    },
+    {
+      "name": "lose",
+      "frames": 30,
+      "buttons": 1,
+      "diagnostics": [],
+      "state": "paused",
+      "frameId": 112,
+      "image": "create-1-lose.png",
+      "rgbaSha256": "b7952142891f281b4d514a8a04b22b03eef6293375ec59e8d5267ad70e16af2b"
+    },
+    {
+      "name": "release2",
+      "frames": 1,
+      "buttons": 0,
+      "diagnostics": [],
+      "state": "paused",
+      "frameId": 113,
+      "image": "create-1-release2.png",
+      "rgbaSha256": "5b44d8d71327979d3e77d133a14c1c7bbb3c755c1de608e74f53184a1fa541f3"
+    },
+    {
+      "name": "lose-retry",
+      "frames": 1,
+      "buttons": 16,
+      "diagnostics": [],
+      "state": "paused",
+      "frameId": 114,
+      "image": "create-1-lose-retry.png",
+      "rgbaSha256": "3c53bf880f623d4a866e70fc285e17d2bf0a89eeab711973cb867a507ee4e0dc"
+    }
+  ]
+}

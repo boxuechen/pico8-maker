@@ -7,6 +7,7 @@ import { readAssetsSchema, editAssetsSchema } from "./asset-tools.js";
 import { capabilities } from "./capabilities.js";
 import { mountKnowledge } from "./knowledge-env.js";
 import { mainPath } from "./workspace.js";
+import { readSource, sourceRangeProperties } from "./source-read.js";
 const schema = (properties = {}, required = []) => ({
   type: "object",
   properties,
@@ -21,7 +22,7 @@ export function createPico8Tools({ game, knowledge }) {
       "Read authored resource drafts. Omit all arguments for used-slot inventory. Use kind/id/count for sprite, sfx or music; kind=map requires x,y,width,height (max 32×32). Does not read live RAM or advance the game.",
     edit_assets:
       "Atomically edit native cartridge resources. Sprites use eight 8-pixel hex rows (0–f), optional flags. Map patches use rectangular tile-id rows, within 128×32. SFX replaces one slot; omitted tail notes are silent, loops default off. Music replaces one pattern; four SFX ids or null, flags default false. A sprite edit requires rows or flags; omitted fields preserve that sprite's other data. Resources are loaded before _init. Edits affect only the draft until load_game; invalid batches apply nothing. Read occupied slots before allocating ids. All 256 sprites are available; map rows 32–63 share sprite memory and are not editable by this tool.",
-    read_game: `Read the complete working source, the workspace file ${mainPath} (path main.lua for edit). Read it before editing. This is not a live-variable snapshot.`,
+    read_game: `Read the first page of the current working source, ${mainPath}, plus draft/committed status and approximate code budget. Bounded to 2000 lines or 50 KiB. Follow the returned read({path,offset}) or byteOffset continuation until the needed source is read. Repeating read_game starts at the beginning. Not a live-variable snapshot.`,
     load_game: `Compile ${mainPath} with the current resource draft, run one frame and commit both as a new version. Omit source after targeted edit calls; pass complete Lua source (game logic; static resources are edited separately with edit_assets) to replace the whole file for a new game or a rewrite. Failure retains both drafts and the previous committed playable cart. Passing source never clears resource drafts. Returns PNG and diagnostics; startup success is not gameplay verification.`,
     reset_game:
       "Reload the last committed version into the independent test session and advance one frame. Uncommitted edits are not loaded. This does not promise to erase cartdata.",
@@ -75,8 +76,19 @@ export function createPico8Tools({ game, knowledge }) {
   const read = createReadTool();
   const readTool = {
     ...read,
+    description: `${read.description} For an oversized line in ${mainPath}, use the returned byteOffset continuation; no shell is available.`,
+    parameters: {
+      ...read.parameters,
+      properties: { ...read.parameters.properties, ...sourceRangeProperties },
+    },
     replay: "safe",
-    execute: (args, api, ctx) => read.execute(args, withEnv(api, env), ctx),
+    execute: async (args, api, ctx) => {
+      if (game.workspace?.resolve(args.path) === mainPath)
+        return readSource(args, game.workspace, ctx);
+      if (args.byteOffset !== undefined || args.byteLimit !== undefined)
+        throw new Error(`Byte ranges are only available for ${mainPath}`);
+      return read.execute(args, withEnv(api, env), ctx);
+    },
   };
   // pi-durable's edit tool, always pointed at this cart's workspace rather than
   // whatever environment the harness has (it has none).

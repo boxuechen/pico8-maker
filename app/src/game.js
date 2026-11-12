@@ -13,6 +13,8 @@ import {
 } from "./pico8/assets.js";
 import { downloadCart, cartBytes } from "./pico8/cart.js";
 import { CartWorkspace } from "./pico8/workspace.js";
+import { readSource } from "./pico8/source-read.js";
+import { sourceBudget } from "./pico8/source-budget.js";
 
 export class Game {
   constructor(onChange, { versions, revision, draft, onSave, onDraft } = {}) {
@@ -46,6 +48,25 @@ export class Game {
   }
   get hasGame() {
     return this.versions.length > 0;
+  }
+  cartStatus(observed) {
+    if (this.budgetSource !== this.draft.source) {
+      this.budgetSource = this.draft.source;
+      this.budget = sourceBudget(this.draft.source);
+    }
+    return {
+      committedRevision: this.hasGame ? this.revision : null,
+      draftDirty: !sameSnapshot(this.draft, this.snapshot),
+      draftSourceBudget: this.budget,
+      ...(observed
+        ? {
+            observed: {
+              kind: observed,
+              cartRevision: observed === "committed" ? this.revision : null,
+            },
+          }
+        : {}),
+    };
   }
   setDraft(text) {
     this.setWorking({ ...this.draft, source: text });
@@ -284,8 +305,24 @@ export class Game {
       ].includes(action)
     )
       throw new Error(`未知游戏工具：${action}`);
-    if (action === "read_game")
-      return { output: [{ type: "text", text: this.draft.source }] };
+    if (action === "read_game") {
+      const { structuredOutput: _programOutput, ...result } = await readSource(
+        {},
+        this.workspace,
+        { abortSignal: signal },
+      );
+      return {
+        ...result,
+        diagnostics: [
+          ...(result.diagnostics ?? []),
+          {
+            severity: "info",
+            code: "cart_status",
+            message: JSON.stringify(this.cartStatus()),
+          },
+        ],
+      };
+    }
     if (action === "read_assets")
       return {
         output: [
@@ -335,7 +372,10 @@ export class Game {
         observation = (await this.rpc("advance", { frames: 1, buttons: 0 }))
           .observation;
       if (observation.state === "faulted") {
-        const result = this.output(observation);
+        const result = this.output({
+          ...observation,
+          cart: this.cartStatus("failed-draft"),
+        });
         if (this.hasGame)
           await this.rpc("load", { cart: cartBytes(this.snapshot) });
         else this.cancelTests();
@@ -390,7 +430,10 @@ export class Game {
     } else observation = await this.rpc("observe");
     if (observation.frame) this.testFrame = observation.frame;
     this.changed();
-    const result = this.output(observation, options);
+    const result = this.output(
+      { ...observation, cart: this.cartStatus("committed") },
+      options,
+    );
     if (note) result.output[0].text += note;
     return result;
   }

@@ -1,3 +1,11 @@
+# Real-model skills evaluation
+
+Open `/evaluation.html` on the same local development origin used for the main app's saved model settings. The page uses the production Agent, tools, compiled documents and real Worker/WASM, with disposable in-memory carts. It never writes the test carts or conversations to the user's shelf. Run 12 evaluations executes create/edit/assets/playtest/explain/compact twice; Stop cancels the active request. Normal provider charges apply. Credentials remain in the browser configuration and are redacted from archived results.
+
+`skills-browser.js` runs the cases from `skills-cases.mjs`; the dev-only `skills-recorder.mjs` accepts same-origin loopback POSTs and archives reports plus source, knowledge, evaluator and dependency-lock snapshots in `.cache/evaluations/skills-<id>/`. Production builds do not include this page or archive endpoint. The harness checks successful skill reads, scope/resource preservation, actual inputs, natural completion and exact fixture movement pixels. Create-game checks require separate gameplay review. Compaction uses declared synthetic history, real provider summarization and transcript restoration. The evaluator alone has a 180-second / 40-tool budget per attempt; the interactive app remains uncapped.
+
+Run `npm run test:skills` from `app/` for deterministic evaluator tests. The [2026-11-13 report](../../../docs/pico8-agent/research/runs/2026-11-13-skills/README.md) records two full DeepSeek batches, including the routing failures that motivated the final prompt change. Preserve raw attempts; do not selectively rerun failures or silently repair generated games.
+
 # Fixed-task knowledge-pack pilot
 
 This is a research harness, separate from the production UI. The recorded first run and interpretation are in `docs/pico8-agent/research/runs/2026-11-12-deepseek-flash/README.md`.
