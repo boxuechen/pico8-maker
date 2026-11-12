@@ -185,10 +185,20 @@ export class Agent {
       },
       context,
     );
+    if (this.providerId && this.providerId !== model.provider)
+      this.models.deleteProvider(this.providerId);
+    this.providerId = model.provider;
     this.apiKey = config.apiKey;
     this.configured = true;
   }
+  clearConnection() {
+    if (this.providerId) this.models.deleteProvider(this.providerId);
+    this.providerId = null;
+    this.apiKey = "";
+    this.configured = false;
+  }
   async send(text) {
+    if (!this.configured) throw new Error("Please connect a model first.");
     const submission = await this.root.submit(
       { type: "input", content: text },
       context,

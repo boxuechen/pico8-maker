@@ -143,3 +143,123 @@ test("a text-only response cannot pass the capability probe", async (t) => {
   );
   await assert.rejects(probeConnection(config, image, "red"), /工具/);
 });
+
+test("mainstream catalogs preserve Pi protocols and distinguish Qwen regional keys", () => {
+  const apis = new Set();
+  for (const p of providers) {
+    assert.ok(p.models.length > 0, p.id);
+    for (const model of p.models) {
+      assert.ok(model.input.includes("image"));
+      const connection = createConnection({
+        provider: p.id,
+        model: model.id,
+        baseUrl: model.baseUrl,
+        apiKey: config.apiKey,
+      });
+      assert.equal(connection.model, model);
+      apis.add(model.api);
+    }
+  }
+  assert.equal(apis.size, 5);
+  for (const id of [
+    "openai",
+    "anthropic",
+    "google",
+    "deepseek",
+    "qwen-cn",
+    "qwen",
+    "openrouter",
+    "moonshotai-cn",
+    "minimax-cn",
+    "mistral",
+    "xai",
+  ])
+    assert.ok(
+      providers.some((p) => p.id === id),
+      id,
+    );
+  const qwen = providers.find((p) => p.id === "qwen-cn");
+  assert.ok(
+    qwen.models.every(
+      (m) =>
+        m.baseUrl === "https://dashscope.aliyuncs.com/compatible-mode/v1" &&
+        m.id.startsWith("qwen"),
+    ),
+  );
+  assert.notEqual(
+    qwen.models[0].baseUrl,
+    providers.find((p) => p.id === "qwen-token-plan-cn").models[0].baseUrl,
+  );
+});
+
+// Exercise real lazy adapters, not just their names in the selector. A controlled
+// 401 avoids real provider traffic while validating URL, auth, image and tools.
+for (const [id, modelId, path, authHeader] of [
+  ["openai", "gpt-4.1", "/v1/responses", "authorization"],
+  ["anthropic", "claude-sonnet-4-5", "/v1/messages", "x-api-key"],
+  [
+    "google",
+    "gemini-2.5-flash",
+    "/v1beta/models/gemini-2.5-flash:streamGenerateContent",
+    "x-goog-api-key",
+  ],
+  ["mistral", "mistral-small-latest", "/v1/chat/completions", "authorization"],
+  [
+    "qwen-cn",
+    "qwen3.6-flash",
+    "/compatible-mode/v1/chat/completions",
+    "authorization",
+  ],
+]) {
+  test(`${id} uses its native adapter with image and tool payloads`, async (t) => {
+    const preset = providers
+      .find((p) => p.id === id)
+      .models.find((m) => m.id === modelId);
+    let requests = 0;
+    t.mock.method(globalThis, "fetch", async (input, init) => {
+      const request = new Request(input, init);
+      requests++;
+      assert.equal(new URL(request.url).pathname, path);
+      assert.equal(
+        request.headers.get(authHeader),
+        authHeader === "authorization"
+          ? `Bearer ${config.apiKey}`
+          : config.apiKey,
+      );
+      const body = await request.json();
+      assert.ok(
+        JSON.stringify(body).includes(image.data),
+        "request contains screenshot",
+      );
+      assert.ok(
+        JSON.stringify(body.tools).includes("report_screen"),
+        "request contains tool schema",
+      );
+      return Response.json(
+        {
+          error: {
+            message: "Invalid API key",
+            type: "authentication_error",
+            code: 401,
+            status: "UNAUTHENTICATED",
+          },
+        },
+        { status: 401 },
+      );
+    });
+    await assert.rejects(
+      probeConnection(
+        {
+          provider: id,
+          model: modelId,
+          baseUrl: preset.baseUrl,
+          apiKey: config.apiKey,
+        },
+        image,
+        "red",
+      ),
+      /401|Invalid API key/i,
+    );
+    assert.equal(requests, 1);
+  });
+}

@@ -11,7 +11,7 @@
     "prepare:player": "node scripts/prepare-player.mjs",
     "predev": "npm run prepare:player",
     "prebuild": "npm run prepare:player",
-    "test": "node --test tests/runtime.test.mjs tests/model-connection.test.mjs tests/project-store.test.mjs tests/cartridges.test.mjs tests/workbench-state.test.mjs",
+    "test": "node --test tests/runtime.test.mjs tests/model-connection.test.mjs tests/model-store.test.mjs tests/project-store.test.mjs tests/cartridges.test.mjs tests/workbench-state.test.mjs",
     "test:model": "node tests/mock-model.mjs"
   },
   "dependencies": {

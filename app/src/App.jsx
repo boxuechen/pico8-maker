@@ -48,11 +48,17 @@ import {
   readableError,
 } from "./model-config.js";
 
+import {
+  readModelConfig,
+  writeModelConfig,
+  clearModelConfig,
+} from "./model-store.js";
+
 const convertMessage = (message) => message;
-function ModelSettings({ initial, onSave, onClose, pending }) {
+function ModelSettings({ initial, onSave, onClear, onClose, pending }) {
   const dialog = useRef(null);
   const [form, setForm] = useState(() => normalizeConfig(initial));
-  const [remember, setRemember] = useState(initial.remember ?? false);
+  const [remember, setRemember] = useState(initial.remember ?? true);
   const [busy, setBusy] = useState(false),
     [notice, setNotice] = useState("");
   useEffect(() => {
@@ -60,9 +66,18 @@ function ModelSettings({ initial, onSave, onClose, pending }) {
   }, []);
   const probeAbort = useRef(null);
   useEffect(() => () => probeAbort.current?.abort(), []);
+  const [modelSearch, setModelSearch] = useState("");
   const preset = providers.find((p) => p.id === form.provider);
+  const filteredModels = preset?.models.filter(
+    (m) =>
+      m.id === form.model ||
+      `${m.name} ${m.id}`
+        .toLowerCase()
+        .includes(modelSearch.toLowerCase().trim()),
+  );
   function selectProvider(id) {
-    const model = providers.find((p) => p.id === id)?.models[0];
+    setModelSearch("");
+    const model = providers.find((p) => p.id === id)?.defaultModel;
     // Credentials never follow the user across service origins.
     setForm({
       provider: id,
@@ -158,6 +173,18 @@ function ModelSettings({ initial, onSave, onClose, pending }) {
             <option value="custom">Custom compatible API</option>
           </select>
         </label>
+        {preset?.models.length > 12 && (
+          <label>
+            Find a model
+            <input
+              type="search"
+              placeholder="Search model names…"
+              value={modelSearch}
+              disabled={busy}
+              onChange={(e) => setModelSearch(e.target.value)}
+            />
+          </label>
+        )}
         {preset && (
           <label>
             Model
@@ -168,11 +195,20 @@ function ModelSettings({ initial, onSave, onClose, pending }) {
                 const model = preset.models.find(
                   (m) => m.id === e.target.value,
                 );
-                setForm({ ...form, model: model.id, baseUrl: model.baseUrl });
+                setForm({
+                  ...form,
+                  model: model.id,
+                  baseUrl: model.baseUrl,
+                  apiKey:
+                    new URL(model.baseUrl).origin ===
+                    new URL(form.baseUrl).origin
+                      ? form.apiKey
+                      : "",
+                });
                 setNotice("");
               }}
             >
-              {preset.models.map((m) => (
+              {filteredModels.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.name}
                 </option>
@@ -181,7 +217,11 @@ function ModelSettings({ initial, onSave, onClose, pending }) {
           </label>
         )}
         {preset && (
-          <p className="model-detail">{form.model} · Image input supported</p>
+          <p className="model-detail">
+            {preset.models.length} image-capable{" "}
+            {preset.models.length === 1 ? "model" : "models"} · Test to verify
+            tool support
+          </p>
         )}
         {!preset && (
           <label>
@@ -192,7 +232,9 @@ function ModelSettings({ initial, onSave, onClose, pending }) {
               disabled={busy}
               placeholder="https://your-provider.com/v1"
               value={form.baseUrl}
-              onChange={(e) => setForm({ ...form, baseUrl: e.target.value })}
+              onChange={(e) =>
+                setForm({ ...form, baseUrl: e.target.value, apiKey: "" })
+              }
             />
           </label>
         )}
@@ -224,20 +266,41 @@ function ModelSettings({ initial, onSave, onClose, pending }) {
           <input
             type="checkbox"
             checked={remember}
+            disabled={busy}
             onChange={(e) => setRemember(e.target.checked)}
           />
           Remember settings on this device (including key)
         </label>
         <p className="fine-print">
-          Requests go directly to {preset ? form.baseUrl : "your endpoint"}.
-          Keys are not saved by default. Connection testing sends two small
-          requests to check image and tool support.
+          Saved in this browser by default. Requests go directly to{" "}
+          {preset ? form.baseUrl : "your endpoint"}. Connection test: two small
+          requests for images and tools.
         </p>
         {notice && (
           <p role="status" className="notice">
             {notice}
           </p>
         )}
+        <button
+          type="button"
+          className="clear-model-settings"
+          disabled={busy || !initial.apiKey}
+          onClick={() => {
+            try {
+              onClear();
+              setForm({ ...defaultConfig });
+              setRemember(true);
+              setModelSearch("");
+              setNotice(
+                "Local model settings cleared. Your game and chat are kept.",
+              );
+            } catch {
+              setNotice("Could not clear browser storage. Please try again.");
+            }
+          }}
+        >
+          Clear saved settings
+        </button>
         <div className="dialog-actions">
           <button
             type="button"
@@ -255,15 +318,6 @@ function ModelSettings({ initial, onSave, onClose, pending }) {
       </form>
     </dialog>
   );
-}
-function readConfig() {
-  try {
-    return normalizeConfig(
-      JSON.parse(localStorage.getItem("pico-demo-model") ?? "null"),
-    );
-  } catch {
-    return { ...defaultConfig };
-  }
 }
 
 export function App() {
@@ -324,7 +378,7 @@ export function App() {
     [ready, setReady] = useState(false),
     [configured, setConfigured] = useState(false);
   const [settings, setSettings] = useState(false),
-    [config, setConfig] = useState(readConfig),
+    [config, setConfig] = useState(readModelConfig),
     [code, setCode] = useState(false);
   const [sending, setSending] = useState(false);
   const [cartLoading, setCartLoading] = useState(false);
@@ -466,9 +520,16 @@ export function App() {
   }
   async function saveConfig(next) {
     await agentRef.current.configure(next);
-    if (next.remember)
-      localStorage.setItem("pico-demo-model", JSON.stringify(next));
-    else localStorage.removeItem("pico-demo-model");
+    try {
+      writeModelConfig(next);
+    } catch {
+      // A failed save must not leave a hidden, newly selected connection active.
+      if (configured) await agentRef.current.configure(config);
+      else agentRef.current.clearConnection();
+      throw new Error(
+        "Could not save settings in this browser. Allow local storage or turn off Remember settings.",
+      );
+    }
     setConfig(next);
     setConfigured(true);
     setSettings(false);
@@ -476,6 +537,12 @@ export function App() {
     pendingRef.current = "";
     setPending("");
     if (text) void sendMessage(text);
+  }
+  function clearConfig() {
+    clearModelConfig();
+    agentRef.current.clearConnection();
+    setConfig({ ...defaultConfig });
+    setConfigured(false);
   }
   const playing = game.state === "running" && !game.testFrame;
   const conversationTitle =
@@ -529,15 +596,6 @@ export function App() {
                   Continue making <ChevronRight size={14} />
                 </button>
               )}
-              <button
-                className="settings-button"
-                disabled={!ready || busy}
-                onClick={() => setSettings(true)}
-              >
-                <Settings size={16} />
-                <span>{configured ? "Model connected" : "Connect model"}</span>
-                {configured && <i />}
-              </button>
               <details className="more">
                 <summary aria-label="Project actions">
                   <MoreHorizontal size={20} />
@@ -746,9 +804,22 @@ export function App() {
                     rows={2}
                   />
                   <div className="composer-footer">
-                    <span>
-                      {configured ? config.model : "Bring your own API key"}
-                    </span>
+                    <button
+                      type="button"
+                      className="composer-model-button"
+                      aria-label="Model settings"
+                      title={
+                        configured
+                          ? `${providers.find((p) => p.id === config.provider)?.name ?? "Custom API"} · ${config.model}`
+                          : "Choose a model and API key"
+                      }
+                      disabled={!ready || busy}
+                      onClick={() => setSettings(true)}
+                    >
+                      <Settings size={14} />
+                      <span>{configured ? config.model : "Connect model"}</span>
+                      <ChevronRight size={13} />
+                    </button>
                     {chat.isRunning || sending ? (
                       <ComposerPrimitive.Cancel
                         aria-label="Stop generation"
@@ -981,6 +1052,7 @@ export function App() {
             onClose={closeSettings}
             pending={!!pending}
             onSave={saveConfig}
+            onClear={clearConfig}
           />
         )}{" "}
         {code && (

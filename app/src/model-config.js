@@ -1,27 +1,25 @@
 import { createModels, createProvider } from "@earendil-works/pi-ai/models";
 import { openAICompletionsApi } from "@earendil-works/pi-ai/api/openai-completions.lazy";
-import { DEEPSEEK_MODELS } from "@earendil-works/pi-ai/providers/deepseek.models";
-import { OPENROUTER_MODELS } from "@earendil-works/pi-ai/providers/openrouter.models";
+import { openAIResponsesApi } from "@earendil-works/pi-ai/api/openai-responses.lazy";
+import { anthropicMessagesApi } from "@earendil-works/pi-ai/api/anthropic-messages.lazy";
+import { googleGenerativeAIApi } from "@earendil-works/pi-ai/api/google-generative-ai.lazy";
+import { mistralConversationsApi } from "@earendil-works/pi-ai/api/mistral-conversations.lazy";
+import { providers } from "./model-catalog.js";
+export { providers } from "./model-catalog.js";
 
-// Keep Pi's model capabilities, endpoint and compatibility metadata intact.
-const visionModels = (catalog) =>
-  Object.values(catalog)
-    .filter((m) => m.api === "openai-completions" && m.input.includes("image"))
-    .sort((a, b) => a.name.localeCompare(b.name));
-export const providers = [
-  { id: "deepseek", name: "DeepSeek", models: visionModels(DEEPSEEK_MODELS) },
-  {
-    id: "openrouter",
-    name: "OpenRouter",
-    models: visionModels(OPENROUTER_MODELS),
-  },
-];
+const adapters = {
+  "openai-completions": openAICompletionsApi,
+  "openai-responses": openAIResponsesApi,
+  "anthropic-messages": anthropicMessagesApi,
+  "google-generative-ai": googleGenerativeAIApi,
+  "mistral-conversations": mistralConversationsApi,
+};
 export const defaultConfig = {
   provider: "deepseek",
   model: "deepseek-flash",
-  baseUrl: DEEPSEEK_MODELS["deepseek-flash"].baseUrl,
+  baseUrl: providers[0].models.find((m) => m.id === "deepseek-flash").baseUrl,
   apiKey: "",
-  remember: false,
+  remember: true,
 };
 export function normalizeConfig(value = {}) {
   if (!value || typeof value !== "object") return { ...defaultConfig };
@@ -34,6 +32,7 @@ export function normalizeConfig(value = {}) {
     ),
   );
   return {
+    remember: true,
     ...value,
     provider: value.provider ?? known?.id ?? "custom",
     apiKey: value.apiKey ?? "",
@@ -96,7 +95,7 @@ export function createConnection(value) {
       maxTokensField: "max_tokens",
     },
   };
-  const api = openAICompletionsApi();
+  const api = adapters[model.api]();
   const options = (o) => ({
     ...o,
     maxTokens: Math.min(o?.maxTokens ?? 12000, model.maxTokens),
