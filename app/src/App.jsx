@@ -562,10 +562,22 @@ export function App() {
           running: chat.isRunning || sending,
         }}
       >
-        <div className={`app ${workspace ? "studio-mode" : "home-mode"}`}>
+        <div
+          className={`app ${workspace ? "studio-mode" : "home-mode"}`}
+          style={{ "--chat-width": `${split}%` }}
+        >
           <PageHeader
             busy={busy}
             title={conversationTitle}
+            previewStatus={
+              busy
+                ? "AI playtesting"
+                : game.testFrame
+                  ? "Ready to play"
+                  : playing
+                    ? "Playing"
+                    : "Press play to try"
+            }
             hasConversation={chat.messages.length > 0}
             onHome={() => {
               setWorkspace(false);
@@ -609,7 +621,7 @@ export function App() {
               </div>
             </details>
           </PageHeader>
-          <main className="workspace" style={{ "--chat-width": `${split}%` }}>
+          <main className="workspace">
             {!workspace && (
               <>
                 <section className="home-intro">
@@ -895,20 +907,6 @@ export function App() {
               />
             )}
             <section className="player-panel" aria-label="Game preview">
-              {workspace && (
-                <div className="preview-heading">
-                  <span>Preview</span>
-                  <span>
-                    {busy
-                      ? "AI playtesting"
-                      : game.testFrame
-                        ? "Ready to play"
-                        : playing
-                          ? "Playing"
-                          : "Press play to try"}
-                  </span>
-                </div>
-              )}
               <div className="console-group" ref={stage}>
                 <div className="console">
                   <div className="screen-backdrop" />

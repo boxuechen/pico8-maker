@@ -44,14 +44,28 @@ export function HomeHeader({
   );
 }
 
-export function WorkbenchHeader({ busy, onHome, title, children }) {
+export function WorkbenchHeader({
+  busy,
+  onHome,
+  title,
+  previewStatus,
+  children,
+}) {
   return (
     <header className="topbar workbench-header">
-      <HomeButton compact disabled={busy} onClick={onHome} />
-      <h1 className="conversation-title" title={title}>
-        {title}
-      </h1>
-      <div className="top-actions">{children}</div>
+      <div className="workbench-chat-heading">
+        <HomeButton compact disabled={busy} onClick={onHome} />
+        <h1 className="conversation-title" title={title}>
+          {title}
+        </h1>
+      </div>
+      <div className="workbench-preview-heading">
+        <h2>Preview</h2>
+        <span className="preview-status" role="status">
+          {previewStatus}
+        </span>
+        <div className="top-actions">{children}</div>
+      </div>
     </header>
   );
 }

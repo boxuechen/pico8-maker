@@ -14,7 +14,6 @@
 .studio-mode .topbar,
 .studio-mode .chat-panel,
 .studio-mode .player-panel,
-.studio-mode .preview-heading,
 .studio-mode .composer-area {
   background: var(--canvas);
 }
@@ -23,18 +22,6 @@
 }
 .studio-mode .workspace {
   grid-template-columns: var(--chat-width, 58%) 5px minmax(0, 1fr);
-}
-.studio-mode .preview-heading {
-  height: 43px;
-  padding: 0 28px;
-  border: 0;
-  font: 14px var(--workbench-font);
-  letter-spacing: 0;
-  color: var(--muted);
-}
-.studio-mode .preview-heading span:last-child {
-  font: 12px var(--workbench-font);
-  color: var(--muted);
 }
 .studio-mode .chat-viewport {
   padding: 20px 28px 24px;
@@ -180,7 +167,7 @@
   font: 13px/1.5 var(--workbench-font);
 }
 .studio-mode .player-panel {
-  padding: 54px 24px 24px;
+  padding: 20px 24px 24px;
   align-items: flex-start;
 }
 /* 540px shell contains the original 128px screen at exactly 3x. */
@@ -193,11 +180,59 @@
 .studio-mode .console-group:fullscreen .console {
   width: min(80vw, calc((100dvh - 120px) * 180 / 210));
 }
-/* Workbench navigation is a single compact row, independent of the home header. */
+/* Header and content share the resizable columns and divider. */
 .studio-mode .workbench-header {
+  display: grid;
+  grid-template-columns: var(--chat-width, 58%) 5px minmax(0, 1fr);
   height: 52px;
+  padding: 0;
+  gap: 0;
+}
+.studio-mode .workbench-header::before {
+  content: "";
+  grid-column: 2;
+  grid-row: 1;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    transparent 2px,
+    var(--edge) 2px,
+    var(--edge) 3px,
+    transparent 3px
+  );
+}
+.workbench-chat-heading,
+.workbench-preview-heading {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  height: 100%;
   padding: 0 24px;
+}
+.workbench-chat-heading {
+  grid-column: 1;
+  grid-row: 1;
   gap: 12px;
+}
+.workbench-preview-heading {
+  grid-column: 3;
+  grid-row: 1;
+  gap: 16px;
+}
+.workbench-preview-heading h2 {
+  flex-shrink: 0;
+  font: 16px/1.5 var(--workbench-font);
+  color: var(--text);
+}
+.workbench-preview-heading .preview-status {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+  font: 12px/1.5 var(--workbench-font);
+  color: var(--muted);
 }
 .studio-mode .workbench-header .top-actions {
   flex-shrink: 0;
@@ -207,8 +242,19 @@
 }
 @media (max-width: 800px) {
   .studio-mode .workbench-header {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .studio-mode .workbench-header::before,
+  .workbench-preview-heading .preview-status {
+    display: none;
+  }
+  .workbench-chat-heading,
+  .workbench-preview-heading {
     padding: 0 12px;
     gap: 8px;
+  }
+  .workbench-preview-heading {
+    grid-column: 2;
   }
 }
 .studio-mode .app-title {
@@ -365,11 +411,6 @@ dialog {
   .studio-mode .assistant {
     padding-right: 0;
   }
-  .studio-mode .preview-heading {
-    height: 34px;
-    padding: 0 17px;
-    font-size: 13px;
-  }
   .studio-mode .composer-area {
     padding: 10px 12px;
   }
@@ -381,7 +422,7 @@ dialog {
     padding: 10px 12px;
   }
   .studio-mode .player-panel {
-    padding: 35px 12px 7px;
+    padding: 8px 12px 7px;
   }
   .studio-mode .console {
     width: min(210px, calc((40dvh - 120px) * 180 / 210));
