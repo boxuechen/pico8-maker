@@ -5,7 +5,7 @@ const read = (path) => readFile(new URL(path, root), "utf8");
 const hash = (text) => createHash("sha256").update(text).digest("hex");
 const manifest = JSON.parse(await read("manifest.json"));
 const palette = JSON.parse(await read("palette.json"));
-const validation = JSON.parse(await read("validation-results.json"));
+const validations = new Map();
 const references = {};
 for (const item of manifest.references) {
   if (references[item.id]) throw new Error(`Duplicate reference ${item.id}`);
@@ -17,6 +17,10 @@ for (const item of manifest.references) {
     content = marker + content.split(marker)[1].split("\n## ")[0];
   }
   if (item.id.startsWith("recipe/")) {
+    const receiptFile = item.validation ?? "validation-results.json";
+    if (!validations.has(receiptFile))
+      validations.set(receiptFile, JSON.parse(await read(receiptFile)));
+    const validation = validations.get(receiptFile);
     const receipt = validation.checks.find(
       (c) =>
         c.name ===

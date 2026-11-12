@@ -29,3 +29,20 @@ Bundled English references are available through read_reference({"id":"..."}). C
 - `api/persistence`: API catalog: persistence
 - `api/gpio`: API catalog: gpio
 - `api/lua`: API catalog: lua
+- `guide/game-design`: Designing a replayable small game
+- `guide/microgames`: Original microgames: controls, tuning and limits
+- `case/celeste-classic`: Celeste Classic: forgiving precision
+- `case/just-one-boss`: Just One Boss: readable attack phases
+- `case/porklike`: Porklike: turn and resource decisions
+- `case/high-stakes`: High Stakes: information and optional risk
+- `pattern/forgiving-controls`: Input forgiveness and consistent controls
+- `pattern/telegraph-attack-recovery`: Readable attack phases
+- `pattern/risk-reward`: Optional risk and visible reward
+- `pattern/teach-vary-combine`: Teach, vary, then combine
+- `pattern/turn-economy`: Action costs and turn resolution
+- `pattern/resource-pressure`: Resources that change decisions
+- `pattern/event-feedback`: Coherent visual and audio event feedback
+- `pattern/information-before-commitment`: Useful information before commitment
+- `recipe/spring-courier`: Spring Courier: complete platform microgame
+- `recipe/signal-arena`: Signal Arena: complete timing microgame
+- `recipe/lantern-vault`: Lantern Vault: complete turn microgame

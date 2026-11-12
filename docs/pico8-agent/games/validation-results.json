@@ -1,0 +1,198 @@
+{
+  "verifiedOn": "2026-11-12",
+  "checks": [
+    {
+      "name": "spring-courier: original Lua and exported cart",
+      "passed": true,
+      "sourceSha256": "3a58be24c37faa4feb935d8d09da3db74f820da5378e5b83ed12a20591b174f4",
+      "framesPerLoad": 121
+    },
+    {
+      "name": "signal-arena: original Lua and exported cart",
+      "passed": true,
+      "sourceSha256": "7ffefb9d850c3d26de7a68e71208d1ebb7351bfebf19b1cfe86cbbbe65e256fb",
+      "framesPerLoad": 121
+    },
+    {
+      "name": "lantern-vault: original Lua and exported cart",
+      "passed": true,
+      "sourceSha256": "54a66dd207eeaa693925536ebe21471c2d8cf87d7ef53063dca55cbeb44e2238",
+      "framesPerLoad": 121
+    },
+    {
+      "name": "spring-courier: keyboard delivery, fall failure and clean retry",
+      "passed": true,
+      "frames": 158,
+      "pcmBytes": 117600,
+      "pcmSha256": "a5e2ff55f24d5dd6cd1253cc8077dbde478a043e06931cbe88337a38b17245ad",
+      "listeningReview": false
+    },
+    {
+      "name": "spring-courier: coyote window and optional high gem",
+      "passed": true,
+      "frames": 40,
+      "pcmBytes": 30870,
+      "pcmSha256": "4640cd2f7ba48aba9a99d2656c9fbad2f4beb92fbae92b477fc8daef49cc6eca",
+      "listeningReview": false
+    },
+    {
+      "name": "signal-arena: dodge and strike policy wins; idle policy loses; restart clears damage",
+      "passed": true,
+      "frames": 766,
+      "pcmBytes": 564480,
+      "pcmSha256": "ece1ac821b0d2644850d2a25458d73cb8726ee01e2c14b55a07d855958e79110",
+      "listeningReview": false
+    },
+    {
+      "name": "lantern-vault: direct route wins without damage",
+      "passed": true,
+      "frames": 161,
+      "pcmBytes": 119804,
+      "pcmSha256": "93d929221a0ac579d3148ab4c192b43d4c0dca645df19e7d4d02e8c2f6ab866c",
+      "listeningReview": false,
+      "route": [
+        2,
+        2,
+        2,
+        2,
+        4,
+        4,
+        16,
+        4,
+        4,
+        1,
+        8,
+        4,
+        1,
+        1,
+        1,
+        8,
+        8,
+        8,
+        8
+      ],
+      "turns": 19,
+      "fuelLeft": 5
+    },
+    {
+      "name": "lantern-vault: optional two-gem route wins without damage",
+      "passed": true,
+      "frames": 161,
+      "pcmBytes": 119804,
+      "pcmSha256": "9be29f61b7f148feed10ea89f10a5721868c7a48990aa1c9f99213e0b33be08b",
+      "listeningReview": false,
+      "route": [
+        2,
+        2,
+        2,
+        16,
+        4,
+        4,
+        2,
+        4,
+        4,
+        1,
+        8,
+        4,
+        1,
+        1,
+        8,
+        8,
+        1,
+        8,
+        8
+      ],
+      "turns": 19,
+      "fuelLeft": 1
+    },
+    {
+      "name": "lantern-vault: waiting can lose, restart clears relic/resources",
+      "passed": true,
+      "frames": 50,
+      "pcmBytes": 38220,
+      "pcmSha256": "22e57576c8fa4488bcb8c860af9e4dbce1bbb287fc16a8566b124dcc767a98fc",
+      "listeningReview": false
+    },
+    {
+      "name": "spring-courier: buffered landing jump and expired edge grace",
+      "passed": true,
+      "frames": 175,
+      "pcmBytes": 130094,
+      "pcmSha256": "a420c0f33b3c83b5c7d8dd5c38ccab77413688aa9aff298000e8669d5132c5ef",
+      "listeningReview": false
+    },
+    {
+      "name": "lantern-vault: fuel exhaustion loses even without damage",
+      "passed": true,
+      "frames": 49,
+      "pcmBytes": 37484,
+      "pcmSha256": "f72a868253abbc890f42b21745ef6807a04f81648f19aa4d954b1bb237033f88",
+      "listeningReview": false
+    },
+    {
+      "name": "lantern-vault: living arrival on the final fuel unit wins",
+      "passed": true,
+      "frames": 41,
+      "pcmBytes": 31604,
+      "pcmSha256": "0b4e7fed5cc3a33dfed95bfb792d88b0d9f928f0a305bd04a2e9bd52d016dfcf",
+      "listeningReview": false,
+      "route": [
+        2,
+        1,
+        4,
+        4,
+        2,
+        4,
+        4,
+        2,
+        2,
+        2,
+        8,
+        4,
+        1,
+        8,
+        8,
+        8,
+        8,
+        1,
+        1,
+        1
+      ],
+      "turns": 20,
+      "fuelLeft": 0
+    },
+    {
+      "name": "spring-courier: feedback channel preserves music",
+      "passed": true,
+      "frames": 2,
+      "pcmBytes": 2940,
+      "pcmSha256": "063d34263348ca31e69b33a31f7b5918f542476d16677da1fddef5a6b495cdd2",
+      "listeningReview": false
+    },
+    {
+      "name": "signal-arena: feedback channel preserves music",
+      "passed": true,
+      "frames": 49,
+      "pcmBytes": 37484,
+      "pcmSha256": "bea242930609fccd78b62c088c454bdea8b19cebf5e281f7b244fc74629840c2",
+      "listeningReview": false
+    },
+    {
+      "name": "lantern-vault: feedback channel preserves music",
+      "passed": true,
+      "frames": 2,
+      "pcmBytes": 2940,
+      "pcmSha256": "aecadc2e2a56b4b59677c5b0d81df10d9982d7d103eb83a6612918065b1fda42",
+      "listeningReview": false
+    }
+  ],
+  "artifacts": {
+    "playerSha256": "628a421e9f1fb6291845827d1029a3137456b5d48ea5b22f08d0a5d355be597f"
+  },
+  "limits": [
+    "Original games: startup only",
+    "No human enjoyment ratings",
+    "No subjective listening review",
+    "Probes copy state for tests only; no new model tool"
+  ]
+}

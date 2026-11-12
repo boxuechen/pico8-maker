@@ -153,6 +153,94 @@
       "title": "API catalog: lua",
       "file": "references/api-catalog.md",
       "heading": "lua"
+    },
+    {
+      "id": "guide/game-design",
+      "title": "Designing a replayable small game",
+      "file": "references/game-design.md"
+    },
+    {
+      "id": "guide/microgames",
+      "title": "Original microgames: controls, tuning and limits",
+      "file": "references/microgames.md"
+    },
+    {
+      "id": "case/celeste-classic",
+      "title": "Celeste Classic: forgiving precision",
+      "file": "cases/celeste-classic.md"
+    },
+    {
+      "id": "case/just-one-boss",
+      "title": "Just One Boss: readable attack phases",
+      "file": "cases/just-one-boss.md"
+    },
+    {
+      "id": "case/porklike",
+      "title": "Porklike: turn and resource decisions",
+      "file": "cases/porklike.md"
+    },
+    {
+      "id": "case/high-stakes",
+      "title": "High Stakes: information and optional risk",
+      "file": "cases/high-stakes.md"
+    },
+    {
+      "id": "pattern/forgiving-controls",
+      "title": "Input forgiveness and consistent controls",
+      "file": "patterns/forgiving-controls.md"
+    },
+    {
+      "id": "pattern/telegraph-attack-recovery",
+      "title": "Readable attack phases",
+      "file": "patterns/telegraph-attack-recovery.md"
+    },
+    {
+      "id": "pattern/risk-reward",
+      "title": "Optional risk and visible reward",
+      "file": "patterns/risk-reward.md"
+    },
+    {
+      "id": "pattern/teach-vary-combine",
+      "title": "Teach, vary, then combine",
+      "file": "patterns/teach-vary-combine.md"
+    },
+    {
+      "id": "pattern/turn-economy",
+      "title": "Action costs and turn resolution",
+      "file": "patterns/turn-economy.md"
+    },
+    {
+      "id": "pattern/resource-pressure",
+      "title": "Resources that change decisions",
+      "file": "patterns/resource-pressure.md"
+    },
+    {
+      "id": "pattern/event-feedback",
+      "title": "Coherent visual and audio event feedback",
+      "file": "patterns/event-feedback.md"
+    },
+    {
+      "id": "pattern/information-before-commitment",
+      "title": "Useful information before commitment",
+      "file": "patterns/information-before-commitment.md"
+    },
+    {
+      "id": "recipe/spring-courier",
+      "title": "Spring Courier: complete platform microgame",
+      "file": "games/spring-courier.lua",
+      "validation": "games/validation-results.json"
+    },
+    {
+      "id": "recipe/signal-arena",
+      "title": "Signal Arena: complete timing microgame",
+      "file": "games/signal-arena.lua",
+      "validation": "games/validation-results.json"
+    },
+    {
+      "id": "recipe/lantern-vault",
+      "title": "Lantern Vault: complete turn microgame",
+      "file": "games/lantern-vault.lua",
+      "validation": "games/validation-results.json"
     }
   ]
 }

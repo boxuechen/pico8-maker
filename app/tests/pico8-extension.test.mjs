@@ -5,6 +5,10 @@ import knowledge from "../src/generated/pico8-knowledge.js";
 import { createPico8Extension } from "../src/pico8/extension.js";
 import { defaultConfig } from "../src/model-config.js";
 import { compactTranscript } from "../src/project-store.js";
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { spawnSync } from "node:child_process";
 const response = (delta, reason) =>
   new Response(
     `data: ${JSON.stringify({ id: "fixture", object: "chat.completion.chunk", created: 1, model: "deepseek-flash", choices: [{ index: 0, delta, finish_reason: reason }] })}\n\ndata: [DONE]\n\n`,
@@ -53,6 +57,9 @@ test("actual provider requests replace legacy rules and preserve references acro
     assert.ok(system.includes("PICO-8 game author"));
     assert.ok(system.includes("16.16"));
     assert.ok(system.includes("bright green"));
+    assert.ok(system.includes("guide/game-design"));
+    assert.ok(system.includes("case/celeste-classic"));
+    assert.ok(!system.includes("## Observed implementation"));
     assert.ok(!system.includes("LEGACY_JUMP_ONLY"));
     assert.equal(body.tools.length, 6);
     assert.ok(body.tools.some((t) => t.function.name === "read_reference"));
@@ -67,7 +74,7 @@ test("actual provider requests replace legacy rules and preserve references acro
               type: "function",
               function: {
                 name: "read_reference",
-                arguments: '{"id":"recipe/music-from-patterns"}',
+                arguments: '{"id":"recipe/lantern-vault"}',
               },
             },
           ],
@@ -78,7 +85,7 @@ test("actual provider requests replace legacy rules and preserve references acro
       body.messages.some(
         (m) =>
           m.role === "tool" &&
-          String(m.content).includes("function write_pattern"),
+          String(m.content).includes("function blocked(x,y)"),
       ),
     );
     return response(
@@ -100,14 +107,14 @@ test("actual provider requests replace legacy rules and preserve references acro
       sections: { instructions: "LEGACY_JUMP_ONLY" },
       timestamp: 1,
     },
-    { role: "user", content: "Make music", timestamp: 2 },
+    { role: "user", content: "Make a turn-based game", timestamp: 2 },
   ];
   const a = new Agent(game, () => {});
   try {
     await a.open(old);
     assert.equal(bodies.length, 0);
     await a.configure({ ...defaultConfig, apiKey: "fixture" });
-    await a.send("Read the music recipe.");
+    await a.send("Read the vault microgame recipe.");
     assert.equal(bodies.length, 2);
     saved = compactTranscript([...a.transcriptEntries.values()]);
   } finally {
@@ -245,4 +252,45 @@ test("Pi delivers complete full/cropped ASCII and restores it without replaying 
   } finally {
     await restored.dispose();
   }
+});
+
+test("design references resolve and knowledge compilation rejects stale microgame receipts", async (t) => {
+  for (const ref of Object.values(knowledge.references)) {
+    for (const [id] of ref.content.matchAll(
+      /\b(?:guide|case|pattern|recipe|palette|api)\/[a-z][a-z-]*/g,
+    )) {
+      assert.ok(knowledge.references[id], `${ref.id} refers to missing ${id}`);
+    }
+  }
+  const dir = await mkdtemp(join(tmpdir(), "pico8-knowledge-"));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  const docs = join(dir, "docs/pico8-agent");
+  const script = join(dir, "app/scripts/prepare-knowledge.mjs");
+  await cp(new URL("../../docs/pico8-agent/", import.meta.url), docs, {
+    recursive: true,
+  });
+  await mkdir(join(dir, "app/scripts"), { recursive: true });
+  await cp(
+    new URL("../scripts/prepare-knowledge.mjs", import.meta.url),
+    script,
+  );
+  const compile = () =>
+    spawnSync(process.execPath, [script], { encoding: "utf8" });
+  assert.equal(compile().status, 0, "fresh receipts compile");
+  const source = join(docs, "games/lantern-vault.lua");
+  const original = await readFile(source, "utf8");
+  await writeFile(source, original + "\n-- unverified change\n");
+  let result = compile();
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Unverified recipe recipe\/lantern-vault/);
+  await writeFile(source, original);
+  const path = join(docs, "games/validation-results.json");
+  const receipts = JSON.parse(await readFile(path, "utf8"));
+  receipts.checks.find(
+    (c) => c.name === "lantern-vault: original Lua and exported cart",
+  ).passed = false;
+  await writeFile(path, JSON.stringify(receipts));
+  result = compile();
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Unverified recipe recipe\/lantern-vault/);
 });

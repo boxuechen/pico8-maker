@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>PICO-8 design microgames</title>
+  <link rel="stylesheet" href="../../../app/public/player/player.css" />
+  <style>
+    :root {
+      color-scheme: dark;
+      font:
+        16px/1.5 system-ui,
+        sans-serif;
+      background: #1d2b53;
+      color: #fff1e8;
+    }
+    body {
+      display: block;
+      min-block-size: 0;
+      background: none;
+      max-width: 720px;
+      margin: 32px auto;
+      padding: 0 16px;
+    }
+    h1 {
+      font-size: 24px;
+    }
+    p {
+      max-width: 64ch;
+    }
+    select,
+    button {
+      font: inherit;
+      padding: 8px;
+      margin: 0 8px 12px 0;
+    }
+    a {
+      color: #ffccaa;
+    }
+    #player {
+      width: 384px;
+      max-width: 100%;
+      margin: 20px 0;
+    }
+    #status {
+      display: block;
+      min-height: 24px;
+      color: #00e436;
+    }
+  </style>
+  <h1>Original design microgames</h1>
+  <p>
+    Three small examples of complete game loops, with original pixels and sound.
+    Select a game, start the player, then press X. These are learning examples,
+    not measured evidence of game quality.
+  </p>
+  <label for="game">Game </label>
+  <select id="game">
+    <option value="spring-courier">Spring Courier</option>
+    <option value="signal-arena">Signal Arena</option>
+    <option value="lantern-vault">Lantern Vault</option>
+  </select>
+  <button id="start" disabled>Start player</button>
+  <button id="pause" disabled>Pause</button>
+  <output id="status" aria-live="polite">Loading player…</output>
+  <div id="player"></div>
+  <p id="controls"></p>
+  <a id="source">View Lua source</a>
+  <script type="module">
+    import { createPico8WebPlayer } from "../../../app/public/player/main/player.mjs";
+    const select = document.querySelector("#game"),
+      start = document.querySelector("#start"),
+      pause = document.querySelector("#pause"),
+      status = document.querySelector("#status");
+    const descriptions = {
+      "spring-courier":
+        "Arrows move. Z (O button) jumps; hold for height. Collect the yellow parcel, reach the right exit, and optionally collect the high pink gem. X retries after the result.",
+      "signal-arena":
+        "Arrows move. Leave the marked lane before it strikes, then press X at the yellow center during recovery. Hit three times to win. X retries after the result.",
+      "lantern-vault":
+        "Arrow presses move; Z (O button) waits. Retrieve the upper-right relic and return to the green pad. The marked row hurts after your next action. Fuel is limited; optional pink gems cost 2 extra fuel each. X retries after the result.",
+    };
+    let player;
+    async function load() {
+      start.disabled = pause.disabled = select.disabled = true;
+      try {
+        const id = select.value,
+          response = await fetch("./" + id + ".lua");
+        if (!response.ok) throw Error("Source HTTP " + response.status);
+        const source = await response.text();
+        await player.loadCart(
+          new TextEncoder().encode(
+            "pico-8 cartridge // http://www.pico-8.com\nversion 43\n__lua__\n" +
+              source +
+              "\n",
+          ),
+          { displayName: id + ".p8" },
+        );
+        document.querySelector("#controls").textContent = descriptions[id];
+        document.querySelector("#source").href = "./" + id + ".lua";
+        status.textContent = "Ready — start the player, then press X.";
+        start.textContent = "Start player";
+        pause.textContent = "Pause";
+        start.disabled = pause.disabled = false;
+      } catch (e) {
+        status.textContent = e.message;
+      } finally {
+        select.disabled = false;
+      }
+    }
+    try {
+      player = await createPico8WebPlayer({
+        root: document.querySelector("#player"),
+        shell: "hosted",
+        execution: "worker",
+        commandTimeoutMs: 12000,
+      });
+      player.on("fault", (e) => {
+        status.textContent = e.error.message;
+      });
+      select.addEventListener("change", load);
+      start.addEventListener("click", async () => {
+        try {
+          await player.start();
+          player.canvas.focus();
+          status.textContent = "Playing — " + descriptions[select.value];
+        } catch (e) {
+          status.textContent = e.message;
+        }
+      });
+      pause.addEventListener("click", async () => {
+        try {
+          if (player.state === "running") {
+            await player.pause();
+            pause.textContent = "Resume";
+            status.textContent = "Paused";
+          } else if (player.state === "paused") {
+            await player.resume();
+            pause.textContent = "Pause";
+            player.canvas.focus();
+            status.textContent = "Playing";
+          }
+        } catch (e) {
+          status.textContent = e.message;
+        }
+      });
+      await load();
+    } catch (e) {
+      status.textContent = e.message;
+    }
+  </script>
+</html>

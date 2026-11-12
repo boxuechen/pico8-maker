@@ -1,0 +1,36 @@
+{
+  "status": "not_run",
+  "language": "English",
+  "tasks": [
+    {
+      "id": "platform-delivery",
+      "kind": "near_transfer",
+      "prompt": "Create a one-screen PICO-8 delivery platformer. Carry a parcel to an exit, with an optional risky collectible. Make jumping responsive, show success and failure, support immediate retry, and include coherent original art and sound."
+    },
+    {
+      "id": "platform-moving-hazards",
+      "kind": "far_transfer",
+      "prompt": "Create a PICO-8 rooftop repair game. The player fixes three antennas while avoiding moving hazards. Use jump timing and route choice, teach the controls through play, provide an ending and quick retry, and include original art and sound. Do not use a parcel-delivery theme."
+    },
+    {
+      "id": "timing-boss",
+      "kind": "near_transfer",
+      "prompt": "Create a small PICO-8 arena boss game. Give the player a readable warning, an attack to dodge and an opening to counterattack. Develop the challenge across three phases. Include a visible objective, failure, quick retry, and original art and sound."
+    },
+    {
+      "id": "timing-rescue",
+      "kind": "far_transfer",
+      "prompt": "Create a PICO-8 rescue game about moving stranded creatures through periodically dangerous crossings. Timing and limited carrying capacity should create choices. Show clear warnings, success and failure, quick retry, and original art and sound. Do not use a boss or center-core mechanic."
+    },
+    {
+      "id": "turn-extraction",
+      "kind": "near_transfer",
+      "prompt": "Create a small turn-based PICO-8 exploration game. Retrieve an object and return before a visible resource runs out. Include an optional reward detour, predictable hazards, clear action costs, success, failure, quick retry, and original art and sound."
+    },
+    {
+      "id": "turn-gardening",
+      "kind": "far_transfer",
+      "prompt": "Create a turn-based PICO-8 garden puzzle. Grow and harvest plants by deciding how to spend limited water over a short season. Waiting must have an understandable consequence. Include at least two viable strategies, an ending, retry, and original art and sound. Do not use a dungeon, relic or extraction route."
+    }
+  ]
+}

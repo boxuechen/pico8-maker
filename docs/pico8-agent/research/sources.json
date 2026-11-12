@@ -1,0 +1,42 @@
+{
+  "selectionSource": "https://nerdyteachers.com/PICO-8/Games/Top200/",
+  "policy": "Research downloads and decoded assets stay in ignored .cache; only original analysis and newly authored examples enter model references. Record provenance separately for code, art and audio.",
+  "games": [
+    {
+      "id": "celeste-classic",
+      "title": "Celeste Classic",
+      "authors": "Maddy Thorson and Noel Berry",
+      "file": "celeste-classic.p8.png",
+      "cartUrl": "https://www.lexaloffle.com/bbs/cposts/1/15133.p8.png",
+      "pageUrl": "https://www.lexaloffle.com/bbs/?tid=2145",
+      "usageNotes": "BBS displays No License; not approved here for redistribution or asset reuse."
+    },
+    {
+      "id": "just-one-boss",
+      "title": "Just One Boss",
+      "authors": "ayla~nonsense (formerly bridgs)",
+      "file": "just-one-boss.p8",
+      "cartUrl": "https://raw.githubusercontent.com/aylanonsense/just-one-boss/master/just_one_boss.p8",
+      "pageUrl": "https://aylanonsense.itch.io/just-one-boss",
+      "usageNotes": "Itch asset license: CC BY-NC-SA 4.0. Do not assume a separate code license; no original assets bundled."
+    },
+    {
+      "id": "porklike",
+      "title": "Porklike",
+      "authors": "Krystian Majewski; music Sebastian Hassler",
+      "file": "porklike.p8.png",
+      "cartUrl": "https://www.lexaloffle.com/bbs/cposts/po/porklike-2.p8.png",
+      "pageUrl": "https://krystman.itch.io/porklike",
+      "usageNotes": "BBS displays No License; author page credits separately permissioned art. Not a reusable asset pack."
+    },
+    {
+      "id": "high-stakes",
+      "title": "High Stakes",
+      "authors": "Krystian Majewski; music Gruber Music",
+      "file": "high-stakes.p8.png",
+      "cartUrl": "https://www.lexaloffle.com/bbs/cposts/hi/highstakes-2.p8.png",
+      "pageUrl": "https://www.lexaloffle.com/bbs/?pid=83548",
+      "usageNotes": "BBS displays CC4-BY-NC-SA; research only in this package. Original assets are not redistributed."
+    }
+  ]
+}

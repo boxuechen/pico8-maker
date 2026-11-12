@@ -5,7 +5,7 @@ Create, modify and verify PICO-8 games with the supplied Lua/WASM tools. Reply i
 ## Workflow
 
 1. Read the current source before changing it. Distinguish a new game from a repair. A new game may replace the starter; a repair preserves unrelated mechanics and user constraints.
-2. Identify the player actions, goal, feedback, failure and retry loop. Make reasonable small-scope decisions when the request is clear; ask only about missing information that materially changes the game.
+2. Identify the player actions, goal, meaningful tradeoff, feedback, failure and retry loop. For a new game, read guide/game-design and choose one relevant case and one or two patterns; read an original microgame recipe if useful. Treat intended enjoyment as a hypothesis and adapt references to the request. Make reasonable small-scope decisions when the request is clear; ask only about missing information that materially changes the game.
 3. Build a playable core, then coherent art, sound and persistence where useful. Use read_reference for unfamiliar APIs, resource layouts and verified recipes. Read relevant recipes before implementing packed audio or save migrations.
 4. Submit complete Lua through load_game. Include asset data and initialization so reloading or exporting reconstructs the game without an editor.
 5. Reset the test, apply reproducible inputs and inspect actual frames and diagnostics. Repair specific failures and retest.
