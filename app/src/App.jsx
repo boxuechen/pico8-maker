@@ -42,6 +42,13 @@ import {
   duplicateCart,
   requestPersistence,
 } from "./cart-store.js";
+import {
+  activeSession,
+  addSession,
+  updateSession,
+  sessionContext,
+} from "./sessions.js";
+import { SessionBar } from "./SessionBar.jsx";
 import { CartShelf, CartBody, ago } from "./CartShelf.jsx";
 import { downloadCart } from "./pico8/cart.js";
 import { currentTool, describeTool, formatButtons } from "./workbench-state.js";
@@ -331,7 +338,6 @@ function ModelSettings({ initial, onSave, onClear, onClose, pending }) {
   );
 }
 
-
 const nextIdeas = [
   "Make it a little harder",
   "Add sound effects",
@@ -339,7 +345,11 @@ const nextIdeas = [
 ];
 const homeIdeas = [
   ["Platformer", "#00e436", "Make a platformer with coins and a double jump."],
-  ["Space shooter", "#29adff", "Make a space shooter with upgradeable weapons."],
+  [
+    "Space shooter",
+    "#29adff",
+    "Make a space shooter with upgradeable weapons.",
+  ],
   ["Moon fishing", "#ffa300", "Make a tiny fishing game set on the moon."],
 ];
 function rgbaToUrl(rgba) {
@@ -382,18 +392,23 @@ export function App() {
   return store ? <Studio store={store} /> : <div className="app home-mode" />;
 }
 
-const contentKeys = ["transcript", "versions", "revision", "workspace", "label", "title"];
+const contentKeys = ["versions", "revision", "sourceDraft", "label", "title"];
 const upsert = (list, cart) =>
   sortCarts([{ ...cart }, ...list.filter((c) => c.id !== cart.id)]);
 
 function Studio({ store }) {
   const [saved] = useState(
-    () => store.carts.find((c) => c.id === store.session.currentId) ?? null,
+    () => store.carts.find((c) => c.id === store.navigation.currentId) ?? null,
   );
   const project = useRef(saved ?? newCart());
   const [shelf, setShelf] = useState(() => store.carts.filter(isOnShelf));
   const [switching, setSwitching] = useState(false);
-  const [workspace, setWorkspace] = useState(!!(saved && store.session.active));
+  const [inWorkbench, setInWorkbench] = useState(
+    !!(saved && store.navigation.active),
+  );
+  const transitionLock = useRef(false);
+  const homeDraft = useRef(store.navigation.homeDraft ?? "");
+  const [, refreshSessions] = useState(0);
   const [pending, setPending] = useState("");
   const pendingRef = useRef("");
   const sendLock = useRef(false);
@@ -402,21 +417,51 @@ function Studio({ store }) {
   const [view, setView] = useState("preview");
   const [frames, setFrames] = useState([]);
   const [label, setLabel] = useState(project.current.label ?? null);
-  const [showRestore, setShowRestore] = useState(!!saved?.interrupted);
+  const [showRestore, setShowRestore] = useState(
+    !!activeSession(project.current).interrupted,
+  );
   const saveTimer = useRef(null);
   function persist(patch) {
     if ("active" in patch)
       void store
-        .setSession({ currentId: project.current.id, active: patch.active })
+        .setNavigation({ currentId: project.current.id, active: patch.active })
         .catch(() => {});
     // Only real content changes reorder the shelf; opening or typing does not.
     const touched = contentKeys.some(
-      (k) => k in patch && JSON.stringify(patch[k]) !== JSON.stringify(project.current[k]),
+      (k) =>
+        k in patch &&
+        JSON.stringify(patch[k]) !== JSON.stringify(project.current[k]),
     );
-    Object.assign(project.current, patch);
+    if (
+      ("sourceDraft" in patch &&
+        patch.sourceDraft !== project.current.sourceDraft) ||
+      ("revision" in patch && patch.revision !== project.current.revision)
+    )
+      project.current.sourceVersion++;
+    const { active: _pageMode, ...content } = patch;
+    Object.assign(project.current, content);
     if (touched) project.current.updatedAt = Date.now();
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(flush, 180);
+  }
+  function persistSession(
+    patch,
+    cartId = project.current.id,
+    sessionId = project.current.activeSessionId,
+  ) {
+    if (!updateSession(project.current, cartId, sessionId, patch)) return;
+    refreshSessions((v) => v + 1);
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(flush, 180);
+  }
+  function saveComposerDraft(text) {
+    if (inWorkbench) persistSession({ draft: text });
+    else {
+      homeDraft.current = text;
+      void store
+        .setNavigation({ homeDraft: text })
+        .catch(() => setStorageError(true));
+    }
   }
   // Write the current cart; it joins the shelf once it has real content.
   async function flush() {
@@ -481,13 +526,17 @@ function Studio({ store }) {
       {
         versions: project.current.versions,
         revision: project.current.revision,
-        draft: project.current.workspace,
+        draft: project.current.sourceDraft,
         onSave: (versions, revision) => persist({ versions, revision }),
-        onDraft: (text) => persist({ workspace: text }),
+        onDraft: (text) => persist({ sourceDraft: text }),
       },
     );
+    g.workspace.id = project.current.id;
     gameRef.current = g;
-    Promise.all([g.mount(mount.current), connectAgent(project.current.transcript)])
+    Promise.all([
+      g.mount(mount.current),
+      connectAgent(activeSession(project.current)),
+    ])
       .then(() => {
         if (!disposed) setReady(true);
       })
@@ -503,26 +552,82 @@ function Studio({ store }) {
   }, []);
   const configRef = useRef(config);
   configRef.current = config;
-  // One agent per cart: switching carts replaces it with the next transcript.
-  // Late updates from a replaced agent are ignored so they cannot leak into
-  // another cart.
-  async function connectAgent(transcript) {
+  // Only one session has a live Agent. The player/file environment belongs to
+  // the cart and remains mounted when conversations change.
+  async function connectAgent(session) {
+    const cart = project.current;
     const generation = ++agentGeneration.current;
     const previous = agentRef.current;
     agentRef.current = null;
-    if (previous) await previous.dispose().catch(() => {});
-    const a = new Agent(gameRef.current, (s, nextTranscript) => {
-      if (generation !== agentGeneration.current) return;
-      setChat(s);
-      persist({ transcript: nextTranscript, interrupted: s.isRunning });
-    });
+    setReady(false);
+    setConfigured(false);
+    if (previous)
+      await previous.dispose({ preserveGame: true }).catch(() => {});
+    const a = new Agent(
+      gameRef.current,
+      (state, transcript) => {
+        if (
+          generation !== agentGeneration.current ||
+          project.current.id !== cart.id ||
+          cart.activeSessionId !== session.id
+        )
+          return;
+        setChat(state);
+        persistSession(
+          { transcript, interrupted: state.isRunning },
+          cart.id,
+          session.id,
+        );
+      },
+      { projectContext: () => sessionContext(cart, session) },
+    );
     agentRef.current = a;
-    await a.open(transcript);
-    if (generation !== agentGeneration.current) return;
-    const c = configRef.current;
-    if (c.apiKey && c.model && c.baseUrl) {
-      await a.configure(c);
-      setConfigured(true);
+    try {
+      await a.open(session.transcript);
+      if (generation !== agentGeneration.current) {
+        await a.dispose();
+        return;
+      }
+      const c = configRef.current;
+      if (c.apiKey && c.model && c.baseUrl) {
+        await a.configure(c);
+        setConfigured(true);
+      }
+      setReady(true);
+    } catch (error) {
+      await a.dispose().catch(() => {});
+      throw error;
+    }
+  }
+  async function selectSession(id) {
+    if (busy || sendLock.current || transitionLock.current) return;
+    if (id === project.current.activeSessionId) return;
+    transitionLock.current = true;
+    setSwitching(true);
+    const cart = project.current;
+    const previousId = cart.activeSessionId;
+    try {
+      persistSession({ draft: runtime.thread.composer.getState().text });
+      await flush();
+      const next =
+        id == null ? addSession(cart) : cart.sessions.find((s) => s.id === id);
+      if (!next) throw new Error("Session not found");
+      cart.activeSessionId = next.id;
+      setError("");
+      setShowRestore(!!next.interrupted);
+      runtime.thread.composer.setText(next.draft);
+      await connectAgent(next);
+      await flush();
+      refreshSessions((v) => v + 1);
+    } catch (error) {
+      cart.activeSessionId = previousId;
+      const previous = activeSession(cart);
+      runtime.thread.composer.setText(previous.draft);
+      await connectAgent(previous).catch(() => {});
+      setError(error.message);
+    } finally {
+      transitionLock.current = false;
+      setSwitching(false);
     }
   }
   // Each AI observation: draw it on the TV, add it to the timeline, keep it as the cart label.
@@ -574,7 +679,7 @@ function Studio({ store }) {
       if (!configured) {
         pendingRef.current = text;
         setPending(text);
-        persist({ draft: text });
+        saveComposerDraft(text);
         setSettings(true);
         return;
       }
@@ -586,8 +691,9 @@ function Studio({ store }) {
     },
   });
   useEffect(() => {
-    if (project.current.draft)
-      runtime.thread.composer.setText(project.current.draft);
+    runtime.thread.composer.setText(
+      inWorkbench ? activeSession(project.current).draft : homeDraft.current,
+    );
   }, []);
   async function selectCart(cart) {
     if (cartLock.current || !ready || running) return;
@@ -604,17 +710,16 @@ function Studio({ store }) {
     }
   }
   async function playCurrent() {
-    if (!workspace && !game.activeCart) return selectCart(carts[5]);
+    if (!inWorkbench && !game.activeCart) return selectCart(carts[5]);
     return gameRef.current.play();
   }
   async function sendMessage(text) {
-    if (sendLock.current || !text.trim()) return;
+    if (sendLock.current || transitionLock.current || !ready || !text.trim())
+      return;
     sendLock.current = true;
     // On the home page a new idea always starts a new cart; existing carts
     // stay untouched on the shelf.
-    if (!workspace && isOnShelf(project.current)) {
-      // The home draft belongs to the new cart, not the one left on the shelf.
-      persist({ draft: "" });
+    if (!inWorkbench && isOnShelf(project.current)) {
       try {
         await openCart(newCart(), { enter: true });
       } catch (e) {
@@ -623,19 +728,31 @@ function Studio({ store }) {
         return;
       }
     }
-    if (!project.current.transcript.length) void requestPersistence();
+    if (!isOnShelf(project.current)) void requestPersistence();
     setError("");
     setSending(true);
     setShowRestore(false);
-    setWorkspace(true);
+    setInWorkbench(true);
     setView("preview");
+    const session = activeSession(project.current);
+    const title = text.trim().replace(/\s+/g, " ").slice(0, 120);
     persist({
       active: true,
-      draft: "",
-      title: project.current.transcript.length
-        ? project.current.title
-        : text.trim().replace(/\s+/g, " ").slice(0, 120),
+      title:
+        project.current.title === "Untitled cartridge"
+          ? title
+          : project.current.title,
     });
+    persistSession({
+      draft: "",
+      title: session.transcript.length ? session.title : title,
+    });
+    if (!inWorkbench) {
+      homeDraft.current = "";
+      void store
+        .setNavigation({ homeDraft: "" })
+        .catch(() => setStorageError(true));
+    }
     runtime.thread.composer.setText("");
     try {
       await gameRef.current.restoreProject();
@@ -643,6 +760,11 @@ function Studio({ store }) {
     } catch (e) {
       setError(readableError(e, config.apiKey));
     } finally {
+      persistSession({
+        lastSourceVersion: project.current.sourceVersion,
+        interrupted: false,
+      });
+      await flush();
       sendLock.current = false;
       setSending(false);
     }
@@ -681,32 +803,48 @@ function Studio({ store }) {
   }
   /** Load another cart into the player and chat, optionally entering the workbench. */
   async function openCart(next, { enter = true } = {}) {
-    if (next.id === project.current.id) {
-      await gameRef.current.restoreProject();
-      setWorkspace(enter);
-      persist({ active: enter });
-      return;
-    }
-    setSwitching(true);
+    if (transitionLock.current) throw new Error("A session is still opening");
+    transitionLock.current = true;
     try {
-      await flush();
-      const previous = project.current;
-      // A cart that never got content is not worth keeping.
-      if (!previous.deleted && !isOnShelf(previous))
-        void store.remove(previous.id).catch(() => {});
-      project.current = next;
-      setFrames([]);
-      setLabel(next.label ?? null);
-      setShowRestore(!!next.interrupted);
-      setView("preview");
-      setError("");
-      runtime.thread.composer.setText(next.draft ?? "");
-      await gameRef.current.switchProject(next.versions, next.revision, next.workspace);
-      await connectAgent(next.transcript);
-      setWorkspace(enter);
-      persist({ active: enter });
+      if (next.id === project.current.id) {
+        await gameRef.current.restoreProject();
+        runtime.thread.composer.setText(
+          enter ? activeSession(next).draft : homeDraft.current,
+        );
+        setInWorkbench(enter);
+        persist({ active: enter });
+        return;
+      }
+      setSwitching(true);
+      try {
+        await flush();
+        const previous = project.current;
+        // A cart that never got content is not worth keeping.
+        if (!previous.deleted && !isOnShelf(previous))
+          void store.remove(previous.id).catch(() => {});
+        project.current = next;
+        gameRef.current.workspace.id = next.id;
+        setFrames([]);
+        setLabel(next.label ?? null);
+        setShowRestore(!!activeSession(next).interrupted);
+        setView("preview");
+        setError("");
+        runtime.thread.composer.setText(
+          enter ? activeSession(next).draft : homeDraft.current,
+        );
+        await gameRef.current.switchProject(
+          next.versions,
+          next.revision,
+          next.sourceDraft,
+        );
+        await connectAgent(activeSession(next));
+        setInWorkbench(enter);
+        persist({ active: enter });
+      } finally {
+        setSwitching(false);
+      }
     } finally {
-      setSwitching(false);
+      transitionLock.current = false;
     }
   }
   async function resume(cart = shelf[0]) {
@@ -762,22 +900,12 @@ function Studio({ store }) {
   }
   function setPrompt(text) {
     runtime.thread.composer.setText(text);
-    persist({ draft: text });
+    saveComposerDraft(text);
     document.getElementById("game-prompt")?.focus();
   }
   const playing = game.state === "running" && !game.testFrame;
-  const conversationTitle =
-    chat.messages
-      .find((message) => message.role === "user")
-      ?.content.filter((part) => part.type === "text")
-      .map((part) => part.text)
-      .join(" ")
-      .replace(/\s+/g, " ")
-      .trim() || project.current.title;
-  const cartTitle =
-    project.current.title && project.current.title !== "Untitled cartridge"
-      ? project.current.title
-      : conversationTitle;
+  const cartTitle = project.current.title;
+  const currentSession = activeSession(project.current);
   const hasConversation = chat.messages.length > 0;
   const lastCart = shelf[0] ?? null;
   const tokens = useMemo(() => countTokens(game.source ?? ""), [game.source]);
@@ -813,7 +941,8 @@ function Studio({ store }) {
   const lastMessage = chat.messages.at(-1);
   const groups = [];
   for (const frame of frames) {
-    if (groups.at(-1)?.revision === frame.revision) groups.at(-1).frames.push(frame);
+    if (groups.at(-1)?.revision === frame.revision)
+      groups.at(-1).frames.push(frame);
     else groups.push({ revision: frame.revision, frames: [frame] });
   }
   const cartTile = (cart, i) => (
@@ -838,10 +967,10 @@ function Studio({ store }) {
         }}
       >
         <div
-          className={`app ${workspace ? "studio-mode" : "home-mode"}`}
+          className={`app ${inWorkbench ? "studio-mode" : "home-mode"}`}
           style={{ "--chat-width": `${split}%` }}
         >
-          {workspace ? (
+          {inWorkbench ? (
             <WorkbenchHeader
               busy={busy}
               ready={ready}
@@ -856,7 +985,11 @@ function Studio({ store }) {
               onUndo={safe(() => gameRef.current.undo())}
               onSaveCart={safe(saveCart)}
               onHome={() => {
-                setWorkspace(false);
+                persistSession({
+                  draft: runtime.thread.composer.getState().text,
+                });
+                runtime.thread.composer.setText(homeDraft.current);
+                setInWorkbench(false);
                 persist({ active: false });
               }}
             />
@@ -868,7 +1001,7 @@ function Studio({ store }) {
             />
           )}
           <main className="workspace">
-            {!workspace && (
+            {!inWorkbench && (
               <>
                 <section className="home-intro">
                   <div className="hero-brand">
@@ -907,22 +1040,29 @@ function Studio({ store }) {
                     <button
                       className="your-cart-art"
                       aria-label={
-                        lastCart ? `Continue ${lastCart.title}` : "Make your own cart"
+                        lastCart
+                          ? `Continue ${lastCart.title}`
+                          : "Make your own cart"
                       }
                       disabled={busy}
                       onClick={
                         lastCart
                           ? safe(resume)
-                          : () => document.getElementById("game-prompt")?.focus()
+                          : () =>
+                              document.getElementById("game-prompt")?.focus()
                       }
                     >
                       <CartBody label={lastCart?.label} />
                     </button>
                     <div className="your-cart-text">
-                      <span className="kicker">{lastCart ? "LAST CART" : "YOUR CART"}</span>
+                      <span className="kicker">
+                        {lastCart ? "LAST CART" : "YOUR CART"}
+                      </span>
                       {lastCart ? (
                         <>
-                          <strong title={lastCart.title}>{lastCart.title}</strong>
+                          <strong title={lastCart.title}>
+                            {lastCart.title}
+                          </strong>
                           <small>
                             v{lastCart.revision} · {ago(lastCart.updatedAt)}
                           </small>
@@ -965,14 +1105,34 @@ function Studio({ store }) {
               </>
             )}
             <ThreadPrimitive.Root className="chat-panel">
-              <ThreadPrimitive.Viewport className="chat-viewport">
+              {inWorkbench && (
+                <SessionBar
+                  sessions={project.current.sessions}
+                  activeId={currentSession.id}
+                  disabled={busy || !ready}
+                  onSelect={selectSession}
+                  onNew={() => selectSession(null)}
+                />
+              )}
+
+              <ThreadPrimitive.Viewport
+                key={currentSession.id}
+                className="chat-viewport"
+              >
                 <ThreadPrimitive.Empty>
                   <div className="welcome">
-                    <span className="kicker">LET’S MAKE A LITTLE GAME</span>
-                    <h1>Your idea. Your cartridge.</h1>
+                    <span className="kicker">
+                      {inWorkbench ? "NEW SESSION" : "LET’S MAKE A LITTLE GAME"}
+                    </span>
+                    <h1>
+                      {inWorkbench
+                        ? "Keep building this cart."
+                        : "Your idea. Your cartridge."}
+                    </h1>
                     <p>
-                      Describe a game, or play the preview and tell PICO-8 Maker
-                      what to change.
+                      {inWorkbench
+                        ? "This session has its own conversation. Your game and source are shared across sessions."
+                        : "Describe a game, or play the preview and tell PICO-8 Maker what to change."}
                     </p>
                   </div>
                 </ThreadPrimitive.Empty>
@@ -1000,7 +1160,7 @@ function Studio({ store }) {
                     </button>
                   </div>
                 )}
-                {workspace && showRestore && !running && (
+                {inWorkbench && showRestore && !running && (
                   <div className="restore-note" role="status">
                     <span>
                       The previous run was interrupted. Your conversation and
@@ -1014,7 +1174,7 @@ function Studio({ store }) {
                     </button>
                   </div>
                 )}
-                {workspace && hasConversation && !busy && (
+                {inWorkbench && hasConversation && !busy && (
                   <div className="next-ideas">
                     {nextIdeas.map((idea) => (
                       <button key={idea} onClick={() => setPrompt(idea)}>
@@ -1027,13 +1187,13 @@ function Studio({ store }) {
                   <ComposerPrimitive.Input
                     id="game-prompt"
                     placeholder={
-                      workspace
+                      inWorkbench
                         ? running
                           ? "AI is playtesting — press Stop to interrupt"
                           : "Describe a change…"
                         : "A frog hops across lily pads to catch flies before the sun sets…"
                     }
-                    onChange={(e) => persist({ draft: e.target.value })}
+                    onChange={(e) => saveComposerDraft(e.target.value)}
                     aria-label="Message"
                     rows={2}
                   />
@@ -1067,7 +1227,7 @@ function Studio({ store }) {
                         aria-label="Send message"
                         className="send"
                       >
-                        {workspace ? (
+                        {inWorkbench ? (
                           <>
                             SEND <ArrowUp size={15} />
                           </>
@@ -1086,7 +1246,7 @@ function Studio({ store }) {
                   </div>
                 )}
               </div>
-              {!workspace && (
+              {!inWorkbench && (
                 <div className="prompt-examples">
                   <span className="kicker">TRY</span>
                   {homeIdeas.map(([labelText, color, text]) => (
@@ -1097,14 +1257,14 @@ function Studio({ store }) {
                   ))}
                 </div>
               )}
-              {!workspace && lastCart && (
+              {!inWorkbench && lastCart && (
                 <p className="new-cart-hint">
                   A new idea always starts a new cart — your carts stay on the
                   shelf below.
                 </p>
               )}
             </ThreadPrimitive.Root>
-            {workspace && (
+            {inWorkbench && (
               <div
                 className="panel-divider"
                 role="separator"
@@ -1146,10 +1306,10 @@ function Studio({ store }) {
               />
             )}
             <section
-              className={`player-panel ${workspace ? "has-timeline" : ""}`}
+              className={`player-panel ${inWorkbench ? "has-timeline" : ""}`}
               aria-label="Game preview"
             >
-              {workspace && (
+              {inWorkbench && (
                 <div className="preview-header">
                   <span className={`status-badge status-${status[0]}`}>
                     <i />
@@ -1159,7 +1319,9 @@ function Studio({ store }) {
                   {hint && <span className="preview-hint">{hint}</span>}
                 </div>
               )}
-              <div className={`stage ${workspace && view === "code" ? "show-code" : ""}`}>
+              <div
+                className={`stage ${inWorkbench && view === "code" ? "show-code" : ""}`}
+              >
                 <div className="console-group" ref={stage}>
                   <div className="console">
                     <div className="screen">
@@ -1174,7 +1336,7 @@ function Studio({ store }) {
                         />
                       )}
                       {game.booting && <BootScreen />}
-                      {workspace && pressing && (
+                      {inWorkbench && pressing && (
                         <span className="ai-input-tag">
                           {formatButtons(pressing.buttons)}
                         </span>
@@ -1253,15 +1415,15 @@ function Studio({ store }) {
                             : "ARROWS TO MOVE · Z / X TO PLAY"}
                     </p>
                   </div>
-                  {workspace && running && (
+                  {inWorkbench && running && (
                     <div className="test-progress" aria-hidden="true" />
                   )}
                 </div>
-                {workspace && view === "code" && (
+                {inWorkbench && view === "code" && (
                   <CodeView source={game.source ?? ""} tokens={tokens} />
                 )}
               </div>
-              {workspace && (
+              {inWorkbench && (
                 <section className="timeline" aria-label="Playtest frames">
                   <div className="timeline-head">
                     <h2>Playtest frames</h2>
@@ -1320,7 +1482,7 @@ function Studio({ store }) {
               )}
             </section>
           </main>
-          {!workspace && (
+          {!inWorkbench && (
             <CartShelf
               carts={shelf}
               currentId={project.current.id}
@@ -1333,8 +1495,8 @@ function Studio({ store }) {
               onDelete={(cart) => safe(() => deleteShelfCart(cart))()}
             />
           )}
-          {!workspace && <HowItWorks />}
-          {!workspace && <HomeFooter />}
+          {!inWorkbench && <HowItWorks />}
+          {!inWorkbench && <HomeFooter />}
         </div>
         {settings && (
           <ModelSettings
@@ -1390,11 +1552,7 @@ function Cart({ cart, onSelect, disabled, active, below }) {
       aria-label={`Play ${cart.title} by ${cart.author}`}
       aria-pressed={active}
     >
-      <img
-        src={cartridgeImage(cart.id)}
-        alt=""
-        draggable="false"
-      />
+      <img src={cartridgeImage(cart.id)} alt="" draggable="false" />
       <span className="cart-credit" aria-hidden="true">
         <strong>{cart.title}</strong>
         <small>by {cart.author}</small>

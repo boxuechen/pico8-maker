@@ -159,3 +159,11 @@ Qwen 普通百炼与 Token Plan 分开，并区分中国/国际入口。普通�
 ## 默认文档文件挂载（2026-11-12）
 
 默认 PICO-8 文档以原始 Markdown/Lua 静态文件发布，挂载到只读 `/extensions/pico8/`；每张 cart 的 `/cart/main.lua` 独立可写。启动只读取 Agent 说明、机器定义、默认调色板与精简目录，详细指南由 Pi Durable 内置 `read({path, offset, limit})` 按需读取。文档共享缓存，使用版本路径与 SHA-256 校验；加载失败可重试。已移除 `read_reference` 工具与整包 `pico8-knowledge.js`，不保留旧加载兼容分支。源码编辑、编译提交、测试与导出流程保持原有边界。
+
+## Cart workspace 与多个 session（2026-11-12）
+
+首页每张 cart 对应一个 workspace。工作台标题显示 cart 名称，聊天区的 SESSION 下拉框与 NEW SESSION 管理当前 cart 的独立对话，不增加 workspace 切换入口。会话独立保存历史、草稿、中断状态与标题，共享源码、版本和封面；切换不会回退游戏。运行期间锁定会话切换，旧 Agent 关闭后才激活新 Agent。刷新恢复当前 cart 和上次活动会话，但不会重放中断任务。
+
+存储使用 `sessions` / `activeSessionId`，原 `workspace` 源码草稿字段改为 `sourceDraft`；已有单对话 cart 会在读取时一次性升级。首页输入草稿独立存放，不覆盖会话草稿。复制 cart 为会话分配新 ID。恢复旧会话时，项目上下文提示共享源码变化，要求读取当前工作文件。Pi 仍由应用持久化会话快照到 IndexedDB，不自动恢复执行中的工具。
+
+验证：54 项应用测试与 4 项 Sites 测试、生产构建通过；使用本地模拟模型和真实 WASM 验证两条会话的独立历史、草稿、刷新恢复、首页往返以及两张 cart 的隔离，390px 窄屏无横向溢出。未调用付费模型。

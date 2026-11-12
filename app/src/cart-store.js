@@ -1,28 +1,27 @@
-// Browser-only cart shelf. There is no server: every cart (chat transcript,
-// source versions, label) lives in IndexedDB, falling back to memory when the
-// browser refuses storage.
+// Browser-only cart workspaces. There is no server: shared game files and
+// versions, independent conversation sessions and labels live in IndexedDB,
+// falling back to memory when the browser refuses storage.
+import { newSession, newId } from "./sessions.js";
 import { sampleSource } from "./sample.js";
 
 const dbName = "pico8-maker";
 const maxSource = 100000;
 
-const uuid = () =>
-  globalThis.crypto?.randomUUID?.() ??
-  `cart-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
-
 export function newCart(patch = {}) {
   const now = Date.now();
+  const session = patch.sessions?.[0] ?? newSession();
   return {
-    id: uuid(),
+    id: newId(),
     title: "Untitled cartridge",
-    transcript: [],
+    schemaVersion: 2,
+    sessions: [session],
+    activeSessionId: session.id,
+    sourceVersion: 0,
     versions: [sampleSource],
     revision: 1,
     label: null,
     // Agent's working copy of main.lua; null means "same as the latest version".
-    workspace: null,
-    draft: "",
-    interrupted: false,
+    sourceDraft: null,
     savedRevision: null,
     createdAt: now,
     updatedAt: now,
@@ -35,7 +34,12 @@ export function normalizeCart(data) {
   if (
     !data ||
     typeof data.id !== "string" ||
-    !Array.isArray(data.transcript) ||
+    !Array.isArray(data.sessions) ||
+    !data.sessions.length ||
+    !data.sessions.every(
+      (s) => typeof s.id === "string" && Array.isArray(s.transcript),
+    ) ||
+    new Set(data.sessions.map((s) => s.id)).size !== data.sessions.length ||
     !Array.isArray(data.versions) ||
     !data.versions.length ||
     !data.versions.every((v) => typeof v === "string" && v.length <= maxSource)
@@ -43,8 +47,19 @@ export function normalizeCart(data) {
     return null;
   const cart = { ...newCart(), ...data };
   cart.versions = cart.versions.slice(-12);
-  if (typeof cart.workspace !== "string" || cart.workspace.length > maxSource)
-    cart.workspace = null;
+  if (
+    typeof cart.sourceDraft !== "string" ||
+    cart.sourceDraft.length > maxSource
+  )
+    cart.sourceDraft = null;
+  cart.sourceVersion = Math.max(0, Number(cart.sourceVersion) || 0);
+  cart.sessions = cart.sessions.map((s) => ({
+    ...newSession(),
+    ...s,
+    draft: typeof s.draft === "string" ? s.draft : "",
+  }));
+  if (!cart.sessions.some((s) => s.id === cart.activeSessionId))
+    cart.activeSessionId = cart.sessions[0].id;
   cart.revision = Math.max(Number(cart.revision) || 0, cart.versions.length);
   if (typeof cart.title !== "string" || !cart.title.trim())
     cart.title = "Untitled cartridge";
@@ -55,7 +70,11 @@ export function normalizeCart(data) {
 export function isOnShelf(cart) {
   return (
     !!cart &&
-    (cart.transcript.length > 0 || cart.versions.length > 1 || cart.revision > 1)
+    (cart.sessions.length > 1 ||
+      cart.sessions.some((s) => s.transcript.length > 0 || s.draft.trim()) ||
+      cart.sourceDraft != null ||
+      cart.versions.length > 1 ||
+      cart.revision > 1)
   );
 }
 
@@ -71,15 +90,46 @@ export const sortCarts = (carts) =>
 
 export function duplicateCart(cart) {
   const now = Date.now();
-  return newCart({
-    ...structuredCopy(cart),
-    id: uuid(),
-    title: `${cart.title} (copy)`.slice(0, 120),
+  const copy = structuredCopy(cart);
+  const activeIndex = cart.sessions.findIndex(
+    (s) => s.id === cart.activeSessionId,
+  );
+  copy.sessions = copy.sessions.map((s) => ({
+    ...s,
+    id: newId(),
     interrupted: false,
+  }));
+  return newCart({
+    ...copy,
+    id: newId(),
+    title: `${cart.title} (copy)`.slice(0, 120),
+    activeSessionId: copy.sessions[activeIndex].id,
     savedRevision: null,
     createdAt: now,
     updatedAt: now,
   });
+}
+
+// One-time record upgrade at the storage boundary. Runtime code uses only sessions.
+export function upgradeCart(data) {
+  if (!data || data.sessions || !Array.isArray(data.transcript)) return data;
+  const { transcript, draft, interrupted, workspace, ...shared } = data;
+  const session = newSession({
+    title: data.title || "First session",
+    transcript,
+    draft: draft ?? "",
+    interrupted: !!interrupted,
+    createdAt: data.createdAt,
+    updatedAt: data.updatedAt,
+  });
+  return {
+    ...shared,
+    schemaVersion: 2,
+    sessions: [session],
+    activeSessionId: session.id,
+    sourceDraft: workspace ?? null,
+    sourceVersion: 0,
+  };
 }
 
 // IndexedDB only accepts structured-cloneable values; JSON keeps it plain.
@@ -151,17 +201,24 @@ export async function openCartStore({ backend } = {}) {
       persistent = false;
     }
   }
-  const session = (await backend.get("meta", "session"))?.value ?? {};
-  const carts = (await backend.getAll("carts")).map(normalizeCart).filter(Boolean);
+  const navigation = (await backend.get("meta", "session"))?.value ?? {};
+  const carts = [];
+  for (const record of await backend.getAll("carts")) {
+    const upgraded = upgradeCart(record);
+    const cart = normalizeCart(upgraded);
+    if (!cart) continue;
+    if (upgraded !== record) await backend.put("carts", cart);
+    carts.push(cart);
+  }
   return {
     persistent,
     carts: sortCarts(carts),
-    session,
+    navigation,
     put: (cart) => backend.put("carts", cart),
     remove: (id) => backend.delete("carts", id),
-    setSession(patch) {
-      Object.assign(session, patch);
-      return backend.put("meta", { key: "session", value: { ...session } });
+    setNavigation(patch) {
+      Object.assign(navigation, patch);
+      return backend.put("meta", { key: "session", value: { ...navigation } });
     },
   };
 }

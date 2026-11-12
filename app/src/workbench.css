@@ -995,3 +995,44 @@
     80.5556% 6.1905%
   );
 }
+
+.session-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  min-width: 0;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-2);
+  font: 14px var(--font-pixel);
+}
+.session-bar select {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 6px 8px;
+  background: var(--surface);
+  color: var(--text);
+  font: 13px var(--font-ui);
+}
+.session-bar button {
+  flex-shrink: 0;
+  padding: 6px 8px;
+  color: var(--text-2);
+}
+.session-bar button:hover:not(:disabled) {
+  color: var(--accent);
+  background: var(--surface);
+}
+@media (max-width: 600px) {
+  .session-bar {
+    padding: 8px;
+    gap: 4px;
+  }
+  .session-bar label {
+    display: none;
+  }
+}

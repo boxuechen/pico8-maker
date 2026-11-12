@@ -9,6 +9,7 @@ import {
   Harness,
   MemoryStorage,
   createRegistry,
+  section,
 } from "@earendil-works/pi-durable";
 
 export function projectView(view) {
@@ -78,8 +79,13 @@ export function projectView(view) {
 }
 
 export class Agent {
-  constructor(game, onUpdate, { knowledge = defaultKnowledgeFiles } = {}) {
+  constructor(
+    game,
+    onUpdate,
+    { knowledge = defaultKnowledgeFiles, projectContext } = {},
+  ) {
     this.knowledge = knowledge;
+    this.projectContext = projectContext;
     this.game = game;
     this.onUpdate = onUpdate;
     this.models = createModels();
@@ -92,6 +98,8 @@ export class Agent {
       game: this.game,
       knowledge: this.knowledge,
     });
+    if (this.projectContext)
+      pico8.sections.push(section("pico8_project", this.projectContext));
     registry.install(pico8);
     this.harness = await Harness.open(
       new MemoryStorage(),
@@ -170,8 +178,9 @@ export class Agent {
     this.game.cancelTests();
     await this.root?.abort(context);
   }
-  async dispose() {
-    await this.abort();
+  async dispose({ preserveGame = false } = {}) {
+    if (preserveGame) await this.root?.abort(context);
+    else await this.abort();
     await this.watch?.stop();
     await this.harness?.close(context);
   }
