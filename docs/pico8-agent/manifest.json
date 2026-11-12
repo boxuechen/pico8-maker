@@ -247,5 +247,11 @@
       "file": "games/lantern-vault.lua",
       "validation": "games/validation-results.json"
     }
+  ],
+  "skills": [
+    "skills/pico8-create/SKILL.md",
+    "skills/pico8-edit/SKILL.md",
+    "skills/pico8-assets/SKILL.md",
+    "skills/pico8-playtest/SKILL.md"
   ]
 }

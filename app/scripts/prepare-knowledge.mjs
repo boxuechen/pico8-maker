@@ -5,6 +5,28 @@ const read = (path) => readFile(new URL(path, root), "utf8");
 const hash = (text) => createHash("sha256").update(text).digest("hex");
 const manifest = JSON.parse(await read("manifest.json"));
 const palette = JSON.parse(await read("palette.json"));
+// Fixed, repository-owned skills use a deliberately narrow frontmatter format.
+// This publishes metadata, not a general filesystem/package discovery service.
+const skills = [];
+const skillNames = new Set();
+for (const file of manifest.skills ?? []) {
+  const text = await read(file);
+  const match = text.match(
+    /^---\nname: ([a-z0-9]+(?:-[a-z0-9]+)*)\ndescription: ([^\n]+)\n---\n/,
+  );
+  if (
+    !match ||
+    match[1].length > 64 ||
+    match[2].length > 1024 ||
+    file !== `skills/${match[1]}/SKILL.md` ||
+    skillNames.has(match[1])
+  )
+    throw new Error(`Invalid skill metadata: ${file}`);
+  if (/[\u3400-\u9fff]/u.test(text) || text.includes("/Users/"))
+    throw new Error(`Invalid skill content: ${file}`);
+  skillNames.add(match[1]);
+  skills.push({ name: match[1], description: match[2], file });
+}
 const validations = new Map();
 const referenceIds = new Set();
 for (const item of manifest.references) {
@@ -69,10 +91,19 @@ const fileTexts = {};
 const sourceFiles = new Set([
   ...Object.values(manifest.sections),
   ...manifest.references.map((r) => r.file),
+  ...skills.map((skill) => skill.file),
   "REFERENCE_INDEX.md",
 ]);
 for (const file of sourceFiles) fileTexts[file] = await read(file);
 fileTexts["PALETTE_DEFAULT.md"] = sections.pico8_palette;
+fileTexts["SKILLS.md"] =
+  "# Available PICO-8 skills\n\nSelect the relevant skill by its purpose and read its path with read({path}). Full instructions load on demand; reuse a skill already read in the current context.\n\n" +
+  skills
+    .map(
+      (s) =>
+        `- ${s.name}: ${s.description}\n  Path: /extensions/pico8/${s.file}`,
+    )
+    .join("\n");
 fileTexts["REFERENCE_FILES.md"] =
   "# PICO-8 document files\n\nRead these paths with read({path}). The following files cover all registered references. For long files use offset/limit to continue reading.\n\n" +
   manifest.references
@@ -81,8 +112,14 @@ fileTexts["REFERENCE_FILES.md"] =
         `- /extensions/pico8/${r.file}${r.heading ? ` (heading: ${r.heading})` : ""} — ${r.title}`,
     )
     .join("\n");
-for (const [file, text] of Object.entries(fileTexts))
+for (const [file, text] of Object.entries(fileTexts)) {
+  for (const [path] of text.matchAll(
+    /\/extensions\/pico8\/[A-Za-z0-9_./-]+\.(?:md|lua)/g,
+  ))
+    if (!Object.hasOwn(fileTexts, path.slice("/extensions/pico8/".length)))
+      throw new Error(`Unknown documentation link in ${file}: ${path}`);
   files[file] = { sha256: hash(text), size: Buffer.byteLength(text) };
+}
 const fileVersion =
   "pico8-files-v1-" + hash(JSON.stringify(files)).slice(0, 16);
 await rm(new URL("../public/extensions/pico8/", import.meta.url), {
@@ -102,6 +139,7 @@ const fileSections = {
   ...manifest.sections,
   pico8_palette: "PALETTE_DEFAULT.md",
   pico8_references: "REFERENCE_INDEX.md",
+  pico8_skills: "SKILLS.md",
 };
 await writeFile(
   new URL("pico8-files.js", output),

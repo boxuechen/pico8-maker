@@ -1,16 +1,14 @@
-# Gameplay verification
+# Gameplay observation reference
 
-Load source and inspect initialization diagnostics. Establish a reproducible start and record source revision, session/generation and frame identity. Define observable success before sending input, then test the main action, boundaries/failure and retry.
-
-Use short input batches near collisions or transitions. Explicitly release buttons to test new presses. Compare the same sequence before/after a repair. A completed operation or successful compile is not gameplay verification.
+Observation formats, frame identity and evidence limits for the PICO-8 host. The pico8-playtest skill owns the task workflow; consult this reference for a specific observation question. A completed operation or successful compile is not gameplay verification.
 
 | Feature | Useful evidence |
 | --- | --- |
 | Sprite | Correct pixels, transparency, animation and movement alignment |
 | Map | Wall blocking, reachability, collectible removal and count |
-| SFX | Correct RAM, trigger channel and actual non-silent PCM |
-| Music | Pattern progression/looping and independent sound-effect channel |
-| Save | Correct value after the specific tested restart/reload lifecycle |
+| SFX | Authored slot data from read_assets and trigger/channel logic from source; audio output is unverified by this host |
+| Music | Authored patterns and source playback/loop logic; audible progression and mixing are unverified by this host |
+| Save | Visible saved value after the specific tested restart/reload lifecycle, when the game exposes it |
 
 PNG is the default for overall appearance and layout. observe_game accepts format "png", "ascii" or "both" and an optional region {x,y,width,height}. Other game tools still return PNG. Prefer a small ASCII crop for exact pixel inspection; full-screen ASCII is available but is not automatically cheaper or easier for the model than PNG.
 

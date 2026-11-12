@@ -9,7 +9,7 @@ import { createPico8Extension } from "../src/pico8/extension.js";
 import { knowledge, index, load } from "./helpers/knowledge.mjs";
 
 const path = "/extensions/pico8/references/audio.md";
-test("startup reads only four entry files; shared documents are lazy and cached", async () => {
+test("startup reads entry files and skill metadata, not skill bodies; documents are lazy and cached", async () => {
   const loaded = [];
   const docs = createKnowledgeFiles({
     load: async (file) => {
@@ -20,6 +20,8 @@ test("startup reads only four entry files; shared documents are lazy and cached"
   await docs.prepare();
   assert.deepEqual(loaded.sort(), Object.values(index.sections).sort());
   assert.ok(!loaded.includes("references/audio.md"));
+  assert.ok(loaded.includes("SKILLS.md"));
+  assert.ok(!loaded.some((file) => file.startsWith("skills/")));
   const a = mountKnowledge(null, docs),
     b = mountKnowledge(null, docs);
   const [x, y] = await Promise.all([
@@ -28,6 +30,13 @@ test("startup reads only four entry files; shared documents are lazy and cached"
   ]);
   assert.equal(x.value, y.value);
   assert.equal(loaded.filter((f) => f === "references/audio.md").length, 1);
+  const skill = "/extensions/pico8/skills/pico8-create/SKILL.md";
+  await Promise.all([a.readTextFile(skill), b.readTextFile(skill)]);
+  assert.equal(
+    loaded.filter((file) => file === "skills/pico8-create/SKILL.md").length,
+    1,
+  );
+  assert.ok(!loaded.includes("skills/pico8-playtest/SKILL.md"));
 });
 test("HTTP loader uses versioned paths, rejects errors/hash mismatches and retries", async (t) => {
   const urls = [];
@@ -156,6 +165,7 @@ test("published Markdown and Lua are original files; metadata contains no bodies
   for (const file of new Set([
     ...Object.values(manifest.sections),
     ...manifest.references.map((r) => r.file),
+    ...manifest.skills,
   ])) {
     assert.equal(
       await load(file),

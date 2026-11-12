@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { Agent } from "./helpers/knowledge.mjs";
 import { knowledge, index, load } from "./helpers/knowledge.mjs";
 import { createPico8Extension } from "../src/pico8/extension.js";
+import { createKnowledgeFiles } from "../src/pico8/knowledge-files.js";
 import { defaultConfig } from "../src/model-config.js";
 import { compactTranscript } from "../src/project-store.js";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
@@ -44,6 +45,85 @@ test("references are English, complete, bounded and isolated", async () => {
     ),
   );
 });
+test(
+  "Pi advertises skill metadata and reads only the selected SKILL.md on demand",
+  { timeout: 10000 },
+  async (t) => {
+    const loaded = [];
+    const docs = createKnowledgeFiles({
+      load: async (file) => {
+        loaded.push(file);
+        return load(file);
+      },
+    });
+    let requests = 0;
+    const path = "/extensions/pico8/skills/pico8-edit/SKILL.md";
+    const expected = await load("skills/pico8-edit/SKILL.md");
+    const bodies = [];
+    t.mock.method(globalThis, "fetch", async (_url, init) => {
+      bodies.push(JSON.parse(init.body));
+      if (++requests === 1)
+        return response(
+          {
+            role: "assistant",
+            tool_calls: [
+              {
+                index: 0,
+                id: "skill-1",
+                type: "function",
+                function: { name: "read", arguments: JSON.stringify({ path }) },
+              },
+            ],
+          },
+          "tool_calls",
+        );
+      return response(
+        { role: "assistant", content: "Editing workflow read." },
+        "stop",
+      );
+    });
+    const a = new Agent(
+      {
+        execute() {
+          throw Error("Reading a skill must not run the game");
+        },
+        cancelTests() {},
+      },
+      () => {},
+      { knowledge: docs },
+    );
+    t.after(() => a.dispose());
+    await a.open();
+    assert.ok(!loaded.some((file) => file.startsWith("skills/")));
+    await a.configure({ ...defaultConfig, apiKey: "fixture" });
+    await a.send("Read the editing skill before changing a coin animation.");
+    assert.equal(requests, 2);
+    const system = JSON.stringify(
+      bodies[0].messages.filter((m) => m.role === "system"),
+    );
+    for (const name of [
+      "pico8-create",
+      "pico8-edit",
+      "pico8-assets",
+      "pico8-playtest",
+    ])
+      assert.ok(system.includes(`/skills/${name}/SKILL.md`));
+    assert.ok(
+      !system.includes("## Diagnose the requested change"),
+      "skill bodies are not permanent system sections",
+    );
+    assert.ok(
+      bodies[1].messages.some(
+        (m) => m.role === "tool" && m.content === expected,
+      ),
+      "full original skill reaches the model through read",
+    );
+    assert.deepEqual(
+      loaded.filter((file) => file.startsWith("skills/")),
+      ["skills/pico8-edit/SKILL.md"],
+    );
+  },
+);
 test("actual provider requests replace legacy rules and preserve references across restore without replay", async (t) => {
   const bodies = [];
   let gameCalls = 0;
@@ -58,11 +138,19 @@ test("actual provider requests replace legacy rules and preserve references acro
       )
       .join("\n");
     assert.ok(system.includes("PICO-8 game author"));
+    assert.ok(system.includes("## Completion"));
+    assert.ok(
+      system.includes(
+        "Once the requested behavior is implemented and the relevant checks pass, stop calling tools",
+      ),
+    );
+    assert.ok(system.includes("Repeated attempts without new evidence"));
     assert.ok(system.includes("16.16"));
     assert.ok(system.includes("bright green"));
     assert.ok(system.includes("references/game-design.md"));
     assert.ok(!system.includes("## Observed implementation"));
     assert.ok(!system.includes("LEGACY_JUMP_ONLY"));
+    assert.ok(!system.includes("LEGACY_KEEP_PLAYTESTING_FOREVER"));
     assert.equal(body.tools.length, 9);
     assert.ok(body.tools.some((t) => t.function.name === "edit"));
     assert.ok(body.tools.some((t) => t.function.name === "read"));
@@ -108,7 +196,10 @@ test("actual provider requests replace legacy rules and preserve references acro
     {
       role: "system",
       content: "",
-      sections: { instructions: "LEGACY_JUMP_ONLY" },
+      sections: {
+        instructions: "LEGACY_JUMP_ONLY",
+        pico8_agent: "LEGACY_KEEP_PLAYTESTING_FOREVER",
+      },
       timestamp: 1,
     },
     { role: "user", content: "Make a turn-based game", timestamp: 2 },
@@ -136,6 +227,142 @@ test("actual provider requests replace legacy rules and preserve references acro
     await b.dispose();
   }
 });
+
+test(
+  "a long tool sequence ends on the model's final reply and accepts another request",
+  { timeout: 15000 },
+  async (t) => {
+    let requests = 0;
+    let gameCalls = 0;
+    const views = [];
+    let finished;
+    const idle = new Promise((resolve) => {
+      finished = resolve;
+    });
+    t.mock.method(globalThis, "fetch", async () => {
+      requests++;
+      // Beyond the former 24-round cap: completion belongs to the model.
+      if (requests <= 26)
+        return response(
+          {
+            role: "assistant",
+            tool_calls: [
+              {
+                index: 0,
+                id: `step-${requests}`,
+                type: "function",
+                function: {
+                  name: "press_buttons",
+                  arguments: '{"frames":1,"buttons":0}',
+                },
+              },
+            ],
+          },
+          "tool_calls",
+        );
+      return response(
+        { role: "assistant", content: "Done. Controls and checks reported." },
+        "stop",
+      );
+    });
+    const a = new Agent(
+      {
+        execute() {
+          gameCalls++;
+          return {
+            output: [{ type: "text", text: `Observed frame ${gameCalls}.` }],
+          };
+        },
+        cancelTests() {},
+      },
+      (view) => {
+        views.push(view);
+        if (
+          !view.isRunning &&
+          JSON.stringify(view.messages).includes("Controls and checks reported")
+        )
+          finished();
+      },
+    );
+    t.after(() => a.dispose());
+    await a.open();
+    await a.configure({ ...defaultConfig, apiKey: "fixture" });
+    await a.send("Create and check a game.");
+    await idle;
+    assert.equal(requests, 27);
+    assert.equal(gameCalls, 26);
+    assert.equal(views.at(-1).isRunning, false);
+    assert.equal(views.at(-1).error, null);
+    await a.send("Explain the controls without changing the game.");
+    assert.equal(requests, 28, "no automatic follow-up after a final reply");
+    assert.equal(gameCalls, 26);
+  },
+);
+
+test(
+  "STOP interrupts an active playtest and settles the submission",
+  { timeout: 10000 },
+  async (t) => {
+    let entered;
+    const started = new Promise((resolve) => {
+      entered = resolve;
+    });
+    let cancelled = 0;
+    let finished;
+    const idle = new Promise((resolve) => {
+      finished = resolve;
+    });
+    t.mock.method(globalThis, "fetch", async () =>
+      response(
+        {
+          role: "assistant",
+          tool_calls: [
+            {
+              index: 0,
+              id: "pending-input",
+              type: "function",
+              function: {
+                name: "press_buttons",
+                arguments: '{"frames":600,"buttons":2}',
+              },
+            },
+          ],
+        },
+        "tool_calls",
+      ),
+    );
+    const a = new Agent(
+      {
+        execute(_name, _args, signal) {
+          return new Promise((_resolve, reject) => {
+            signal.throwIfAborted();
+            signal.addEventListener("abort", () => reject(signal.reason), {
+              once: true,
+            });
+            entered();
+          });
+        },
+        cancelTests() {
+          cancelled++;
+        },
+      },
+      (view) => {
+        if (cancelled && !view.isRunning) finished();
+      },
+    );
+    t.after(() => a.dispose());
+    await a.open();
+    await a.configure({ ...defaultConfig, apiKey: "fixture" });
+    const submission = a.send("Playtest the game.");
+    // Observe rejection immediately, even if cancellation settles before abort returns.
+    const settled = Promise.allSettled([submission]);
+    await started;
+    await a.abort();
+    await settled;
+    await idle;
+    assert.equal(cancelled, 1);
+  },
+);
 
 test("Pi delivers complete full/cropped ASCII and restores it without replaying game operations", async (t) => {
   const { createPico8Session } =
@@ -286,6 +513,23 @@ test("design references resolve and knowledge compilation rejects stale microgam
   const compile = () =>
     spawnSync(process.execPath, [script], { encoding: "utf8" });
   assert.equal(compile().status, 0, "fresh receipts compile");
+  const skillPath = join(docs, "skills/pico8-create/SKILL.md");
+  const skill = await readFile(skillPath, "utf8");
+  await writeFile(
+    skillPath,
+    skill.replace("name: pico8-create", "name: invalid-name"),
+  );
+  let invalid = compile();
+  assert.notEqual(invalid.status, 0);
+  assert.match(invalid.stderr, /Invalid skill metadata/);
+  await writeFile(
+    skillPath,
+    skill + "\nRead /extensions/pico8/skills/missing/SKILL.md\n",
+  );
+  invalid = compile();
+  assert.notEqual(invalid.status, 0);
+  assert.match(invalid.stderr, /Unknown documentation link/);
+  await writeFile(skillPath, skill);
   const source = join(docs, "games/lantern-vault.lua");
   const original = await readFile(source, "utf8");
   await writeFile(source, original + "\n-- unverified change\n");

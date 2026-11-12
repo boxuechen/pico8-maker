@@ -34,6 +34,12 @@ npm run dev -- --host 127.0.0.1 --port 5173
 
 游戏工具：`read_game`、`load_game`、`reset_game`、`press_buttons`、`observe_game`；资源工具：`read_assets`、`edit_assets`；文件工具：`read`（读取 `/extensions/pico8/` 文档和当前源码）、`edit`（仅修改 `/cart/main.lua`）。截图将实际 RGBA 编码成 PNG image content 交给模型。修改先编译并执行一帧，通过后才替换用户游戏。交互 Agent 不设工具轮数上限，可手动停止；每次输入 1–600 帧；测试 Worker 超时会被终止。
 
+创建任务的收尾由 [AGENT.md](docs/pico8-agent/AGENT.md) 和 [试玩说明](docs/pico8-agent/references/playtest.md) 约定：先确定请求范围，检查主操作和代表性结果，通过后给最终回复；已有成功证据时不继续扩展功能或重复试玩。没有新证据时检查源码或改变测试方法，无法解决的阻塞如实报告。`observe_game` 不推进时间，load/reset/input 已返回的图片无需重复索取；音频输出不在当前观察能力内。最终回复直接结束 Pi 的本轮任务，无额外 finish 工具或强制轮数限制。这是模型行为指导，不是硬性终止保证。
+
+2026-11-12 收尾回归：74 项应用测试、4 项 Sites 检查及生产构建通过。测试覆盖新规则进入实际 provider 请求、恢复时替换旧规则、26 轮工具调用后自然结束并接受新消息、STOP 中断待完成的试玩调用。浏览器使用本地模拟模型完成 8 步真实 WASM 工具联调，最终回复后 STOP 消失、预览恢复 READY TO PLAY。本次未重新调用真实模型，不能据此量化其重复试玩的改善。
+
+2026-11-13 分层调整：采用薄 Pi Durable extension + 四个按需读取的 `SKILL.md`（创建、修改、资源、试玩）。常驻上下文包含共享规则、机器/宿主能力、参考索引和 skill 名称/用途/路径；完整 skill 正文经现有 `read` 加载。工具 schema、执行适配及 replay/output 限制集中在 `app/src/pico8/tools.js`。这是当前浏览器宿主的静态 skills 接入，不是 pi-coding-agent 的目录扫描器或 Pi package 安装器。详见 [机制对比与结构](docs/pico8-extension-architecture.md)。75 项应用测试、4 项 Sites 检查及构建通过；浏览器启动、旧会话恢复通过。未进行真实模型生成评测。
+
 ## 存储与范围
 
 - 按用户要求，默认将所选模型、接口与 API Key 保存到当前浏览器 localStorage，刷新后恢复。可取消 Remember settings 使用内存模式，或用 Clear saved settings 清除本机模型配置（保留游戏与聊天）。没有业务后端，不内置服务密钥，请求直接发送到所选模型服务。不同站点/端口的浏览器存储彼此独立。
