@@ -284,7 +284,7 @@ export function App() {
   const pendingRef = useRef("");
   const sendLock = useRef(false);
   const [storageError, setStorageError] = useState(false);
-  const [split, setSplit] = useState(62);
+  const [split, setSplit] = useState(58);
   const saveTimer = useRef(null);
   function persist(patch) {
     Object.assign(project.current, patch, { updatedAt: Date.now() });

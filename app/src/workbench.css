@@ -23,7 +23,7 @@
   border-bottom: 1px solid var(--edge);
 }
 .studio-mode .workspace {
-  grid-template-columns: var(--chat-width, 62%) 5px minmax(0, 1fr);
+  grid-template-columns: var(--chat-width, 58%) 5px minmax(0, 1fr);
 }
 .studio-mode .panel-heading,
 .studio-mode .preview-heading {
@@ -186,11 +186,12 @@
   font: 13px/1.5 var(--workbench-font);
 }
 .studio-mode .player-panel {
-  padding: 58px 24px 24px;
+  padding: 54px 24px 24px;
+  align-items: flex-start;
 }
-/* 360px shell contains the original 128px screen at exactly 2x. */
+/* 540px shell contains the original 128px screen at exactly 3x. */
 .studio-mode .console {
-  width: min(360px, 100%, calc((100dvh - 240px) * 180 / 210));
+  width: min(540px, 100%, calc((100dvh - 144px) * 180 / 210));
 }
 .studio-mode .console-group:fullscreen {
   background: var(--canvas);
