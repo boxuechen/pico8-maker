@@ -50,6 +50,7 @@ export function sessionContext(cart, session) {
     session.lastSourceVersion !== cart.sourceVersion;
   return `Current cart: ${JSON.stringify(cart.title)}. Workspace ID: ${cart.id}. Active session ID: ${session.id}.
 Shared source revision: ${cart.revision}; working-file change counter: ${cart.sourceVersion}.
+${cart.versions.length ? "A committed game exists in this cart." : "No game has been committed yet. The working file may be empty or contain an unfinished draft; create and load the first playable version before testing."}
 ${session.lastSourceVersion == null ? "This is a new conversation about the existing cart." : changed ? "The shared source changed since this conversation last ran. Previous source and test results in this history are stale." : "This conversation shares its source with the cart's other sessions."}
 Read /cart/main.lua before making changes. Use the current shared working file, never restore source from conversation history. Starting or switching conversations does not reset the game. Re-establish current test state before relying on historical frames.`;
 }

@@ -60,3 +60,22 @@ test("leaving gallery restores project cartridge without changing saved versions
   assert.equal(game.source, sampleSource);
   assert.equal(saved, false);
 });
+
+test("leaving gallery for an empty project pauses it without loading a demo", async () => {
+  const game = new Game(() => {});
+  let paused = false;
+  game.activeCart = carts[0];
+  game.player = {
+    pause: async () => {
+      paused = true;
+    },
+    loadCart: async () => {
+      throw new Error("must not load a default game");
+    },
+  };
+  await game.restoreProject();
+  assert.equal(paused, true);
+  assert.equal(game.activeCart, null);
+  assert.equal(game.source, "");
+  assert.deepEqual(game.versions, []);
+});

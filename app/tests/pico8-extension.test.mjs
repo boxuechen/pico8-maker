@@ -144,10 +144,11 @@ test("Pi delivers complete full/cropped ASCII and restores it without replaying 
     await import("../src/pico8/observation.js");
   const session = await createPico8Session();
   t.after(() => session.dispose());
-  await session.loadSource(`function _draw()
+  const source = `function _draw()
     cls(0) pal(8,136,1)
     for y=0,127 do for x=0,127 do pset(x,y,(x+y)%16) end end
-  end`);
+  end`;
+  await session.loadSource(source);
   await session.advance({ frames: 1 });
   const crop = { format: "ascii", region: { x: 1, y: 3, width: 7, height: 5 } };
   const expectedFull = observationText(
@@ -165,7 +166,7 @@ test("Pi delivers complete full/cropped ASCII and restores it without replaying 
   let reads = 0;
   let requests = 0;
   let saved;
-  const game = new Game(() => {});
+  const game = new Game(() => {}, { versions: [source] });
   game.ensureWorker = async () => {};
   game.player = { pause: async () => {} };
   game.rpc = async (action) => {
@@ -300,4 +301,39 @@ test("design references resolve and knowledge compilation rejects stale microgam
   result = compile();
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /Unverified recipe recipe\/lantern-vault/);
+});
+
+test("agent sends high/low/off thinking, uses model output capacity and retries transient failures", async (t) => {
+  const bodies = [];
+  t.mock.method(globalThis, "fetch", async (_url, init) => {
+    bodies.push(JSON.parse(init.body));
+    if (bodies.length === 1)
+      return Response.json(
+        { error: { message: "temporarily unavailable" } },
+        { status: 503 },
+      );
+    return response({ role: "assistant", content: "Done." }, "stop");
+  });
+  const a = new Agent({ cancelTests() {} }, () => {});
+  t.after(() => a.dispose());
+  await a.open();
+  await a.configure({ ...defaultConfig, apiKey: "fixture" });
+  await a.send("Say done");
+  assert.equal(bodies.length, 2, "Pi retries one transient provider failure");
+  assert.equal(bodies[1].thinking.type, "enabled");
+  assert.equal(bodies[1].reasoning_effort, "high");
+  assert.ok(bodies[1].max_tokens > 12000);
+  for (const level of ["low", "off"]) {
+    await a.configure({
+      ...defaultConfig,
+      apiKey: "fixture",
+      thinkingLevel: level,
+    });
+    await a.send("Say done again");
+    assert.equal(
+      bodies.at(-1).thinking.type,
+      level === "off" ? "disabled" : "enabled",
+    );
+    if (level !== "off") assert.equal(bodies.at(-1).reasoning_effort, level);
+  }
 });

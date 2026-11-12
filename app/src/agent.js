@@ -3,7 +3,7 @@ import { createPico8Extension } from "./pico8/extension.js";
 import { groupAssistantTurns } from "./workbench-state.js";
 import { BACKGROUND_CONTEXT as context } from "@earendil-works/chord/context";
 import { createModels } from "@earendil-works/pi-ai/models";
-import { compactTranscript, recoverTranscript } from "./project-store.js";
+import { compactTranscript, recoverEntries } from "./project-store.js";
 import { createConnection, readableError } from "./model-config.js";
 import {
   Harness,
@@ -66,7 +66,8 @@ export function projectView(view) {
       });
   }
   for (const e of entries)
-    (e.model ?? []).forEach((m, i) => add(m, `${e.id}-${i}`));
+    if (e.kind !== "pi.compaction")
+      (e.model ?? []).forEach((m, i) => add(m, `${e.id}-${i}`));
   if (live.generation?.message) add(live.generation.message, "streaming", true);
   return {
     messages: groupAssistantTurns(messages),
@@ -107,23 +108,49 @@ export class Agent {
         models: this.models,
         registry,
         settings: () => ({
-          retry: { maxRetries: 0 },
-          compaction: { enabled: false },
+          // Pi Durable owns retry/backoff; avoid nested transport retries.
+          stream: { maxRetries: 0 },
           toolExecution: "sequential",
         }),
       },
       context,
     );
     this.root = await this.harness.root(context, {
-      agent: { extensions: [pico8], maxTurns: 24, thinkingLevel: "off" },
+      agent: { extensions: [pico8], thinkingLevel: "high" },
     });
-    const recovered = recoverTranscript(transcript);
+    const recovered = recoverEntries(transcript);
     if (recovered.length) {
-      const imported = await this.root.submit(
-        { type: "write", entry: { kind: "restored", model: recovered } },
-        context,
-      );
-      await imported.wait(context);
+      const restored = await this.root.commit(async (tx) => {
+        const ids = new Map();
+        const imported = [];
+        const remap = (id) => {
+          if (!ids.has(id))
+            throw new Error(
+              "Saved conversation has an invalid context boundary",
+            );
+          return ids.get(id);
+        };
+        for (const { id, head, edits, ...entry } of recovered) {
+          const saved = await tx.appendEntry(this.root.id, {
+            ...entry,
+            ...(head === undefined
+              ? {}
+              : { head: head === id ? "self" : remap(head) }),
+            ...(edits
+              ? {
+                  edits: edits.map((edit) => ({
+                    ...edit,
+                    target: remap(edit.target),
+                  })),
+                }
+              : {}),
+          });
+          ids.set(id, saved.id);
+          imported.push(saved);
+        }
+        return imported;
+      }, context);
+      for (const entry of restored) this.transcriptEntries.set(entry.id, entry);
     }
     this.watch = await this.root.watch(context, { min: 100, max: 200 });
     this.publish(this.watch.value);
@@ -132,25 +159,20 @@ export class Agent {
     });
   }
   publish(value) {
-    const view = projectView(value);
-    const failure = value.docs?.["pi.live"]?.runFailure;
-    if (failure?.reason === "turn_limit")
-      view.error = "已达到本次工具调用上限，可发送“继续测试”接着验证。";
-    else if (view.error) view.error = readableError(view.error, this.apiKey);
     for (const entry of value.entries ?? [])
       this.transcriptEntries.set(entry.id, entry);
-    this.onUpdate(
-      view,
-      compactTranscript([...this.transcriptEntries.values()]),
-    );
+    const entries = [...this.transcriptEntries.values()];
+    const view = projectView({ ...value, entries });
+    if (view.error) view.error = readableError(view.error, this.apiKey);
+    this.onUpdate(view, compactTranscript(entries));
   }
   async configure(value) {
-    const { config, model, provider } = createConnection(value);
+    const { config, model, provider, thinkingLevel } = createConnection(value);
     this.models.setProvider(provider);
     await this.root.configure(
       {
         model: { provider: model.provider, modelId: model.id },
-        thinkingLevel: "off",
+        thinkingLevel,
       },
       context,
     );

@@ -5,7 +5,7 @@ import {
   cropRgba,
 } from "./pico8/observation.js";
 import { cartridgeBytes } from "./cartridges.js";
-import { sampleSource, cartBytes } from "./sample.js";
+import { cartBytes } from "./sample.js";
 import { downloadCart } from "./pico8/cart.js";
 import { CartWorkspace } from "./pico8/workspace.js";
 
@@ -14,15 +14,17 @@ export class Game {
     this.onSave = onSave;
     this.onDraft = onDraft;
     this.onChange = onChange;
-    this.versions = versions?.length ? versions.slice(-12) : [sampleSource];
+    this.versions = versions?.slice(-12) ?? [];
     // A user-facing version number survives the 12-entry undo window.
-    this.revision = Math.max(revision ?? this.versions.length, this.versions.length);
+    this.revision = Math.max(
+      revision ?? this.versions.length,
+      this.versions.length,
+    );
     // The agent's working copy (/cart/main.lua). Versions are what load_game committed.
     this.draft = typeof draft === "string" ? draft : this.source;
     this.workspace = new CartWorkspace({
       read: () => this.draft,
       write: (text) => this.setDraft(text),
-      maxLength: capabilities.maxSourceLength,
     });
     this.pending = new Map();
     this.nextId = 0;
@@ -32,7 +34,10 @@ export class Game {
     this.muted = false;
   }
   get source() {
-    return this.versions.at(-1);
+    return this.versions.at(-1) ?? "";
+  }
+  get hasGame() {
+    return this.versions.length > 0;
   }
   setDraft(text) {
     if (text === this.draft) return;
@@ -43,6 +48,7 @@ export class Game {
     this.onChange({
       state: this.state,
       source: this.source,
+      hasGame: this.hasGame,
       canUndo: this.versions.length > 1,
       revision: this.revision,
       testFrame: this.testFrame,
@@ -82,9 +88,10 @@ export class Game {
       attributeFilter: ["aria-pressed"],
     });
     syncMute();
-    await this.player.loadCart(cartBytes(this.source), {
-      displayName: "little-wall.p8",
-    });
+    if (this.hasGame)
+      await this.player.loadCart(cartBytes(this.source), {
+        displayName: "my-game.p8",
+      });
     if (!this.muted) this.mute();
     this.changed();
   }
@@ -104,7 +111,7 @@ export class Game {
     };
     this.worker.onerror = () => this.cancelTests("测试进程异常，已停止。");
     await this.rpc("init", { url: this.url });
-    await this.rpc("load", { source: this.source });
+    if (this.hasGame) await this.rpc("load", { source: this.source });
   }
   rpc(action, args = {}) {
     const id = ++this.nextId;
@@ -163,14 +170,17 @@ export class Game {
   }
   async restoreProject() {
     if (!this.activeCart) return;
-    await this.player.loadCart(cartBytes(this.source), {
-      displayName: "my-game.p8",
-    });
+    if (this.hasGame)
+      await this.player.loadCart(cartBytes(this.source), {
+        displayName: "my-game.p8",
+      });
+    else await this.player.pause();
     this.activeCart = null;
     this.testFrame = null;
     this.changed();
   }
   async play() {
+    if (!this.hasGame && !this.activeCart) return;
     this.testFrame = null;
     this.changed();
     if (this.player.state === "running") await this.player.pause();
@@ -182,6 +192,7 @@ export class Game {
     this.player.canvas.focus();
   }
   async restart() {
+    if (!this.hasGame && !this.activeCart) return;
     this.testFrame = null;
     await this.player.reset();
     await this.player.start();
@@ -208,20 +219,27 @@ export class Game {
   }
   /** Save the current source as a .p8 cart, labelled with an RGBA frame. */
   export({ title, label } = {}) {
+    if (!this.hasGame) return;
     downloadCart(this.source, { title, label });
   }
   /** Swap in another cart's versions without rebooting the player. */
   async switchProject(versions, revision, draft) {
     this.cancelTests("Switched to another cart.");
-    this.versions = versions?.length ? versions.slice(-12) : [sampleSource];
-    this.revision = Math.max(revision ?? this.versions.length, this.versions.length);
+    this.versions = versions?.slice(-12) ?? [];
+    this.revision = Math.max(
+      revision ?? this.versions.length,
+      this.versions.length,
+    );
     this.draft = typeof draft === "string" ? draft : this.source;
     this.activeCart = null;
     this.testFrame = null;
-    if (this.player)
-      await this.player.loadCart(cartBytes(this.source), {
-        displayName: "my-game.p8",
-      });
+    if (this.player) {
+      if (this.hasGame)
+        await this.player.loadCart(cartBytes(this.source), {
+          displayName: "my-game.p8",
+        });
+      else await this.player.pause();
+    }
     this.changed();
   }
   execute(action, args, signal) {
@@ -251,39 +269,49 @@ export class Game {
       throw new Error(`未知游戏工具：${action}`);
     if (action === "read_game")
       return { output: [{ type: "text", text: this.draft }] };
+    if (action !== "load_game" && !this.hasGame)
+      throw new Error(
+        "No game has been loaded yet. Write main.lua and call load_game first.",
+      );
     const options = observationOptions(action === "observe_game" ? args : {});
     await this.ensureWorker();
     await this.player.pause();
     let observation;
     let note = "";
     if (action === "load_game") {
-      if (
-        args.source !== undefined &&
-        (typeof args.source !== "string" ||
-          args.source.length > capabilities.maxSourceLength)
-      )
-        throw new Error("源码应为不超过 100 KB 的 Lua 文本");
+      if (args.source !== undefined && typeof args.source !== "string")
+        throw new Error("源码应为 Lua 文本");
       // A full source replaces the working file first; otherwise load the edits.
       if (args.source !== undefined) this.setDraft(args.source);
       const source = this.draft;
+      if (!source.trim())
+        throw new Error(
+          "main.lua is empty. Write game source before loading it.",
+        );
       observation = await this.rpc("load", { source });
       if (observation.state !== "faulted")
         observation = (await this.rpc("advance", { frames: 1, buttons: 0 }))
           .observation;
       if (observation.state === "faulted") {
         const result = this.output(observation);
-        await this.rpc("load", { source: this.source });
+        if (this.hasGame) await this.rpc("load", { source: this.source });
+        else this.cancelTests();
         result.output[0].text +=
-          "\nNot committed: main.lua keeps this failing source. Fix it with edit, then call load_game again. The test session still runs the last loaded version.";
+          "\nNot committed: main.lua keeps this failing source. Fix it with edit, then call load_game again." +
+          (this.hasGame
+            ? " The test session still runs the last loaded version."
+            : " No playable version exists yet.");
         return { ...result, isError: true };
       }
       signal?.throwIfAborted();
-      if (source === this.source) note = "\nmain.lua is unchanged since the last load; no new version.";
+      if (source === this.source)
+        note = "\nmain.lua is unchanged since the last load; no new version.";
       else {
         try {
           await this.player.loadCart(cartBytes(source));
         } catch (error) {
-          await this.rpc("load", { source: this.source });
+          if (this.hasGame) await this.rpc("load", { source: this.source });
+          else this.cancelTests();
           throw error;
         }
         this.versions.push(source);
@@ -298,7 +326,7 @@ export class Game {
         args.frames < 1 ||
         args.frames > capabilities.maxInputFrames
       )
-        throw new Error("frames 必须为 1–120");
+        throw new Error(`frames 必须为 1–${capabilities.maxInputFrames}`);
       if (
         !Number.isInteger(args.buttons) ||
         args.buttons < 0 ||

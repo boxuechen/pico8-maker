@@ -97,6 +97,7 @@ export function WorkbenchHeader({
   onHome,
   title,
   revision,
+  hasGame,
   saveFailed,
   tokens,
   chars,
@@ -129,7 +130,7 @@ export function WorkbenchHeader({
           {title}
         </h1>
         <span className={`version-badge ${saveFailed ? "unsaved" : ""}`}>
-          v{revision} · {saveFailed ? "Not saved" : "Saved locally"}
+          {hasGame ? `v${revision}` : "Empty cart"} · {saveFailed ? "Not saved" : "Saved locally"}
         </span>
       </div>
       <div className="wb-actions">
@@ -164,7 +165,7 @@ export function WorkbenchHeader({
         </button>
         <button
           className="save-cart"
-          disabled={!ready}
+          disabled={!ready || !hasGame}
           onClick={onSaveCart}
           title="Download a .p8 cartridge labelled with the latest playtest frame"
         >

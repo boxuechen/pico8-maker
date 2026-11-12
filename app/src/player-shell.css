@@ -1,4 +1,27 @@
 /* Both screens use the homepage's compact controls, anchored to the TV itself. */
+.empty-preview {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px;
+  background: #0a1020;
+  color: #b8bcc8;
+  text-align: center;
+}
+.empty-preview span {
+  font: clamp(11px, 2vw, 18px) Proggy, monospace;
+}
+.empty-preview small {
+  max-width: 22ch;
+  font-size: clamp(9px, 1.5vw, 12px);
+  line-height: 1.5;
+  color: #7e869c;
+}
 :is(.home-mode, .studio-mode) .console .player-controls {
   position: absolute;
   bottom: 15%;

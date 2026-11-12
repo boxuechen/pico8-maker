@@ -1,4 +1,9 @@
-import { createModels, createProvider } from "@earendil-works/pi-ai/models";
+import {
+  createModels,
+  createProvider,
+  clampThinkingLevel,
+  getSupportedThinkingLevels,
+} from "@earendil-works/pi-ai/models";
 import { openAICompletionsApi } from "@earendil-works/pi-ai/api/openai-completions.lazy";
 import { openAIResponsesApi } from "@earendil-works/pi-ai/api/openai-responses.lazy";
 import { anthropicMessagesApi } from "@earendil-works/pi-ai/api/anthropic-messages.lazy";
@@ -20,7 +25,27 @@ export const defaultConfig = {
   baseUrl: providers[0].models.find((m) => m.id === "deepseek-flash").baseUrl,
   apiKey: "",
   remember: true,
+  thinkingLevel: "high",
 };
+const thinkingLevels = [
+  "off",
+  "minimal",
+  "low",
+  "medium",
+  "high",
+  "xhigh",
+  "max",
+];
+export function thinkingOptions(config) {
+  const model = providers
+    .find((p) => p.id === config.provider)
+    ?.models.find((m) => m.id === config.model) ?? { reasoning: true };
+  // Custom endpoints have no capability catalog; the user selects their level.
+  return {
+    levels: getSupportedThinkingLevels(model),
+    level: clampThinkingLevel(model, config.thinkingLevel ?? "high"),
+  };
+}
 export function normalizeConfig(value = {}) {
   if (!value || typeof value !== "object") return { ...defaultConfig };
   if (!value.model && !value.baseUrl) return { ...defaultConfig };
@@ -36,6 +61,9 @@ export function normalizeConfig(value = {}) {
     ...value,
     provider: value.provider ?? known?.id ?? "custom",
     apiKey: value.apiKey ?? "",
+    thinkingLevel: thinkingLevels.includes(value.thinkingLevel)
+      ? value.thinkingLevel
+      : "high",
   };
 }
 export function validateConfig(value) {
@@ -63,6 +91,20 @@ export function validateConfig(value) {
     throw new Error("请填写 Base URL，不要包含 /chat/completions");
   if (!config.model || !config.apiKey)
     throw new Error("请填写 API Key 和模型名称");
+  if (config.provider === "custom") {
+    config.contextWindow = Number(config.contextWindow ?? 128000);
+    config.maxTokens = Number(config.maxTokens ?? 32768);
+    if (
+      !Number.isSafeInteger(config.contextWindow) ||
+      config.contextWindow < 1 ||
+      !Number.isSafeInteger(config.maxTokens) ||
+      config.maxTokens < 1 ||
+      config.maxTokens > config.contextWindow
+    )
+      throw new Error(
+        "请填写模型支持的上下文和输出 token 数，输出不能超过上下文",
+      );
+  }
   if (config.provider !== "custom") {
     const model = providers
       .find((p) => p.id === config.provider)
@@ -83,10 +125,10 @@ export function createConnection(value) {
     api: "openai-completions",
     provider: "byok",
     baseUrl: config.baseUrl,
-    reasoning: false,
+    reasoning: config.thinkingLevel !== "off",
     input: ["text", "image"],
-    contextWindow: 128000,
-    maxTokens: 12000,
+    contextWindow: config.contextWindow,
+    maxTokens: config.maxTokens,
     cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
     compat: {
       supportsStore: false,
@@ -96,12 +138,6 @@ export function createConnection(value) {
     },
   };
   const api = adapters[model.api]();
-  const options = (o) => ({
-    ...o,
-    maxTokens: Math.min(o?.maxTokens ?? 12000, model.maxTokens),
-    timeoutMs: o?.timeoutMs ?? 120000,
-    maxRetries: 0,
-  });
   const provider = createProvider({
     id: model.provider,
     name: config.provider,
@@ -114,11 +150,16 @@ export function createConnection(value) {
       },
     },
     api: {
-      stream: (m, t, o) => api.stream(m, t, options(o)),
-      streamSimple: (m, t, o) => api.streamSimple(m, t, options(o)),
+      stream: (m, t, o) => api.stream(m, t, o),
+      streamSimple: (m, t, o) => api.streamSimple(m, t, o),
     },
   });
-  return { config, model, provider };
+  return {
+    config,
+    model,
+    provider,
+    thinkingLevel: clampThinkingLevel(model, config.thinkingLevel),
+  };
 }
 export function readableError(error, apiKey = "") {
   let text = String(error?.message ?? error ?? "请求失败");

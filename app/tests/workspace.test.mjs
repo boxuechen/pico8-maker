@@ -22,19 +22,31 @@ function memoryWorkspace(text = "", maxLength) {
 test("the workspace exposes exactly one writable file", async () => {
   const { box, ws } = memoryWorkspace("print(1)");
   assert.equal((await ws.absolutePath("main.lua", context)).value, mainPath);
-  assert.equal((await ws.absolutePath("./x/../main.lua", context)).value, mainPath);
+  assert.equal(
+    (await ws.absolutePath("./x/../main.lua", context)).value,
+    mainPath,
+  );
   assert.equal((await ws.readTextFile("main.lua", context)).value, "print(1)");
   assert.equal((await ws.fileInfo("/cart", context)).value.kind, "directory");
-  assert.equal((await ws.fileInfo("other.lua", context)).error.code, "not_found");
+  assert.equal(
+    (await ws.fileInfo("other.lua", context)).error.code,
+    "not_found",
+  );
   assert.equal(
     (await ws.writeFile("/etc/passwd", "x", context)).error.code,
     "permission_denied",
   );
-  assert.equal((await ws.exec("ls", undefined, context)).error.code, "shell_unavailable");
+  assert.equal(
+    (await ws.exec("ls", undefined, context)).error.code,
+    "shell_unavailable",
+  );
   assert.equal((await ws.writeFile("main.lua", "print(2)", context)).ok, true);
   assert.equal(box.text, "print(2)");
   const small = memoryWorkspace("", 4).ws;
-  assert.equal((await small.writeFile("main.lua", "12345", context)).error.code, "invalid");
+  assert.equal(
+    (await small.writeFile("main.lua", "12345", context)).error.code,
+    "invalid",
+  );
 });
 
 test("the agent's edit tool changes only the targeted block of main.lua", async () => {
@@ -92,7 +104,9 @@ function scriptedGame(options) {
   game.rpc = async (action, args) => {
     if (action === "load") {
       loads.push(args.source);
-      return args.source.includes("bad") ? { state: "faulted", diagnostics: [] } : ok;
+      return args.source.includes("bad")
+        ? { state: "faulted", diagnostics: [] }
+        : ok;
     }
     return { observation: ok };
   };
@@ -145,4 +159,44 @@ test("a stored draft survives reopening and switching carts", async () => {
   assert.equal(game.draft, "b");
   await game.switchProject(["a"], 1, "a + edits");
   assert.equal(game.draft, "a + edits");
+});
+
+test("game tools allow the player frame range and large source without an app cap", async () => {
+  const { game } = scriptedGame();
+  const source = "-- data\n".repeat(15000);
+  await game.execute("load_game", { source });
+  assert.equal(game.source, source);
+  await game.workspace.writeFile("main.lua", source + "-- edit", context);
+  assert.equal(game.draft, source + "-- edit");
+  await game.execute("press_buttons", { frames: 600, buttons: 0 });
+  await assert.rejects(
+    () => game.execute("press_buttons", { frames: 601, buttons: 0 }),
+    /1–600/,
+  );
+});
+
+test("empty projects do not play a demo and first successful load creates v1", async () => {
+  const { game } = scriptedGame({ versions: [] });
+  assert.equal(game.source, "");
+  assert.equal(game.draft, "");
+  assert.equal(game.hasGame, false);
+  assert.equal(game.revision, 0);
+  await game.play();
+  await game.restart();
+  await assert.rejects(() => game.execute("observe_game", {}), /No game/);
+  await assert.rejects(() => game.execute("load_game", {}), /empty/);
+  const failed = await game.execute("load_game", { source: "bad code" });
+  assert.equal(failed.isError, true);
+  assert.equal(game.hasGame, false);
+  assert.equal(game.revision, 0);
+  assert.equal(game.draft, "bad code");
+  await game.execute("load_game", { source: "function _draw() cls(1) end" });
+  assert.equal(game.hasGame, true);
+  assert.equal(game.revision, 1);
+  assert.equal(game.versions.length, 1);
+  await game.switchProject([], 0);
+  assert.equal(game.source, "");
+  assert.equal(game.draft, "");
+  assert.equal(game.hasGame, false);
+  assert.equal(game.revision, 0);
 });

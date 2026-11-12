@@ -65,6 +65,7 @@ import {
   validateConfig,
   probeConnection,
   readableError,
+  thinkingOptions,
 } from "./model-config.js";
 
 import {
@@ -88,6 +89,7 @@ function ModelSettings({ initial, onSave, onClear, onClose, pending }) {
   useEffect(() => () => probeAbort.current?.abort(), []);
   const [modelSearch, setModelSearch] = useState("");
   const preset = providers.find((p) => p.id === form.provider);
+  const thinking = thinkingOptions(form);
   const filteredModels = preset?.models.filter(
     (m) =>
       m.id === form.model ||
@@ -104,6 +106,7 @@ function ModelSettings({ initial, onSave, onClear, onClose, pending }) {
       model: model?.id ?? "",
       baseUrl: model?.baseUrl ?? "",
       apiKey: "",
+      thinkingLevel: form.thinkingLevel ?? "high",
     });
     setNotice("");
   }
@@ -282,6 +285,73 @@ function ModelSettings({ initial, onSave, onClear, onClose, pending }) {
             />
           </label>
         )}
+        {!preset && (
+          <>
+            <label>
+              Context window (tokens)
+              <input
+                type="number"
+                min="1"
+                step="1"
+                required
+                disabled={busy}
+                value={form.contextWindow ?? 128000}
+                onChange={(e) =>
+                  setForm({ ...form, contextWindow: e.target.value })
+                }
+              />
+            </label>
+            <label>
+              Maximum output (tokens)
+              <input
+                type="number"
+                min="1"
+                step="1"
+                required
+                disabled={busy}
+                value={form.maxTokens ?? 32768}
+                onChange={(e) =>
+                  setForm({ ...form, maxTokens: e.target.value })
+                }
+              />
+            </label>
+            <p className="model-detail">
+              Use your model’s published limits. Custom endpoints may require
+              Thinking level set to Off.
+            </p>
+          </>
+        )}
+        <label>
+          Thinking level
+          <select
+            value={thinking.level}
+            disabled={busy || thinking.levels.length === 1}
+            onChange={(e) =>
+              setForm({ ...form, thinkingLevel: e.target.value })
+            }
+          >
+            {thinking.levels.map((level) => (
+              <option key={level} value={level}>
+                {
+                  {
+                    off: "Off",
+                    minimal: "Minimal",
+                    low: "Low",
+                    medium: "Medium",
+                    high: "High",
+                    xhigh: "Extra high",
+                    max: "Maximum",
+                  }[level]
+                }
+              </option>
+            ))}
+          </select>
+        </label>
+        <p className="model-detail">
+          {thinking.levels.length === 1 && thinking.level === "off"
+            ? "This model does not support thinking."
+            : "Higher thinking levels can improve complex work, but take more time and tokens."}
+        </p>
         <label className="checkbox">
           <input
             type="checkbox"
@@ -508,7 +578,8 @@ function Studio({ store }) {
     agentGeneration = useRef(0);
   const [game, setGame] = useState({
     state: "loading",
-    source: project.current.versions.at(-1),
+    source: project.current.versions.at(-1) ?? "",
+    hasGame: project.current.versions.length > 0,
     canUndo: false,
     revision: project.current.revision ?? project.current.versions.length,
     testFrame: null,
@@ -746,7 +817,6 @@ function Studio({ store }) {
     }
   }
   async function playCurrent() {
-    if (!inWorkbench && !game.activeCart) return selectCart(carts[5]);
     return gameRef.current.play();
   }
   async function sendMessage(text) {
@@ -907,12 +977,14 @@ function Studio({ store }) {
     }
   }
   async function saveCart() {
+    if (!gameRef.current.hasGame) return;
     const rgba = frames.at(-1)?.rgba ?? (label ? await urlToRgba(label) : null);
     gameRef.current.export({ title: cartTitle, label: rgba });
     markSaved({ ...project.current, revision: game.revision });
   }
   async function saveShelfCart(cart) {
     const live = cart.id === project.current.id ? project.current : cart;
+    if (!live.versions.length) return;
     downloadCart(live.versions.at(-1), {
       title: live.title,
       label: live.label ? await urlToRgba(live.label) : null,
@@ -944,7 +1016,8 @@ function Studio({ store }) {
     saveComposerDraft(text);
     document.getElementById("game-prompt")?.focus();
   }
-  const playing = game.state === "running" && !game.testFrame;
+  const hasPlayable = game.hasGame || !!game.activeCart;
+  const playing = hasPlayable && game.state === "running" && !game.testFrame;
   const cartTitle = project.current.title;
   const currentSession = activeSession(project.current);
   const hasConversation = chat.messages.length > 0;
@@ -961,7 +1034,9 @@ function Studio({ store }) {
     : cartLoading
       ? ["info", "LOADING CART"]
       : running
-        ? ["accent", "AI PLAYTESTING"]
+        ? ["accent", game.hasGame ? "AI PLAYTESTING" : "CREATING GAME"]
+        : !hasPlayable
+          ? ["neutral", "NO GAME YET"]
         : game.testFrame
           ? ["success", "READY TO PLAY"]
           : playing
@@ -973,7 +1048,7 @@ function Studio({ store }) {
       : tool
         ? describeTool(tool).label.toLowerCase()
         : "thinking…"
-    : `v${game.revision}${game.testFrame ? " · latest AI test frame" : ""}`;
+    : game.hasGame ? `v${game.revision}${game.testFrame ? " · latest AI test frame" : ""}` : "";
   const hint = running
     ? "Your controls unlock when testing ends"
     : game.testFrame
@@ -1021,6 +1096,7 @@ function Studio({ store }) {
               ready={ready}
               title={cartTitle}
               revision={game.revision}
+              hasGame={game.hasGame}
               saveFailed={storageError}
               tokens={tokens}
               chars={game.source?.length ?? 0}
@@ -1120,7 +1196,7 @@ function Studio({ store }) {
                             {lastCart.title}
                           </strong>
                           <small>
-                            v{lastCart.revision} · {ago(lastCart.updatedAt)}
+                            {lastCart.versions.length ? `v${lastCart.revision}` : "Empty cart"} · {ago(lastCart.updatedAt)}
                           </small>
                           <button
                             className="continue-button"
@@ -1187,13 +1263,13 @@ function Studio({ store }) {
                     </span>
                     <h1>
                       {inWorkbench
-                        ? "Keep building this cart."
+                        ? game.hasGame ? "Keep building this cart." : "Make your first game."
                         : "Your idea. Your cartridge."}
                     </h1>
                     <p>
                       {inWorkbench
-                        ? "This session has its own conversation. Your game and source are shared across sessions."
-                        : "Describe a game, or play the preview and tell PICO-8 Maker what to change."}
+                        ? game.hasGame ? "This session has its own conversation. Your game and source are shared across sessions." : "Describe what you want to play. Your first version will appear in Preview."
+                        : "Describe a game to create your own cartridge."}
                     </p>
                   </div>
                 </ThreadPrimitive.Empty>
@@ -1393,6 +1469,12 @@ function Studio({ store }) {
                   <div className="console">
                     <div className="screen">
                       <div ref={mount} className="player-mount" />
+                      {!hasPlayable && !game.booting && (
+                        <div className="empty-preview" role="status">
+                          <span>YOUR GAME GOES HERE</span>
+                          <small>{running ? "Creating your first version…" : "Describe a game to get started."}</small>
+                        </div>
+                      )}
                       {game.testFrame && (
                         <canvas
                           ref={testCanvas}
@@ -1408,7 +1490,7 @@ function Studio({ store }) {
                           {formatButtons(pressing.buttons)}
                         </span>
                       )}
-                      {!playing && !busy && (
+                      {hasPlayable && !playing && !busy && (
                         <button
                           disabled={!ready}
                           className={`play-overlay ${game.testFrame ? "over-frame" : ""}`}
@@ -1431,14 +1513,14 @@ function Studio({ store }) {
                     <div className="player-controls">
                       <button
                         aria-label={playing ? "Pause game" : "Play game"}
-                        disabled={!ready || busy}
+                        disabled={!ready || busy || !hasPlayable}
                         onClick={safe(playCurrent)}
                       >
                         {playing ? <Pause size={20} /> : <Play size={20} />}
                       </button>
                       <button
                         aria-label="Restart game"
-                        disabled={!ready || busy}
+                        disabled={!ready || busy || !hasPlayable}
                         onClick={safe(() => gameRef.current.restart())}
                       >
                         <RotateCcw size={19} />
@@ -1446,7 +1528,7 @@ function Studio({ store }) {
                       <span className="control-divider" />
                       <button
                         aria-label={game.muted ? "Enable sound" : "Mute"}
-                        disabled={!ready || busy}
+                        disabled={!ready || busy || !hasPlayable}
                         onClick={() => gameRef.current.mute()}
                       >
                         {game.muted ? (
@@ -1477,6 +1559,8 @@ function Studio({ store }) {
                         ? "POWERING ON…"
                         : cartLoading
                           ? "LOADING CARTRIDGE…"
+                          : !hasPlayable
+                            ? "WAITING FOR YOUR GAME"
                           : running
                             ? "AI IS PLAYTESTING"
                             : "ARROWS TO MOVE · Z / X TO PLAY"}

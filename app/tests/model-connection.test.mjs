@@ -7,6 +7,7 @@ import {
   providers,
   probeConnection,
   readableError,
+  thinkingOptions,
 } from "../src/model-config.js";
 
 const config = { ...defaultConfig, apiKey: "fixture-not-a-real-secret" };
@@ -56,6 +57,36 @@ test("Pi presets retain DeepSeek vision, reasoning compatibility and provider en
       apiKey: "test",
     }).provider,
     "deepseek",
+  );
+});
+
+test("thinking follows model capabilities and custom limits are explicit", () => {
+  assert.equal(createConnection(config).thinkingLevel, "high");
+  assert.equal(
+    createConnection({ ...config, thinkingLevel: "low" }).thinkingLevel,
+    "low",
+  );
+  const preset = providers
+    .find((p) => p.id === "openai")
+    .models.find((m) => m.id === "gpt-4.1");
+  const plain = {
+    ...config,
+    provider: "openai",
+    model: preset.id,
+    baseUrl: preset.baseUrl,
+  };
+  assert.deepEqual(thinkingOptions(plain), { levels: ["off"], level: "off" });
+  assert.equal(createConnection(plain).thinkingLevel, "off");
+  const custom = {
+    ...config,
+    provider: "custom",
+    contextWindow: 200000,
+    maxTokens: 64000,
+  };
+  assert.equal(createConnection(custom).model.maxTokens, 64000);
+  assert.throws(
+    () => createConnection({ ...custom, maxTokens: 300000 }),
+    /token/,
   );
 });
 

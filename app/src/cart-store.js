@@ -5,7 +5,6 @@ import { newSession, newId } from "./sessions.js";
 import { sampleSource } from "./sample.js";
 
 const dbName = "pico8-maker";
-const maxSource = 100000;
 
 export function newCart(patch = {}) {
   const now = Date.now();
@@ -17,8 +16,8 @@ export function newCart(patch = {}) {
     sessions: [session],
     activeSessionId: session.id,
     sourceVersion: 0,
-    versions: [sampleSource],
-    revision: 1,
+    versions: [],
+    revision: 0,
     label: null,
     // Agent's working copy of main.lua; null means "same as the latest version".
     sourceDraft: null,
@@ -41,17 +40,26 @@ export function normalizeCart(data) {
     ) ||
     new Set(data.sessions.map((s) => s.id)).size !== data.sessions.length ||
     !Array.isArray(data.versions) ||
-    !data.versions.length ||
-    !data.versions.every((v) => typeof v === "string" && v.length <= maxSource)
+    !data.versions.every((v) => typeof v === "string")
   )
     return null;
   const cart = { ...newCart(), ...data };
   cart.versions = cart.versions.slice(-12);
+  // Earlier empty carts were seeded with the demo. Remove only untouched seeds.
   if (
-    typeof cart.sourceDraft !== "string" ||
-    cart.sourceDraft.length > maxSource
-  )
+    cart.versions.length === 1 &&
+    cart.versions[0] === sampleSource &&
+    cart.revision === 1 &&
+    cart.savedRevision == null &&
+    !cart.label &&
+    (cart.sourceDraft == null || cart.sourceDraft === sampleSource) &&
+    cart.sessions.every((session) => session.transcript.length === 0)
+  ) {
+    cart.versions = [];
+    cart.revision = 0;
     cart.sourceDraft = null;
+  }
+  if (typeof cart.sourceDraft !== "string") cart.sourceDraft = null;
   cart.sourceVersion = Math.max(0, Number(cart.sourceVersion) || 0);
   cart.sessions = cart.sessions.map((s) => ({
     ...newSession(),
@@ -74,8 +82,8 @@ export function isOnShelf(cart) {
       cart.sessions.length > 1 ||
       cart.sessions.some((s) => s.transcript.length > 0 || s.draft.trim()) ||
       cart.sourceDraft != null ||
-      cart.versions.length > 1 ||
-      cart.revision > 1)
+      cart.versions.length > 0 ||
+      cart.revision > 0)
   );
 }
 

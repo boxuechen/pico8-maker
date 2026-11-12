@@ -15,9 +15,15 @@ test("model key persists by default, opt-out removes it, clear preserves project
     removeItem: (key) => data.delete(key),
   };
   assert.equal(readModelConfig(storage).remember, true);
+  assert.equal(readModelConfig(storage).thinkingLevel, "high");
   const saved = { ...defaultConfig, apiKey: "fixture-not-real" };
   writeModelConfig(saved, storage);
   assert.deepEqual(readModelConfig(storage), saved);
+  writeModelConfig({ ...saved, thinkingLevel: "low" }, storage);
+  assert.equal(readModelConfig(storage).thinkingLevel, "low");
+  const { thinkingLevel, ...legacy } = saved;
+  writeModelConfig(legacy, storage);
+  assert.equal(readModelConfig(storage).thinkingLevel, "high");
   writeModelConfig({ ...saved, remember: false }, storage);
   assert.equal(readModelConfig(storage).apiKey, "");
   writeModelConfig(saved, storage);

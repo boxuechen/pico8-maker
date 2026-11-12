@@ -73,3 +73,48 @@ test("infinite guest code is bounded by VM instruction budget", async (t) => {
   assert.equal(result.state, "faulted");
   assert.ok(result.diagnostics.length);
 });
+
+test("actual test worker uses player safety defaults and advances 600 frames", async (t) => {
+  let reply;
+  const previousSelf = globalThis.self;
+  globalThis.self = {
+    postMessage(value) {
+      reply = value;
+    },
+  };
+  t.after(() => {
+    if (previousSelf === undefined) delete globalThis.self;
+    else globalThis.self = previousSelf;
+  });
+  await import("../src/test-worker.js");
+  const send = async (data) => {
+    await self.onmessage({ data: { id: 1, ...data } });
+    assert.equal(reply.error, undefined);
+    return reply.result;
+  };
+  await send({
+    action: "init",
+    url: new URL("../public/player/main/player.mjs", import.meta.url).href,
+  });
+  const source =
+    "function _init() local n=0 for i=1,1000 do for j=1,1000 do n+=1 end end end function _draw() cls(1) end";
+  const limited = await createPico8Session();
+  t.after(() => limited.dispose());
+  assert.equal(
+    (await limited.loadSource(source, { instructionBudget: 1000000 })).state,
+    "faulted",
+  );
+  assert.equal((await send({ action: "load", source })).state, "ready");
+  const advanced = await send({ action: "advance", frames: 600, buttons: 0 });
+  assert.equal(advanced.outcome, "completed");
+  assert.equal(advanced.completedFrames, 600);
+  const infinite = await send({
+    action: "load",
+    source: "function _init() while true do end end",
+  });
+  assert.equal(
+    infinite.state,
+    "faulted",
+    "default VM safety still stops infinite code",
+  );
+});

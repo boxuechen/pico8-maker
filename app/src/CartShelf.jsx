@@ -81,7 +81,7 @@ function ShelfCart({ cart, current, disabled, onOpen, onSave, onDuplicate, onDel
               <button
                 aria-label={`Save ${cart.title} as a file`}
                 title="Save cart"
-                disabled={disabled}
+                disabled={disabled || !cart.versions.length}
                 onClick={() => onSave(cart)}
               >
                 <FloppyIcon size={14} />
@@ -111,7 +111,7 @@ function ShelfCart({ cart, current, disabled, onOpen, onSave, onDuplicate, onDel
         {cart.title}
       </strong>
       <small className="shelf-meta">
-        v{cart.revision} · {ago(cart.updatedAt)}
+        {cart.versions.length ? `v${cart.revision}` : "Empty cart"} · {ago(cart.updatedAt)}
       </small>
       <span className={`shelf-status ${status}`}>
         <i />

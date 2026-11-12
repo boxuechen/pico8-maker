@@ -52,7 +52,7 @@ test("carts round-trip, sort newest first and keep the session", async () => {
 
 test("records are validated; broken ones are skipped", async () => {
   assert.equal(
-    normalizeCart({ id: "x", sessions: [newSession()], versions: [] }),
+    normalizeCart({ id: "x", sessions: [newSession()], versions: null }),
     null,
   );
   assert.equal(
@@ -63,7 +63,7 @@ test("records are validated; broken ones are skipped", async () => {
     normalizeCart({
       id: "x",
       sessions: [newSession()],
-      versions: ["a".repeat(100001)],
+      versions: [42],
     }),
     null,
   );
@@ -83,6 +83,19 @@ test("records are validated; broken ones are skipped", async () => {
     store.carts.map((c) => c.id),
     ["ok"],
   );
+});
+
+test("large source and draft survive a storage round trip without an app character cap", async () => {
+  const backend = memoryBackend();
+  const source = "-- source\n".repeat(12000);
+  const draft = source + "-- working edit";
+  const store = await openCartStore({ backend });
+  await store.put(
+    newCart({ id: "large", versions: [source], sourceDraft: draft }),
+  );
+  const reopened = await openCartStore({ backend });
+  assert.equal(reopened.carts[0].versions[0], source);
+  assert.equal(reopened.carts[0].sourceDraft, draft);
 });
 
 test("shelf membership, save status and duplicates", () => {
@@ -138,4 +151,36 @@ test("default cart names skip existing numbered titles", async () => {
   await backend.put("carts", newCart({ title: "New Cart7" }));
   const store = await openCartStore({ backend });
   assert.equal((await store.createCart()).title, "New Cart8");
+});
+
+test("new empty carts persist without demo source or a version", async () => {
+  const cart = newCart({ named: true });
+  assert.deepEqual(cart.versions, []);
+  assert.equal(cart.revision, 0);
+  const backend = memoryBackend();
+  const store = await openCartStore({ backend });
+  await store.put(cart);
+  const restored = (await openCartStore({ backend })).carts[0];
+  assert.deepEqual(restored.versions, []);
+  assert.equal(restored.revision, 0);
+  assert.equal(isOnShelf(restored), true);
+});
+
+test("only untouched legacy demo seeds become empty carts", async () => {
+  const { sampleSource } = await import("../src/sample.js");
+  const seed = newCart({ versions: [sampleSource], revision: 1 });
+  assert.deepEqual(normalizeCart(seed).versions, []);
+  assert.deepEqual(normalizeCart({ ...seed, savedRevision: 1 }).versions, [
+    sampleSource,
+  ]);
+  const edited = { ...seed, sourceDraft: "-- my edit" };
+  assert.equal(normalizeCart(edited).sourceDraft, "-- my edit");
+  assert.deepEqual(normalizeCart(edited).versions, [sampleSource]);
+  const authored = {
+    ...seed,
+    sessions: [
+      newSession({ transcript: [{ role: "user", content: "make this game" }] }),
+    ],
+  };
+  assert.deepEqual(normalizeCart(authored).versions, [sampleSource]);
 });
