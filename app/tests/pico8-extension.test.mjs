@@ -125,3 +125,124 @@ test("actual provider requests replace legacy rules and preserve references acro
     await b.dispose();
   }
 });
+
+test("Pi delivers complete full/cropped ASCII and restores it without replaying game operations", async (t) => {
+  const { createPico8Session } =
+    await import("../public/player/main/player.mjs");
+  const { Game } = await import("../src/game.js");
+  const { observationOptions, observationText } =
+    await import("../src/pico8/observation.js");
+  const session = await createPico8Session();
+  t.after(() => session.dispose());
+  await session.loadSource(`function _draw()
+    cls(0) pal(8,136,1)
+    for y=0,127 do for x=0,127 do pset(x,y,(x+y)%16) end end
+  end`);
+  await session.advance({ frames: 1 });
+  const crop = { format: "ascii", region: { x: 1, y: 3, width: 7, height: 5 } };
+  const expectedFull = observationText(
+    session.observe(),
+    observationOptions({ format: "ascii" }),
+  );
+  const expectedCrop = observationText(
+    session.observe(),
+    observationOptions(crop),
+  );
+  assert.ok(
+    Buffer.byteLength(expectedFull) > 16384,
+    "exercise the old reference-size boundary",
+  );
+  let reads = 0;
+  let requests = 0;
+  let saved;
+  const game = new Game(() => {});
+  game.ensureWorker = async () => {};
+  game.player = { pause: async () => {} };
+  game.rpc = async (action) => {
+    reads++;
+    assert.equal(action, "observe");
+    return session.observe();
+  };
+  t.mock.method(globalThis, "fetch", async (url, init) => {
+    const body = JSON.parse(init.body);
+    requests++;
+    const tool = body.tools.find(
+      (t) => t.function.name === "observe_game",
+    ).function;
+    assert.deepEqual(tool.parameters.properties.format.enum, [
+      "png",
+      "ascii",
+      "both",
+    ]);
+    assert.equal(tool.parameters.properties.region.additionalProperties, false);
+    const system = JSON.stringify(
+      body.messages.filter((m) => m.role === "system"),
+    );
+    assert.ok(system.includes("Historical frames are past evidence"));
+    assert.ok(!system.includes("no ASCII"));
+    const resultText = body.messages
+      .filter((m) => m.role === "tool")
+      .map((m) =>
+        typeof m.content === "string"
+          ? m.content
+          : m.content
+              .filter((c) => c.type === "text")
+              .map((c) => c.text)
+              .join("\n"),
+      );
+    if (requests > 1)
+      assert.ok(
+        resultText.includes(expectedFull),
+        "full grid, legend and identity reach the provider intact",
+      );
+    if (requests > 2) assert.ok(resultText.includes(expectedCrop));
+    if (requests < 3)
+      return response(
+        {
+          role: "assistant",
+          tool_calls: [
+            {
+              index: 0,
+              id: `ascii-${requests}`,
+              type: "function",
+              function: {
+                name: "observe_game",
+                arguments: JSON.stringify(
+                  requests === 1 ? { format: "ascii" } : crop,
+                ),
+              },
+            },
+          ],
+        },
+        "tool_calls",
+      );
+    return response(
+      { role: "assistant", content: "Fixture: observation inspected." },
+      "stop",
+    );
+  });
+  const first = new Agent(game, () => {});
+  try {
+    await first.open();
+    await first.configure({ ...defaultConfig, apiKey: "fixture" });
+    await first.send("Inspect full pixels, then crop.");
+    assert.equal(requests, 3);
+    assert.equal(reads, 2);
+    saved = compactTranscript([...first.transcriptEntries.values()]);
+    assert.ok(JSON.stringify(saved).includes("pico8-slots-v1"));
+  } finally {
+    await first.dispose();
+  }
+  const restored = new Agent(game, () => {});
+  try {
+    await restored.open(saved);
+    assert.equal(reads, 2);
+    assert.equal(requests, 3);
+    await restored.configure({ ...defaultConfig, apiKey: "fixture" });
+    await restored.send("Review the historical evidence.");
+    assert.equal(requests, 4);
+    assert.equal(reads, 2, "restoring transcript must not replay observations");
+  } finally {
+    await restored.dispose();
+  }
+});

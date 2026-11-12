@@ -23,9 +23,30 @@ export function createPico8Extension({ game, knowledge }) {
     press_buttons:
       "Hold a button mask for 1–120 logical frames and return the actual PNG. Left=1, right=2, up=4, down=8, O/Z=16, X=32. Add bits for combinations; 0 releases all buttons. These masks differ from Lua button indices.",
     observe_game:
-      "Observe the most recently completed test frame and diagnostics without advancing time. Returns PNG. No live-variable or audio observation.",
+      "Observe the latest completed test frame without advancing time. Default PNG for overall appearance; request ascii with a small region for exact pixels, or both for the same frame/region. ASCII uses screen slots 0-f and the actual frame's English palette legend. Coordinates are screen pixels from the top left. No live-variable or audio observation. A new test session may have no completed frame; reset or advance explicitly.",
   };
   const parameters = {
+    observe_game: schema({
+      format: {
+        type: "string",
+        enum: [...capabilities.observationFormats],
+        description:
+          "Defaults to png. Use ascii for pixel inspection or both for matched text and image.",
+      },
+      region: {
+        ...schema(
+          {
+            x: { type: "integer", minimum: 0, maximum: 127 },
+            y: { type: "integer", minimum: 0, maximum: 127 },
+            width: { type: "integer", minimum: 1, maximum: 128 },
+            height: { type: "integer", minimum: 1, maximum: 128 },
+          },
+          ["x", "y", "width", "height"],
+        ),
+        description:
+          "Optional crop at original pixel resolution. Must fit within 128x128; omitted means full screen. Applies to every requested format.",
+      },
+    }),
     load_game: schema(
       { source: { type: "string", maxLength: capabilities.maxSourceLength } },
       ["source"],
@@ -52,7 +73,7 @@ export function createPico8Extension({ game, knowledge }) {
       section(
         "pico8_host",
         () =>
-          `Submit complete Lua source (maximum ${capabilities.maxSourceLength} characters); initialize art, map and sound data in Lua. Game tools run sequentially. Test input: player 0, at most ${capabilities.maxInputFrames} frames. Observation format: ${capabilities.observation}; no ASCII, cropping, live-variable query or audio return. Test persistence: ${capabilities.persistence}; destroying its Worker loses that instance. Test and live player are separate. read_reference reads bundled documentation without operating the game. Source exports retain procedural initialization.`,
+          `Submit complete Lua source (maximum ${capabilities.maxSourceLength} characters); initialize art, map and sound data in Lua. Game tools run sequentially. Test input: player 0, at most ${capabilities.maxInputFrames} frames. Default observation: ${capabilities.observation}. observe_game supports ${capabilities.observationFormats.join(", ")} and optional pixel-region cropping. Use PNG for overall appearance and cropped ASCII with the actual palette for precise pixels. Other game tools return PNG. No live-variable query or audio return. Test persistence: ${capabilities.persistence}; destroying its Worker loses that instance. Test and live player are separate. Historical frames are past evidence, not the current session state; establish a new baseline after restore. read_reference reads bundled documentation without operating the game. Source exports retain procedural initialization.`,
       ),
       section(
         "pico8_knowledge",
@@ -67,6 +88,15 @@ export function createPico8Extension({ game, knowledge }) {
           description,
           parameters: parameters[name] ?? schema(),
           replay: "unsafe",
+          ...(name === "observe_game"
+            ? {
+                outputLimits: {
+                  maxBytes: capabilities.observationMaxBytes,
+                  maxLines: capabilities.observationMaxLines,
+                  retain: "head",
+                },
+              }
+            : {}),
           execute: async (args, api, ctx) =>
             game.execute(name, args, ctx.abortSignal),
         }),

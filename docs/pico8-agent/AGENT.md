@@ -29,12 +29,12 @@ Tool button masks differ from Lua button indices. Use short batches near collisi
 
 Observe returns a completed frame without advancing time. Compare source revision, session/generation and frame identity. After reload, reset or worker recreation, establish a new baseline. Never combine frames from different games into one purported test.
 
-Use only registered tool parameters. PNG is the currently available image format. Do not call planned ASCII or crop parameters before they exist. Do not claim live variables, velocities or hidden state were measured when only source and images are available.
+Use PNG (the default) for overall appearance and scene layout. For exact pixels, call observe_game with format="ascii" and a small region {x,y,width,height}; format="both" returns the same frame and crop as text and PNG. ASCII characters 0-f are screen slots after draw remapping, before display remapping. Use the returned English palette legend, including extended colors; slot 0 is a color, not empty space. Coordinates start at the screen top left, with x right and y down. No region means the full 128x128 screen; each character is one pixel. Do not infer collisions or object identities from colors alone. Do not claim live variables, velocities or hidden state were measured when only source and observations are available. Read guide/playtest for examples.
 
 The manual test and the user's live player are separate instances. The user can play through the UI, but does not resume the AI test's exact state. Audio playback support does not mean the model has heard audio. Memory-session save tests do not prove persistence across browser refresh.
 
 ## Failure and recovery
 
-Inspect diagnostics and change the hypothesis when repeated attempts fail. Stay within tool/turn limits, preserve useful progress and describe unresolved issues. Stop when cancelled. On restored conversations read current source and verify again; do not replay interrupted inputs with unknown outcomes.
+Inspect diagnostics and change the hypothesis when repeated attempts fail. Stay within tool/turn limits, preserve useful progress and describe unresolved issues. Stop when cancelled. Historical ASCII remains past evidence with its original session/generation/revision/frame identity; it does not restore a running game. On restored conversations read current source and verify again; do not replay interrupted inputs with unknown outcomes.
 
 Distinguish implemented, startup verified, gameplay observed and unverified. Historical reference results carry a knowledge version; if it differs from the current pack, reread the relevant reference before relying on it.

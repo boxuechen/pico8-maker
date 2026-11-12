@@ -102,22 +102,39 @@ const server = http.createServer(async (req, res) => {
             .filter((x) => x.type === "text")
             .map((x) => x.text)
             .join("\n");
-    const operations = [
-      ["read_game", {}],
-      ["reset_game", {}],
-      ["press_buttons", { frames: 24, buttons: 2 }],
-      ["press_buttons", { frames: 1, buttons: 34 }],
-      ["press_buttons", { frames: 45, buttons: 2 }],
-      [
-        "load_game",
-        { source: source.replace("jump_speed=-3", "jump_speed=-4.5") },
-      ],
-      ["reset_game", {}],
-      ["press_buttons", { frames: 24, buttons: 2 }],
-      ["press_buttons", { frames: 1, buttons: 34 }],
-      ["press_buttons", { frames: 45, buttons: 2 }],
-      ["observe_game", {}],
-    ];
+    const observationFixture = body.model === "fixture-observation";
+    const operations = observationFixture
+      ? [
+          [
+            "load_game",
+            {
+              source:
+                "function _draw()\n cls(0) pal(8,136,1)\n for y=0,127 do for x=0,127 do pset(x,y,(x+y)%16) end end\nend",
+            },
+          ],
+          ["observe_game", { format: "ascii" }],
+          [
+            "observe_game",
+            { format: "both", region: { x: 1, y: 3, width: 7, height: 5 } },
+          ],
+          ["observe_game", {}],
+        ]
+      : [
+          ["read_game", {}],
+          ["reset_game", {}],
+          ["press_buttons", { frames: 24, buttons: 2 }],
+          ["press_buttons", { frames: 1, buttons: 34 }],
+          ["press_buttons", { frames: 45, buttons: 2 }],
+          [
+            "load_game",
+            { source: source.replace("jump_speed=-3", "jump_speed=-4.5") },
+          ],
+          ["reset_game", {}],
+          ["press_buttons", { frames: 24, buttons: 2 }],
+          ["press_buttons", { frames: 1, buttons: 34 }],
+          ["press_buttons", { frames: 45, buttons: 2 }],
+          ["observe_game", {}],
+        ];
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
@@ -141,9 +158,35 @@ const server = http.createServer(async (req, res) => {
       });
       send({}, "tool_calls");
     } else {
+      if (observationFixture) {
+        const text = toolResults
+          .map((r) =>
+            typeof r.content === "string"
+              ? r.content
+              : JSON.stringify(r.content),
+          )
+          .join("\n");
+        const images = body.messages
+          .flatMap((m) => (Array.isArray(m.content) ? m.content : []))
+          .filter((p) => p.type === "image_url");
+        const sizes = images.map((p) => {
+          const png = Buffer.from(p.image_url.url.split(",")[1], "base64");
+          return `${png.readUInt32BE(16)}x${png.readUInt32BE(20)}`;
+        });
+        if (
+          !text.includes("8 = deep rose (#be1250), display code 136") ||
+          !text.includes("region: x=1 y=3 width=7 height=5") ||
+          !sizes.includes("7x5") ||
+          !sizes.includes("128x128")
+        )
+          throw new Error(
+            "Observation fixture did not receive the expected palette, crop and PNG sizes",
+          );
+      }
       send({
-        content:
-          "联调模拟响应：已执行读取、修复前测试、修改和修复后测试。此响应来自本地测试服务，不是实际模型推理。",
+        content: observationFixture
+          ? "联调模拟响应：完整 ASCII、实际扩展调色板、7×5 同帧裁剪和默认 128×128 PNG 已收到。此响应来自本地测试服务，不是实际模型推理。"
+          : "联调模拟响应：已执行读取、修复前测试、修改和修复后测试。此响应来自本地测试服务，不是实际模型推理。",
       });
       send({}, "stop");
     }

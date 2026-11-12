@@ -120,3 +120,11 @@ Qwen 普通百炼与 Token Plan 分开，并区分中国/国际入口。普通�
 在 `app` 中执行 `npm run prepare:knowledge` 生成知识模块；dev、build、test 自动生成。构建检查英文内容、示例验证哈希和工具输出大小，知识输出携带版本及 SHA-256。修改源文档，不要编辑生成文件。
 
 本轮验证：25 项应用测试、15 项知识示例检查、4 项 Sites 测试及生产构建通过。历史恢复使用真实 Pi 适配器和模拟模型响应检查请求内容：新 sections 替换旧提示词，读取资料的工具记录保留，游戏操作不重放。本轮未调用真实模型服务。观察仍为 PNG，ASCII 后续接入。
+
+### Cropped ASCII observation
+
+`observe_game({})` 仍返回完整 PNG。新增 `format: "ascii" | "png" | "both"` 和可选 `region: {x,y,width,height}`；区域使用左上角起点的屏幕像素坐标，越界报错，省略则读取完整 128×128。ASCII 每字符对应一像素，用 0–f 表示屏幕颜色槽，并附完整的当前帧调色板英文颜色名、RGB 和显示色编号（含扩展色）。`both` 从同一个快照生成同区域文字与 PNG，观察不会推进帧。
+
+像素编码与裁剪位于 `app/src/pico8/observation.js`；调色板模块由知识包的 `palette.json` 同源生成。常驻规则和 `guide/playtest` 引导模型默认用 PNG 看整体、按需用局部 ASCII 核对像素。完整字符矩阵使用独立的 32 KiB / 256 行预算，大量诊断会明确标记缩减，矩阵不会被静默截断。历史保留 ASCII 及 session/generation/revision/frame 标识；恢复历史不会恢复游戏运行状态或重放操作。
+
+验证：32 项应用测试、15 项示例检查、4 项 Sites 测试及生产构建通过。真实 WASM 覆盖默认/扩展色、绘图与显示映射、重复颜色、奇数列和边缘裁剪，并逐像素还原 RGBA；真实 Pi 适配器使用模拟响应验证完整矩阵、裁剪和历史恢复。浏览器另用 `fixture-observation` 本地模型联调，确认实际 PNG 为 7×5 裁剪或默认 128×128，刷新后裁剪矩阵与调色板记录保留。本轮没有调用真实模型。

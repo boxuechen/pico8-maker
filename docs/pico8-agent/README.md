@@ -7,8 +7,8 @@ The English knowledge pack is now integrated into the application's pico8 extens
 - [Palette data](palette.json) retains multilingual labels as metadata; model output uses English names.
 - Five standalone [recipes](recipes/README.md) remain byte-for-byte matched to their validation hashes.
 
-Run `npm --prefix app run prepare:knowledge` to regenerate the ignored ESM bundle. Development, build and npm test prepare it automatically. Edit Markdown/JSON sources, not generated JavaScript.
+Run `npm --prefix app run prepare:knowledge` to regenerate the ignored ESM knowledge bundle and English runtime palette module from the same palette.json. Development, build and npm test prepare it automatically. Edit Markdown/JSON sources, not generated JavaScript.
 
 The compiler validates English model content, recipe receipts and output limits. App integration tests capture real Pi adapter request bodies using a clearly simulated model endpoint, checking sections, tool calls and history recovery without external model credentials.
 
-PNG observation remains unchanged. ASCII/cropping, audio return and browser save lifecycle expansion remain future work. Developer design and validation records may remain in Chinese; they are excluded from model context.
+PNG remains the default observation. observe_game also supports cropped ASCII or both formats from one frame, with its actual English palette legend. See guide/playtest for usage. Audio return and browser save lifecycle expansion remain future work. Developer design and validation records may remain in Chinese; they are excluded from model context.

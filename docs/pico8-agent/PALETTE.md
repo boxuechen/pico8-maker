@@ -37,4 +37,4 @@ English labels describe colors; they do not identify objects. Data source: palet
 | 142 | display target | coral red | #ff6e59 |
 | 143 | display target | salmon peach | #ff9d81 |
 
-Use numeric IDs in Lua. Extended codes 128–143 are display targets selected with pal(slot,code,1); the screen still has 16 slots. Draw remapping changes subsequent writes; display remapping changes the final color. Transparency is controlled separately by palt. A future text observation must report the actual frame display palette rather than assuming default colors.
+Use numeric IDs in Lua. Extended codes 128–143 are display targets selected with pal(slot,code,1); the screen still has 16 slots. Draw remapping changes subsequent writes; display remapping changes the final color. Transparency is controlled separately by palt. ASCII observations report the actual frame display palette rather than assuming default colors. Each character 0-f represents a screen slot after draw remapping and before display remapping. The legend applies even when multiple slots share a display color. Slot 0 is not an empty or transparent screen pixel.

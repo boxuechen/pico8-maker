@@ -11,3 +11,4 @@ app/.vite/
 *.log
 
 /app/src/generated/pico8-knowledge.js
+/app/src/generated/pico8-palette.js

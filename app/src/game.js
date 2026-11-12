@@ -1,4 +1,9 @@
 import { capabilities } from "./pico8/capabilities.js";
+import {
+  observationOptions,
+  observationText,
+  cropRgba,
+} from "./pico8/observation.js";
 import { cartridgeBytes } from "./cartridges.js";
 import { sampleSource, cartBytes } from "./sample.js";
 
@@ -237,6 +242,7 @@ export class Game {
       throw new Error(`未知游戏工具：${action}`);
     if (action === "read_game")
       return { output: [{ type: "text", text: this.source }] };
+    const options = observationOptions(action === "observe_game" ? args : {});
     await this.ensureWorker();
     await this.player.pause();
     let observation;
@@ -286,29 +292,25 @@ export class Game {
     } else observation = await this.rpc("observe");
     if (observation.frame) this.testFrame = observation.frame;
     this.changed();
-    return this.output(observation);
+    return this.output(observation, options);
   }
-  output(observation) {
-    const { frame, ...meta } = observation;
+  output(observation, options = observationOptions()) {
+    const { frame } = observation;
     const output = [
       {
         type: "text",
-        text: JSON.stringify({
-          ...meta,
-          frame: frame
-            ? { frameId: frame.frameId, targetFps: frame.targetFps }
-            : null,
-        }),
+        text: observationText(observation, options),
       },
     ];
-    if (frame) {
+    if (frame && options.format !== "ascii") {
+      const { width, height } = options.region;
       const canvas = document.createElement("canvas");
-      canvas.width = 128;
-      canvas.height = 128;
+      canvas.width = width;
+      canvas.height = height;
       canvas
         .getContext("2d")
         .putImageData(
-          new ImageData(new Uint8ClampedArray(frame.rgba), 128, 128),
+          new ImageData(cropRgba(frame, options.region), width, height),
           0,
           0,
         );

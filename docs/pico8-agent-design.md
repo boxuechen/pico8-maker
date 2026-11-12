@@ -1,6 +1,6 @@
 # PICO-8 创作 Agent：知识与 Pi Durable 接入设计
 
-> 实施更新：英文知识包、常驻 sections、read_reference 与历史恢复验证已接入。原设计中的“未实现”描述为设计时状态；当前入口见 app/src/pico8/extension.js。ASCII 仍未接入。
+> 实施更新：英文知识包、常驻 sections、read_reference 与历史恢复验证已接入。原设计中的“未实现”描述为设计时状态；当前入口见 app/src/pico8/extension.js。observe_game 已支持可裁剪 ASCII 与同帧 PNG/ASCII，默认仍为 PNG；当前用法见知识包 guide/playtest。
 
 
 日期：2026-11-12。状态：设计稿，尚未接入运行代码。
