@@ -1,5 +1,22 @@
 # PICO-8 Agent evaluation
 
+## Open-ended case study
+
+Open `/scripts/evaluation/case-study.html` locally for the Lodge Podge experiment. This uses the same Agent, knowledge and saved provider configuration with a disposable cart. Send the initial request, then follow-up feedback in the same session. Each turn has a 15-minute timeout and no tool-call limit. It archives the original prompts, transcript, committed revisions, draft and separate evaluator inputs through the loopback recorder. It does not write to the user's cart library or score fun automatically. The page is a local research tool, not a production entry point.
+
+The finished two-version sample is at `/case-studies/lodge-podge/index.html`. See [the case study](../../../docs/lodge-podge-case-study.md) for scope, failures and actual verification. Full provider transcripts remain in the ignored cache.
+
+To replay its final successful route from `app/`, create an output directory and run:
+
+```sh
+mkdir -p ../.cache/lodge-podge-replay
+node scripts/evaluation/replay-case.mjs public/case-studies/lodge-podge/final.p8 public/case-studies/lodge-podge/replay-inputs.json ../.cache/lodge-podge-replay/game
+```
+
+This loads the unchanged cart in the bundled WASM runtime and writes actual PNG frames plus input/diagnostic evidence. Compare the victory and restart frames with the retained sample images; absence of runtime faults alone is not a gameplay pass.
+
+## Fixed suites
+
 Open `/evaluation.html` on the same local development origin as the app. The evaluator uses the browser's saved model configuration and makes normal provider requests with disposable carts. Select Workflow for the original six tasks twice, or Small mechanics for three small repair tasks twice. It records tool use, skill selection, scope preservation and independent pixel checks. Review creation gameplay with the returned frames. Compaction tests use declared synthetic history and real provider summarization.
 
 The evaluator has a 180-second and 40-tool budget per attempt. Its loopback recorder saves reports and execution snapshots under `.cache/evaluations/skills-<id>/`. Preserve failed attempts and report the scope of each check. Deterministic evaluator tests are part of `npm test`.

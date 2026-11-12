@@ -1,0 +1,26 @@
+{
+  "cart": "final.p8",
+  "sha256": "99dcf2ea3e379e494c5a9d7d14e3592fe1269441175edaf020671e5472935949",
+  "runtime": "Bundled PICO-8-compatible WASM player; official PICO-8 not tested",
+  "method": "Independent runtime replay of successful inputs after the model final load; cart unmodified",
+  "codeModifiedForTest": false,
+  "initialState": "normal zero resources",
+  "observed": [
+    "6 sticks, 3 mud, 3 leaves delivered; victory panel",
+    "X restarts with zero inventory and progress"
+  ],
+  "steps": 34,
+  "frames": 1180,
+  "diagnostics": [],
+  "inputFile": "replay-inputs.json",
+  "images": [
+    "start.png",
+    "win.png",
+    "restart.png"
+  ],
+  "limitations": [
+    "No human audio review or enjoyment rating",
+    "A separate exploratory route did not complete; preserved in ignored cache",
+    "This is one model, one case and two feedback turns"
+  ]
+}

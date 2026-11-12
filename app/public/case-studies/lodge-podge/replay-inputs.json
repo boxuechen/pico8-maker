@@ -1,0 +1,146 @@
+[
+  {
+    "buttons": 32,
+    "frames": 32
+  },
+  {
+    "buttons": 1,
+    "frames": 6
+  },
+  {
+    "buttons": 0,
+    "frames": 10
+  },
+  {
+    "buttons": 4,
+    "frames": 44
+  },
+  {
+    "buttons": 0,
+    "frames": 45
+  },
+  {
+    "buttons": 9,
+    "frames": 60
+  },
+  {
+    "buttons": 1,
+    "frames": 12
+  },
+  {
+    "buttons": 32,
+    "frames": 57,
+    "capture": "call-0"
+  },
+  {
+    "buttons": 9,
+    "frames": 8
+  },
+  {
+    "buttons": 0,
+    "frames": 12
+  },
+  {
+    "buttons": 2,
+    "frames": 60
+  },
+  {
+    "buttons": 4,
+    "frames": 47
+  },
+  {
+    "buttons": 0,
+    "frames": 45
+  },
+  {
+    "buttons": 9,
+    "frames": 42
+  },
+  {
+    "buttons": 8,
+    "frames": 14
+  },
+  {
+    "buttons": 32,
+    "frames": 50,
+    "capture": "call-8"
+  },
+  {
+    "buttons": 0,
+    "frames": 25,
+    "capture": "call-16"
+  },
+  {
+    "buttons": 9,
+    "frames": 10
+  },
+  {
+    "buttons": 0,
+    "frames": 10,
+    "capture": "call-17"
+  },
+  {
+    "buttons": 6,
+    "frames": 50
+  },
+  {
+    "buttons": 4,
+    "frames": 14
+  },
+  {
+    "buttons": 0,
+    "frames": 50,
+    "capture": "call-19"
+  },
+  {
+    "buttons": 8,
+    "frames": 58
+  },
+  {
+    "buttons": 32,
+    "frames": 50
+  },
+  {
+    "buttons": 0,
+    "frames": 25
+  },
+  {
+    "buttons": 4,
+    "frames": 60
+  },
+  {
+    "buttons": 0,
+    "frames": 45,
+    "capture": "call-22"
+  },
+  {
+    "buttons": 8,
+    "frames": 58
+  },
+  {
+    "buttons": 10,
+    "frames": 12
+  },
+  {
+    "buttons": 0,
+    "frames": 12
+  },
+  {
+    "buttons": 4,
+    "frames": 66
+  },
+  {
+    "buttons": 0,
+    "frames": 45,
+    "capture": "win"
+  },
+  {
+    "buttons": 32,
+    "frames": 6
+  },
+  {
+    "buttons": 0,
+    "frames": 40,
+    "capture": "restart"
+  }
+]
