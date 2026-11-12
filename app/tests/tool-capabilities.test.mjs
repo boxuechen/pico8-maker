@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/game.js";
-import { EvaluationGame, input } from "../scripts/evaluation/core.mjs";
+import { TestGame, input } from "./helpers/game.mjs";
 import { fixtureSnapshot } from "../scripts/evaluation/skills-cases.mjs";
 import { inputPlan } from "../src/pico8/input-sequence.js";
 import {
@@ -21,7 +21,7 @@ const headers = (r) =>
     .filter((p) => p.type === "text")
     .map((p) => JSON.parse(p.text.split("\n")[0]));
 function gameFor(t, snapshot = fixtureSnapshot()) {
-  const g = new EvaluationGame();
+  const g = new TestGame();
   g.versions = [snapshot];
   g.draft = { ...snapshot };
   t.after(() => g.dispose());

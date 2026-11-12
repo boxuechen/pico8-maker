@@ -7,7 +7,7 @@ import { emptySnapshot } from "../src/pico8/assets.js";
 import { createPico8Extension } from "../src/pico8/extension.js";
 import { sessionContext, activeSession } from "../src/sessions.js";
 import { newCart } from "../src/cart-store.js";
-import { EvaluationGame } from "../scripts/evaluation/core.mjs";
+import { TestGame } from "./helpers/game.mjs";
 
 const reply = (name, args = {}) => {
   const delta = name
@@ -186,7 +186,7 @@ test("request baseline stays stable through own edit/load and detects external c
 });
 
 test("cart status distinguishes dirty resources, committed frames, failed drafts and advisory budgets", async (t) => {
-  const game = new EvaluationGame();
+  const game = new TestGame();
   t.after(() => game.dispose());
   const over =
     "function _init() local a=0\n" +

@@ -1,32 +1,24 @@
-# PICO-8 authoring knowledge
+# PICO-8 knowledge and host contract
 
-English documentation for the pico8 extension. Conversations follow the user's language. The model uses its own design and programming knowledge; task skills provide on-demand workflows; bundled references supply optional implementation details and examples.
+[AGENT.md](AGENT.md) routes requests to the create, edit, assets or playtest skill. [MACHINE.md](MACHINE.md) defines the PICO-8 target. The default palette, [reference index](REFERENCE_INDEX.md), project context and skill metadata are available at startup. Skill bodies and references load through `read` when needed. Tool evidence drives the final response in the user's language.
 
-## Context organization
+## Host tools
 
-- [AGENT.md](AGENT.md) is the compact task router with shared evidence/completion rules. It asks the model to read the relevant skill, without reading every skill or imposing a game structure.
-- `skills/pico8-{create,edit,assets,playtest}/SKILL.md` separates task workflows, following Game Studio's entry/specialist organization. Each file has Agent Skills-style name/description frontmatter. The compiler generates `SKILLS.md` with metadata and paths only; full bodies load through `read` when needed.
-- [MACHINE.md](MACHINE.md) contains the machine conventions most likely to affect ordinary code. Detailed memory layouts, cartridge budgets and button tables live in the existing on-demand guides.
-- The host section and tool descriptions own workspace operations, schemas, button masks, observation formats and persistence limits. [HOST.md](HOST.md) documents that boundary for maintainers; it is not another model section to inject.
-- [REFERENCE_INDEX.md](REFERENCE_INDEX.md) provides a compact set of optional topic entry points. [REFERENCE_CATALOG.md](REFERENCE_CATALOG.md) retains the reference inventory for maintainers; `manifest.json` is the publication allowlist. Topic guides link to virtual file paths for optional reading.
-- [Palette data](palette.json) and [full palette documentation](PALETTE.md) retain color IDs, English names, RGB values and extended colors. The current compiler supplies the default legend; observations report the actual frame palette.
+| Tool | Behavior |
+| --- | --- |
+| `read`, `edit` | Read source or mounted documentation. Edits target the single Lua draft at `/cart/main.lua`. |
+| `read_game` | Read the first source page and draft status. Follow the returned line or UTF-8 byte continuation for large source. |
+| `load_game` | Start the draft in the test runtime and commit source and resources together after a successful load. Failed loads retain both the draft and last playable cart. |
+| `reset_game`, `press_buttons` | Operate the committed cart in a separate test Worker. Sequences allow up to eight steps, 600 total frames and eight PNG checkpoints. Results report actual progress and early stops. |
+| `observe_game` | Read the completed frame as PNG, ASCII or both with optional pixel cropping. |
+| `read_assets`, `edit_assets` | Read authored draft or committed data, preview sprites and maps, and apply atomic draft edits with actual changes reported. |
 
-The five standalone [asset recipes](recipes/README.md), three original [playable microgames](games/README.md), four cases, eight patterns and all API categories remain available. Recipe source and validation hashes are unchanged. Raw classic-game originals remain outside the distributed model library; see [research provenance](research/README.md).
+Runtime observations include frame identity, cart revision, draft status and approximate source budgets. Instruction counts describe the local WASM runtime. The playback and test Workers have separate state. Test saves use memory, so restored conversations should establish a fresh observation baseline. Detailed contracts are in [playtest](references/playtest.md) and [asset authoring](references/asset-authoring.md).
 
-## File loading
+## Publication and validation
 
-`npm --prefix app run prepare:knowledge` validates the sources and publishes original model-facing Markdown and Lua under `app/public/extensions/pico8/<version>/`. Only the manifest-listed sources are published, plus the compact index and generated palette/file directory. Research and maintainer documents are excluded.
+`manifest.json` is the publication allowlist. The compiler publishes Markdown and Lua under `app/public/extensions/pico8/<version>/` and emits only paths, sizes, hashes and section mappings in the browser index. Files are verified and cached on demand. The `/extensions/pico8/` mount is read-only. The app owns the static skill catalog and registers capabilities through the [Pi Durable extension](../../app/src/pico8/extension.js).
 
-The browser imports `pico8-files.js`, which contains only paths, sizes, hashes and section mappings. `knowledge-files.js` fetches files on demand, verifies hashes, caches successful reads across carts, and retries failed reads. The versioned URL prevents mixed deployments from silently returning different instructions.
+Keep full skill instructions out of startup context and use virtual paths in model-facing links. The compiler checks language, skill metadata, links and recipe source hashes against successful receipts. When Lua examples change, run the appropriate [recipe verifier](recipes/README.md) or [microgame verifier](games/README.md) before regenerating the bundle.
 
-AGENT.md, MACHINE.md, PALETTE_DEFAULT.md, REFERENCE_INDEX.md and the generated SKILLS.md catalog load before an Agent opens; a failure prevents opening without its required rules. Pi sections read these files through the same store. Skill bodies, detailed guides and executable examples are available through the built-in `read` tool at `/extensions/pico8/`; long files support `offset` and `limit`. The cart's writable source is `/cart/main.lua`. Documentation is shared and read-only; editing remains cart-only. There is no shell, packed document module or read_reference compatibility tool.
-
-## Validation
-
-Development, build and npm test prepare static documentation automatically. The compiler validates English model content, skill metadata and directory names, internal document links, source headings and recipe receipts. Repository-owned skill frontmatter uses exactly single-line name and description fields; this is not a general YAML/package scanner. Tests verify direct file delivery through actual Pi requests, restore without replay, lazy loading, caching, HTTP/hash failures, pagination, readonly isolation and original-file equality. No real model requests are required.
-
-The [first paired pilot](research/runs/2026-11-12-deepseek-flash/README.md) is an unchanged historical record. It predates file loading and does not establish its effect; human enjoyment review remains pending.
-
-## Runtime integration
-
-`app/src/pico8/extension.js` composes Pi Durable sections and tools. `tools.js` holds executable schemas, output limits, replay semantics and workspace adapters. The app uses Pi Durable 1.5.2, not pi-coding-agent: its static skill catalog/read integration is application-owned. It does not install Pi packages, scan user skill directories or implement `/skill:name`. The SKILL.md format is reusable, but these skills depend on this host's game tools and virtual paths. See [the architecture comparison](../pico8-extension-architecture.md).
+[Sources](SOURCES.md) records the PICO-8 manual and runtime evidence. [Research provenance](research/README.md) describes the classic-game references and the local acquisition script.

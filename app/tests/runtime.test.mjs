@@ -2,20 +2,9 @@ import { emptySnapshot } from "../src/pico8/assets.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createPico8Session } from "../public/player/main/player.mjs";
-import { sampleSource } from "../src/sample.js";
+import { sampleSource } from "./helpers/sample-cart.mjs";
+import { input } from "./helpers/game.mjs";
 import { cartBytes } from "../src/pico8/cart.js";
-const input = (buttons) => ({
-  controllers: [buttons, 0, 0, 0, 0, 0, 0, 0],
-  devkit: {
-    mouseXRaw: 0,
-    mouseYRaw: 0,
-    mouseButtons: 0,
-    wheelRaw: 0,
-    movementXRaw: 0,
-    movementYRaw: 0,
-    keypresses: [],
-  },
-});
 function robot(frame) {
   const points = [];
   for (let y = 0; y < 128; y++)

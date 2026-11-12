@@ -22,4 +22,4 @@ node docs/pico8-agent/recipes/verify.mjs
 
 五个样例先分别在公开 manual session 上运行，再包装成纯 Lua `.p8` 重新加载，证明不依赖素材段。行为测试还检查像素、按键、资源 RAM、PCM、音乐 pattern 和 memory 存档生命周期。验证用的 Lua 断言和低层 RAM 读取仅属于开发侧测试，不是新的网页模型工具。
 
-脚本成功后写出 [validation-results.json](../validation-results.json)，包含源码哈希、产物哈希和具体检查；失败不会覆盖上次成功报告。文字说明见 [VALIDATION](../VALIDATION.md)。与报告比较时应确认源码/产物哈希仍匹配。
+脚本成功后写出 [validation-results.json](../validation-results.json)，包含源码哈希、产物哈希和具体检查。知识库编译会检查回执与 Lua 源码的哈希是否一致。

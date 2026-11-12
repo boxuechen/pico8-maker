@@ -1,7 +1,10 @@
 import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { skillsRecorder } from "./scripts/evaluation/skills-recorder.mjs";
+
+const appEntry = fileURLToPath(new URL("./index.html", import.meta.url));
 
 export default defineConfig({
   base: "./",
@@ -23,7 +26,8 @@ export default defineConfig({
     react(),
     {
       name: "embedded-pico-cartridges",
-      transformIndexHtml() {
+      transformIndexHtml(_html, { filename }) {
+        if (filename !== appEntry) return;
         const carts = JSON.parse(
           readFileSync(
             new URL("./src/assets/carts.json", import.meta.url),
@@ -34,10 +38,7 @@ export default defineConfig({
           carts.map((cart) => [
             cart.id,
             readFileSync(
-              new URL(
-                `./public/assets/carts/${cart.id}.p8.png`,
-                import.meta.url,
-              ),
+              new URL(`./src/assets/carts/${cart.id}.p8.png`, import.meta.url),
             ).toString("base64"),
           ]),
         );

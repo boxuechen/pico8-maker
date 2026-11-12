@@ -9,7 +9,7 @@ import {
 import { editAssets } from "../src/pico8/assets.js";
 import { createPico8Session } from "../public/player/main/player.mjs";
 import { cartBytes } from "../src/pico8/cart.js";
-import { input } from "../scripts/evaluation/core.mjs";
+import { input } from "./helpers/game.mjs";
 
 test("evaluation metrics require successful skill reads and actual tool evidence", () => {
   const entries = [

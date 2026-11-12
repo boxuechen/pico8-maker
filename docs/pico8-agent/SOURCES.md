@@ -1,6 +1,6 @@
 # 来源、版本与维护
 
-文档版本 1；核对日期 2026-11-12。文档与示例均在 docs 下，尚未接入网页 Agent。文中“已验证”只适用于 [VALIDATION](VALIDATION.md) 列出的具体检查。
+资料核对日期为 2026-11-12。网页 Agent 使用 manifest 发布的资料。示例验证范围见[资源与存档示例](recipes/README.md)和[完整小游戏](games/README.md)。
 
 ## 语义来源
 
@@ -31,4 +31,4 @@
 - 修改 recipe 后重跑 `node docs/pico8-agent/recipes/verify.mjs`；失败不得把 report 日期手动改成“通过”。
 - 新增复杂 API 模式，先写独立可执行例子与相关验证，再提升为已验证用法。API 目录从 inventory 逐条生成，不把 implementation 状态擅自改成 compatibility 承诺。
 - 官方事实、本地语义、宿主工具能力分开标注。宿主观测不足不代表没有对应游戏 API。
-- 参考链接是开发者溯源入口；网页模型若要读取，仍需后续实现打包/资料工具，不能靠 URL 自行获得内容。
+- 参考链接供维护者追溯来源。模型通过 `/extensions/pico8/` 读取已发布的资料。

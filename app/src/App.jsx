@@ -1238,7 +1238,7 @@ function Studio({ store }) {
                     <div className="mobile-only-carts">
                       {carts.slice(0, 6).map(cartTile)}
                     </div>
-                    {carts.slice(6, 11).map((cart, i) => cartTile(cart, i))}
+                    {carts.slice(6).map((cart, i) => cartTile(cart, i))}
                     <a
                       className="more-carts"
                       href="https://www.lexaloffle.com/bbs/?cat=7&carts_tab=1#mode=carts&sub=2"

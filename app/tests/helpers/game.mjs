@@ -1,18 +1,10 @@
 import { emptySnapshot } from "../../src/pico8/assets.js";
 import { cartBytes } from "../../src/pico8/cart.js";
-import { createHash } from "node:crypto";
 import { deflateSync } from "node:zlib";
 import { Game } from "../../src/game.js";
 import { createPico8Session } from "../../public/player/main/player.mjs";
-import {
-  observationOptions,
-  observationText,
-  cropRgba,
-} from "../../src/pico8/observation.js";
 
-export const sha = (value) => createHash("sha256").update(value).digest("hex");
-export const blankSource =
-  'function _draw()\n cls(0)\n print("new game",48,60,7)\nend';
+const blankSource = "function _draw() cls(0) end";
 export const input = (buttons = 0) => ({
   controllers: [buttons, 0, 0, 0, 0, 0, 0, 0],
   devkit: {
@@ -33,7 +25,7 @@ function crc(bytes) {
   }
   return (n ^ -1) >>> 0;
 }
-export function png(rgba, width = 128, height = 128) {
+function png(rgba, width = 128, height = 128) {
   const chunk = (type, bytes) => {
     const t = Buffer.from(type),
       sz = Buffer.alloc(4),
@@ -60,10 +52,9 @@ export function png(rgba, width = 128, height = 128) {
 }
 // Reuses Game.perform/execute and the real standalone runtime. Only browser
 // rendering/storage/Worker transport are replaced; tools and observations remain.
-export class EvaluationGame extends Game {
-  constructor(onVersion = () => {}) {
+export class TestGame extends Game {
+  constructor() {
     super(() => {}, { versions: [emptySnapshot(blankSource)] });
-    this.onVersion = onVersion;
     this.player = {
       pause: async () => {},
       loadCart: async (bytes) => {
@@ -80,20 +71,14 @@ export class EvaluationGame extends Game {
     }
   }
   async rpc(action, args = {}) {
-    if (action === "load")
-      return this.session.loadCart(args.cart, {
-        instructionBudget: 1000000,
-      });
+    if (action === "load") return this.session.loadCart(args.cart);
     if (action === "advance")
       return this.session.advance({
         frames: args.frames,
         input: input(args.buttons),
       });
     if (action === "observe") return this.session.observe();
-    throw Error("Unsupported evaluation transport action " + action);
-  }
-  save() {
-    this.onVersion(this.snapshot, this.revision);
+    throw Error("Unsupported test transport action " + action);
   }
   cancelTests() {
     /* guest execution is instruction-bounded; disposal follows abort */
@@ -105,66 +90,8 @@ export class EvaluationGame extends Game {
       data: png(rgba, width, height).toString("base64"),
     };
   }
-  output(observation, options = observationOptions()) {
-    const output = [
-      { type: "text", text: observationText(observation, options) },
-    ];
-    if (observation.frame && options.format !== "ascii")
-      output.push({
-        type: "image",
-        mimeType: "image/png",
-        data: png(
-          cropRgba(observation.frame, options.region),
-          options.region.width,
-          options.region.height,
-        ).toString("base64"),
-      });
-    return { output, isError: observation.state === "faulted" };
-  }
   async dispose() {
     await this.session?.dispose();
     await this.live?.dispose();
-  }
-}
-export class RunBudget {
-  constructor({ tokens = 200000, tools = 80, milliseconds = 720000 } = {}) {
-    this.limits = { tokens, tools, milliseconds };
-    this.started = Date.now();
-    this.tokens = 0;
-    this.toolCalls = 0;
-    this.reason = null;
-  }
-  check() {
-    if (!this.reason && Date.now() - this.started >= this.limits.milliseconds)
-      this.reason = "time_budget";
-    if (!this.reason && this.tokens >= this.limits.tokens)
-      this.reason = "token_budget";
-    if (this.reason) throw Error(this.reason);
-  }
-  tool() {
-    this.check();
-    if (this.toolCalls >= this.limits.tools) {
-      this.reason = "tool_budget";
-      throw Error(this.reason);
-    }
-    this.toolCalls++;
-  }
-  usage(u) {
-    this.tokens +=
-      u?.totalTokens ??
-      (u?.input ?? 0) +
-        (u?.output ?? 0) +
-        (u?.cacheRead ?? 0) +
-        (u?.cacheWrite ?? 0);
-  }
-  snapshot() {
-    return {
-      limits: this.limits,
-      elapsedMs: Date.now() - this.started,
-      reportedTokens: this.tokens,
-      toolCalls: this.toolCalls,
-      stopReason: this.reason,
-      tokenOvershoot: Math.max(0, this.tokens - this.limits.tokens),
-    };
   }
 }

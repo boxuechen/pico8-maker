@@ -12,7 +12,7 @@ import { cartBytes, cartText } from "../src/pico8/cart.js";
 import { decodeP8 } from "../../ref/pico8-web-player/packages/cart-codec/dist/public.js";
 import { createPico8Session } from "../public/player/main/player.mjs";
 import { Game } from "../src/game.js";
-import { EvaluationGame } from "../scripts/evaluation/core.mjs";
+import { TestGame } from "./helpers/game.mjs";
 import {
   newCart,
   openCartStore,
@@ -154,7 +154,7 @@ test("invalid batches, shared-map rows and out-of-range reads cannot partially c
 });
 
 test("resource-only commits, failed source edits, undo and cart switching preserve complete versions", async (t) => {
-  const g = new EvaluationGame();
+  const g = new TestGame();
   t.after(() => g.dispose());
   await g.execute("edit_assets", { edits });
   assert.equal(g.versions.length, 1);
