@@ -1,21 +1,37 @@
 # Local Agent Prototype — MiniCPM5-2B
 
-A headless PICO-8 game agent built for one model: **MiniCPM5-2B** (`openbmb/minicpm5-2b:q4_K_M`,
-1.6 GB, text only, Apache-2.0). It runs in Node against a local Ollama today; the final target
-is in-browser inference. It owns its workflow, tools, prompts and model protocol, and shares
-only the player runtime and evaluation oracles with Maker. Maker itself is not changed.
+A headless PICO-8 game agent built for one model, **MiniCPM5-2B**, running on a local Ollama.
+Goal of this stage: get the whole flow working end to end on that model. Browser inference is
+out of scope for now. The lab owns its workflow, tools, prompts and model protocol, and shares
+only the player runtime and evaluation oracles with Maker. Maker is not changed.
+
+## Model facts
+
+| Item | Value |
+| --- | --- |
+| Model | `openbmb/minicpm5-2b:q4_K_M` (Ollama, 1.56 GB), Apache-2.0 |
+| Architecture | `LlamaForCausalLM`, 2.5B parameters, 42 layers, GQA 16/2, 131K context |
+| Input | Text only |
+| Tool calls | `<function name="f"><param name="p">value</param></function>`; values containing `<`, `&` or newlines are wrapped in `<![CDATA[…]]>` |
+| Tool results | A user turn of `<tool_response>…</tool_response>` blocks |
+| Thinking | Prefill `<think>\n` (on) or `<think>\n\n</think>\n\n` (off) after `<|im_start|>assistant\n` |
+| Sampling | Official: `temperature 1.0, top_p 0.95`; `repetition_penalty 1.05` if output repeats |
+
+The Ollama tag's own template has no tool section, no newline before `<think>`, a 4096-token
+default context, and a stop list stored as a single string. The lab therefore does not use it:
+it renders the official chat template itself and calls `POST /api/generate` with `raw: true`,
+explicit `stop: ["<|im_end|>", "</s>"]` and `num_ctx`.
 
 ## Design constraints
 
 | Constraint | Consequence |
 | --- | --- |
 | 2B parameters | The model writes small, local game logic. The host owns structure, verification and every decision it can make deterministically. |
-| Text only | No screenshots. The model sees host reports: lint issues, faults, state values, mode changes, and an on-demand 32×32 ASCII thumbnail. |
-| Browser target (≈8K-token requests in the reference WebGPU Space) | Every request is assembled to fit **8K tokens** (prompt + reply). No conversation grows without bound. |
-| XML tool calls with CDATA (`<function name="…"><param name="…"><![CDATA[…]]></param></function>`) | Tool parameters are flat strings. Lua source travels in CDATA, never as escaped JSON. No nested arrays or objects in tool arguments. |
-| Ollama does not run the GGUF Jinja template; the browser engine will produce raw text too | The lab renders the chat template and parses tool calls itself. Engines only complete raw text, so local and browser runs see byte-identical prompts. |
+| Text only | No images. The model sees host reports: lint issues, faults, state values, mode changes and an on-demand 32×32 ASCII thumbnail. |
+| Small models degrade on long, noisy context | Each request is rebuilt from host state and targets ≤ 8K tokens; older tool responses shrink to one line. `num_ctx` 16K as a hard ceiling. |
+| XML tool calls with CDATA | Tool parameters are flat strings. Lua source travels in CDATA, never as escaped JSON. No nested arrays or objects. |
 
-Lessons carried over from larger local models: a fixed template plus host lint and smoke makes
+Carried-over lessons from larger local models: a fixed template plus host lint and smoke makes
 building reliable; free-form self-testing does not converge; letting a verification phase edit
 code breaks correct fixes. Hence: **the model builds, the host verifies.**
 
@@ -23,67 +39,52 @@ code breaks correct fixes. Hence: **the model builds, the host verifies.**
 
 ```
 lab/local-agent/
-  bin/        eval.mjs (tasks × repeats), probe.mjs (protocol and speed check)
-  prompts/    core.md, api.md, phase files, templates/*.lua (+ checks)
+  bin/        probe.mjs (protocol and speed), eval.mjs (tasks × repeats)
+  prompts/    core.md, api.md, phase files, templates/<genre>.lua + checks
   src/
-    engine/ollama.mjs   raw completion: complete(prompt, {stop, maxTokens, temperature, signal})
-    protocol.mjs        MiniCPM5 chat template, tool definitions, <function> parser, thinking prefill
-    budget.mjs          token estimate and 8K request assembly (truncation rules)
-    loop.mjs            tool loop over engine + protocol; PICO-8-agnostic
-    maker.mjs           the only import path into app/: player runtime, cart codec, tokens, S4 tasks/oracle
-    runtime.mjs         one inspection session: load, advance, read, ASCII thumbnail
-    lint.mjs            static checks before loading
-    verify.mjs          host verification: smoke + template checks + task checks → text report
-    tools.mjs           model-facing tools
-    phases.mjs          plan → build → verify/fix → report
-    sounds.mjs          fixed sfx 0–7 bank preloaded into new carts
-  tests/      node --test with a scripted engine; no model requests
+    ollama.mjs     raw completion: complete(prompt, {stop, maxTokens, temperature, numCtx, signal})
+    protocol.mjs   MiniCPM5 chat template, tool definitions, <function> parser, thinking prefill
+    context.mjs    token estimate and request assembly within the budget
+    loop.mjs       tool loop over ollama + protocol; PICO-8-agnostic
+    maker.mjs      the only import path into app/: player runtime, cart codec, tokens, S4 tasks/oracle
+    runtime.mjs    one inspection session: load, advance, read, ASCII thumbnail
+    lint.mjs       static checks before loading
+    verify.mjs     host verification: smoke + template checks + task checks → text report
+    tools.mjs      model-facing tools
+    phases.mjs     plan → build → verify/fix → report
+    sounds.mjs     fixed sfx 0–7 bank preloaded into new carts
+  tests/      node --test with a scripted completion; no model requests
 ```
 
 Rules:
 
 - `app/` never imports `lab/`; `lab/` imports `app/` only through `src/maker.mjs`.
-- `engine/*` knows nothing about prompts; `protocol.mjs` knows nothing about PICO-8;
+- `ollama.mjs` knows nothing about prompts; `protocol.mjs` knows nothing about PICO-8;
   `phases.mjs` is the only module that knows the workflow; tools never call the model.
-- No provider SDK dependency. A future `engine/webgpu.mjs` implements the same `complete`.
+- No provider SDK dependency (pi-ai is removed).
 - Results go to `.cache/lab/` (ignored).
 
-## Protocol
-
-- Prompt: `<|im_start|>system … # Tools <tools>{json}</tools> …<|im_end|>`, user turns,
-  assistant turns with `<function>` calls, tool results as a user turn of
-  `<tool_response>…</tool_response>` blocks — exactly the official template.
-- Thinking: off by default (`<think>\n\n</think>\n\n` prefilled); on = `<think>\n` prefilled.
-  Both are evaluated; the default follows the data.
-- Parsing: every `<function name>` block with `<param>` values (CDATA or plain). A reply with
-  malformed XML gets one corrective tool response quoting the expected form.
-- Sampling: official `temperature 1.0, top_p 0.95`; `repetition_penalty 1.05` if loops appear.
-- Stop strings: `<|im_end|>`, `</s>`.
-
-## Tasks the model is asked to do
+## Tasks
 
 | Tier | Example | Model output | Host verification |
 | --- | --- | --- | --- |
 | T1 tweak | "make the player faster", "lose after 5 misses" on a working cart | 1–3 `edit_game` calls | lint, smoke, task check (state read) |
-| T2 repair | S4 `shooter-repair` | `edit_game` calls | smoke, S4 oracle (evaluation only) |
-| T3 create from template | "catch falling fruit" | choose a template, fill its marked slots | smoke + the template's own checks |
+| T2 repair | S4 `shooter-repair` | `edit_game` calls | smoke; S4 oracle in evaluation |
+| T3 create from template | "catch falling fruit" | pick a template, fill its marked slots | smoke + the template's checks |
 | Stretch | S4 `shooter-create` | as T3 | S4 oracle |
 
-New games never start from an empty file: the host loads a genre template (catch, dodge,
-shooter, collect first) whose structure, `g`, `new_game()`, modes, retry and HUD are fixed.
-The model edits only regions marked `-- SLOT: …`.
+New games never start from an empty file. The host loads a genre template (catch, dodge,
+shooter, collect first) whose structure, `g`, `new_game()`, modes, retry and HUD are fixed;
+the model edits only regions marked `-- SLOT: …`.
 
 ## Workflow
-
-Every phase request is assembled from host state (task, plan, numbered source, last report)
-and stays within the 8K budget; inside a phase, older tool responses shrink to one line.
 
 | Phase | Model sees | Tools | Ends when |
 | --- | --- | --- | --- |
 | plan (T3 only) | task, template list | none | a short form: `TEMPLATE / NAME / GOAL / CONTROLS` |
 | build | core + api + phase, task, plan, numbered source | `write_game`, `edit_game`, `look`, `done` | `done` accepted: clean load and smoke |
 | verify | — (host) | — | host runs smoke + template/task checks |
-| fix (≤ 2 rounds) | failing checks with actual values, numbered source | `edit_game`, `look`, `done` | `done` accepted and checks re-run |
+| fix (≤ 2 rounds) | failing checks with actual values, numbered source | `edit_game`, `look`, `done` | `done` accepted, checks re-run |
 | report | — | — | host writes the four-part reply from host results |
 
 Caps per task: 15 minutes, 30 tool calls, 8 turns per phase.
@@ -92,10 +93,12 @@ Caps per task: 15 minutes, 30 tool calls, 8 turns per phase.
 
 | Tool | Params (strings) | Host behaviour |
 | --- | --- | --- |
-| `write_game` | `source` | Replace main.lua → lint → load → smoke. T1/T2 do not offer it. |
+| `write_game` | `source` | Replace main.lua → lint → load → smoke. Not offered in T1/T2. |
 | `edit_game` | `find`, `replace` | One exact, unique replacement, then the same pipeline. Errors quote nearby numbered lines. |
-| `look` | — | 32×32 ASCII thumbnail of the current frame (`0–f`, one char per 4×4 block) plus `g` summary. |
-| `done` | `summary` | Accepted only when the phase condition holds; otherwise the reason. |
+| `look` | — | 32×32 ASCII thumbnail of the current frame (`0–f`, one char per 4×4 block) plus a `g` summary. |
+| `done` | `summary` | Accepted only when the phase condition holds; otherwise returns the reason. |
+
+A reply with malformed XML gets one corrective tool response quoting the expected form.
 
 ## Host checks
 
@@ -106,25 +109,39 @@ Caps per task: 15 minutes, 30 tool calls, 8 turns per phase.
 **Smoke**: boots 30 frames without fault; `g.mode` set; frame uses more than one colour;
 input changes `g` or the frame.
 
-**Template checks**: each template ships cases on its own `g` fields (idle loses, scoring
-increases `g.score`, win reachable with setup, X retry restores the initial state).
+**Template checks**: each template ships cases on its own `g` fields — idle loses, scoring
+raises `g.score`, win reachable with setup, X retry restores the initial state.
 
 **Task checks** (T1): a state read per task, e.g. `g.speed > 1.5`.
 
 ## Evaluation
 
-`bin/probe.mjs`: protocol round-trips (tool call with CDATA Lua, tool response, final text)
-and speed (prefill and decode tokens/s at 2K/4K/8K).
+`bin/probe.mjs`: protocol round trips (a tool call carrying Lua in CDATA, a tool response, a
+final text reply) and speed (prefill and decode tokens/s at 2K/4K/8K prompts).
 
 `bin/eval.mjs`: T1 ×5 tasks, T2 `shooter-repair`, T3 catch/dodge, stretch `shooter-create`;
-3 repeats; thinking on/off. Metrics: oracle/check pass, finished within caps, tool and parse
-errors, largest request in tokens, decode tokens, wall time.
+3 repeats; thinking on and off. Metrics: oracle/check pass, finished within caps, tool and
+parse errors, largest request in tokens, decode tokens, wall time.
 
 ## Milestones
 
-1. **M0 protocol and speed.** Engine, protocol, probe. Exit: valid CDATA tool calls in
-   ≥ 9/10 probe turns; measured tokens/s.
-2. **M1 tweak and repair.** Flat tools, 8K assembly, host verification, text reports. Exit:
-   T1 ≥ 4/5, T2 ≥ 2/3.
-3. **M2 create from templates.** Templates with slots and checks, plan form. Exit: T3 ≥ 2/3.
-4. **M3 browser.** WebGPU engine behind the same `complete`.
+1. **M0 protocol and speed** — `ollama.mjs`, `protocol.mjs`, `probe.mjs`. Exit: valid tool
+   calls with CDATA Lua in ≥ 9/10 probe turns; measured tokens/s; thinking on/off compared.
+2. **M1 tweak and repair** — flat tools, request assembly, host verification, text reports.
+   Exit: T1 ≥ 4/5, T2 ≥ 2/3.
+3. **M2 create from templates** — templates with slots and checks, plan form. Exit: T3 ≥ 2/3.
+
+## Current code and migration
+
+The existing lab code was written for a larger multimodal model. Kept and adapted:
+`maker.mjs`, `runtime.mjs` (images replaced by ASCII), `lint.mjs`, `smoke.mjs` (folded into
+`verify.mjs`), `sounds.mjs`, `prompts/template.lua`, `prompts/api.md`. Removed: `model.mjs`
+(pi-ai), the `play` and `check` tools, image handling, the old phase controller and its tests.
+
+## Running
+
+```sh
+OLLAMA_HOST=127.0.0.1:11434 OLLAMA_FLASH_ATTENTION=1 OLLAMA_KV_CACHE_TYPE=q8_0 \
+  ~/.local/ollama-0.40.16/ollama serve
+~/.local/ollama-0.40.16/ollama pull openbmb/minicpm5-2b:q4_K_M
+```
