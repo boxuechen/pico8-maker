@@ -3,9 +3,9 @@ import { CHAR_LIMIT, TOKEN_LIMIT } from "./pico8/tokens.js";
 
 const BASE = import.meta.env.BASE_URL;
 const links = [
-  ["Carts", "https://www.lexaloffle.com/bbs/?cat=7#sub=2"],
-  ["PICO-8 Manual", "https://www.lexaloffle.com/dl/docs/pico-8_manual.html"],
-  ["Lexaloffle", "https://www.lexaloffle.com/pico-8.php"],
+  ["Player", "https://boxuechen.github.io/pico8-player/"],
+  ["GitHub", "https://github.com/boxuechen/pico8-maker"],
+  ["X", "https://x.com/boxuechen"],
 ];
 
 export function FloppyIcon({ size = 16 }) {
@@ -60,14 +60,20 @@ export function HomeHeader({ busy, onResume, canResume }) {
   return (
     <header className="topbar home-header">
       <span className="site-name">PICO-8 MAKER</span>
-      <nav className="home-nav" aria-label="PICO-8 links">
+      <nav className="home-nav" aria-label="Project links">
         {canResume && (
           <button className="resume-link" disabled={busy} onClick={onResume}>
             Continue <ChevronRight size={14} />
           </button>
         )}
         {links.map(([label, href]) => (
-          <a key={label} href={href} target="_blank" rel="noreferrer">
+          <a
+            key={label}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={label === "X" ? "Follow @boxuechen on X" : undefined}
+          >
             {label}
           </a>
         ))}

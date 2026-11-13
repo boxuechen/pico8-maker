@@ -1,7 +1,9 @@
 /* ---------- Home: the official site's banner composition ---------- */
 .home-header {
-  height: 52px;
-  padding: 0 40px;
+  min-height: 52px;
+  padding: 8px 40px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 .site-name {
   font: 14px var(--font-pixel);
@@ -719,9 +721,6 @@
   }
   .home-nav {
     gap: 16px;
-  }
-  .home-nav a:not(:first-of-type) {
-    display: none;
   }
   .home-mode .workspace {
     grid-template-columns: minmax(0, 1fr);
