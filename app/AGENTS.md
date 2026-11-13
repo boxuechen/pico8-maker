@@ -2,7 +2,7 @@
 
 ## Development
 
-- Run the local server and open the preview in the available browser. Validate app changes with `npm test`, `npm run build` and `npm run test:sites` from `app/`.
+- Run the local server and open the preview in the available browser. Validate changed behavior with focused tests first. Run the production build once after integration; run Sites checks when hosting or packaging changes. Expand to `npm test` for shared-state regressions or failures whose impact cannot be bounded.
 - Keep the Sites hosting files and packaging checks. A build produces `dist/client/index.html`, `dist/server/index.js` and `dist/.openai/hosting.json`.
 - Implement UI in `src/`. Record durable product decisions here and use [the knowledge guide](../docs/pico8-agent/README.md) for the current host contract.
 

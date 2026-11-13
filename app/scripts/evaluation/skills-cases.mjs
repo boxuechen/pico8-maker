@@ -1,3 +1,4 @@
+import { outcomeMetrics } from "./outcome-metrics.mjs";
 import { emptySnapshot, editAssets } from "../../src/pico8/assets.js";
 
 export const fixtureSource = `-- Preserve unrelated mechanics and the credit.
@@ -101,6 +102,8 @@ export function transcriptMetrics(entries) {
       c.arguments.path.endsWith("/pico8-assets/SKILL.md"),
   );
   return {
+    outcomes: outcomeMetrics(entries),
+    processChecksProfile: "legacy-skill-routing",
     tools: calls.length,
     failedTools: calls.filter((c) => results.get(c.id)?.isError).length,
     skillReads: skillReads.map((c) => c.arguments.path.split("/").at(-2)),

@@ -105,3 +105,7 @@ Detailed historical reports, raw screenshots and the retired comparison scripts 
 ```sh
 git show 5d7bb30:docs/pico8-agent/research/runs/2026-11-13-tools/README.md
 ```
+
+## Tooling baseline and outcome metrics
+
+See [the frozen baseline](../../../docs/tooling-progress.md). `transcriptMetrics().outcomes` counts unique tool-call IDs, UTF-8 result bytes, PNG dimensions, errors and first successful load. Gameplay coverage remains unknown without verifier evidence. Existing skill checks are labeled `legacy-skill-routing`; they are process checks for the current implementation. Recheck archived metrics with `node scripts/evaluation/freeze-tooling-baseline.mjs --check` from `app/`.

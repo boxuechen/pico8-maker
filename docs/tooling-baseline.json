@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "makerCommit": "65b8098",
+  "runtimeCommit": "43d3ef70c07f707b2b6bec0823fa08744df0d7f3",
+  "counting": "Unique tool-call IDs across cumulative archived entries; UTF-8 text bytes exclude images. Coverage is unknown unless separately verified.",
+  "cases": [
+    {
+      "name": "sweet-garden",
+      "archive": ".cache/evaluations/skills-7de97928-1061-4d21-901d-4ccf03115679/report.json",
+      "archiveSha256": "cd8f3458b43b4f76a3e32bbbbf1bcedf8f358b2d51a4dcc6c2d4cd18d684ba97",
+      "model": {
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "thinkingLevel": "high"
+      },
+      "knowledgeVersion": "pico8-files-v1-1a3d2e4d082c5c0d",
+      "finalCart": "app/public/case-studies/sweet-garden/final.p8",
+      "finalCartSha256": "8f1bf649292af567ac5bbd225972247d1cc789051e20066ab64ecdac7682005e",
+      "independentEvidence": "app/public/case-studies/sweet-garden/verification.json",
+      "independentEvidenceSha256": "8e03f4b7e569077538c809b4a20def272130a47b6e457ac374c0c3d54ee94ff9",
+      "metrics": {
+        "schemaVersion": 1,
+        "toolCalls": 176,
+        "byTool": {
+          "read": 11,
+          "edit_assets": 1,
+          "load_game": 15,
+          "observe_game": 88,
+          "edit": 16,
+          "press_buttons": 41,
+          "read_assets": 4
+        },
+        "failedTools": 2,
+        "missingResults": 0,
+        "errorRate": 0.011363636363636364,
+        "observationShare": 0.5,
+        "onePixelRowObservations": 68,
+        "stateReads": 0,
+        "debugExecutions": 0,
+        "firstSuccessfulLoadCall": 8,
+        "firstVerifiedCoreLoopCall": null,
+        "resultTextBytes": 267300,
+        "resultTextCharacters": 267267,
+        "images": 119,
+        "imageDimensions": {
+          "128x128": 105,
+          "64x64": 5,
+          "32x32": 1,
+          "104x84": 2,
+          "36x36": 4,
+          "60x60": 1,
+          "28x28": 1
+        },
+        "agentCoverage": {
+          "coreLoop": "unknown",
+          "victory": "unknown",
+          "retry": "unknown"
+        },
+        "independentCoverage": {
+          "coreLoop": "unknown",
+          "victory": "unknown",
+          "retry": "unknown"
+        }
+      }
+    },
+    {
+      "name": "lodge-podge",
+      "archive": ".cache/evaluations/skills-67a19a0c-0347-4c5a-844d-5950a1077d9b/report.json",
+      "archiveSha256": "f133803703f7d58001ba8f2e371c615d0aa5e5b977ebab2ec8d29e803018268d",
+      "model": {
+        "provider": "deepseek",
+        "model": "deepseek-flash",
+        "thinkingLevel": "high"
+      },
+      "knowledgeVersion": "pico8-files-v1-08d654900fad082f",
+      "finalCart": "app/public/case-studies/lodge-podge/final.p8",
+      "finalCartSha256": "99dcf2ea3e379e494c5a9d7d14e3592fe1269441175edaf020671e5472935949",
+      "independentEvidence": "app/public/case-studies/lodge-podge/verification.json",
+      "independentEvidenceSha256": "898f7ea393bf9d42a10ecfe8b17242b9fbd059c7a222604773759cc1ad62c672",
+      "metrics": {
+        "schemaVersion": 1,
+        "toolCalls": 157,
+        "byTool": {
+          "read": 14,
+          "edit_assets": 5,
+          "load_game": 24,
+          "edit": 29,
+          "observe_game": 27,
+          "press_buttons": 57,
+          "read_assets": 1
+        },
+        "failedTools": 10,
+        "missingResults": 0,
+        "errorRate": 0.06369426751592357,
+        "observationShare": 0.17197452229299362,
+        "onePixelRowObservations": 0,
+        "stateReads": 0,
+        "debugExecutions": 0,
+        "firstSuccessfulLoadCall": 7,
+        "firstVerifiedCoreLoopCall": null,
+        "resultTextBytes": 238988,
+        "resultTextCharacters": 238988,
+        "images": 215,
+        "imageDimensions": {
+          "128x128": 204,
+          "56x56": 1,
+          "48x48": 1,
+          "40x40": 2,
+          "64x40": 1,
+          "56x36": 1,
+          "48x40": 1,
+          "40x36": 1,
+          "52x36": 1,
+          "32x32": 1,
+          "160x88": 1
+        },
+        "agentCoverage": {
+          "coreLoop": "unknown",
+          "victory": "unknown",
+          "retry": "unknown"
+        },
+        "independentCoverage": {
+          "coreLoop": "unknown",
+          "victory": "unknown",
+          "retry": "unknown"
+        }
+      }
+    }
+  ]
+}
