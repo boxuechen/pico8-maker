@@ -34,7 +34,8 @@ export async function runLoop({ complete, system, messages, tools, thinking, max
   const usage = emptyUsage(),
     byName = new Map(tools.map((t) => [t.name, t]));
   let toolCalls = 0,
-    toolErrors = 0;
+    toolErrors = 0,
+    lastKey = null;
   const result = (status, extra = {}) => ({ status, messages, usage, toolCalls, toolErrors, ...extra });
   for (let turn = 0; turn < maxTurns; turn++) {
     const remaining = deadline - Date.now();
@@ -55,13 +56,19 @@ export async function runLoop({ complete, system, messages, tools, thinking, max
       return result("text", { text: reply.content.filter((p) => p.type === "text").map((p) => p.text).join("\n").trim() });
     let finished = null;
     for (const call of calls) {
+      // Small models sometimes repeat a call verbatim; the result cannot change.
+      const key = `${call.name}:${JSON.stringify(call.arguments ?? {})}`;
+      const repeated = key === lastKey;
+      lastKey = key;
       if (budget.toolCalls <= 0) return result("tools");
       budget.toolCalls--;
       toolCalls++;
       const tool = byName.get(call.name);
       let out;
       try {
-        out = tool
+        out = repeated
+          ? { isError: true, content: [{ type: "text", text: "This is identical to your previous call, so the result would be the same. Do something different or finish the phase." }] }
+          : tool
           ? await tool.execute(call.arguments ?? {})
           : { isError: true, content: [{ type: "text", text: `Unknown tool ${call.name}. Available: ${[...byName.keys()].join(", ")}.` }] };
       } catch (e) {

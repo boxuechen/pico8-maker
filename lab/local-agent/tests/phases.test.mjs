@@ -52,8 +52,9 @@ test("a create task runs plan, build and test in fresh conversations and enforce
   const testIntro = model.seen[3].messages[0].content;
   assert.match(testIntro, /PLAN:\nTITLE: Star Catch/);
   assert.match(testIntro, /\s+1\| -- STAR CATCH/);
+  assert.match(testIntro, /BUILD RESULT: star catch\. The code is believed to be complete/);
   assert.equal(model.seen[3].messages.length, 1);
-  assert.deepEqual(model.seen[3].tools.map((t) => t.name), ["check", "play", "edit_game", "done"]);
+  assert.deepEqual(model.seen[3].tools.map((t) => t.name), ["check", "edit_game", "done"]);
   const rejected = r.phases[2].messages.find((m) => m.role === "toolResult" && m.isError);
   assert.match(rejected.content[0].text, /run check on the current version/);
   const checked = r.phases[2].messages.find((m) => m.role === "toolResult" && m.toolName === "check").content[0].text;

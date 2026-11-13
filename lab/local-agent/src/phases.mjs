@@ -67,7 +67,8 @@ export async function runTask(task, { complete, onEvent = () => {}, ...overrides
     if (build.status !== "done") return finish("build_" + build.status);
 
     // TEST: host-judged cases; done needs a passing normal-play case on the final version.
-    const test = await phase("test", [check(bench), play(bench), editGame(bench),
+    // No free play here: 9B kept repeating play calls instead of writing cases.
+    const test = await phase("test", [check(bench), editGame(bench),
       done(
         { type: "object", properties: { unverified: { type: "array", items: { type: "string" }, description: "Requested behaviour no passing case covers" } }, required: ["unverified"], additionalProperties: false },
         "Finish testing. The host reports the cases that passed; list requested behaviour you could not confirm.",
@@ -86,7 +87,9 @@ export async function runTask(task, { complete, onEvent = () => {}, ...overrides
 
     async function phase(name, tools) {
       const t0 = Date.now();
-      const messages = [user(`${context(task, plan, bench)}\n\nStart the ${name.toUpperCase()} phase.`)];
+      // The test phase verifies; it must not re-implement a change that is done.
+      const handoff = name === "test" ? `\n\nBUILD RESULT: ${build.done?.summary ?? "built"}. The code is believed to be complete. Verify it with check; edit only if a case shows a real bug.` : "";
+      const messages = [user(`${context(task, plan, bench)}${handoff}\n\nStart the ${name.toUpperCase()} phase.`)];
       let r,
         nudges = cfg.nudges,
         turnsLeft = cfg.turns[name];

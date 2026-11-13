@@ -66,7 +66,7 @@ only the newest image is sent; older images become a one-line note.
 | --- | --- | --- | --- | --- |
 | plan (create only) | task | none | text reply | 1 call |
 | build | core + api + example + build, task, plan, source | `write_game`, `edit_game`, `done` | `done` accepted: last load clean and smoke boots | 12 turns |
-| test | core + api + test, task, plan checks, source, smoke | `check`, `play`, `edit_game`, `done` | `done` after a passing no-setup case on the final version | 16 turns |
+| test | core + api + test, task, plan checks, build summary, source, smoke | `check`, `edit_game`, `done` | `done` after a passing no-setup case on the final version | 16 turns |
 | report | — | — | host writes the four-part reply | — |
 
 Global caps match S4: 15 minutes and 40 tool calls per task. Thinking is `low` for
@@ -93,7 +93,11 @@ single values are accepted. Every error says what to do next.
 
 Why `check`: in the first 9B run the test phase wandered through 16 free `play`
 calls without converging on a route; the model can state an expectation but not
-judge long state dumps. Cases turn testing into data the host evaluates.
+judge long state dumps. Cases turn testing into data the host evaluates. With
+`play` still offered, the next run ignored `check`, repeated identical `play` calls
+and re-implemented an already fixed bug, so the test phase now has no `play`,
+receives the build summary ("believed complete; verify"), and the loop rejects a
+call identical to the previous one. `play` remains for interactive use.
 
 ## Host checks
 

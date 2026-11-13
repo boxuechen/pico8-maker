@@ -69,6 +69,25 @@ test("play reports mode changes, state, setup evidence and faults", async (t) =>
   assert.match(textOf(await p.execute({ steps: [{ press: ["jump"], frames: 1 }] })), /unknown button|must be equal/);
 });
 
+test("lengths and repeated calls", async (t) => {
+  const bench = new Bench(emptySnapshot(""));
+  t.after(() => bench.dispose());
+  await writeGame(bench).execute({ source: shooterSource });
+  const r = await play(bench).execute({ reset: true, steps: [{ press: [], frames: 1 }], read: ["#g.enemies", "#g.bullets"] });
+  assert.match(textOf(r), /"#g.enemies":3,"#g.bullets":0/);
+  const { runLoop } = await import("../src/loop.mjs");
+  let n = 0;
+  const same = { role: "assistant", content: [{ type: "toolCall", id: "a", name: "noop", arguments: { x: 1 } }], stopReason: "toolUse" };
+  const loop = await runLoop({
+    complete: async () => (n++ < 2 ? structuredClone(same) : { role: "assistant", content: [{ type: "text", text: "ok" }], stopReason: "stop" }),
+    system: "", messages: [], tools: [{ name: "noop", execute: async () => ({ content: [{ type: "text", text: "ran" }] }) }],
+    maxTurns: 5, budget: { toolCalls: 10 }, deadline: Date.now() + 10000,
+  });
+  const results = loop.messages.filter((m) => m.role === "toolResult");
+  assert.equal(results[0].content[0].text, "ran");
+  assert.match(results[1].content[0].text, /identical to your previous call/);
+});
+
 test("play accepts stringified steps and single values", async (t) => {
   const bench = new Bench(emptySnapshot(""));
   t.after(() => bench.dispose());

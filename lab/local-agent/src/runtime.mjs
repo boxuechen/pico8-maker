@@ -59,11 +59,17 @@ export class Runtime {
     }
     return { audio };
   }
-  /** Read dotted paths such as "g.player.x"; values are compacted to plain JSON. */
+  /** Read dotted paths such as "g.player.x" (or "#g.enemies" for a length); values are plain JSON. */
   async read(paths) {
-    const r = await this.session.inspect({ mode: "read", paths: paths.map((p) => p.split(".").map((k) => (/^\d+$/.test(k) ? Number(k) : k))) });
+    const keys = paths.map((p) => p.replace(/^#/, "").split(".").map((k) => (/^\d+$/.test(k) ? Number(k) : k)));
+    const r = await this.session.inspect({ mode: "read", paths: keys });
     if (!r.ok) throw new Error(r.error?.message ?? "state read failed");
-    return Object.fromEntries(paths.map((p, i) => [p, plain(compactInspected(r.values[i]))]));
+    return Object.fromEntries(
+      paths.map((p, i) => {
+        const v = plain(compactInspected(r.values[i]));
+        return [p, p.startsWith("#") ? (Array.isArray(v) ? v.length : v && typeof v === "object" ? Object.keys(v).length : null) : v];
+      }),
+    );
   }
   async setup(code) {
     const r = await this.session.inspect({ mode: "debug", code });

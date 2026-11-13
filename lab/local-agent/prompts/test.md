@@ -7,5 +7,5 @@ Phase: TEST. Prove the game works with host-judged test cases.
 - Prefer cases without setup. Use setup only to reach states that take too long to play.
 - Send several cases in one check call. Read FAIL lines: they show the actual values.
 - If the game is wrong, fix it with edit_game, then run check again. If only your case is wrong, correct the case.
-- play is available to explore before writing cases.
+- Paths may start with # for a length, e.g. "#g.enemies". Do not repeat a case that already passed.
 - When the important cases pass, call done and list in unverified anything requested that no passing case covers.
