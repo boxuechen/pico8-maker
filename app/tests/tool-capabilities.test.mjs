@@ -550,7 +550,7 @@ test("resource previews are versioned, correctly colored and cannot operate the 
       [2, 3],
     ],
   );
-  const at = (10 * images[0].width + 4) * 4;
+  const at = (40 * images[0].width + 16) * 4;
   assert.deepEqual([...images[0].rgba.slice(at, at + 3)], [255, 119, 168]);
   assert.deepEqual([...images[1].rgba.slice(at, at + 3)], [0, 228, 54]);
   assert.equal(g.testFrame, null);

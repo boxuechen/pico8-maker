@@ -11,7 +11,7 @@ This document describes the current implementation. The [agent tooling plan](../
 | `read`, `edit` | Read source, on-demand playtest records or mounted documentation. Follow the returned continuation. Only `/cart/main.lua` is writable. |
 | `load_game` | Start the draft in the test runtime and commit source and resources together after a successful load. Failed loads retain both the draft and last playable cart. |
 | `reset_game`, `press_buttons` | Operate the committed cart in a separate test Worker. Eight logical steps, 600 frames including tap releases, eight PNG checkpoints. Step-end captures and sequential recorded-call replay are supported. |
-| `observe_game` | Read the completed frame as PNG, ASCII or both with optional pixel cropping. |
+| `observe_game` | Read the completed frame as PNG, ASCII or both. Regions clip to the screen; model PNGs use 4x nearest-neighbor enlargement while coordinates and ASCII remain native. |
 | `read_assets`, `edit_assets` | Read authored draft or committed data, preview sprites and maps, and apply atomic draft edits with actual changes reported. |
 
 Runtime observations include frame identity, cart revision, draft status and approximate source budgets. Instruction counts describe the local WASM runtime. The playback and test Workers have separate state. Test saves use memory, so restored conversations should establish a fresh observation baseline. Detailed contracts are in [playtest](references/playtest.md) and [asset authoring](references/asset-authoring.md).

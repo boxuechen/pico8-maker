@@ -2,6 +2,7 @@ import {
   observationOptions,
   observationText,
   cropRgba,
+  modelImage,
 } from "./pico8/observation.js";
 import { cartridgeBytes } from "./cartridges.js";
 import {
@@ -426,7 +427,7 @@ export class Game {
           cart: this.cartStatus(),
         }),
       });
-      if (preview) output.push(this.image(preview.image));
+      if (preview) output.push(this.image(modelImage(preview.image)));
       return { output };
     }
     if (action === "edit_assets") {
@@ -623,7 +624,7 @@ export class Game {
     if (frame && options.format !== "ascii") {
       const { width, height } = options.region;
       output.push(
-        this.image({ rgba: cropRgba(frame, options.region), width, height }),
+        this.image(modelImage({ rgba: cropRgba(frame, options.region), width, height })),
       );
     }
     return { output, isError: observation.state === "faulted" };

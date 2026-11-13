@@ -23,18 +23,19 @@ export function observationOptions(args = {}) {
     typeof region !== "object" ||
     Array.isArray(region) ||
     Object.keys(region).some((key) => !Object.hasOwn(fullScreen, key)) ||
-    !Object.keys(fullScreen).every((key) => Number.isInteger(region[key])) ||
-    region.x < 0 ||
-    region.y < 0 ||
+    !Object.keys(fullScreen).every((key) => Number.isSafeInteger(region[key])) ||
     region.width < 1 ||
-    region.height < 1 ||
-    region.x + region.width > 128 ||
-    region.y + region.height > 128
+    region.height < 1
   )
     throw new Error(
-      "region must contain integer x, y, width, height within the 128x128 screen",
+      "region requires safe integer x/y and positive integer width/height",
     );
-  return { format, region: { ...region } };
+  const x = Math.max(0, region.x), y = Math.max(0, region.y);
+  const right = Math.min(128, region.x + region.width);
+  const bottom = Math.min(128, region.y + region.height);
+  if (right <= x || bottom <= y)
+    throw new Error("region does not intersect the 128x128 screen");
+  return { format, region: { x, y, width: right - x, height: bottom - y } };
 }
 
 export function encodeAscii(frame, region) {
@@ -139,4 +140,18 @@ export function observationText(observation, options) {
       "Observation exceeds its text budget; no partial pixel grid was returned",
     );
   return text;
+}
+
+// Applied before the PNG encoder, shared by production and headless test encoders.
+// Frames, ASCII, labels and UI previews keep their original pixels.
+export function modelImage({ rgba, width, height }) {
+  const scale = 4;
+  const pixels = new Uint8ClampedArray(width * height * scale * scale * 4);
+  for (let y = 0; y < height * scale; y++) {
+    for (let x = 0; x < width * scale; x++) {
+      const source = (Math.floor(y / scale) * width + Math.floor(x / scale)) * 4;
+      pixels.set(rgba.subarray(source, source + 4), (y * width * scale + x) * 4);
+    }
+  }
+  return { rgba: pixels, width: width * scale, height: height * scale };
 }

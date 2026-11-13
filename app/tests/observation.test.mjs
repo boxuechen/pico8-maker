@@ -8,6 +8,7 @@ import {
   encodeAscii,
   cropRgba,
   observationText,
+  modelImage,
 } from "../src/pico8/observation.js";
 import { capabilities } from "../src/pico8/capabilities.js";
 import { Game } from "../src/game.js";
@@ -82,8 +83,6 @@ test("regions reject invalid input and preserve exact boundary/odd-pixel crops",
     { region: null },
     { region: { x: 0, y: 0, width: 128 } },
     { region: { ...valid, x: -1 } },
-    { region: { ...valid, width: 2 } },
-    { region: { ...valid, height: 2 } },
     { region: { ...valid, width: 0 } },
     { region: { ...valid, x: 0.5 } },
     { region: { ...valid, x: "1" } },
@@ -208,7 +207,7 @@ test("Game validates before side effects; ASCII does not require DOM or advance 
   };
   await assert.rejects(
     game.execute("observe_game", {
-      region: { x: 127, y: 0, width: 2, height: 1 },
+      region: { x: 128, y: 0, width: 2, height: 1 },
     }),
   );
   assert.equal(initialized, 0);
@@ -270,15 +269,15 @@ test("PNG remains default and both uses one snapshot/region for image and text",
   const legacy = await game.execute("observe_game", {});
   assert.equal(legacy.output[1].type, "image");
   assert.equal(legacy.output[1].mimeType, "image/png");
-  assert.equal(captured[0].width, 128);
-  assert.equal(captured[0].height, 128);
-  assert.deepEqual(captured[0].data, session.observe().frame.rgba);
+  assert.equal(captured[0].width, 512);
+  assert.equal(captured[0].height, 512);
+  assert.deepEqual(captured[0].data, modelImage(session.observe().frame).rgba);
   const region = { x: 1, y: 7, width: 7, height: 3 };
   const both = await game.execute("observe_game", { format: "both", region });
   assert.equal(reads, 2);
   assert.equal(both.output.length, 2);
-  assert.equal(captured[1].width, 7);
-  assert.equal(captured[1].height, 3);
+  assert.equal(captured[1].width, 28);
+  assert.equal(captured[1].height, 12);
   const frame = session.observe().frame;
   const rows = rowsOf(both.output[0].text);
   const pixels = rows.flatMap((row) =>
@@ -286,9 +285,24 @@ test("PNG remains default and both uses one snapshot/region for image and text",
       rgb.get(frame.displayPalette[parseInt(char, 16)]),
     ),
   );
-  assert.deepEqual(captured[1].data, new Uint8ClampedArray(pixels));
+  assert.deepEqual(captured[1].data, modelImage({ rgba: new Uint8ClampedArray(pixels), width: 7, height: 3 }).rgba);
   assert.equal(
     JSON.parse(both.output[0].text.split("\n")[0]).frame.frameId,
     frame.frameId,
   );
+});
+
+
+test("crop intersection and nearest-neighbor expansion preserve exact original pixels", () => {
+  assert.deepEqual(observationOptions({ region: { x: -2, y: 126, width: 5, height: 8 } }).region,
+    { x: 0, y: 126, width: 3, height: 2 });
+  assert.throws(() => observationOptions({ region: { x: -5, y: 0, width: 3, height: 1 } }), /intersect/);
+  const rgba = Uint8ClampedArray.from([1,2,3,255, 4,5,6,255]);
+  const result = modelImage({ rgba, width: 2, height: 1 });
+  assert.equal(result.width, 8); assert.equal(result.height, 4);
+  for (let y = 0; y < 4; y++) for (let x = 0; x < 8; x++) {
+    const offset = (y * 8 + x) * 4;
+    assert.deepEqual(result.rgba.slice(offset, offset + 4), rgba.slice(x < 4 ? 0 : 4, x < 4 ? 4 : 8));
+  }
+  assert.deepEqual([...rgba], [1,2,3,255,4,5,6,255]);
 });

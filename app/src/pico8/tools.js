@@ -55,7 +55,7 @@ export function createPico8Tools({ game, knowledge }) {
           ["x", "y", "width", "height"],
         ),
         description:
-          "Optional crop at original pixel resolution. Must fit within 128x128; omitted means full screen. Applies to every requested format.",
+          "Optional crop at original pixel resolution. Clipped to the 128x128 screen; omitted means full screen. Applies to every requested format.",
       },
     }),
     load_game: schema({
