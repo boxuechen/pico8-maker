@@ -3,6 +3,7 @@
 ## Development
 
 - Run the local server and open the preview in the available browser. Validate changed behavior with focused tests first. Run the production build once after integration; run Sites checks when hosting or packaging changes. Expand to `npm test` for shared-state regressions or failures whose impact cannot be bounded.
+- Production uses GitHub Pages at `/pico8-maker/`; keep player, knowledge and public asset URLs compatible with `VITE_BASE_PATH`. CI verifies the build before deployment.
 - Keep the Sites hosting files and packaging checks. A build produces `dist/client/index.html`, `dist/server/index.js` and `dist/.openai/hosting.json`.
 - Implement UI in `src/`. Record durable product decisions here and use [the knowledge guide](../docs/pico8-agent/README.md) for the current host contract.
 

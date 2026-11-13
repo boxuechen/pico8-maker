@@ -8,7 +8,7 @@ Describe an idea, let the agent write and playtest it in a real WebAssembly runt
 [![Code license: MIT](https://img.shields.io/badge/code_license-MIT-blue.svg)](LICENSE)
 [![Node.js 24](https://img.shields.io/badge/Node.js-24-43853d.svg)](.node-version)
 
-[简体中文](README.zh-CN.md) · [Quick start](#quick-start) · [Contributing](CONTRIBUTING.md) · [Development guide](docs/development.md)
+[**Live demo**](https://boxuechen.github.io/pico8-maker/) · [简体中文](README.zh-CN.md) · [Quick start](#quick-start) · [Contributing](CONTRIBUTING.md) · [Development guide](docs/development.md)
 
 ![PICO-8 Maker home screen with a game composer and community cartridge gallery](docs/images/home.png)
 
@@ -24,6 +24,10 @@ Describe an idea, let the agent write and playtest it in a real WebAssembly runt
 
 Maker combines React and assistant-ui, Pi Durable Agent, and [pico8-web-player](https://github.com/boxuechen/pico8-web-player). It is an independent project, not an official Lexaloffle product.
 
+## Try it online
+
+Open [PICO-8 Maker](https://boxuechen.github.io/pico8-maker/) in Chrome/Chromium. Community carts can be played without a model key; creating games requires your own model endpoint and API key. Carts and settings stay in that browser's storage, and model requests go directly to the provider you choose.
+
 ## Quick start
 
 Use **Node.js 24**, npm, and Chrome/Chromium. The first start needs internet access to download the pinned player; no player source checkout or Emscripten installation is needed.
@@ -35,7 +39,7 @@ npm --prefix app ci
 npm --prefix app run dev -- --host 127.0.0.1 --port 5175
 ```
 
-Open [http://127.0.0.1:5175](http://127.0.0.1:5175). While the repository is private, cloning requires repository access.
+Open [http://127.0.0.1:5175](http://127.0.0.1:5175).
 
 1. Enter a game idea on the home screen to create a cart.
 2. Select a model and provide your own API key. For a custom endpoint, set its Base URL and model ID.

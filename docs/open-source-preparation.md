@@ -1,6 +1,6 @@
-# Open-source preparation
+# Open-source release status
 
-Reviewed on 2026-11-13. Maker remains private while the project prepares its public release. The README and root license describe project-owned code; they do not imply that all bundled material has already been cleared for redistribution.
+Updated on 2026-11-13. Maker is public and the development preview is hosted at [GitHub Pages](https://boxuechen.github.io/pico8-maker/). The README and root license describe project-owned code; they do not imply that all bundled material has already been cleared for redistribution.
 
 ## Prepared
 
@@ -11,11 +11,10 @@ Reviewed on 2026-11-13. Maker remains private while the project prepares its pub
 - A third-party inventory, including all 11 community carts and the exact license embedded in the bundled Proggy Vector font.
 - Build packaging that retains Maker's license/notices, the font notice and the player's separate license files.
 
-## Remaining release work
+## Asset provenance follow-up
 
 | Material | Current evidence | Required follow-up |
 | --- | --- | --- |
-| Maker live demo | No deployed Maker URL is recorded | Deploy and verify the full creation/play/export flow, then add the actual URL to the GitHub homepage |
 | PICO-8 logo, television and play-button images | Exact sources and permissions are not recorded | Verify and document permission or replace them with original artwork; refresh the README screenshot if changed |
 
 Exact filenames, authors, source links and the reviewed terms are in [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md). The font's own notice has already been recovered and is shipped with the application.
@@ -28,6 +27,12 @@ On 2026-11-13 the maintainer chose to keep all 11 community cartridges for the n
 
 The current UI and artwork are retained. This change does not alter game behavior or the community gallery.
 
-Before changing Maker's visibility, address the items above for the chosen distribution, check the Git history for retained third-party files as well as the current tree, and update the README's release-preparation note. A live Maker demo URL should only be added to GitHub's Website field after an actual deployment is available; the player's demo is not the Maker app.
+The maintainer authorized publishing the existing application with its community gallery retained. The repository visibility and Pages deployment are separate from the third-party license records above; public hosting does not change those records.
+
+Successful `main` CI runs deploy the static build. The deployment smoke check uses a temporary browser profile and a scripted local model to verify connection probing, creation, real WASM input, `.p8` export and reload recovery against the production subdirectory. It is integration evidence, not a new real-model quality evaluation. See the [deployment guide](development.md#github-pages-deployment).
 
 The separate `pico8-runtime` repository can choose its own license and release schedule. It is not required to build or publish Maker.
+
+## Deployment verification — 2026-11-13
+
+[CI and deployment](https://github.com/boxuechen/pico8-maker/actions/runs/43385041105) passed for `71014e0`: 139 regression tests, production build, packaged-license checks and Pages deployment. The published app passed `deployment-smoke.mjs`: 11 gallery entries, image/tool connection probe, a new resource cart, changed pixels after physical keyboard input, downloaded `deployment-smoke.p8`, and restored cart state after reload; no runtime exceptions or failed app asset requests were observed. Model responses were intercepted to a local scripted fixture with a dummy key. No paid model requests were made.

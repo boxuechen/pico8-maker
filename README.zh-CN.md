@@ -4,7 +4,7 @@
 
 描述游戏想法，让 Agent 编写代码并在真实 WebAssembly 运行时里试玩，再通过对话持续修改。完成后导出 `.p8` 卡带。
 
-[English](README.md) · [参与贡献](CONTRIBUTING.md) · [开发指南](docs/development.md)
+[**在线体验**](https://boxuechen.github.io/pico8-maker/) · [English](README.md) · [参与贡献](CONTRIBUTING.md) · [开发指南](docs/development.md)
 
 ![PICO-8 Maker 首页：游戏创作输入框与社区卡带](docs/images/home.png)
 
@@ -20,6 +20,10 @@
 
 应用使用 React、assistant-ui、Pi Durable Agent 和 [pico8-web-player](https://github.com/boxuechen/pico8-web-player)。这是独立项目，并非 Lexaloffle 官方产品。
 
+## 在线体验
+
+使用 Chrome/Chromium 打开 [PICO-8 Maker](https://boxuechen.github.io/pico8-maker/)。试玩社区卡带不需要模型 Key；创作游戏需要配置自己的模型服务和 API Key。卡带与配置保存在当前浏览器，请求直接发送到你选择的模型服务。
+
 ## 快速开始
 
 准备 **Node.js 24**、npm 和 Chrome/Chromium。首次启动需要联网下载固定版本的播放器，不需要播放器源码或 Emscripten。
@@ -31,7 +35,7 @@ npm --prefix app ci
 npm --prefix app run dev -- --host 127.0.0.1 --port 5175
 ```
 
-打开 [http://127.0.0.1:5175](http://127.0.0.1:5175)。仓库仍为私有时，克隆需要仓库访问权限。
+打开 [http://127.0.0.1:5175](http://127.0.0.1:5175)。
 
 1. 在首页输入游戏想法并创建卡带。
 2. 选择模型并填写自己的 API Key；自定义服务还需填写 Base URL 和模型 ID。
