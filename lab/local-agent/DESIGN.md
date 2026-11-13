@@ -161,3 +161,13 @@ Browser probe: bundling Pi's four tool files for the browser pulls Node-only mod
 `config.js`, `utils/paths.js`, `utils/output-files.js`, `utils/shell.js`, photon image
 resizing and pi-tui (77 unresolved imports); the main entry pulls 397. just-bash ships a
 browser entry.
+
+Browser feasibility (follow-up the same night): `browser/build.mjs` bundles Pi's four tool
+files plus just-bash's browser entry with esbuild, replacing Node built-ins by small shims
+(`browser/shims.mjs`: path/url/os implemented, fs reports ENOENT, child_process and zlib
+throw) and injecting `Buffer`. `browser/run.mjs` loads it in headless Chrome: read, edit,
+write and bash all work against a just-bash MountableFs (pipes and a custom `p8` command
+included), and OPFS reads and writes a file. Bundle 2.8 MB, mostly just-bash (1.2 MB) plus
+unused pi-tui/highlight.js render code that can be trimmed. Not yet done: a real `p8` on the
+player runtime in a Worker, an OPFS-backed IFileSystem for `/cart`, and the Pi agent loop
+itself in the browser (Maker already runs pi-durable there).
