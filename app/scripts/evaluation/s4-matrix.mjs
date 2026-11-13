@@ -22,6 +22,7 @@ export function resolveMatrix(matrix, env = process.env) {
       "contextWindow",
       "maxTokens",
       "input",
+      "api",
     ];
     if (
       Object.keys(row).some((k) => !allowed.includes(k)) ||

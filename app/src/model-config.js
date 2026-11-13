@@ -95,6 +95,11 @@ export function validateConfig(value) {
   if (!config.model || !config.apiKey)
     throw new Error("请填写 API Key 和模型名称");
   if (config.provider === "custom") {
+    // Off by default. Local servers such as Ollama keep tool-result images
+    // inside function_call_output only on the Responses API; Chat Completions
+    // moves them into an extra user message that some models treat as a new request.
+    config.api =
+      config.api === "openai-responses" ? "openai-responses" : "openai-completions";
     config.contextWindow = Number(config.contextWindow ?? 128000);
     config.maxTokens = Number(config.maxTokens ?? 32768);
     if (
@@ -125,7 +130,7 @@ export function createConnection(value) {
   const model = preset ?? {
     id: config.model,
     name: config.model,
-    api: "openai-completions",
+    api: config.api,
     provider: "byok",
     baseUrl: config.baseUrl,
     reasoning: config.thinkingLevel !== "off",

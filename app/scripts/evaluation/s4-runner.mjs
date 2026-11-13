@@ -8,7 +8,11 @@ import { activeSession, sessionContext } from "../../src/sessions.js";
 import { EvaluationGame } from "./node-game.mjs";
 import { verifyShooter, verifyAgentRoutes } from "./shooter-oracle.mjs";
 import { s4Metrics, transcriptEvidence } from "./s4-metrics.mjs";
-export const limits = Object.freeze({ milliseconds: 180000, tools: 40 });
+// S4 budgets; slower local models may raise the time limit (recorded in the archive).
+export const limits = Object.freeze({
+  milliseconds: Number(process.env.S4_TIME_LIMIT_MS) || 180000,
+  tools: 40,
+});
 const knowledge = createKnowledgeFiles({
   load: (file) =>
     readFile(
