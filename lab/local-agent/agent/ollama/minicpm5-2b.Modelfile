@@ -1,0 +1,9 @@
+# MiniCPM5-2B for the lab: the published tag sets num_ctx 4096 (Pi's prompt plus
+# the skill would be truncated silently) and its stop list is one malformed string.
+FROM openbmb/minicpm5-2b:q4_K_M
+PARAMETER num_ctx 32768
+PARAMETER stop "<|im_end|>"
+PARAMETER stop "<|im_start|>"
+PARAMETER stop "</s>"
+PARAMETER temperature 0.7
+PARAMETER top_p 0.95

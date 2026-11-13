@@ -15,20 +15,56 @@
         {
           "id": "qwen3.5:4b-q4_K_M",
           "reasoning": true,
-          "thinkingLevelMap": { "off": "none" },
-          "input": ["text"],
+          "thinkingLevelMap": {
+            "off": "none"
+          },
+          "input": [
+            "text"
+          ],
           "contextWindow": 32768,
           "maxTokens": 8192,
-          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          }
         },
         {
           "id": "qwen3.5:9b-q4_K_M",
           "reasoning": true,
-          "thinkingLevelMap": { "off": "none" },
-          "input": ["text"],
+          "thinkingLevelMap": {
+            "off": "none"
+          },
+          "input": [
+            "text"
+          ],
           "contextWindow": 32768,
           "maxTokens": 8192,
-          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          }
+        },
+        {
+          "id": "lab-minicpm5-2b",
+          "reasoning": true,
+          "thinkingLevelMap": {
+            "off": "none"
+          },
+          "input": [
+            "text"
+          ],
+          "contextWindow": 32768,
+          "maxTokens": 8192,
+          "cost": {
+            "input": 0,
+            "output": 0,
+            "cacheRead": 0,
+            "cacheWrite": 0
+          }
         }
       ]
     }
