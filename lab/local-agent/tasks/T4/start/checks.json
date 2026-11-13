@@ -1,0 +1,25 @@
+{
+ "cases": [
+  {
+   "name": "rocks appear",
+   "press": "wait*60",
+   "expect": [
+    {
+     "path": "#g.rocks",
+     "atLeast": 1
+    }
+   ]
+  },
+  {
+   "name": "a rock on the player loses",
+   "setup": "g.rocks={{x=g.player.x,y=g.player.y}}",
+   "press": "wait*3",
+   "expect": [
+    {
+     "path": "g.mode",
+     "equals": "lose"
+    }
+   ]
+  }
+ ]
+}

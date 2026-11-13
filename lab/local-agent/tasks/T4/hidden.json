@@ -1,0 +1,87 @@
+{
+ "cases": [
+  {
+   "name": "rocks appear",
+   "press": "wait*60",
+   "expect": [
+    {
+     "path": "#g.rocks",
+     "atLeast": 1
+    }
+   ]
+  },
+  {
+   "name": "a rock on the player loses",
+   "setup": "g.rocks={{x=g.player.x,y=g.player.y}}",
+   "press": "wait*3",
+   "expect": [
+    {
+     "path": "g.mode",
+     "equals": "lose"
+    }
+   ]
+  },
+  {
+   "name": "rocks fall",
+   "setup": "g.rocks={{x=10,y=20}}",
+   "press": "wait*10",
+   "expect": [
+    {
+     "path": "g.rocks.1.y",
+     "atLeast": 35
+    }
+   ]
+  },
+  {
+   "name": "surviving 900 frames wins",
+   "setup": "g.time=895 g.rocks={}",
+   "press": "wait*10",
+   "expect": [
+    {
+     "path": "g.mode",
+     "equals": "win"
+    }
+   ]
+  },
+  {
+   "name": "time counts while playing",
+   "setup": "g.rocks={}",
+   "press": "wait*15",
+   "expect": [
+    {
+     "path": "g.time",
+     "atLeast": 10
+    },
+    {
+     "path": "g.mode",
+     "equals": "play"
+    }
+   ]
+  },
+  {
+   "name": "player moves",
+   "press": "right*10",
+   "expect": [
+    {
+     "path": "g.player.x",
+     "changes": true
+    }
+   ]
+  },
+  {
+   "name": "X restarts after a loss",
+   "setup": "g.rocks={{x=g.player.x,y=g.player.y}}",
+   "press": "wait*20 x wait*2",
+   "expect": [
+    {
+     "path": "g.mode",
+     "equals": "play"
+    },
+    {
+     "path": "g.time",
+     "atMost": 5
+    }
+   ]
+  }
+ ]
+}

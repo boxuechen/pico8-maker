@@ -1,0 +1,94 @@
+{
+ "cases": [
+  {
+   "name": "apples appear",
+   "press": "wait*70",
+   "expect": [
+    {
+     "path": "#g.apples",
+     "atLeast": 1
+    }
+   ]
+  },
+  {
+   "name": "catching scores",
+   "setup": "g.apples={{x=g.player.x,y=g.player.y}}",
+   "press": "wait*3",
+   "expect": [
+    {
+     "path": "g.score",
+     "equals": 1
+    }
+   ]
+  },
+  {
+   "name": "apples fall",
+   "setup": "g.apples={{x=10,y=20}}",
+   "press": "wait*10",
+   "expect": [
+    {
+     "path": "g.apples.1.y",
+     "atLeast": 25
+    }
+   ]
+  },
+  {
+   "name": "missing counts",
+   "setup": "g.apples={{x=10,y=126}}",
+   "press": "wait*10",
+   "expect": [
+    {
+     "path": "g.missed",
+     "equals": 1
+    }
+   ]
+  },
+  {
+   "name": "10th catch wins",
+   "setup": "g.score=9 g.apples={{x=g.player.x,y=g.player.y}}",
+   "press": "wait*3",
+   "expect": [
+    {
+     "path": "g.mode",
+     "equals": "win"
+    }
+   ]
+  },
+  {
+   "name": "3rd miss loses",
+   "setup": "g.missed=2 g.apples={{x=10,y=126}}",
+   "press": "wait*10",
+   "expect": [
+    {
+     "path": "g.mode",
+     "equals": "lose"
+    }
+   ]
+  },
+  {
+   "name": "basket moves",
+   "press": "left*10",
+   "expect": [
+    {
+     "path": "g.player.x",
+     "changes": true
+    }
+   ]
+  },
+  {
+   "name": "X restarts after a loss",
+   "setup": "g.missed=2 g.apples={{x=10,y=126}}",
+   "press": "wait*30 x wait*2",
+   "expect": [
+    {
+     "path": "g.mode",
+     "equals": "play"
+    },
+    {
+     "path": "g.missed",
+     "equals": 0
+    }
+   ]
+  }
+ ]
+}

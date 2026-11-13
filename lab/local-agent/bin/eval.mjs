@@ -4,7 +4,7 @@
 //     [--thinking off] [--time-ms 600000]
 // Each run gets a fresh workspace and a temporary Pi agent directory; the agent sees
 // only the workspace, the pico8 skill and bin/ (p8) on PATH. Results go to .cache/lab/.
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
@@ -19,6 +19,8 @@ const { values: a } = parseArgs({
     repeat: { type: "string", default: "1" },
     thinking: { type: "string", default: "off" },
     "time-ms": { type: "string", default: "600000" },
+    // Load the pico8 skill up front (/skill:pico8) instead of relying on the model to read it.
+    "force-skill": { type: "boolean", default: false },
   },
 });
 if (!a.model) throw new Error("--model is required");
@@ -26,20 +28,31 @@ const runId = new Date().toISOString().replace(/[-:]/g, "").slice(0, 13) + "-" +
 const OUT = join(LAB, "../../.cache/lab", runId);
 mkdirSync(OUT, { recursive: true });
 
-function runPi(work, prompt, log) {
+// Everything the agent can see lives outside the lab: a temporary agent dir with
+// its own copy of the skill and a p8 launcher. A run once followed the skill's
+// lab path and edited a task's original start file.
+function sandboxDirs() {
   const agentDir = mkdtempSync(join(tmpdir(), "pi-agent-"));
   for (const f of ["models.json", "settings.json"]) cpSync(join(LAB, "agent", f), join(agentDir, f));
+  cpSync(join(LAB, "skill/pico8"), join(agentDir, "skills/pico8"), { recursive: true });
+  mkdirSync(join(agentDir, "bin"));
+  writeFileSync(join(agentDir, "bin/p8"), `#!/bin/sh\nexec node ${JSON.stringify(join(LAB, "bin/p8"))} "$@"\n`, { mode: 0o755 });
+  return agentDir;
+}
+
+function runPi(work, prompt, log) {
+  const agentDir = sandboxDirs();
   const args = [
     "--mode", "json", "--no-session", "--offline", "--no-extensions", "--no-mcp",
     "--no-context-files", "--no-prompt-templates", "--no-skills",
-    "--skill", join(LAB, "skill/pico8"),
+    "--skill", join(agentDir, "skills/pico8"),
     "--model", `ollama/${a.model}`, "--thinking", a.thinking, prompt,
   ];
   return new Promise((done) => {
     const t0 = Date.now();
     const child = spawn(PI, args, {
       cwd: work,
-      env: { ...process.env, PI_CODING_AGENT_DIR: agentDir, PATH: `${join(LAB, "bin")}:${process.env.PATH}` },
+      env: { ...process.env, PI_CODING_AGENT_DIR: agentDir, PATH: `${join(agentDir, "bin")}:${process.env.PATH}` },
       stdio: ["ignore", "pipe", "pipe"],
     });
     let out = "", err = "", timedOut = false;
@@ -104,16 +117,20 @@ async function score(task, dir, work) {
   throw new Error(`unknown task kind ${task.kind}`);
 }
 
+const taskHash = () => execFileSync("git", ["-C", LAB, "status", "--porcelain", "tasks"], { encoding: "utf8" });
+const before = taskHash();
 const rows = [];
 for (const id of a.tasks.split(",")) {
   const dir = join(LAB, "tasks", id);
   const task = JSON.parse(readFileSync(join(dir, "task.json"), "utf8"));
-  const prompt = readFileSync(join(dir, "task.md"), "utf8").trim();
+  const text = readFileSync(join(dir, "task.md"), "utf8").trim();
+  const prompt = a["force-skill"] && task.kind === "p8" ? `/skill:pico8 ${text}` : text;
   for (let n = 1; n <= Number(a.repeat); n++) {
     const base = join(OUT, `${id}-${n}`), work = join(base, "work");
     mkdirSync(work, { recursive: true });
     if (existsSync(join(dir, "start"))) cpSync(join(dir, "start"), work, { recursive: true });
     const run = await runPi(work, prompt, join(base, "events.jsonl"));
+    if (taskHash() !== before) throw new Error(`run ${id}-${n} modified the lab's task files; restore them with git checkout and investigate ${base}`);
     const m = metrics(run.events);
     const s = await score(task, dir, work);
     const row = { task: id, n, pass: s.pass, seconds: run.seconds, timedOut: run.timedOut, exit: run.code, ...m, score: s.detail };
@@ -123,7 +140,7 @@ for (const id of a.tasks.split(",")) {
   }
 }
 const md = [
-  `# ${a.model} · thinking ${a.thinking} · ${runId}`,
+  `# ${a.model} · thinking ${a.thinking}${a["force-skill"] ? " · skill forced" : ""} · ${runId}`,
   "",
   "| task | n | pass | s | turns | tools | errors | out tok | stopped |",
   "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",

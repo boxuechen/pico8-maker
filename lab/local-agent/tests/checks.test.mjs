@@ -20,7 +20,7 @@ test("lint and runtime failures name the line and the fix", async () => {
   assert.match(fault.at(-1).detail, /foo is not defined/);
 });
 
-for (const t of ["T1", "T2", "T3"])
+for (const t of ["T1", "T2", "T3", "T4", "T5"])
   test(`${t}: the start cart fails hidden checks and the reference solution passes`, async () => {
     assert.equal((await scoreCart(join(lab, `tasks/${t}/start/main.lua`), join(lab, `tasks/${t}/hidden.json`))).pass, false);
     const r = await scoreCart(join(lab, `tests/fixtures/${t}-solution.lua`), join(lab, `tasks/${t}/hidden.json`));

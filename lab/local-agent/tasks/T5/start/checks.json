@@ -1,0 +1,25 @@
+{
+ "cases": [
+  {
+   "name": "apples appear",
+   "press": "wait*70",
+   "expect": [
+    {
+     "path": "#g.apples",
+     "atLeast": 1
+    }
+   ]
+  },
+  {
+   "name": "catching scores",
+   "setup": "g.apples={{x=g.player.x,y=g.player.y}}",
+   "press": "wait*3",
+   "expect": [
+    {
+     "path": "g.score",
+     "equals": 1
+    }
+   ]
+  }
+ ]
+}

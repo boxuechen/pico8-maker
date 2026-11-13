@@ -8,7 +8,7 @@ description: Make, change and fix PICO-8 games in main.lua and check them with t
 ## Workflow (always follow)
 
 1. Read the task, `main.lua`, and `checks.json` if it exists.
-2. Make the smallest change that does the task. Use `edit` for small changes; keep existing variable names.
+2. Make the smallest change that does the task; keep existing variable names. Edit one place per `edit` call: copy a short `oldText` (one or two lines) exactly from the file, including its leading spaces. If an edit fails, read those lines again with `read` and retry. Never rewrite the whole game to make a small change.
 3. After **every** change run `p8 check` with bash. Read each `FAIL` line: it gives the line and what to change.
 4. Repeat until `p8 check` prints `ALL PASSED`. Never finish while something fails.
 5. Reply with a one-paragraph summary of what you changed.

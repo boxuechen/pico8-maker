@@ -99,8 +99,9 @@ export async function main(argv) {
       const name = rest[0];
       if (!templates().includes(name)) throw new Error(`unknown template "${name ?? ""}"; choose one of: ${templates().join(", ")}`);
       const target = resolve("main.lua");
-      if (existsSync(target) && readFileSync(target, "utf8").trim() && opts.force === undefined)
-        throw new Error("main.lua already has code; edit it instead (or add --force 1 to replace it)");
+      // Never offer an overwrite: small models use it to throw away a game they should fix.
+      if (existsSync(target) && readFileSync(target, "utf8").trim())
+        throw new Error("main.lua already has a game. Fix or change that game with edit; p8 new is only for an empty main.lua.");
       copyFileSync(join(TEMPLATES, `${name}.lua`), target);
       console.log(`main.lua now holds the ${name} template. Change it, then run: p8 check`);
       return 0;
