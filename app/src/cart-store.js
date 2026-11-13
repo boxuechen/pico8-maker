@@ -6,6 +6,8 @@ import { validSnapshot } from "./pico8/assets.js";
 import { normalizePlaytests } from "./pico8/playtests.js";
 
 const dbName = "pico8-maker";
+// Default names in either UI language share one counter: "New Cart 3", "新卡带 3".
+const numbered = /^(?:New Cart|新卡带) ?(\d+)$/;
 
 export function newCart(patch = {}) {
   const now = Date.now();
@@ -87,17 +89,44 @@ export function isOnShelf(cart) {
   );
 }
 
-/** "saved" when the current revision has been downloaded as a file. */
+/** "empty" before the first version; "saved" once the current revision was downloaded. */
 export function saveStatus(cart) {
+  if (!cart.versions?.length && !cart.revision) return "empty";
   return cart.savedRevision != null && cart.savedRevision === cart.revision
     ? "saved"
     : "unsaved";
 }
 
+/** A cart title from the first prompt: one line, trimmed at a word boundary. */
+export function titleFromPrompt(text, max = 40) {
+  const line = String(text ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/[.。!！?？]+$/, "");
+  if (line.length <= max) return line;
+  const cut = line.slice(0, max);
+  const space = cut.lastIndexOf(" ");
+  return `${(space > max / 2 ? cut.slice(0, space) : cut).trim()}…`;
+}
+
+/** A new shelf cart holding an imported or remixed cartridge as its first version. */
+export function importedCart({ title, snapshot, label = null, origin = null }) {
+  return newCart({
+    title: String(title || "Untitled cartridge")
+      .trim()
+      .slice(0, 120),
+    named: true,
+    versions: [snapshot],
+    revision: 1,
+    label,
+    origin,
+  });
+}
+
 export const sortCarts = (carts) =>
   [...carts].sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0));
 
-export function duplicateCart(cart) {
+export function duplicateCart(cart, suffix = "(copy)") {
   const now = Date.now();
   const copy = structuredCopy(cart);
   const activeIndex = cart.sessions.findIndex(
@@ -111,7 +140,7 @@ export function duplicateCart(cart) {
   return newCart({
     ...copy,
     id: newId(),
-    title: `${cart.title} (copy)`.slice(0, 120),
+    title: `${cart.title} ${suffix}`.slice(0, 120),
     activeSessionId: copy.sessions[activeIndex].id,
     savedRevision: null,
     createdAt: now,
@@ -201,12 +230,12 @@ export async function openCartStore({ backend } = {}) {
     navigation,
     put: (cart) => backend.put("carts", cart),
     remove: (id) => backend.delete("carts", id),
-    defaultCartName() {
-      return `New Cart${Math.max(navigation.nextCartNumber || 1, ...carts.map((c) => Number(/^New Cart(\d+)$/.exec(c.title)?.[1] || 0) + 1))}`;
+    defaultCartName(prefix = "New Cart") {
+      return `${prefix} ${Math.max(navigation.nextCartNumber || 1, ...carts.map((c) => Number(numbered.exec(c.title)?.[1] || 0) + 1))}`;
     },
-    async createCart(name = "") {
-      const title = name.trim().slice(0, 120) || this.defaultCartName();
-      const number = /^New Cart(\d+)$/.exec(title)?.[1];
+    async createCart(name = "", prefix) {
+      const title = name.trim().slice(0, 120) || this.defaultCartName(prefix);
+      const number = numbered.exec(title)?.[1];
       if (number)
         await this.setNavigation({
           nextCartNumber: Math.max(

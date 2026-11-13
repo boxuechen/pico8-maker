@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { t } from "./i18n.js";
 
 // Match the website's power-on sequence: vertical coloured bits, dense cross-scan,
 // horizontal streaks, then black. The game only starts after the sequence ends.
@@ -57,7 +58,7 @@ export function BootScreen() {
       width={128}
       height={128}
       className="boot-screen"
-      aria-label="Powering on PICO-8"
+      aria-label={t("powering")}
     />
   );
 }

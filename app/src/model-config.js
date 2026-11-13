@@ -10,6 +10,7 @@ import { anthropicMessagesApi } from "@earendil-works/pi-ai/api/anthropic-messag
 import { googleGenerativeAIApi } from "@earendil-works/pi-ai/api/google-generative-ai.lazy";
 import { mistralConversationsApi } from "@earendil-works/pi-ai/api/mistral-conversations.lazy";
 import { providers } from "./model-catalog.js";
+import { t } from "./i18n.js";
 export { providers } from "./model-catalog.js";
 
 const adapters = {
@@ -80,7 +81,7 @@ export function validateConfig(value) {
   try {
     url = new URL(config.baseUrl);
   } catch {
-    throw new Error("请输入有效的 HTTP(S) 接口地址");
+    throw new Error(t("errUrl"));
   }
   if (
     !["http:", "https:"].includes(url.protocol) ||
@@ -89,11 +90,11 @@ export function validateConfig(value) {
     url.search ||
     url.hash
   )
-    throw new Error("接口地址不能包含账号、密码、查询参数或片段");
+    throw new Error(t("errUrlParts"));
   if (/\/chat\/completions\/?$/.test(url.pathname))
-    throw new Error("请填写 Base URL，不要包含 /chat/completions");
+    throw new Error(t("errBaseUrl"));
   if (!config.model || !config.apiKey)
-    throw new Error("请填写 API Key 和模型名称");
+    throw new Error(t("errKeyModel"));
   if (config.provider === "custom") {
     // Off by default. Local servers such as Ollama keep tool-result images
     // inside function_call_output only on the Responses API; Chat Completions
@@ -110,7 +111,7 @@ export function validateConfig(value) {
       config.maxTokens > config.contextWindow
     )
       throw new Error(
-        "请填写模型支持的上下文和输出 token 数，输出不能超过上下文",
+        t("errLimits"),
       );
   }
   if (config.provider !== "custom") {
@@ -118,7 +119,7 @@ export function validateConfig(value) {
       .find((p) => p.id === config.provider)
       ?.models.find((m) => m.id === config.model);
     if (!model || config.baseUrl !== model.baseUrl)
-      throw new Error("请选择目录中的模型；修改接口地址请使用自定义服务");
+      throw new Error(t("errCatalog"));
   }
   return config;
 }
@@ -153,7 +154,7 @@ export function createConnection(value) {
     models: [model],
     auth: {
       apiKey: {
-        name: "用户密钥",
+        name: "user key",
         resolve: async () => ({ auth: { apiKey: config.apiKey } }),
       },
     },
@@ -170,18 +171,18 @@ export function createConnection(value) {
   };
 }
 export function readableError(error, apiKey = "") {
-  let text = String(error?.message ?? error ?? "请求失败");
-  if (apiKey) text = text.replaceAll(apiKey, "[密钥已隐藏]");
+  let text = String(error?.message ?? error ?? t("errRequest"));
+  if (apiKey) text = text.replaceAll(apiKey, t("keyHidden"));
   if (/401|authentication|invalid.*key/i.test(text))
-    return "认证失败：请检查所选服务的 API Key。";
+    return t("errAuth");
   if (/402|insufficient.*(balance|quota)|balance.*insufficient/i.test(text))
-    return "账户余额或额度不足，请在模型服务中检查。";
+    return t("errBalance");
   if (/429|rate.?limit/i.test(text))
-    return "请求限流或额度不足，请稍后重试或检查服务配额。";
+    return t("errRate");
   if (/timeout|timed out/i.test(text))
-    return "模型响应超时，请重试；也可先测试连接。";
+    return t("errTimeout");
   if (/fetch|connection error|network/i.test(text))
-    return "无法连接模型服务，请检查网络、接口地址和 CORS 设置。";
+    return t("errNetwork");
   return text;
 }
 
@@ -234,18 +235,18 @@ export async function probeConnection(
       .result();
     if (["error", "aborted", "length"].includes(result.stopReason))
       throw new Error(
-        result.errorMessage || "测试未完成：响应中断或超出长度限制",
+        result.errorMessage || t("probeIncomplete"),
       );
     return result;
   };
-  onProgress("正在验证流式连接、图片输入和工具调用…");
+  onProgress(t("probeStart"));
   const first = await run();
   const calls = first.content.filter((p) => p.type === "toolCall");
   if (calls.length !== 1 || calls[0].name !== tool.name)
-    throw new Error("模型未按要求调用测试工具，请确认支持工具调用。");
+    throw new Error(t("probeNoTool"));
   if (calls[0].arguments?.color !== expectedColor)
-    throw new Error("图片验证未通过：模型未识别测试图片的颜色。");
-  onProgress("图片与工具调用通过，正在验证工具结果回传…");
+    throw new Error(t("probeImage"));
+  onProgress(t("probeResult"));
   messages.push(first, {
     role: "toolResult",
     toolCallId: calls[0].id,
@@ -262,6 +263,6 @@ export async function probeConnection(
     last.stopReason !== "stop" ||
     !last.content.some((p) => p.type === "text" && p.text.trim())
   )
-    throw new Error("工具结果回传后，模型未正常结束回复。");
-  return "连接通过：流式回复、图片识别、工具调用及结果回传均正常。";
+    throw new Error(t("probeNoFinish"));
+  return t("probeOk");
 }

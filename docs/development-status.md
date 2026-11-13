@@ -11,6 +11,7 @@
 | 状态与日志 | 有界状态读取/调试、printh 日志、正常路线与 debug 路线区分 |
 | Agent 流程 | 固定启动前缀、按需参考、重开骨架、音频触发与版本覆盖事实 |
 | 评测 | 两个保留案例、S4 射击新建/修复、独立玩法检查、模型矩阵与图像对照 |
+| 界面 | 中英文切换；我的卡带重命名/复制/可撤销删除/批量保存；社区卡带与 Lodge Podge 示例 Remix；拖入 `.p8` / `.p8.png` 试玩与导入；分享卡片与图标 |
 
 播放器版本由 [`app/player.lock.json`](../app/player.lock.json) 确定，升级方式见[开发指南](development.md#player-updates)。Maker 不维护自己的 VM 分支。
 

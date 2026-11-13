@@ -242,8 +242,8 @@ export class Game {
     this.changed();
     try {
       const [loaded] = await Promise.allSettled([
-        this.player.loadCart(cartridgeBytes(cart.id), {
-          displayName: `${cart.id}.p8.png`,
+        this.player.loadCart(cart.bytes ?? cartridgeBytes(cart.id), {
+          displayName: cart.fileName ?? `${cart.id}.p8.png`,
         }),
         this.hasPoweredOn ? Promise.resolve() : this.boot(),
       ]);

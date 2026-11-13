@@ -39,7 +39,7 @@ test("Pi presets retain DeepSeek vision, reasoning compatibility and provider en
   assert.ok(providers[1].models.length > 1);
   assert.throws(
     () => createConnection({ ...config, baseUrl: "https://other.invalid" }),
-    /目录/,
+    /Choose a model from the list/,
   );
   assert.throws(
     () =>
@@ -151,7 +151,7 @@ test("real Pi adapter streams fragmented tool arguments and returns images throu
     );
     return streamResponse([[{ role: "assistant", content: "OK" }, "stop"]]);
   });
-  assert.match(await probeConnection(config, image, "red"), /连接通过/);
+  assert.match(await probeConnection(config, image, "red"), /Connection passed/);
   assert.equal(bodies.length, 2);
 });
 
@@ -165,7 +165,7 @@ test("failed auth is not retried and provider error cannot expose the configured
     );
   });
   await assert.rejects(probeConnection(config, image, "red"), (e) => {
-    assert.match(readableError(e, config.apiKey), /认证失败/);
+    assert.match(readableError(e, config.apiKey), /Authentication failed/);
     assert.ok(!readableError(e, config.apiKey).includes(config.apiKey));
     return true;
   });
@@ -176,7 +176,7 @@ test("a text-only response cannot pass the capability probe", async (t) => {
   t.mock.method(globalThis, "fetch", async () =>
     streamResponse([[{ role: "assistant", content: "OK" }, "stop"]]),
   );
-  await assert.rejects(probeConnection(config, image, "red"), /工具/);
+  await assert.rejects(probeConnection(config, image, "red"), /tool/);
 });
 
 test("mainstream catalogs preserve Pi protocols and distinguish Qwen regional keys", () => {

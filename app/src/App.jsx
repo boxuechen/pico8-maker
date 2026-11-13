@@ -14,7 +14,9 @@ import {
 } from "./WorkbenchMessages.jsx";
 import { BootScreen } from "./BootScreen.jsx";
 import { HowItWorks, HomeFooter } from "./HomeSections.jsx";
-import { cartridgeImage } from "./cartridges.js";
+import { cartridgeImage, cartridgeBytes } from "./cartridges.js";
+import { t, useLang } from "./i18n.js";
+import { readCartBytes } from "./pico8/import.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AssistantRuntimeProvider,
@@ -36,6 +38,7 @@ import {
   LoaderCircle,
   Copy,
   PanelLeftOpen,
+  Upload,
 } from "lucide-react";
 import {
   openCartStore,
@@ -45,6 +48,9 @@ import {
   sortCarts,
   duplicateCart,
   requestPersistence,
+  saveStatus,
+  titleFromPrompt,
+  importedCart,
 } from "./cart-store.js";
 import {
   activeSession,
@@ -81,6 +87,7 @@ import {
 const BASE = import.meta.env.BASE_URL;
 const convertMessage = (message) => message;
 function ModelSettings({ initial, onSave, onClear, onClose, pending }) {
+  const { t } = useLang();
   const dialog = useRef(null);
   const [form, setForm] = useState(() => normalizeConfig(initial));
   const [remember, setRemember] = useState(initial.remember ?? true);
@@ -174,19 +181,19 @@ function ModelSettings({ initial, onSave, onClear, onClose, pending }) {
     >
       <form onSubmit={save} className="settings-form">
         <div className="dialog-heading">
-          <h2>Connect your model</h2>
+          <h2>{t("connectYourModel")}</h2>
           <button
             type="button"
-            aria-label="Close settings"
+            aria-label={t("closeSettings")}
             onClick={onClose}
             disabled={busy}
           >
             <X size={20} />
           </button>
         </div>
-        <p>Choose a model and enter your provider’s API key.</p>
+        <p>{t("connectIntro")}</p>
         <label>
-          Provider
+          {t("provider")}
           <select
             value={form.provider}
             disabled={busy}
@@ -197,15 +204,15 @@ function ModelSettings({ initial, onSave, onClear, onClose, pending }) {
                 {p.name}
               </option>
             ))}
-            <option value="custom">Custom compatible API</option>
+            <option value="custom">{t("customApi")}</option>
           </select>
         </label>
         {preset?.models.length > 12 && (
           <label>
-            Find a model
+            {t("findModel")}
             <input
               type="search"
-              placeholder="Search model names…"
+              placeholder={t("searchModels")}
               value={modelSearch}
               disabled={busy}
               onChange={(e) => setModelSearch(e.target.value)}
@@ -214,7 +221,7 @@ function ModelSettings({ initial, onSave, onClear, onClose, pending }) {
         )}
         {preset && (
           <label>
-            Model
+            {t("model")}
             <select
               value={form.model}
               disabled={busy}
@@ -245,14 +252,12 @@ function ModelSettings({ initial, onSave, onClear, onClose, pending }) {
         )}
         {preset && (
           <p className="model-detail">
-            {preset.models.length} image-capable{" "}
-            {preset.models.length === 1 ? "model" : "models"} · Test to verify
-            tool support
+            {t("modelCount", { n: preset.models.length })}
           </p>
         )}
         {!preset && (
           <label>
-            Base URL
+            {t("baseUrl")}
             <input
               required
               type="url"
@@ -266,23 +271,23 @@ function ModelSettings({ initial, onSave, onClear, onClose, pending }) {
           </label>
         )}
         <label>
-          API Key
+          {t("apiKey")}
           <input
             required
             type="password"
             disabled={busy}
             autoComplete="off"
-            placeholder="Enter your API key"
+            placeholder={t("enterApiKey")}
             value={form.apiKey}
             onChange={(e) => setForm({ ...form, apiKey: e.target.value })}
           />
         </label>
         {!preset && (
           <label>
-            Model ID
+            {t("modelId")}
             <input
               required
-              placeholder="Model ID from your provider"
+              placeholder={t("modelIdPlaceholder")}
               disabled={busy}
               value={form.model}
               onChange={(e) => setForm({ ...form, model: e.target.value })}
@@ -292,7 +297,7 @@ function ModelSettings({ initial, onSave, onClear, onClose, pending }) {
         {!preset && (
           <>
             <label>
-              Context window (tokens)
+              {t("contextWindow")}
               <input
                 type="number"
                 min="1"
@@ -306,7 +311,7 @@ function ModelSettings({ initial, onSave, onClear, onClose, pending }) {
               />
             </label>
             <label>
-              Maximum output (tokens)
+              {t("maxOutput")}
               <input
                 type="number"
                 min="1"
@@ -319,14 +324,11 @@ function ModelSettings({ initial, onSave, onClear, onClose, pending }) {
                 }
               />
             </label>
-            <p className="model-detail">
-              Use your model’s published limits. Custom endpoints may require
-              Thinking level set to Off.
-            </p>
+            <p className="model-detail">{t("customLimits")}</p>
           </>
         )}
         <label>
-          Thinking level
+          {t("thinkingLevel")}
           <select
             value={thinking.level}
             disabled={busy || thinking.levels.length === 1}
@@ -336,25 +338,15 @@ function ModelSettings({ initial, onSave, onClear, onClose, pending }) {
           >
             {thinking.levels.map((level) => (
               <option key={level} value={level}>
-                {
-                  {
-                    off: "Off",
-                    minimal: "Minimal",
-                    low: "Low",
-                    medium: "Medium",
-                    high: "High",
-                    xhigh: "Extra high",
-                    max: "Maximum",
-                  }[level]
-                }
+                {t("levels")[level]}
               </option>
             ))}
           </select>
         </label>
         <p className="model-detail">
           {thinking.levels.length === 1 && thinking.level === "off"
-            ? "This model does not support thinking."
-            : "Higher thinking levels can improve complex work, but take more time and tokens."}
+            ? t("noThinking")
+            : t("thinkingHint")}
         </p>
         <label className="checkbox">
           <input
@@ -363,12 +355,10 @@ function ModelSettings({ initial, onSave, onClear, onClose, pending }) {
             disabled={busy}
             onChange={(e) => setRemember(e.target.checked)}
           />
-          Remember settings on this device (including key)
+          {t("remember")}
         </label>
         <p className="fine-print">
-          Saved in this browser by default. Requests go directly to{" "}
-          {preset ? form.baseUrl : "your endpoint"}. Connection test: two small
-          requests for images and tools.
+          {t("finePrint", { url: preset ? form.baseUrl : t("yourEndpoint") })}
         </p>
         {notice && (
           <p role="status" className="notice">
@@ -385,15 +375,13 @@ function ModelSettings({ initial, onSave, onClear, onClose, pending }) {
               setForm({ ...defaultConfig });
               setRemember(true);
               setModelSearch("");
-              setNotice(
-                "Local model settings cleared. Your game and chat are kept.",
-              );
+              setNotice(t("cleared"));
             } catch {
-              setNotice("Could not clear browser storage. Please try again.");
+              setNotice(t("clearFailed"));
             }
           }}
         >
-          Clear saved settings
+          {t("clearSaved")}
         </button>
         <div className="dialog-actions">
           <button
@@ -402,11 +390,11 @@ function ModelSettings({ initial, onSave, onClear, onClose, pending }) {
             onClick={test}
             disabled={busy}
           >
-            {busy ? <LoaderCircle className="spin" size={16} /> : null}Test
-            connection
+            {busy ? <LoaderCircle className="spin" size={16} /> : null}
+            {t("testConnection")}
           </button>
           <button className="primary" disabled={busy}>
-            {pending ? "Save & start making" : "Save settings"}
+            {pending ? t("saveAndStart") : t("saveSettings")}
           </button>
         </div>
       </form>
@@ -414,20 +402,23 @@ function ModelSettings({ initial, onSave, onClear, onClose, pending }) {
   );
 }
 
-const nextIdeas = [
-  "Make it a little harder",
-  "Add sound effects",
-  "Add a title screen",
-];
-const homeIdeas = [
-  ["Platformer", "#00e436", "Make a platformer with coins and a double jump."],
-  [
-    "Space shooter",
-    "#29adff",
-    "Make a space shooter with upgradeable weapons.",
-  ],
-  ["Moon fishing", "#ffa300", "Make a tiny fishing game set on the moon."],
-];
+// The bundled Maker-built example: playable on the home TV and remixable.
+const showcase = {
+  id: "showcase-lodge-podge",
+  title: "Lodge Podge",
+  fileName: "lodge-podge.p8",
+  fileUrl: `${BASE}case-studies/lodge-podge/final.p8`,
+  label: `${BASE}case-studies/lodge-podge/start.png`,
+  page: "https://github.com/boxuechen/pico8-maker/blob/main/docs/lodge-podge-case-study.md",
+  showcase: true,
+};
+const isCartFile = (name) =>
+  /\.p8(\.png)?$/i.test(name) || /\.png$/i.test(name);
+const defaultSessionTitles = new Set(["New session", "New conversation"]);
+const sessionTitle = (session) =>
+  !session.titleEdited && defaultSessionTitles.has(session.title)
+    ? t("newConversation")
+    : session.title;
 function rgbaToUrl(rgba) {
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = 128;
@@ -473,6 +464,7 @@ const upsert = (list, cart) =>
   sortCarts([{ ...cart }, ...list.filter((c) => c.id !== cart.id)]);
 
 function Studio({ store }) {
+  useLang();
   const [saved] = useState(
     () => store.carts.find((c) => c.id === store.navigation.currentId) ?? null,
   );
@@ -494,7 +486,19 @@ function Studio({ store }) {
     () => store.navigation.sidebarCollapsed ?? window.innerWidth < 1100,
   );
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [creation, setCreation] = useState(null);
+  // Home prompt waiting for a model connection before its cart is created.
+  const pendingCreate = useRef(null);
+  const [renamingCart, setRenamingCart] = useState(null);
+  const [toast, setToast] = useState(null);
+  const toastTimer = useRef(null);
+  const [dragging, setDragging] = useState(false);
+  const filePicker = useRef(null);
+  const importMode = useRef("preview");
+  function showToast(message, action = null) {
+    clearTimeout(toastTimer.current);
+    setToast({ message, action, key: Date.now() });
+    toastTimer.current = setTimeout(() => setToast(null), action ? 7000 : 4000);
+  }
   function toggleSidebar() {
     setCollapsed((value) => {
       void store
@@ -778,7 +782,7 @@ function Studio({ store }) {
         threadId: project.current.activeSessionId,
         threads: project.current.sessions.map((session) => ({
           id: session.id,
-          title: session.title,
+          title: sessionTitle(session),
           status: "regular",
         })),
         onSwitchToThread: selectSession,
@@ -805,7 +809,7 @@ function Studio({ store }) {
         .join("\n");
       if (!inWorkbench) {
         saveComposerDraft(text);
-        setCreation({ text });
+        await startFromHome(text);
         return;
       }
       await submitMessage(text);
@@ -828,7 +832,7 @@ function Studio({ store }) {
     try {
       await gameRef.current.previewCart(cart);
     } catch (e) {
-      setError(`Could not play ${cart.title}: ${e.message}`);
+      setError(t("couldNotPlay", { title: cart.title, message: e.message }));
     } finally {
       cartLock.current = false;
       setCartLoading(false);
@@ -873,6 +877,7 @@ function Studio({ store }) {
   }
   function closeSettings() {
     setSettings(false);
+    pendingCreate.current = null;
     if (pendingRef.current) runtime.thread.composer.setText(pendingRef.current);
     pendingRef.current = "";
     setPending("");
@@ -885,17 +890,19 @@ function Studio({ store }) {
       // A failed save must not leave a hidden, newly selected connection active.
       if (configured) await agentRef.current.configure(config);
       else agentRef.current.clearConnection();
-      throw new Error(
-        "Could not save settings in this browser. Allow local storage or turn off Remember settings.",
-      );
+      throw new Error(t("settingsSaveFailed"));
     }
+    configRef.current = next;
     setConfig(next);
     setConfigured(true);
     setSettings(false);
     const text = pendingRef.current;
+    const create = pendingCreate.current;
     pendingRef.current = "";
+    pendingCreate.current = null;
     setPending("");
-    if (text) void sendMessage(text);
+    if (create != null) void safe(() => createCart(create))();
+    else if (text) void sendMessage(text);
   }
   function clearConfig() {
     clearModelConfig();
@@ -956,7 +963,20 @@ function Studio({ store }) {
     if (cart) await openCart(cart, { enter: true });
   }
   function newBlankCart() {
-    setCreation({ text: "" });
+    return createCart("");
+  }
+  /** Home MAKE: connect a model first, then create a cart named after the idea. */
+  async function startFromHome(text) {
+    if (!text.trim()) return;
+    if (!configured) {
+      pendingCreate.current = text;
+      pendingRef.current = text;
+      setPending(text);
+      runtime.thread.composer.setText(text);
+      setSettings(true);
+      return;
+    }
+    await createCart(text);
   }
   async function submitMessage(text) {
     if (!configured) {
@@ -969,21 +989,118 @@ function Studio({ store }) {
     }
     await sendMessage(text);
   }
-  async function createNamedCart(name) {
-    const text = creation.text;
-    const cart = await store.createCart(name);
+  async function createCart(text) {
+    const cart = await store.createCart(
+      titleFromPrompt(text),
+      t("defaultCartName"),
+    );
     activeSession(cart).draft = text;
     void requestPersistence();
     await openCart(cart);
     await flush();
-    setCreation(null);
-    if (text) {
+    if (text.trim()) {
       homeDraft.current = "";
       void store
         .setNavigation({ homeDraft: "" })
         .catch(() => setStorageError(true));
-      await submitMessage(text);
+      // The model is connected by now: startFromHome and saveConfig check first.
+      await sendMessage(text);
     }
+  }
+  async function renameCart(cart, name) {
+    const title = name.trim().slice(0, 120);
+    if (!title) throw new Error(t("enterCartName"));
+    if (cart.id === project.current.id) {
+      persist({ title, named: true });
+      await flush();
+      refreshSessions((v) => v + 1);
+      return;
+    }
+    const next = { ...cart, title, named: true, updatedAt: Date.now() };
+    setShelf((list) => upsert(list, next));
+    await store.put(next).catch(() => setStorageError(true));
+  }
+  async function saveAllCarts() {
+    for (const cart of shelf.filter((c) => saveStatus(c) === "unsaved")) {
+      await saveShelfCart(cart);
+      await new Promise((r) => setTimeout(r, 250));
+    }
+  }
+  /** Read a dropped or picked file and play it on the home TV. */
+  async function openCartFile(file, mode = importMode.current) {
+    if (!file) return;
+    if (!isCartFile(file.name)) throw new Error(t("unsupportedFile"));
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    let parsed;
+    try {
+      parsed = await readCartBytes(bytes);
+    } catch (e) {
+      throw new Error(t("importFailed", { message: e.message }));
+    }
+    const title =
+      parsed.title.replace(/\b\p{L}/gu, (c) => c.toUpperCase()) ||
+      file.name.replace(/\.p8(\.png)?$|\.png$/i, "").trim() ||
+      "Untitled cartridge";
+    if (mode === "import") {
+      await addToShelf(parsed, { title, origin: null });
+      showToast(t("imported", { title }));
+      return;
+    }
+    await selectCart({
+      id: `file-${Date.now()}`,
+      title,
+      author: t("localFile"),
+      bytes,
+      fileName: file.name,
+      local: true,
+      parsed,
+    });
+  }
+  async function addToShelf(parsed, { title, origin, label }) {
+    const cart = importedCart({
+      title,
+      snapshot: parsed.snapshot,
+      label: parsed.label ? rgbaToUrl(parsed.label) : (label ?? null),
+      origin,
+    });
+    await store.put(cart);
+    setShelf((list) => upsert(list, cart));
+    return cart;
+  }
+  /** Copy the cart playing on the TV into My carts and open it in the workbench. */
+  async function remixCart(source) {
+    if (!source) return;
+    const bytes =
+      source.bytes ??
+      (source.fileUrl
+        ? new Uint8Array(await (await fetch(source.fileUrl)).arrayBuffer())
+        : cartridgeBytes(source.id));
+    const parsed = source.parsed ?? (await readCartBytes(bytes));
+    const cart = await addToShelf(parsed, {
+      title: source.local
+        ? source.title
+        : t("remixName", { title: source.title }),
+      origin: source.local
+        ? null
+        : {
+            title: source.title,
+            author: source.author,
+            page: source.page ?? null,
+          },
+      label: source.label,
+    });
+    await openCart(cart);
+    showToast(
+      source.local || source.showcase
+        ? t("imported", { title: cart.title })
+        : t("remixed", { title: source.title, author: source.author }),
+    );
+  }
+  async function playShowcase() {
+    const bytes = new Uint8Array(
+      await (await fetch(showcase.fileUrl)).arrayBuffer(),
+    );
+    await selectCart({ ...showcase, author: t("showcaseAuthor"), bytes });
   }
   function markSaved(cart) {
     const savedAt = Date.now();
@@ -1013,15 +1130,19 @@ function Studio({ store }) {
   }
   async function duplicateShelfCart(cart) {
     const live = cart.id === project.current.id ? project.current : cart;
-    const copy = duplicateCart(live);
+    const copy = duplicateCart(live, t("copySuffix"));
     try {
       await store.put(copy);
       setShelf((list) => upsert(list, copy));
+      showToast(t("duplicated", { title: copy.title }));
     } catch {
       setStorageError(true);
     }
   }
   async function deleteShelfCart(cart) {
+    const live = cart.id === project.current.id ? project.current : cart;
+    // A plain copy restores the cart exactly if the user undoes the delete.
+    const backup = JSON.parse(JSON.stringify({ ...live, deleted: undefined }));
     setShelf((list) => list.filter((c) => c.id !== cart.id));
     await store.remove(cart.id).catch(() => setStorageError(true));
     if (cart.id === project.current.id) {
@@ -1030,6 +1151,13 @@ function Studio({ store }) {
       project.current.deleted = true;
       await openCart(blank, { enter: false });
     }
+    showToast(t("deleted", { title: cart.title }), {
+      label: t("undo"),
+      run: async () => {
+        await store.put(backup);
+        setShelf((list) => upsert(list, backup));
+      },
+    });
   }
   function setPrompt(text) {
     runtime.thread.composer.setText(text);
@@ -1063,18 +1191,18 @@ function Studio({ store }) {
   const tool = currentTool(chat.messages, running);
   const pressing = tool?.toolName === "press_buttons" ? tool.args : null;
   const status = game.booting
-    ? ["info", "POWERING ON"]
+    ? ["info", t("stPoweringOn")]
     : cartLoading
-      ? ["info", "LOADING CART"]
+      ? ["info", t("stLoadingCart")]
       : running
-        ? ["accent", game.hasGame ? "AI PLAYTESTING" : "CREATING GAME"]
+        ? ["accent", game.hasGame ? t("stPlaytesting") : t("stCreating")]
         : !hasPlayable
-          ? ["neutral", "NO GAME YET"]
+          ? ["neutral", t("stNoGame")]
           : game.testFrame
-            ? ["success", "READY TO PLAY"]
+            ? ["success", t("stReady")]
             : playing
-              ? ["info", "PLAYING"]
-              : ["neutral", "PRESS PLAY"];
+              ? ["info", t("stPlaying")]
+              : ["neutral", t("stPressPlay")];
   const readout = running
     ? pressing
       ? (() => {
@@ -1086,14 +1214,14 @@ function Studio({ store }) {
         })()
       : tool
         ? describeTool(tool).label.toLowerCase()
-        : "thinking…"
+        : t("thinking").toLowerCase()
     : game.hasGame
-      ? `v${game.previewVersion === "before" ? game.comparisonRevision : game.revision}${game.testFrame ? " · latest AI test frame" : ""}`
+      ? `v${game.previewVersion === "before" ? game.comparisonRevision : game.revision}${game.testFrame ? ` · ${t("latestFrame")}` : ""}`
       : "";
   const hint = running
-    ? "Your controls unlock when testing ends"
+    ? t("hintRunning")
     : game.testFrame
-      ? "Press play to take control"
+      ? t("hintTestFrame")
       : "";
   const lastMessage = chat.messages.at(-1);
   const groups = [];
@@ -1109,7 +1237,6 @@ function Studio({ store }) {
       onSelect={selectCart}
       disabled={busy || !ready}
       active={game.activeCart?.id === cart.id}
-      below={i < 3}
     />
   );
   return (
@@ -1125,6 +1252,21 @@ function Studio({ store }) {
       >
         <div
           className={`app ${inWorkbench ? "studio-mode" : "home-mode"}`}
+          onDragOver={(e) => {
+            if (inWorkbench || !e.dataTransfer.types.includes("Files")) return;
+            e.preventDefault();
+            setDragging(true);
+          }}
+          onDragLeave={(e) => {
+            if (!e.relatedTarget) setDragging(false);
+          }}
+          onDrop={(e) => {
+            if (inWorkbench) return;
+            e.preventDefault();
+            setDragging(false);
+            const file = e.dataTransfer.files?.[0];
+            void safe(() => openCartFile(file, "preview"))();
+          }}
           style={{
             "--chat-fr": `${split}fr`,
             "--preview-fr": `${100 - split}fr`,
@@ -1146,6 +1288,9 @@ function Studio({ store }) {
               canUndo={game.canUndo}
               onUndo={safe(() => gameRef.current.undo())}
               onSaveCart={safe(saveCart)}
+              onRename={(name) =>
+                safe(() => renameCart(project.current, name))()
+              }
               onHome={() => {
                 persistSession({
                   draft: runtime.thread.composer.getState().text,
@@ -1156,11 +1301,7 @@ function Studio({ store }) {
               }}
             />
           ) : (
-            <HomeHeader
-              busy={busy}
-              canResume={!!lastCart}
-              onResume={safe(resume)}
-            />
+            <HomeHeader hasCarts={shelf.length > 0} />
           )}
           <main className="workspace">
             {inWorkbench && (
@@ -1183,22 +1324,49 @@ function Studio({ store }) {
                     </span>
                     <span className="maker-word">MAKER</span>
                     {game.activeCart ? (
-                      <p className="now-playing">
-                        <span>NOW PLAYING</span>
+                      <div className="now-playing">
+                        <span>{t("nowPlaying")}</span>
                         <strong>{game.activeCart.title}</strong>
-                        <a
-                          href={game.activeCart.page}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
-                          by {game.activeCart.author} ↗
-                        </a>
-                      </p>
+                        <span className="now-playing-meta">
+                          {game.activeCart.page ? (
+                            <a
+                              href={game.activeCart.page}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              {t("byAuthor", {
+                                author: game.activeCart.author,
+                              })}{" "}
+                              ↗
+                            </a>
+                          ) : (
+                            <small>
+                              {game.activeCart.local
+                                ? t("localFile")
+                                : t("byAuthor", {
+                                    author: game.activeCart.author,
+                                  })}
+                            </small>
+                          )}
+                          <button
+                            className="remix-button"
+                            disabled={busy || !ready}
+                            title={t("remixTitle")}
+                            onClick={safe(() => remixCart(game.activeCart))}
+                          >
+                            {game.activeCart.local ? (
+                              <Upload size={13} />
+                            ) : (
+                              <PixelPlay size={11} />
+                            )}
+                            {game.activeCart.local
+                              ? t("importShort")
+                              : t("remix")}
+                          </button>
+                        </span>
+                      </div>
                     ) : (
-                      <p className="tagline">
-                        Describe a tiny game. AI writes the cart, playtests it,
-                        and hands you the controls.
-                      </p>
+                      <p className="tagline">{t("tagline")}</p>
                     )}
                   </div>
                   <div className="cart-grid left-carts">
@@ -1214,8 +1382,8 @@ function Studio({ store }) {
                       className="your-cart-art"
                       aria-label={
                         lastCart
-                          ? `Continue ${lastCart.title}`
-                          : "Make your own cart"
+                          ? t("continueCart", { title: lastCart.title })
+                          : t("makeOwnCart")
                       }
                       disabled={busy}
                       onClick={
@@ -1229,7 +1397,7 @@ function Studio({ store }) {
                     </button>
                     <div className="your-cart-text">
                       <span className="kicker">
-                        {lastCart ? "LAST CART" : "YOUR CART"}
+                        {lastCart ? t("lastCart") : t("yourCart")}
                       </span>
                       {lastCart ? (
                         <>
@@ -1239,7 +1407,7 @@ function Studio({ store }) {
                           <small>
                             {lastCart.versions.length
                               ? `v${lastCart.revision}`
-                              : "Empty cart"}{" "}
+                              : t("emptyCart")}{" "}
                             · {ago(lastCart.updatedAt)}
                           </small>
                           <button
@@ -1247,15 +1415,13 @@ function Studio({ store }) {
                             disabled={busy}
                             onClick={safe(resume)}
                           >
-                            CONTINUE <PixelArrow />
+                            {t("continue")} <PixelArrow />
                           </button>
                         </>
                       ) : (
                         <>
-                          <strong>Empty slot</strong>
-                          <small>
-                            Describe an idea below and it becomes your cart.
-                          </small>
+                          <strong>{t("emptySlot")}</strong>
+                          <small>{t("emptySlotHint")}</small>
                         </>
                       )}
                     </div>
@@ -1271,9 +1437,7 @@ function Studio({ store }) {
                       target="_blank"
                       rel="noreferrer"
                     >
-                      MORE
-                      <br />
-                      CARTS
+                      <span>{t("moreCarts")}</span>
                       <PixelArrow />
                     </a>
                   </div>
@@ -1285,13 +1449,13 @@ function Studio({ store }) {
                 <div className="conversation-heading">
                   <button
                     className="mobile-conversations"
-                    aria-label="Open conversations"
+                    aria-label={t("openConversations")}
                     onClick={() => setMobileOpen(true)}
                   >
                     <PanelLeftOpen size={18} />
                   </button>
-                  <span title={currentSession.title}>
-                    {currentSession.title}
+                  <span title={sessionTitle(currentSession)}>
+                    {sessionTitle(currentSession)}
                   </span>
                 </div>
               )}
@@ -1303,21 +1467,23 @@ function Studio({ store }) {
                 <ThreadPrimitive.Empty>
                   <div className="welcome">
                     <span className="kicker">
-                      {inWorkbench ? "NEW SESSION" : "LET’S MAKE A LITTLE GAME"}
+                      {inWorkbench
+                        ? t("welcomeNewKicker")
+                        : t("welcomeHomeKicker")}
                     </span>
                     <h1>
                       {inWorkbench
                         ? game.hasGame
-                          ? "Keep building this cart."
-                          : "Make your first game."
-                        : "Your idea. Your cartridge."}
+                          ? t("welcomeKeep")
+                          : t("welcomeFirst")
+                        : t("welcomeHome")}
                     </h1>
                     <p>
                       {inWorkbench
                         ? game.hasGame
-                          ? "This session has its own conversation. Your game and source are shared across sessions."
-                          : "Describe what you want to play. Your first version will appear in Preview."
-                        : "Describe a game to create your own cartridge."}
+                          ? t("welcomeKeepBody")
+                          : t("welcomeFirstBody")
+                        : t("welcomeHomeBody")}
                     </p>
                   </div>
                 </ThreadPrimitive.Empty>
@@ -1326,7 +1492,7 @@ function Studio({ store }) {
                 />
                 {running && lastMessage?.role !== "assistant" && (
                   <div className="working" role="status">
-                    <i className="spinner" /> Thinking…
+                    <i className="spinner" /> {t("thinking")}
                   </div>
                 )}
               </ThreadPrimitive.Viewport>
@@ -1335,7 +1501,7 @@ function Studio({ store }) {
                   <div role="alert" className="error">
                     {error || chat.error}
                     <button
-                      aria-label="Dismiss error"
+                      aria-label={t("dismissError")}
                       onClick={() => {
                         setError("");
                         setChat((s) => ({ ...s, error: null }));
@@ -1347,12 +1513,9 @@ function Studio({ store }) {
                 )}
                 {inWorkbench && showRestore && !running && (
                   <div className="restore-note" role="status">
-                    <span>
-                      The previous run was interrupted. Your conversation and
-                      game were restored — send a message to continue.
-                    </span>
+                    <span>{t("restored")}</span>
                     <button
-                      aria-label="Dismiss"
+                      aria-label={t("dismiss")}
                       onClick={() => setShowRestore(false)}
                     >
                       <X size={14} />
@@ -1361,7 +1524,7 @@ function Studio({ store }) {
                 )}
                 {inWorkbench && hasConversation && !busy && (
                   <div className="next-ideas">
-                    {nextIdeas.map((idea) => (
+                    {t("nextIdeas").map((idea) => (
                       <button key={idea} onClick={() => setPrompt(idea)}>
                         {idea}
                       </button>
@@ -1374,51 +1537,51 @@ function Studio({ store }) {
                     placeholder={
                       inWorkbench
                         ? running
-                          ? "AI is playtesting — press Stop to interrupt"
-                          : "Describe a change…"
-                        : "A frog hops across lily pads to catch flies before the sun sets…"
+                          ? t("placeholderRunning")
+                          : t("placeholderChange")
+                        : t("placeholderHome")
                     }
                     onChange={(e) => saveComposerDraft(e.target.value)}
-                    aria-label="Message"
+                    aria-label={t("message")}
                     rows={2}
                   />
                   <div className="composer-footer">
                     <button
                       type="button"
                       className={`composer-model-button ${configured ? "" : "unconfigured"}`}
-                      aria-label="Model settings"
+                      aria-label={t("modelSettings")}
                       title={
                         configured
                           ? `${providers.find((p) => p.id === config.provider)?.name ?? "Custom API"} · ${config.model}`
-                          : "Choose a model and API key"
+                          : t("connectModelTitle")
                       }
                       disabled={!ready || busy}
                       onClick={() => setSettings(true)}
                     >
                       {configured ? <i /> : <Settings size={14} />}
-                      <span>{configured ? modelName : "Connect model"}</span>
+                      <span>{configured ? modelName : t("connectModel")}</span>
                       <ChevronDown size={14} />
                     </button>
                     {running ? (
                       <ComposerPrimitive.Cancel
-                        aria-label="Stop generation"
+                        aria-label={t("stopGeneration")}
                         className="send stop"
                       >
                         <i />
-                        STOP
+                        {t("stop")}
                       </ComposerPrimitive.Cancel>
                     ) : (
                       <ComposerPrimitive.Send
-                        aria-label="Send message"
+                        aria-label={t("sendMessage")}
                         className="send"
                       >
                         {inWorkbench ? (
                           <>
-                            SEND <ArrowUp size={15} />
+                            {t("send")} <ArrowUp size={15} />
                           </>
                         ) : (
                           <>
-                            {lastCart ? "MAKE NEW CART" : "MAKE"} <PixelPlay />
+                            {lastCart ? t("makeNew") : t("make")} <PixelPlay />
                           </>
                         )}
                       </ComposerPrimitive.Send>
@@ -1426,15 +1589,13 @@ function Studio({ store }) {
                   </div>
                 </ComposerPrimitive.Root>
                 {storageError && (
-                  <div className="composer-note">
-                    Local save failed. Save your cart to keep a copy.
-                  </div>
+                  <div className="composer-note">{t("localSaveFailed")}</div>
                 )}
               </div>
               {!inWorkbench && (
                 <div className="prompt-examples">
-                  <span className="kicker">TRY</span>
-                  {homeIdeas.map(([labelText, color, text]) => (
+                  <span className="kicker">{t("tryLabel")}</span>
+                  {t("ideas").map(([labelText, color, text]) => (
                     <button key={labelText} onClick={() => setPrompt(text)}>
                       <i style={{ background: color }} />
                       {labelText}
@@ -1442,18 +1603,70 @@ function Studio({ store }) {
                   ))}
                 </div>
               )}
-              {!inWorkbench && lastCart && (
+              {!inWorkbench && (
                 <p className="new-cart-hint">
-                  A new idea always starts a new cart — your carts stay on the
-                  shelf below.
+                  {lastCart && <>{t("newCartHint")} </>}
+                  {t("dropHint")}{" "}
+                  <button
+                    className="link-button"
+                    disabled={busy || !ready}
+                    onClick={() => {
+                      importMode.current = "preview";
+                      filePicker.current?.click();
+                    }}
+                  >
+                    {t("openFile")}
+                  </button>
+                  .
                 </p>
+              )}
+              {!inWorkbench && (
+                <section className="showcase" aria-label={t("showcaseKicker")}>
+                  <img
+                    className="showcase-art"
+                    src={showcase.label}
+                    alt=""
+                    width="72"
+                    height="72"
+                  />
+                  <div className="showcase-text">
+                    <span className="kicker">{t("showcaseKicker")}</span>
+                    <strong>{t("showcaseTitle")}</strong>
+                    <p>{t("showcaseBody")}</p>
+                  </div>
+                  <div className="showcase-actions">
+                    <button
+                      className="continue-button"
+                      disabled={busy || !ready}
+                      onClick={safe(playShowcase)}
+                    >
+                      <PixelPlay size={11} /> {t("showcasePlay")}
+                    </button>
+                    <button
+                      className="continue-button"
+                      disabled={busy || !ready}
+                      title={t("remixTitle")}
+                      onClick={safe(() =>
+                        remixCart({
+                          ...showcase,
+                          author: t("showcaseAuthor"),
+                        }),
+                      )}
+                    >
+                      {t("remix")}
+                    </button>
+                    <a href={showcase.page} target="_blank" rel="noreferrer">
+                      {t("showcaseHow")} ↗
+                    </a>
+                  </div>
+                </section>
               )}
             </ThreadPrimitive.Root>
             {inWorkbench && (
               <div
                 className="panel-divider"
                 role="separator"
-                aria-label="Resize chat panel"
+                aria-label={t("resizeChat")}
                 aria-orientation="vertical"
                 aria-valuemin={35}
                 aria-valuemax={72}
@@ -1498,7 +1711,7 @@ function Studio({ store }) {
             )}
             <section
               className={`player-panel ${inWorkbench ? "has-timeline" : ""}`}
-              aria-label="Game preview"
+              aria-label={t("gamePreview")}
             >
               {inWorkbench && (
                 <div className="preview-header">
@@ -1511,8 +1724,8 @@ function Studio({ store }) {
                   {view === "preview" && game.comparisonRevision != null && (
                     <select
                       className="preview-version"
-                      aria-label="Preview version"
-                      title="Switching versions restarts the preview. Export uses the current cart."
+                      aria-label={t("previewVersion")}
+                      title={t("previewVersionTitle")}
                       value={game.previewVersion ?? "current"}
                       disabled={busy}
                       onChange={(e) =>
@@ -1521,9 +1734,11 @@ function Studio({ store }) {
                         )()
                       }
                     >
-                      <option value="current">Current v{game.revision}</option>
+                      <option value="current">
+                        {t("currentV", { n: game.revision })}
+                      </option>
                       <option value="before">
-                        Before v{game.comparisonRevision}
+                        {t("beforeV", { n: game.comparisonRevision })}
                       </option>
                     </select>
                   )}
@@ -1543,11 +1758,11 @@ function Studio({ store }) {
                       <div ref={mount} className="player-mount" />
                       {!hasPlayable && !game.booting && (
                         <div className="empty-preview" role="status">
-                          <span>YOUR GAME GOES HERE</span>
+                          <span>{t("gameGoesHere")}</span>
                           <small>
                             {running
-                              ? "Creating your first version…"
-                              : "Describe a game to get started."}
+                              ? t("creatingFirst")
+                              : t("describeToStart")}
                           </small>
                         </div>
                       )}
@@ -1557,7 +1772,7 @@ function Studio({ store }) {
                           width={128}
                           height={128}
                           className="test-screen"
-                          aria-label="Actual AI playtest frame"
+                          aria-label={t("actualFrame")}
                         />
                       )}
                       {game.booting && <BootScreen />}
@@ -1570,7 +1785,7 @@ function Studio({ store }) {
                         <button
                           disabled={!ready}
                           className={`play-overlay ${game.testFrame ? "over-frame" : ""}`}
-                          aria-label="Start playing"
+                          aria-label={t("startPlaying")}
                           onClick={safe(playCurrent)}
                         >
                           {ready ? (
@@ -1584,18 +1799,18 @@ function Studio({ store }) {
                     <div
                       className="shell official-shell"
                       role="img"
-                      aria-label="Original PICO-8 pixel television"
+                      aria-label={t("shell")}
                     />
                     <div className="player-controls">
                       <button
-                        aria-label={playing ? "Pause game" : "Play game"}
+                        aria-label={playing ? t("pause") : t("play")}
                         disabled={!ready || busy || !hasPlayable}
                         onClick={safe(playCurrent)}
                       >
                         {playing ? <Pause size={20} /> : <Play size={20} />}
                       </button>
                       <button
-                        aria-label="Restart game"
+                        aria-label={t("restart")}
                         disabled={!ready || busy || !hasPlayable}
                         onClick={safe(() => gameRef.current.restart())}
                       >
@@ -1603,7 +1818,7 @@ function Studio({ store }) {
                       </button>
                       <span className="control-divider" />
                       <button
-                        aria-label={game.muted ? "Enable sound" : "Mute"}
+                        aria-label={game.muted ? t("unmute") : t("mute")}
                         disabled={!ready || busy || !hasPlayable}
                         onClick={() => gameRef.current.mute()}
                       >
@@ -1614,16 +1829,14 @@ function Studio({ store }) {
                         )}
                       </button>
                       <button
-                        aria-label="Fullscreen"
+                        aria-label={t("fullscreen")}
                         onClick={safe(async () => {
                           try {
                             if (document.fullscreenElement)
                               await document.exitFullscreen();
                             else await stage.current.requestFullscreen();
                           } catch {
-                            throw new Error(
-                              "Fullscreen is unavailable in this browser. Try opening the game in Chrome.",
-                            );
+                            throw new Error(t("fullscreenFailed"));
                           }
                         })}
                       >
@@ -1632,14 +1845,14 @@ function Studio({ store }) {
                     </div>
                     <p className="player-help">
                       {game.booting
-                        ? "POWERING ON…"
+                        ? t("helpPowering")
                         : cartLoading
-                          ? "LOADING CARTRIDGE…"
+                          ? t("helpLoading")
                           : !hasPlayable
-                            ? "WAITING FOR YOUR GAME"
+                            ? t("helpWaiting")
                             : running
-                              ? "AI IS PLAYTESTING"
-                              : "ARROWS TO MOVE · Z / X TO PLAY"}
+                              ? t("helpTesting")
+                              : t("helpControls")}
                     </p>
                   </div>
                   {inWorkbench && running && (
@@ -1661,20 +1874,21 @@ function Studio({ store }) {
                 )}
               </div>
               {inWorkbench && (
-                <section className="timeline" aria-label="Playtest frames">
+                <section
+                  className={`timeline ${groups.length ? "" : "empty"}`}
+                  aria-label={t("playtestFrames")}
+                >
                   <div className="timeline-head">
-                    <h2>Playtest frames</h2>
+                    <h2>{t("playtestFrames")}</h2>
                     <span>
                       {frames.length
-                        ? `What the AI saw · ${frames.length} frames`
-                        : "What the AI sees"}
+                        ? t("framesSeen", { n: frames.length })
+                        : t("framesEmpty")}
                     </span>
                   </div>
                   {!groups.length && (
                     <p className="timeline-empty">
-                      {running
-                        ? "Waiting for the first test frame…"
-                        : "Each time the AI presses buttons or looks at the screen, the real frame lands here."}
+                      {running ? t("framesWaiting") : t("framesHint")}
                     </p>
                   )}
                   <div className="timeline-strip">
@@ -1686,7 +1900,9 @@ function Studio({ store }) {
                             className={`run-label ${last ? (running ? "live" : "latest") : ""}`}
                           >
                             V{group.revision}
-                            {last ? (running ? " · LIVE" : " · LATEST") : ""}
+                            {last
+                              ? ` · ${running ? t("live") : t("latest")}`
+                              : ""}
                           </span>
                           <div className="run-frames">
                             {group.frames.map((frame) => (
@@ -1696,7 +1912,7 @@ function Studio({ store }) {
                                   frame === frames.at(-1) ? "current" : ""
                                 }
                               >
-                                <img src={frame.url} alt="AI playtest frame" />
+                                <img src={frame.url} alt={t("frameAlt")} />
                                 <figcaption>
                                   f {frame.frameId ?? "–"}
                                 </figcaption>
@@ -1707,7 +1923,7 @@ function Studio({ store }) {
                                 <span>
                                   <i className="spinner" />
                                 </span>
-                                <figcaption>next</figcaption>
+                                <figcaption>{t("next")}</figcaption>
                               </figure>
                             )}
                           </div>
@@ -1727,6 +1943,12 @@ function Studio({ store }) {
               disabled={busy || !ready || switching}
               onOpen={(cart) => safe(() => openCart(cart, { enter: true }))()}
               onNew={safe(newBlankCart)}
+              onImport={() => {
+                importMode.current = "import";
+                filePicker.current?.click();
+              }}
+              onSaveAll={safe(saveAllCarts)}
+              onRename={setRenamingCart}
               onSave={(cart) => safe(() => saveShelfCart(cart))()}
               onDuplicate={(cart) => safe(() => duplicateShelfCart(cart))()}
               onDelete={(cart) => safe(() => deleteShelfCart(cart))()}
@@ -1735,18 +1957,62 @@ function Studio({ store }) {
           {!inWorkbench && <HowItWorks />}
           {!inWorkbench && <HomeFooter />}
         </div>
-        {creation && (
+        {!inWorkbench && dragging && (
+          <div className="drop-overlay" aria-hidden="true">
+            <div>
+              <Upload size={28} />
+              <strong>{t("dropTitle")}</strong>
+              <span>{t("dropBody")}</span>
+            </div>
+          </div>
+        )}
+        <input
+          ref={filePicker}
+          className="cart-file-input"
+          type="file"
+          accept=".p8,.png"
+          hidden
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            void safe(() => openCartFile(file))();
+          }}
+        />
+        {toast && (
+          <div className="toast" role="status" key={toast.key}>
+            <span>{toast.message}</span>
+            {toast.action && (
+              <button
+                onClick={() => {
+                  const { run } = toast.action;
+                  setToast(null);
+                  void safe(run)();
+                }}
+              >
+                {toast.action.label}
+              </button>
+            )}
+            <button
+              className="toast-close"
+              aria-label={t("dismiss")}
+              onClick={() => setToast(null)}
+            >
+              <X size={14} />
+            </button>
+          </div>
+        )}
+        {renamingCart && (
           <NameDialog
-            title="Create a cart"
-            label="Cart name"
-            placeholder={store.defaultCartName()}
-            hint={`Give your game a name. Leave blank to use ${store.defaultCartName()}.`}
-            action="Create cart"
-            onClose={() => {
-              runtime.thread.composer.setText(homeDraft.current);
-              setCreation(null);
+            title={t("renameCart")}
+            label={t("renameCartLabel")}
+            initial={renamingCart.title}
+            hint={t("renameCartHint")}
+            action={t("saveName")}
+            onClose={() => setRenamingCart(null)}
+            onSave={async (name) => {
+              await renameCart(renamingCart, name);
+              setRenamingCart(null);
             }}
-            onSave={createNamedCart}
           />
         )}
         {settings && (
@@ -1768,11 +2034,9 @@ function CodeView({ source, versionProps }) {
   const [copied, setCopied] = useState(false);
   return (
     <div className="code-view">
-      <CartVersion title="Code" {...versionProps} />
+      <CartVersion title={t("viewCode")} {...versionProps} />
       <div className="code-head">
-        <span>
-          main.lua · {lines.length} lines · ≈{tokens} tokens
-        </span>
+        <span>{t("codeHead", { lines: lines.length, tokens })}</span>
         <button
           onClick={async () => {
             await navigator.clipboard?.writeText(source);
@@ -1780,7 +2044,7 @@ function CodeView({ source, versionProps }) {
             setTimeout(() => setCopied(false), 1200);
           }}
         >
-          <Copy size={13} /> {copied ? "Copied" : "Copy"}
+          <Copy size={13} /> {copied ? t("copied") : t("copy")}
         </button>
       </div>
       <pre>
@@ -1796,20 +2060,21 @@ function CodeView({ source, versionProps }) {
   );
 }
 
-function Cart({ cart, onSelect, disabled, active, below }) {
+function Cart({ cart, onSelect, disabled, active }) {
   return (
     <button
-      className={`cart ${active ? "selected" : ""} ${below ? "tip-below" : ""}`}
+      className={`cart ${active ? "selected" : ""}`}
       onClick={() => onSelect(cart)}
       disabled={disabled}
-      aria-label={`Play ${cart.title} by ${cart.author}`}
+      aria-label={t("playCart", { title: cart.title, author: cart.author })}
       aria-pressed={active}
     >
-      <img src={cartridgeImage(cart.id)} alt="" draggable="false" />
-      <span className="cart-credit" aria-hidden="true">
-        <strong>{cart.title}</strong>
-        <small>by {cart.author}</small>
-        <em>Click to play here</em>
+      <span className="cart-frame">
+        <img src={cartridgeImage(cart.id)} alt="" draggable="false" />
+        <span className="cart-credit" aria-hidden="true">
+          <strong>{cart.title}</strong>
+          <small>{t("byAuthor", { author: cart.author })}</small>
+        </span>
       </span>
     </button>
   );

@@ -12,17 +12,18 @@ import {
   mergeSteps,
   describeTool,
 } from "./workbench-state.js";
+import { t, useLang } from "./i18n.js";
 export const ActivityContext = createContext({ running: false });
 
 function StateIcon({ state }) {
   return state === "running" ? (
-    <i className="state-dot" aria-label="Running" />
+    <i className="state-dot" aria-label={t("stRunning")} />
   ) : state === "failed" ? (
-    <X size={14} aria-label="Failed" />
+    <X size={14} aria-label={t("stFailed")} />
   ) : state === "interrupted" ? (
-    <Square size={11} aria-label="Interrupted" />
+    <Square size={11} aria-label={t("stInterrupted")} />
   ) : (
-    <Check size={14} aria-label="Completed" />
+    <Check size={14} aria-label={t("stCompleted")} />
   );
 }
 function Spinner() {
@@ -31,8 +32,8 @@ function Spinner() {
 function resultText(tool, running) {
   return tool.result === undefined
     ? running
-      ? "Waiting for tool result…"
-      : "No result was recorded. Run another test to verify the game."
+      ? t("waitingResult")
+      : t("noResult")
     : typeof tool.result === "string"
       ? tool.result
       : JSON.stringify(tool.result, null, 2);
@@ -52,9 +53,11 @@ function Step({ step, running }) {
       <div className="step-detail">
         {step.tools.map((tool) => (
           <div key={tool.toolCallId}>
-            <span>INPUT · {tool.toolName}</span>
+            <span>
+              {t("input")} · {tool.toolName}
+            </span>
             <pre>{toolInput(tool)}</pre>
-            <span>RESULT</span>
+            <span>{t("result")}</span>
             <pre>{resultText(tool, running)}</pre>
           </div>
         ))}
@@ -63,6 +66,7 @@ function Step({ step, running }) {
   );
 }
 function ToolActivity({ tools, running }) {
+  useLang();
   const [open, setOpen] = useState(running);
   useEffect(() => setOpen(running), [running]);
   const summary = summarizeTools(tools, running);
@@ -104,8 +108,8 @@ function toolInput(tool) {
   const args = tool.args ?? {};
   if (tool.toolName === "load_game")
     return typeof args.source === "string"
-      ? `${args.source.split("\n").length} lines of Lua + resource draft`
-      : "main.lua + resource draft";
+      ? t("linesLuaDraft", { n: args.source.split("\n").length })
+      : t("mainLuaDraft");
   if (tool.toolName === "edit" && Array.isArray(args.edits))
     return args.edits
       .map((e) =>
@@ -123,10 +127,11 @@ function toolInput(tool) {
 }
 function VersionCard({ tool, edits, isLast }) {
   const { canUndo, onUndo, onViewCode, busy } = useContext(ActivityContext);
+  useLang();
   const detail =
     typeof tool.args?.source === "string"
-      ? `${tool.args.source.split("\n").length} lines`
-      : `${edits} ${edits === 1 ? "edit" : "edits"}`;
+      ? t("nLines", { n: tool.args.source.split("\n").length })
+      : t("nEdits", { n: edits });
   const version = String(tool.result ?? "").match(
     /Committed as version (\d+)/,
   )?.[1];
@@ -147,15 +152,17 @@ function VersionCard({ tool, edits, isLast }) {
       </svg>
       <div className="version-text">
         <strong>
-          Cart updated
+          {t("cartUpdated")}
           {version ? ` · v${version}` : ""}
         </strong>
-        <code>{detail} · passed load check</code>
+        <code>
+          {detail} · {t("passedLoad")}
+        </code>
       </div>
-      <button onClick={onViewCode}>View code</button>
+      <button onClick={onViewCode}>{t("viewCodeBtn")}</button>
       {isLast && (
         <button className="ghost" disabled={busy || !canUndo} onClick={onUndo}>
-          Undo
+          {t("undo")}
         </button>
       )}
     </div>
@@ -174,6 +181,7 @@ export function AssistantMessage() {
   const parts = useAuiState((s) => s.message.parts);
   const isLast = useAuiState((s) => s.message.isLast);
   const activity = useContext(ActivityContext);
+  useLang();
   const running = activity.running && isLast;
   const tools = parts.filter((p) => p.type === "tool-call");
   const firstTool = parts.findIndex((p) => p.type === "tool-call");
@@ -216,9 +224,12 @@ export function AssistantMessage() {
         hideWhenRunning
         autohide="not-last"
       >
-        <ActionBarPrimitive.Copy title="Copy reply" aria-label="Copy reply">
+        <ActionBarPrimitive.Copy
+          title={t("copyReply")}
+          aria-label={t("copyReply")}
+        >
           <Copy size={13} />
-          <span>Copy</span>
+          <span>{t("copy")}</span>
         </ActionBarPrimitive.Copy>
       </ActionBarPrimitive.Root>
     </MessagePrimitive.Root>

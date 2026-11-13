@@ -9,7 +9,7 @@
 
 [在线体验](https://boxuechen.github.io/pico8-maker/) · [English](README.md) · [参与贡献](CONTRIBUTING.md)
 
-![Maker 首页：游戏创作输入框与社区卡带](docs/images/home.png)
+![Maker 首页：正在播放由 Maker Agent 制作的 Lodge Podge，下方是创作输入框与社区卡带](docs/images/home.zh-CN.png)
 
 ## 使用 Maker
 
@@ -17,8 +17,11 @@
 - 让 Agent 在独立会话中输入按键、查询状态、检查游戏画面。
 - 查看代码与资源，撤销修改、对比版本、恢复已有对话。
 - 将最近提交的游戏导出为 `.p8` 卡带。
+- Remix 社区卡带或由 Agent 制作的 **Lodge Podge** 示例，也可以拖入自己的 `.p8` / `.p8.png` 试玩并继续改造。
+- 在浏览器中管理“我的卡带”：重命名、复制、可撤销的删除，以及一键保存所有未保存的卡带。
+- 界面支持 English / 简体中文切换。
 
-使用 **Chrome/Chromium** 打开在线演示。试玩社区卡带无需模型 Key；创作前配置自己的模型地址和 API Key，再点击 **Test connection**。服务需支持工具调用、图像输入，并允许当前浏览器来源的请求（CORS）；模型调用可能产生费用。**STOP** 停止请求，**SAVE CART** 导出卡带。
+使用 **Chrome/Chromium** 打开在线演示。试玩社区卡带和 Lodge Podge 示例无需模型 Key；创作前配置自己的模型地址和 API Key，再点击 **测试连接**（英文界面为 **Test connection**）。服务需支持工具调用、图像输入，并允许当前浏览器来源的请求（CORS）；模型调用可能产生费用。**停止**（STOP）中断请求，**保存卡带**（SAVE CART）导出卡带。
 
 ## 快速开始
 

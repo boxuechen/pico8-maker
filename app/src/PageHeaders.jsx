@@ -1,4 +1,6 @@
-import { ChevronLeft, ChevronRight, Undo2 } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronDown, ChevronLeft, Pencil, Undo2 } from "lucide-react";
+import { useLang } from "./i18n.js";
 import { CHAR_LIMIT, TOKEN_LIMIT } from "./pico8/tokens.js";
 
 const BASE = import.meta.env.BASE_URL;
@@ -56,15 +58,30 @@ export function PixelArrow() {
   );
 }
 
-export function HomeHeader({ busy, onResume, canResume }) {
+export function LangToggle() {
+  const { lang, t, setLang } = useLang();
+  return (
+    <button
+      className="lang-toggle"
+      aria-label={t("langSwitchLabel")}
+      title={t("langSwitchLabel")}
+      onClick={() => setLang(lang === "zh" ? "en" : "zh")}
+    >
+      {t("langSwitch")}
+    </button>
+  );
+}
+
+export function HomeHeader({ hasCarts }) {
+  const { t } = useLang();
   return (
     <header className="topbar home-header">
       <span className="site-name">PICO-8 MAKER</span>
       <nav className="home-nav" aria-label="Project links">
-        {canResume && (
-          <button className="resume-link" disabled={busy} onClick={onResume}>
-            Continue <ChevronRight size={14} />
-          </button>
+        {hasCarts && (
+          <a className="resume-link" href="#my-carts">
+            {t("navMyCarts")} <ChevronDown size={14} />
+          </a>
         )}
         {links.map(([label, href]) => (
           <a
@@ -72,13 +89,66 @@ export function HomeHeader({ busy, onResume, canResume }) {
             href={href}
             target="_blank"
             rel="noopener noreferrer"
-            aria-label={label === "X" ? "Follow @boxuechen on X" : undefined}
+            aria-label={label === "X" ? t("followX") : undefined}
           >
             {label}
           </a>
         ))}
+        <LangToggle />
       </nav>
     </header>
+  );
+}
+
+/** The cart name in the workbench header; click to rename in place. */
+function CartTitle({ title, onRename }) {
+  const { t } = useLang();
+  const [editing, setEditing] = useState(false);
+  const [value, setValue] = useState(title);
+  const input = useRef(null);
+  useEffect(() => {
+    if (editing) input.current?.select();
+  }, [editing]);
+  function commit() {
+    const next = value.trim();
+    setEditing(false);
+    if (next && next !== title) onRename(next);
+    else setValue(title);
+  }
+  if (editing)
+    return (
+      <input
+        ref={input}
+        className="cart-title-input"
+        aria-label={t("renameCartLabel")}
+        value={value}
+        maxLength={120}
+        autoFocus
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.nativeEvent.isComposing) commit();
+          if (e.key === "Escape") {
+            setValue(title);
+            setEditing(false);
+          }
+        }}
+      />
+    );
+  return (
+    <h1 className="conversation-title">
+      <button
+        className="cart-title-button"
+        title={`${title} · ${t("renameCartTitle")}`}
+        onClick={() => {
+          setValue(title);
+          setEditing(true);
+        }}
+      >
+        <span>{title}</span>
+        <Pencil size={13} aria-hidden="true" />
+      </button>
+    </h1>
   );
 }
 
@@ -98,11 +168,12 @@ const kilo = (n) =>
   n >= 1024 ? `${(n / 1024).toFixed(n >= 10240 ? 0 : 1)}K` : String(n);
 
 export function WorkspaceViewSwitch({ view, onView, className = "" }) {
+  const { t } = useLang();
   return (
     <div
       className={`view-switch ${className}`}
       role="tablist"
-      aria-label="Workspace view"
+      aria-label={t("workspaceView")}
     >
       {["preview", "code", "resources"].map((v) => (
         <button
@@ -112,7 +183,11 @@ export function WorkspaceViewSwitch({ view, onView, className = "" }) {
           className={view === v ? "active" : ""}
           onClick={() => onView(v)}
         >
-          {v === "preview" ? "Preview" : v === "code" ? "Code" : "Resources"}
+          {v === "preview"
+            ? t("viewPreview")
+            : v === "code"
+              ? t("viewCode")
+              : t("viewResources")}
         </button>
       ))}
     </div>
@@ -134,7 +209,9 @@ export function WorkbenchHeader({
   canUndo,
   onUndo,
   onSaveCart,
+  onRename,
 }) {
+  const { t } = useLang();
   return (
     <header className="topbar workbench-header">
       <div className="wb-project">
@@ -142,8 +219,8 @@ export function WorkbenchHeader({
           className="home-button"
           disabled={busy}
           onClick={onHome}
-          aria-label="Back to home"
-          title="Back to home"
+          aria-label={t("backHome")}
+          title={t("backHome")}
         >
           <ChevronLeft size={14} />
           <span
@@ -154,19 +231,14 @@ export function WorkbenchHeader({
           />
         </button>
         <span className="wb-divider" />
-        <h1 className="conversation-title" title={title}>
-          {title}
-        </h1>
+        <CartTitle key={title} title={title} onRename={onRename} />
         <span className={`version-badge ${saveFailed ? "unsaved" : ""}`}>
-          {hasGame ? `v${revision}` : "Empty cart"} ·{" "}
-          {saveFailed ? "Not saved" : "Saved locally"}
+          {hasGame ? `v${revision}` : t("emptyCart")} ·{" "}
+          {saveFailed ? t("versionNotSaved") : t("versionSaved")}
         </span>
       </div>
       <div className="wb-actions">
-        <div
-          className="cart-usage"
-          title="Approximate PICO-8 token count and code characters"
-        >
+        <div className="cart-usage" title={t("meterTitle")}>
           <Meter label="TOKENS" value={tokens} limit={TOKEN_LIMIT} />
           <Meter label="CHARS" value={chars} limit={CHAR_LIMIT} format={kilo} />
         </div>
@@ -175,8 +247,8 @@ export function WorkbenchHeader({
           className="icon-button"
           disabled={!ready || busy || !canUndo}
           onClick={onUndo}
-          aria-label="Undo last change"
-          title="Undo last change"
+          aria-label={t("undoLast")}
+          title={t("undoLast")}
         >
           <Undo2 size={16} />
         </button>
@@ -184,11 +256,12 @@ export function WorkbenchHeader({
           className="save-cart"
           disabled={!ready || !hasGame}
           onClick={onSaveCart}
-          title="Download a .p8 cartridge labelled with the latest playtest frame"
+          title={t("saveCartTitle")}
         >
           <FloppyIcon />
-          <span>SAVE CART</span>
+          <span>{t("saveCart")}</span>
         </button>
+        <LangToggle />
       </div>
     </header>
   );

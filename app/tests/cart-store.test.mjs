@@ -9,6 +9,8 @@ import {
   normalizeCart,
   isOnShelf,
   saveStatus,
+  titleFromPrompt,
+  importedCart,
   duplicateCart,
   sortCarts,
 } from "../src/cart-store.js";
@@ -122,6 +124,7 @@ test("shelf membership, save status and duplicates", () => {
   assert.equal(saveStatus(cart), "unsaved");
   assert.equal(saveStatus({ ...cart, savedRevision: 4 }), "saved");
   assert.equal(saveStatus({ ...cart, savedRevision: 3 }), "unsaved");
+  assert.equal(saveStatus(newCart({ named: true })), "empty");
 
   const copy = duplicateCart({ ...cart, title: "Frog", savedRevision: 4 });
   assert.notEqual(copy.id, cart.id);
@@ -139,12 +142,12 @@ test("named empty carts persist and default numbering survives reload and deleti
   assert.equal(named.title, "月亮钓鱼");
   assert.equal(isOnShelf(named), true);
   const first = await store.createCart("   ");
-  assert.equal(first.title, "New Cart1");
+  assert.equal(first.title, "New Cart 1");
   await store.remove(first.id);
   const reopened = await openCartStore({ backend });
-  assert.equal((await reopened.createCart()).title, "New Cart2");
+  assert.equal((await reopened.createCart()).title, "New Cart 2");
   await reopened.createCart("New Cart9");
-  assert.equal((await reopened.createCart()).title, "New Cart10");
+  assert.equal((await reopened.createCart()).title, "New Cart 10");
   assert.equal(
     (await openCartStore({ backend })).carts.find((c) => c.id === named.id)
       .title,
@@ -156,7 +159,7 @@ test("default cart names skip existing numbered titles", async () => {
   const backend = memoryBackend();
   await backend.put("carts", newCart({ title: "New Cart7" }));
   const store = await openCartStore({ backend });
-  assert.equal((await store.createCart()).title, "New Cart8");
+  assert.equal((await store.createCart()).title, "New Cart 8");
 });
 
 test("new empty carts persist without demo source or a version", async () => {
@@ -170,4 +173,22 @@ test("new empty carts persist without demo source or a version", async () => {
   assert.deepEqual(restored.versions, []);
   assert.equal(restored.revision, 0);
   assert.equal(isOnShelf(restored), true);
+});
+
+test("titles from prompts and imported carts", () => {
+  assert.equal(titleFromPrompt("  Make a frog game.  "), "Make a frog game");
+  assert.equal(
+    titleFromPrompt("A frog hops across lily pads to catch flies before the sun sets"),
+    "A frog hops across lily pads to catch…",
+  );
+  const cart = importedCart({
+    title: "Mole Mole remix",
+    snapshot: { source: "print(1)", assets: "00" },
+    origin: { title: "Mole Mole", author: "Adam Atomic" },
+  });
+  assert.equal(cart.revision, 1);
+  assert.equal(cart.versions.length, 1);
+  assert.equal(isOnShelf(cart), true);
+  assert.equal(saveStatus(cart), "unsaved");
+  assert.equal(cart.origin.author, "Adam Atomic");
 });

@@ -1,4 +1,5 @@
 import { interruptedToolResult } from "./project-store.js";
+import { t } from "./i18n.js";
 
 // UI-only grouping: raw model history remains untouched for replay/recovery.
 export function groupAssistantTurns(messages) {
@@ -23,19 +24,25 @@ export function summarizeTools(tools, running) {
   if (running)
     return {
       state: "running",
-      label: "Building & playtesting",
-      detail: `step ${Math.min(tools.length, states.filter((s) => s === "completed").length + 1)} / ${tools.length}`,
+      label: t("toolBuilding"),
+      detail: t("toolStep", {
+        i: Math.min(
+          tools.length,
+          states.filter((s) => s === "completed").length + 1,
+        ),
+        n: tools.length,
+      }),
     };
   const failed = states.filter((s) => s === "failed").length;
   const interrupted = states.filter((s) => s === "interrupted").length;
   return {
     state: failed ? "failed" : interrupted ? "interrupted" : "completed",
     label: failed
-      ? "Finished with errors"
+      ? t("toolErrors")
       : interrupted
-        ? "Stopped before finishing"
-        : "Built and playtested",
-    detail: `${tools.length} steps${failed ? ` · ${failed} failed` : ""}${interrupted ? ` · ${interrupted} interrupted` : ""}`,
+        ? t("toolStopped")
+        : t("toolDone"),
+    detail: t("toolSteps", { n: tools.length, failed, interrupted }),
   };
 }
 
@@ -50,51 +57,53 @@ const buttonNames = [
 /** Tool button mask (left=1 … X=32) → "→ + X". */
 export function formatButtons(mask = 0) {
   const pressed = buttonNames.filter(([bit]) => mask & bit).map(([, n]) => n);
-  return pressed.length ? pressed.join(" + ") : "release";
+  return pressed.length ? pressed.join(" + ") : t("release");
 }
-const toolLabels = {
-  read: "Read a file",
-  read_game: "Read the cart source", // Historical transcripts only.
-  load_game: "Loaded the cart",
-  edit: "Edited main.lua",
-  read_assets: "Read resources",
-  edit_assets: "Edited resources",
-  press_buttons: "Pressed",
-  observe_game: "Looked at the screen",
-  inspect_game: "Inspected test state",
-  reset_game: "Restarted the test",
-};
+const toolNames = new Set([
+  "read",
+  "read_game", // Historical transcripts only.
+  "load_game",
+  "edit",
+  "read_assets",
+  "edit_assets",
+  "press_buttons",
+  "observe_game",
+  "inspect_game",
+  "reset_game",
+]);
+const toolLabel = (name) => (toolNames.has(name) ? t(`tool_${name}`) : null);
 export function describeTool(tool) {
   const args = tool?.args ?? {};
   if (tool?.toolName === "press_buttons" && Array.isArray(args.steps))
     return {
-      label: "Played an input sequence",
-      meta: `${args.steps.length} steps · ${args.steps.reduce((n, s) => n + (s.frames ?? 0) + (s.tap ? 2 : 0), 0)}f`,
+      label: t("toolInputSeq"),
+      meta: t("toolSeqMeta", {
+        n: args.steps.length,
+        f: args.steps.reduce(
+          (n, s) => n + (s.frames ?? 0) + (s.tap ? 2 : 0),
+          0,
+        ),
+      }),
     };
   if (tool?.toolName === "read_assets" && ["png", "both"].includes(args.format))
     return {
       label:
-        args.kind === "map"
-          ? "Previewed map resources"
-          : "Previewed sprite resources",
-      meta: args.version === "committed" ? "committed" : "draft",
+        args.kind === "map" ? t("toolPreviewMap") : t("toolPreviewSprites"),
+      meta: args.version === "committed" ? t("committed") : t("draft"),
     };
   if (tool?.toolName === "load_game")
     return typeof args.source === "string"
       ? {
-          label: "Loaded source and resources",
-          meta: `${args.source.split("\n").length} lines`,
+          label: t("toolLoadedSource"),
+          meta: t("nLines", { n: args.source.split("\n").length }),
         }
-      : { label: toolLabels.load_game, meta: "" };
+      : { label: toolLabel("load_game"), meta: "" };
   if (tool?.toolName === "edit" || tool?.toolName === "edit_assets") {
     const n = Array.isArray(args.edits) ? args.edits.length : 1;
-    return {
-      label: toolLabels[tool.toolName],
-      meta: `${n} ${n === 1 ? "change" : "changes"}`,
-    };
+    return { label: toolLabel(tool.toolName), meta: t("nChanges", { n }) };
   }
   return {
-    label: toolLabels[tool?.toolName] ?? tool?.toolName ?? "Tool",
+    label: toolLabel(tool?.toolName) ?? tool?.toolName ?? t("toolFallback"),
     meta: "",
   };
 }

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
+import { useLang } from "./i18n.js";
 
 export function NameDialog({
   title,
@@ -8,16 +9,20 @@ export function NameDialog({
   placeholder,
   hint,
   action,
+  busyLabel,
   onSave,
   onClose,
 }) {
+  const { t } = useLang();
   const dialog = useRef(null);
   const [name, setName] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   useEffect(() => {
     dialog.current.showModal();
-    dialog.current.querySelector("input")?.focus();
+    const input = dialog.current.querySelector("input");
+    input?.focus();
+    input?.select();
   }, []);
   return (
     <dialog
@@ -26,6 +31,9 @@ export function NameDialog({
       onCancel={(e) => {
         e.preventDefault();
         if (!busy) onClose();
+      }}
+      onClick={(e) => {
+        if (e.target === dialog.current && !busy) onClose();
       }}
     >
       <form
@@ -46,14 +54,14 @@ export function NameDialog({
           <h2 id="name-dialog-title">{title}</h2>
           <button
             type="button"
-            aria-label="Close naming dialog"
+            aria-label={t("closeDialog")}
             disabled={busy}
             onClick={onClose}
           >
             <X size={20} />
           </button>
         </div>
-        <p>{hint}</p>
+        {hint && <p>{hint}</p>}
         <label>
           {label}
           <input
@@ -73,10 +81,10 @@ export function NameDialog({
             disabled={busy}
             onClick={onClose}
           >
-            Cancel
+            {t("cancel")}
           </button>
           <button className="primary" disabled={busy}>
-            {busy ? "Opening…" : action}
+            {busy ? (busyLabel ?? t("saving")) : action}
           </button>
         </div>
       </form>

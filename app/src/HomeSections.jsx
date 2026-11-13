@@ -1,3 +1,5 @@
+import { useLang } from "./i18n.js";
+
 // Below-the-fold content in the official site's style: pixel art left, pink
 // Proggy heading and short body copy right.
 function BubbleArt() {
@@ -49,51 +51,37 @@ function CartArt() {
     </svg>
   );
 }
-const steps = [
-  [
-    BubbleArt,
-    "Describe it",
-    "One sentence is enough. Ask for a frog, a moon, a wall to jump over — the AI writes P8 Lua inside the real console limits.",
-  ],
-  [
-    PlaytestArt,
-    "AI playtests it",
-    "It presses the buttons, watches real frames from the console and fixes what breaks before you ever touch it.",
-  ],
-  [
-    CartArt,
-    "Keep the cart",
-    "Save a .p8 cartridge labelled with a frame from the playtest. Open it in PICO-8 and keep going.",
-  ],
-];
+const arts = [BubbleArt, PlaytestArt, CartArt];
 export function HowItWorks() {
+  const { t } = useLang();
   return (
     <section className="how-it-works" aria-labelledby="how-title">
-      <h2 id="how-title">How it works</h2>
+      <h2 id="how-title">{t("howTitle")}</h2>
       <div className="how-steps">
-        {steps.map(([Art, title, body]) => (
-          <article key={title}>
-            <span className="how-art">
-              <Art />
-            </span>
-            <div>
-              <h3>{title}</h3>
-              <p>{body}</p>
-            </div>
-          </article>
-        ))}
+        {t("steps").map(([title, body], i) => {
+          const Art = arts[i];
+          return (
+            <article key={i}>
+              <span className="how-art">
+                <Art />
+              </span>
+              <div>
+                <h3>{title}</h3>
+                <p>{body}</p>
+              </div>
+            </article>
+          );
+        })}
       </div>
     </section>
   );
 }
 export function HomeFooter() {
+  const { t } = useLang();
   return (
     <footer className="home-footer">
-      <span>DISPLAY 128×128 · 16 COLOURS · CODE P8 LUA · 8192 TOKENS</span>
-      <span>
-        Community carts by their original creators · An independent maker.
-        PICO-8 is a trademark of Lexaloffle Games.
-      </span>
+      <span>{t("footerSpecs")}</span>
+      <span>{t("footerCredit")}</span>
     </footer>
   );
 }

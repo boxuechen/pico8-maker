@@ -110,6 +110,10 @@ try {
     behavior: "allow",
     downloadPath: downloads,
   });
+  // Selectors below use the English UI labels.
+  await browser.cdp.command("Page.addScriptToEvaluateOnNewDocument", {
+    source: 'localStorage.setItem("pico8-maker-lang", "en")',
+  });
   await browser.cdp.command("Page.navigate", { url: site.href });
   await waitFor(
     `document.querySelector('[aria-label="Model settings"]')?.disabled === false`,
@@ -153,13 +157,8 @@ try {
     "#game-prompt",
     "Make a small sprite scene with left/right movement and sound.",
   );
+  // MAKE creates a cart named after the prompt and sends it straight away.
   await click('[aria-label="Send message"]');
-  await waitFor(
-    '!!document.querySelector("#name-dialog-title")',
-    "cart naming",
-  );
-  await fill("dialog input", "Deployment smoke");
-  await click("dialog .primary");
   await waitFor(
     `document.querySelector('.save-cart')?.disabled === false && !document.querySelector('[aria-label="Stop generation"]') && document.body.innerText.includes('资源联调完成')`,
     "cart creation and playtesting",
@@ -215,7 +214,7 @@ try {
   );
   await browser.cdp.command("Page.reload");
   await waitFor(
-    'document.querySelector(".save-cart")?.disabled === false && document.body.innerText.includes("Deployment smoke")',
+    'document.querySelector(".save-cart")?.disabled === false && document.body.innerText.includes("Make a small sprite scene")',
     "saved cart restored",
   );
   assert.deepEqual(errors, []);

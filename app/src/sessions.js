@@ -9,7 +9,7 @@ export function newSession(patch = {}) {
   const now = Date.now();
   return {
     id: newId(),
-    title: "New session",
+    title: "New conversation",
     transcript: [],
     draft: "",
     interrupted: false,

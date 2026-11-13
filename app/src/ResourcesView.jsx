@@ -7,6 +7,7 @@ import {
   music,
 } from "./pico8/assets.js";
 import { CartVersion } from "./CartVersion.jsx";
+import { t, useLang } from "./i18n.js";
 import { renderSheet, renderMap } from "./pico8/asset-preview.js";
 function Pixels({ bytes, mode, page = 0, selected, onSelect }) {
   const ref = useRef(null);
@@ -42,11 +43,7 @@ function Pixels({ bytes, mode, page = 0, selected, onSelect }) {
       ref={ref}
       width={128}
       height={128}
-      aria-label={
-        mode === "map"
-          ? `Map room ${page}`
-          : "Sprite sheet; select a sprite with the Sprite control"
-      }
+      aria-label={mode === "map" ? t("mapRoom", { n: page }) : t("spriteSheet")}
       onClick={
         onSelect
           ? (e) => {
@@ -83,6 +80,7 @@ function Slots({ label, value, onChange, count }) {
   );
 }
 export function ResourcesView({ current, versionProps }) {
+  useLang();
   const [spriteId, setSprite] = useState(0),
     [page, setPage] = useState(0),
     [sfxId, setSfx] = useState(0),
@@ -93,23 +91,21 @@ export function ResourcesView({ current, versionProps }) {
     selectedSound = sound(bytes, sfxId),
     pattern = music(bytes, musicId);
   return (
-    <section className="resources-view" aria-label="Cartridge resources">
-      <CartVersion title="Resources" {...versionProps} />
-      <p className="resource-note">
-        Read-only preview. Ask the assistant to edit resources.
-      </p>
+    <section className="resources-view" aria-label={t("resources")}>
+      <CartVersion title={t("viewResources")} {...versionProps} />
+      <p className="resource-note">{t("readOnly")}</p>
       <div className="resource-stats">
-        <span>{summary.sprites.length}/256 sprites</span>
-        <span>{summary.mapCells} map cells</span>
-        <span>{summary.sfx.length}/64 sounds</span>
-        <span>{summary.music.length}/64 patterns</span>
+        <span>{t("nSprites", { n: summary.sprites.length })}</span>
+        <span>{t("nMapCells", { n: summary.mapCells })}</span>
+        <span>{t("nSounds", { n: summary.sfx.length })}</span>
+        <span>{t("nPatterns", { n: summary.music.length })}</span>
       </div>
       <div className="resource-grid">
         <section>
           <div className="resource-title">
-            <h3>Sprites</h3>
+            <h3>{t("sprites")}</h3>
             <Slots
-              label="Sprite"
+              label={t("sprite")}
               value={spriteId}
               onChange={setSprite}
               count={256}
@@ -122,37 +118,53 @@ export function ResourcesView({ current, versionProps }) {
             onSelect={setSprite}
           />
           <p className="resource-note">
-            Sprite {spriteId} · flags{" "}
-            {selectedSprite.flags.toString(2).padStart(8, "0")}
+            {t("spriteFlags", {
+              id: spriteId,
+              flags: selectedSprite.flags.toString(2).padStart(8, "0"),
+            })}
           </p>
         </section>
         <section>
           <div className="resource-title">
-            <h3>Map</h3>
-            <Slots label="Room" value={page} onChange={setPage} count={16} />
+            <h3>{t("map")}</h3>
+            <Slots
+              label={t("room")}
+              value={page}
+              onChange={setPage}
+              count={16}
+            />
           </div>
           <Pixels bytes={bytes} mode="map" page={page} />
           <p className="resource-note">
-            16×16 tiles · origin ({(page % 8) * 16}, {Math.floor(page / 8) * 16}
-            )<br />
-            Authored map: 128×32. Tile 0 is empty.
+            {t("mapNote", { x: (page % 8) * 16, y: Math.floor(page / 8) * 16 })}
+            <br />
+            {t("mapAuthored")}
           </p>
         </section>
       </div>
       <section className="resource-audio">
         <div className="resource-title">
-          <h3>Sound effects</h3>
+          <h3>{t("soundEffects")}</h3>
           <Slots label="SFX" value={sfxId} onChange={setSfx} count={64} />
         </div>
         <div
           className="note-chart"
           role="img"
-          aria-label={`SFX ${sfxId}: ${selectedSound.notes.filter((n) => n.volume).length} audible notes`}
+          aria-label={t("audibleNotes", {
+            id: sfxId,
+            n: selectedSound.notes.filter((n) => n.volume).length,
+          })}
         >
           {selectedSound.notes.map((n, i) => (
             <span
               key={i}
-              title={`Note ${i}: pitch ${n.pitch}, wave ${n.waveform}, volume ${n.volume}, effect ${n.effect}`}
+              title={t("noteTitle", {
+                i,
+                pitch: n.pitch,
+                wave: n.waveform,
+                volume: n.volume,
+                effect: n.effect,
+              })}
               style={{
                 height: `${4 + (n.pitch / 63) * 96}%`,
                 opacity: n.volume ? 0.3 + n.volume / 10 : 0.08,
@@ -161,19 +173,22 @@ export function ResourcesView({ current, versionProps }) {
           ))}
         </div>
         <p className="resource-note">
-          Speed {selectedSound.speed} ·{" "}
+          {t("speed", { n: selectedSound.speed })} ·{" "}
           {selectedSound.loopEnd
-            ? `loop ${selectedSound.loopStart}–${selectedSound.loopEnd}`
-            : "no loop"}{" "}
-          · 32 notes
+            ? t("loop", {
+                a: selectedSound.loopStart,
+                b: selectedSound.loopEnd,
+              })
+            : t("noLoop")}{" "}
+          · {t("notes32")}
         </p>
         <details>
-          <summary>Note data</summary>
+          <summary>{t("noteData")}</summary>
           <div className="note-table">
             <table>
               <thead>
                 <tr>
-                  {["Note", "Pitch", "Wave", "Volume", "Effect"].map((x) => (
+                  {t("noteCols").map((x) => (
                     <th key={x}>{x}</th>
                   ))}
                 </tr>
@@ -195,9 +210,9 @@ export function ResourcesView({ current, versionProps }) {
       </section>
       <section className="resource-audio">
         <div className="resource-title">
-          <h3>Music</h3>
+          <h3>{t("music")}</h3>
           <Slots
-            label="Pattern"
+            label={t("pattern")}
             value={musicId}
             onChange={setMusic}
             count={64}
@@ -206,19 +221,19 @@ export function ResourcesView({ current, versionProps }) {
         <div className="resource-stats">
           {pattern.channels.map((id, i) => (
             <span key={i}>
-              CH {i}: {id === null ? "off" : `SFX ${id}`}
+              CH {i}: {id === null ? t("channelOff") : `SFX ${id}`}
             </span>
           ))}
         </div>
         <p className="resource-note">
           {[
-            pattern.loopStart && "loop start",
-            pattern.loopEnd && "loop end",
-            pattern.stop && "stop",
+            pattern.loopStart && t("loopStart"),
+            pattern.loopEnd && t("loopEnd"),
+            pattern.stop && t("stopFlag"),
           ]
             .filter(Boolean)
-            .join(" · ") || "Continue to next pattern"}
-          . Audio is heard during gameplay.
+            .join(" · ") || t("continueNext")}
+          {t("audioHeard")}
         </p>
       </section>
     </section>

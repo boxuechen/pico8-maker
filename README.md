@@ -9,7 +9,7 @@ Describe an idea, let the agent write and playtest it in WebAssembly, then refin
 
 [Live demo](https://boxuechen.github.io/pico8-maker/) · [简体中文](README.zh-CN.md) · [Contributing](CONTRIBUTING.md)
 
-![Maker home screen with a game composer and community cartridge gallery](docs/images/home.png)
+![Maker home screen playing Lodge Podge, a cart built by the Maker agent, with the composer and community cartridge gallery](docs/images/home.png)
 
 ## Use Maker
 
@@ -17,8 +17,11 @@ Describe an idea, let the agent write and playtest it in WebAssembly, then refin
 - Let the agent test inputs, inspect state and review captured frames in a separate session.
 - Inspect code and resources, undo changes, compare versions and resume conversations.
 - Export the latest committed game as a `.p8` cartridge.
+- Remix a community cart or the Agent-built **Lodge Podge** showcase, or drop in your own `.p8` / `.p8.png` to play and keep building it.
+- Manage **My carts** in the browser: rename, duplicate, delete with undo and save every unsaved cart at once.
+- Switch the interface between English and 简体中文.
 
-Open the demo in **Chrome/Chromium**. Community cartridges need no model key. To create games, configure your own model endpoint and API key, then use **Test connection**. The provider must support tool calling, image input and browser requests from your origin (CORS); provider charges may apply. Use **STOP** to cancel a request and **SAVE CART** to export.
+Open the demo in **Chrome/Chromium**. Community cartridges and the Lodge Podge showcase need no model key. To create games, configure your own model endpoint and API key, then use **Test connection**. The provider must support tool calling, image input and browser requests from your origin (CORS); provider charges may apply. Use **STOP** to cancel a request and **SAVE CART** to export.
 
 ## Quick start
 

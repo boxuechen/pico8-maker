@@ -12,6 +12,7 @@ import {
   Pencil,
 } from "lucide-react";
 import { NameDialog } from "./NameDialog.jsx";
+import { useLang } from "./i18n.js";
 
 export function SessionSidebar({
   collapsed,
@@ -23,6 +24,7 @@ export function SessionSidebar({
   onMobileClose,
 }) {
   const runtime = useAui();
+  const { t } = useLang();
   const [renaming, setRenaming] = useState(null);
   const drawer = useRef(null);
   // A native modal drawer supplies focus trapping, Escape and background inertness.
@@ -34,12 +36,14 @@ export function SessionSidebar({
     return (
       <ThreadListPrimitive.Root className="session-list">
         <div className="session-sidebar-heading">
-          {!compact && <span>CONVERSATIONS</span>}
+          {!compact && <span>{t("conversations")}</span>}
           <button
             aria-label={
-              compact ? "Expand conversations" : "Collapse conversations"
+              compact ? t("expandConversations") : t("collapseConversations")
             }
-            title={compact ? "Expand conversations" : "Collapse conversations"}
+            title={
+              compact ? t("expandConversations") : t("collapseConversations")
+            }
             onClick={mobileOpen ? onMobileClose : onToggle}
           >
             {compact ? (
@@ -52,11 +56,11 @@ export function SessionSidebar({
         <ThreadListPrimitive.New
           className="new-thread"
           disabled={disabled}
-          aria-label="New conversation"
-          title="New conversation"
+          aria-label={t("newConversation")}
+          title={t("newConversation")}
         >
           <Plus size={17} />
-          {!compact && <span>New conversation</span>}
+          {!compact && <span>{t("newConversation")}</span>}
         </ThreadListPrimitive.New>
         {!compact && (
           <div className="session-list-items">
@@ -72,16 +76,18 @@ export function SessionSidebar({
                   >
                     <MessageSquare size={15} />
                     <span>
-                      <ThreadListItemPrimitive.Title fallback="New conversation" />
+                      <ThreadListItemPrimitive.Title
+                        fallback={t("newConversation")}
+                      />
                     </span>
                     {running && item.id === activeId && (
-                      <i className="spinner" aria-label="Running" />
+                      <i className="spinner" aria-label={t("stRunning")} />
                     )}
                   </ThreadListItemPrimitive.Trigger>
                   <button
                     className="rename-thread"
-                    aria-label={`Rename ${item.title}`}
-                    title="Rename conversation"
+                    aria-label={t("renameThread", { title: item.title })}
+                    title={t("renameConversation")}
                     disabled={disabled}
                     onClick={() =>
                       setRenaming({ id: item.id, title: item.title })
@@ -94,25 +100,19 @@ export function SessionSidebar({
             </ThreadListPrimitive.Items>
           </div>
         )}
-        {!compact && (
-          <p className="session-sidebar-note">
-            Separate conversations.
-            <br />
-            One shared cart.
-          </p>
-        )}
+        {!compact && <p className="session-sidebar-note">{t("sidebarNote")}</p>}
       </ThreadListPrimitive.Root>
     );
   }
   return (
     <>
-      <aside className="session-sidebar" aria-label="Cart conversations">
+      <aside className="session-sidebar" aria-label={t("cartConversations")}>
         {content(collapsed)}
       </aside>
       <dialog
         className="session-drawer"
         ref={drawer}
-        aria-label="Cart conversations"
+        aria-label={t("cartConversations")}
         onCancel={onMobileClose}
         onClick={(e) => {
           if (e.target === drawer.current) onMobileClose();
@@ -122,14 +122,14 @@ export function SessionSidebar({
       </dialog>
       {renaming && (
         <NameDialog
-          title="Rename conversation"
-          label="Conversation name"
+          title={t("renameConversation")}
+          label={t("conversationName")}
           initial={renaming.title}
-          hint="Keep it short and easy to find."
-          action="Save name"
+          hint={t("conversationHint")}
+          action={t("saveName")}
           onClose={() => setRenaming(null)}
           onSave={async (name) => {
-            if (!name) throw new Error("Enter a conversation name.");
+            if (!name) throw new Error(t("enterConversationName"));
             await runtime.threads.item({ id: renaming.id }).rename(name);
             setRenaming(null);
           }}

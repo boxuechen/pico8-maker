@@ -1,3 +1,5 @@
+import { useLang } from "./i18n.js";
+
 export function CartVersion({
   title,
   value,
@@ -6,32 +8,35 @@ export function CartVersion({
   revision,
   dirty,
 }) {
+  const { t } = useLang();
   return (
     <div className="cart-version">
       <div className="resources-heading">
         <h2>{title}</h2>
         <label>
-          Version{" "}
+          {t("version")}{" "}
           <select
-            aria-label="Cart version"
+            aria-label={t("cartVersion")}
             value={value}
             onChange={(e) => onChange(e.target.value)}
           >
-            <option value="draft">Working draft</option>
+            <option value="draft">{t("workingDraft")}</option>
             {hasGame && (
-              <option value="committed">Committed v{revision}</option>
+              <option value="committed">
+                {t("committedV", { n: revision })}
+              </option>
             )}
           </select>
         </label>
       </div>
       <p className="resource-note">
         {!hasGame
-          ? "Working draft · no playable version yet."
+          ? t("noPlayable")
           : dirty
             ? value === "draft"
-              ? "Uncommitted changes · preview and export use the committed cart."
-              : `Showing committed v${revision} · the working draft has uncommitted changes.`
-            : "Source and resources are saved together."}
+              ? t("uncommittedDraft")
+              : t("showingCommitted", { n: revision })
+            : t("savedTogether")}
       </p>
     </div>
   );
