@@ -465,7 +465,7 @@ export class Game {
     const resolved =
       action === "press_buttons" ? this.playtests.resolve(args) : null;
     const purpose =
-      action === "reset_game" ? resetPurpose(args) : "unspecified";
+      action === "reset_game" ? resetPurpose(args) : "normal";
     await this.ensureWorker();
     await this.player.pause();
     let observation;

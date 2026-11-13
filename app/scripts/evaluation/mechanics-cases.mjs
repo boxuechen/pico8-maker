@@ -138,7 +138,7 @@ export async function verifyMechanics(id, game) {
     return game.testFrame;
   }
   const reset = () => run("reset_game");
-  const press = (frames, buttons) => run("press_buttons", { frames, buttons });
+  const press = (frames, buttons) => run("press_buttons", { steps: [{ frames, buttons }] });
   const color = (x, y, rgb) => {
     const start = (y * 128 + x) * 4;
     return rgb.every((c, i) => game.testFrame.rgba[start + i] === c);

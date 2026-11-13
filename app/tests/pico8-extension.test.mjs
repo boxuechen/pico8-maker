@@ -255,7 +255,7 @@ test(
                 type: "function",
                 function: {
                   name: "press_buttons",
-                  arguments: '{"frames":1,"buttons":0}',
+                  arguments: "{\"steps\":[{\"frames\":1,\"buttons\":0}]}",
                 },
               },
             ],
@@ -325,7 +325,7 @@ test(
               type: "function",
               function: {
                 name: "press_buttons",
-                arguments: '{"frames":600,"buttons":2}',
+                arguments: "{\"steps\":[{\"frames\":600,\"buttons\":2}]}",
               },
             },
           ],

@@ -2,7 +2,7 @@ import { inputPlan } from "./input-sequence.js";
 
 const maxRuns = 12,
   maxCalls = 128;
-const purposes = ["unspecified", "normal", "debug"];
+const purposes = ["normal", "debug"];
 const clone = (value) => JSON.parse(JSON.stringify(value));
 export async function fingerprint(bytes) {
   return [...new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))]
@@ -18,9 +18,9 @@ export function resetPurpose(args = {}) {
     (args.purpose !== undefined && !purposes.includes(args.purpose))
   )
     throw new Error(
-      "reset_game accepts purpose normal/debug/unspecified. No reset was executed.",
+      "reset_game accepts purpose normal/debug. No reset was executed.",
     );
-  return args.purpose ?? "unspecified";
+  return args.purpose ?? "normal";
 }
 
 // Persist only bounded input records and frame identities. PNG evidence already
@@ -32,6 +32,7 @@ export function normalizePlaytests(data) {
     try {
       if (
         !r ||
+        r.schemaVersion !== 2 ||
         !/^r[1-9]\d{0,8}$/.test(r.id) ||
         ids.has(r.id) ||
         !Number.isInteger(r.revision) ||
@@ -79,6 +80,7 @@ export function normalizePlaytests(data) {
       ids.add(r.id);
       return [
         {
+          schemaVersion: 2,
           id: r.id,
           revision: r.revision,
           cartHash: r.cartHash,
@@ -100,18 +102,17 @@ export class Playtests {
     this.runs = normalizePlaytests(saved);
     this.onChange = onChange;
     this.active = null;
-    this.replaying = null;
   }
   save() {
     this.onChange(clone(this.runs));
   }
   stop() {
     this.active = null;
-    this.replaying = null;
   }
   start({ revision, cartHash, purpose, origin, frame }) {
     const id = `r${Math.max(0, ...this.runs.map((r) => Number(r.id.slice(1)))) + 1}`;
     this.active = {
+      schemaVersion: 2,
       id,
       revision,
       cartHash,
@@ -122,7 +123,6 @@ export class Playtests {
       calls: [],
     };
     this.runs = [...this.runs.slice(-(maxRuns - 1)), this.active];
-    this.replaying = null;
     this.save();
   }
   summary() {
@@ -139,7 +139,7 @@ export class Playtests {
     if (path === "/cart/playtests.json")
       return JSON.stringify(
         {
-          note: "Recorded execution, not gameplay verdicts. Purpose is author-declared. PNGs remain in the transcript; reset may retain cartdata. Replay each call and inspect its frame on the current cart.",
+          note: "Recorded execution, not gameplay verdicts. PNGs remain in the transcript. Reuse recorded steps as ordinary input on the current cart.",
           active: this.active?.id ?? null,
           runs: this.runs.map(({ calls, ...r }) => ({
             ...r,
@@ -160,45 +160,7 @@ export class Playtests {
     ];
   }
   resolve(args) {
-    if (!args || !Object.hasOwn(args, "replay"))
-      return { plan: inputPlan(args), input: clone(args) };
-    const ref = args.replay;
-    if (
-      Object.keys(args).length !== 1 ||
-      !ref ||
-      Array.isArray(ref) ||
-      typeof ref !== "object" ||
-      Object.keys(ref).some((k) => !["run", "call"].includes(k)) ||
-      typeof ref.run !== "string" ||
-      !Number.isInteger(ref.call) ||
-      ref.call < 0
-    )
-      throw new Error(
-        "Use replay:{run,call} alone, with a zero-based call. No input was executed.",
-      );
-    const source = this.runs.find((r) => r.id === ref.run),
-      call = source?.calls[ref.call];
-    if (!call || call.outcome !== "completed")
-      throw new Error(
-        "No completed recorded call at that location. No input was executed.",
-      );
-    const first =
-      ref.call === 0 &&
-      this.active?.calls.length === 0 &&
-      this.active.origin === "reset";
-    const next =
-      this.replaying?.run === ref.run && this.replaying.next === ref.call;
-    if (!this.active || this.active.id === ref.run || (!first && !next))
-      throw new Error(
-        "Use reset_game, then replay calls in order from 0; ordinary input breaks the replay chain. No input was executed.",
-      );
-    return {
-      plan: inputPlan(call.input),
-      input: clone(call.input),
-      replay: { ...ref },
-      sameCart: source.cartHash === this.active.cartHash,
-      expectedHash: call.frames.at(-1)?.hash,
-    };
+    return { plan: inputPlan(args), input: clone(args) };
   }
   async record(resolved, run) {
     const active = this.active;
@@ -224,20 +186,7 @@ export class Playtests {
         frames,
       });
     else active.truncated = true;
-    this.replaying =
-      resolved.replay && run.execution.outcome === "completed"
-        ? { run: resolved.replay.run, next: resolved.replay.call + 1 }
-        : null;
     this.save();
-    return {
-      ...this.summary(),
-      ...(resolved.replay
-        ? {
-            replay: resolved.replay,
-            sameCart: resolved.sameCart,
-            matchesRecordedFrame: frames.at(-1)?.hash === resolved.expectedHash,
-          }
-        : {}),
-    };
+    return this.summary();
   }
 }

@@ -71,7 +71,11 @@ export class TestGame extends Game {
     }
   }
   async rpc(action, args = {}) {
-    if (action === "load") return this.session.loadCart(args.cart);
+    if (action === "load") {
+      await this.session?.dispose();
+      this.session = await createPico8Session();
+      return this.session.loadCart(args.cart);
+    }
     if (action === "advance")
       return this.session.advance({
         frames: args.frames,

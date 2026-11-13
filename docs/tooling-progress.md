@@ -42,3 +42,7 @@ S2 查询与调试必须复用这种边界检查。调试使用独立受保护�
 已通过 `outcome-metrics.test.mjs` 与 `skills-evaluation.test.mjs` 的 9 项定向测试，其中已有小机制 oracle 使用真实 WASM；冻结基线重算一致。未运行完整回归或付费模型评测。
 
 P0 观察切片已实现：模型运行/资源 PNG 共享 ×4 最近邻出口，裁剪取屏幕交集；原生帧、ASCII 和 UI 数据保持原尺寸。观察测试 7 项通过，资源预览与 Harness 图像交付 2 项通过。输入契约、结果 DTO 与 runtime 查询/调试/日志仍待完成，不能视为 P0 完成。
+
+P0 输入切片已实现：唯一 steps schema、删除 captureFrames/replay 路由、版本 2 输入记录、normal 默认目的，以及每次 load/reset 创建新 session。第一方调用者与模型文档已更新。26 项工具/评测/实际 Worker 测试通过，覆盖 tap、held、部分 stop/fault、非法输入零执行、记录持久化和存档清零。旧记录不转换，卡带内容保留。结果 DTO 与 runtime 查询/调试/日志仍待完成。
+
+输入集成后的知识/对话工具注册/源码工作区/卡带存储/UI 分组定向检查另 31 项通过。未扩大到完整回归；生产构建安排在 runtime 与 Maker 集成完成后运行。

@@ -134,7 +134,7 @@ const server = http.createServer(async (req, res) => {
             ["reset_game", { purpose: "normal" }],
             [
               "press_buttons",
-              { frames: 1, buttons: 16, tap: true, capture: true },
+              { steps: [{ frames: 1, buttons: 16, tap: true, capture: true }] },
             ],
           ]
       : body.model === "fixture-draft"
@@ -220,7 +220,7 @@ const server = http.createServer(async (req, res) => {
                     "function _init() x=60 assert(mget(0,12)==2) assert(fget(1,0)) music(0) end\nfunction _update() if btn(0) then x-=1 end if btn(1) then x+=1 end end\nfunction _draw() cls(1) map(0,0,0,0,16,16) spr(1,x,88) print('resource test',36,20,7) end",
                 },
               ],
-              ["press_buttons", { frames: 10, buttons: 2 }],
+              ["press_buttons", { steps: [{ frames: 10, buttons: 2 }] }],
               [
                 "edit_assets",
                 {
@@ -260,9 +260,9 @@ const server = http.createServer(async (req, res) => {
                 ],
                 ["load_game", {}],
                 ["reset_game", {}],
-                ["press_buttons", { frames: 24, buttons: 2 }],
-                ["press_buttons", { frames: 1, buttons: 34 }],
-                ["press_buttons", { frames: 45, buttons: 2 }],
+                ["press_buttons", { steps: [{ frames: 24, buttons: 2 }] }],
+                ["press_buttons", { steps: [{ frames: 1, buttons: 34 }] }],
+                ["press_buttons", { steps: [{ frames: 45, buttons: 2 }] }],
                 ["observe_game", {}],
               ]
             : observationFixture
@@ -287,9 +287,9 @@ const server = http.createServer(async (req, res) => {
               : [
                   ["read", { path: "/cart/main.lua" }],
                   ["reset_game", {}],
-                  ["press_buttons", { frames: 24, buttons: 2 }],
-                  ["press_buttons", { frames: 1, buttons: 34 }],
-                  ["press_buttons", { frames: 45, buttons: 2 }],
+                  ["press_buttons", { steps: [{ frames: 24, buttons: 2 }] }],
+                  ["press_buttons", { steps: [{ frames: 1, buttons: 34 }] }],
+                  ["press_buttons", { steps: [{ frames: 45, buttons: 2 }] }],
                   [
                     "load_game",
                     {
@@ -300,9 +300,9 @@ const server = http.createServer(async (req, res) => {
                     },
                   ],
                   ["reset_game", {}],
-                  ["press_buttons", { frames: 24, buttons: 2 }],
-                  ["press_buttons", { frames: 1, buttons: 34 }],
-                  ["press_buttons", { frames: 45, buttons: 2 }],
+                  ["press_buttons", { steps: [{ frames: 24, buttons: 2 }] }],
+                  ["press_buttons", { steps: [{ frames: 1, buttons: 34 }] }],
+                  ["press_buttons", { steps: [{ frames: 45, buttons: 2 }] }],
                   ["observe_game", {}],
                 ];
     res.writeHead(200, {

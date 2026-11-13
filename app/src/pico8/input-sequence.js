@@ -18,7 +18,6 @@ const stepProperties = {
 export const inputSchema = {
   type: "object",
   properties: {
-    ...stepProperties,
     steps: {
       type: "array",
       minItems: 1,
@@ -31,52 +30,9 @@ export const inputSchema = {
         additionalProperties: false,
       },
     },
-    captureFrames: {
-      type: "array",
-      maxItems: capabilities.maxInputCaptures - 1,
-      items: { type: "integer", minimum: 1, maximum: maxFrames },
-      description: `At most ${capabilities.maxInputCaptures - 1} strictly increasing cumulative frame offsets from this call's start, each between 1 and the sum of its step frames. Final frame is always included. Omit or use [] for only the final frame; request intermediate frames to verify transitions or separate outcomes.`,
-    },
-    replay: {
-      type: "object",
-      description:
-        "Replay one recorded call after reset_game, in order from call 0. Inspect each returned frame before continuing. Read /cart/playtests.json for runs.",
-      properties: {
-        run: { type: "string" },
-        call: { type: "integer", minimum: 0 },
-      },
-      required: ["run", "call"],
-      additionalProperties: false,
-    },
   },
+  required: ["steps"],
   additionalProperties: false,
-  oneOf: [
-    {
-      required: ["frames", "buttons"],
-      not: { anyOf: [{ required: ["steps"] }, { required: ["replay"] }] },
-    },
-    {
-      required: ["steps"],
-      not: {
-        anyOf: ["frames", "buttons", "tap", "capture", "replay"].map((k) => ({
-          required: [k],
-        })),
-      },
-    },
-    {
-      required: ["replay"],
-      not: {
-        anyOf: [
-          "frames",
-          "buttons",
-          "tap",
-          "capture",
-          "steps",
-          "captureFrames",
-        ].map((k) => ({ required: [k] })),
-      },
-    },
-  ],
 };
 
 // Validate the entire request before any input, player pause or Worker creation.
@@ -86,34 +42,9 @@ export function inputPlan(args) {
     !args ||
     typeof args !== "object" ||
     Array.isArray(args) ||
-    Object.keys(args).some(
-      (k) =>
-        ![
-          "frames",
-          "buttons",
-          "tap",
-          "capture",
-          "steps",
-          "captureFrames",
-        ].includes(k),
-    )
-  )
-    throw invalid(
-      "press_buttons accepts frames/buttons or steps, plus captureFrames",
-    );
-  if (
-    args.steps !== undefined &&
-    ["frames", "buttons", "tap", "capture"].some((k) => args[k] !== undefined)
-  )
-    throw invalid("Use steps or frames/buttons, not both");
-  const steps = args.steps ?? [
-    {
-      frames: args.frames,
-      buttons: args.buttons,
-      tap: args.tap,
-      capture: args.capture,
-    },
-  ];
+    Object.keys(args).some((key) => key !== "steps")
+  ) throw invalid("press_buttons accepts only steps");
+  const steps = args.steps;
   if (
     !Array.isArray(steps) ||
     !steps.length ||
@@ -126,7 +57,7 @@ export function inputPlan(args) {
   const expanded = [],
     stepCaptures = [];
   for (const [index, step] of steps.entries()) {
-    const field = args.steps ? `steps[${index}]` : "input";
+    const field = `steps[${index}]`;
     if (
       !step ||
       typeof step !== "object" ||
@@ -160,29 +91,7 @@ export function inputPlan(args) {
     throw invalid(
       `Total frames must be 1–${maxFrames}; received ${total}. Split this route across calls`,
     );
-  const requested = args.captureFrames;
-  if (requested !== undefined) {
-    if (
-      !Array.isArray(requested) ||
-      requested.length >= capabilities.maxInputCaptures
-    )
-      throw invalid(
-        `captureFrames accepts at most ${capabilities.maxInputCaptures - 1} cumulative offsets; omit it or use [] for only the final frame`,
-      );
-    for (const [index, offset] of requested.entries()) {
-      if (!Number.isInteger(offset) || offset < 1 || offset > total)
-        throw invalid(
-          `captureFrames[${index}] must be an integer 1–${total}, the cumulative frame count for this call`,
-        );
-      if (index && offset <= requested[index - 1])
-        throw invalid(
-          `captureFrames[${index}] must be greater than captureFrames[${index - 1}] (${requested[index - 1]}). Use strictly increasing cumulative offsets, not per-step durations`,
-        );
-    }
-  }
-  const captures = [
-    ...new Set([...(requested ?? []), ...stepCaptures, total]),
-  ].sort((a, b) => a - b);
+  const captures = [...new Set([...stepCaptures, total])].sort((a, b) => a - b);
   if (captures.length > capabilities.maxInputCaptures)
     throw invalid(
       `At most ${capabilities.maxInputCaptures} distinct captures including the final frame`,

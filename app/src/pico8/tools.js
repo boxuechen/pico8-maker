@@ -26,14 +26,14 @@ export function createPico8Tools({ game, knowledge }) {
     load_game:
       "Compile the source and resource drafts, run one frame and commit them on success. Returns PNG and diagnostics. Failure retains the draft and last playable cart.",
     reset_game:
-      "Reload the committed cart and advance one frame. Starts a recorded route; purpose normal/debug is your declaration, not a pass. Cartdata may be retained.",
+      "Reload the committed cart and advance one frame. Starts a recorded route with fresh test memory saves. Purpose normal/debug defaults to normal and describes the setup.",
     press_buttons: `Advance player 0 input in the test Worker: at most ${capabilities.maxInputSteps} steps and ${capabilities.maxInputFrames} total frames. Button masks are left=1, right=2, up=4, down=8, O/Z=16, X=32. Add masks for combinations. Zero releases all buttons. Returns actual progress and PNG checkpoints, stopping early on runtime faults or stops.`,
     observe_game:
       "Read the last completed test frame without advancing time. Use a small ASCII crop to inspect exact pixels with the frame's palette. Reset or advance if no frame exists.",
   };
   const parameters = {
     reset_game: schema({
-      purpose: { type: "string", enum: ["normal", "debug", "unspecified"] },
+      purpose: { type: "string", enum: ["normal", "debug"] },
     }),
     read_assets: readAssetsSchema,
     edit_assets: editAssetsSchema,

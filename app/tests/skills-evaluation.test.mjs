@@ -36,7 +36,7 @@ test("evaluation metrics require successful skill reads and actual tool evidence
               type: "toolCall",
               id: "p",
               name: "press_buttons",
-              arguments: { frames: 10, buttons: 2 },
+              arguments: { steps: [{ frames: 10, buttons: 2 }] },
             },
           ],
         },
@@ -54,7 +54,7 @@ test("evaluation metrics require successful skill reads and actual tool evidence
   const m = transcriptMetrics(entries);
   assert.deepEqual(m.skillReads, []);
   assert.equal(m.failedTools, 1);
-  assert.deepEqual(m.inputs, [{ frames: 10, buttons: 2 }]);
+  assert.deepEqual(m.inputs, [{ steps: [{ frames: 10, buttons: 2 }] }]);
   const task = skillCases.find((t) => t.id === "edit");
   const checks = assessScope(task, fixtureSnapshot(), fixtureSnapshot(), m, {
     status: "done",

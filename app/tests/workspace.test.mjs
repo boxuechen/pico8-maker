@@ -235,9 +235,9 @@ test("game tools allow the player frame range and large source without an app ca
   assert.equal(game.source, source);
   await game.workspace.writeFile("main.lua", source + "-- edit", context);
   assert.equal(game.draft.source, source + "-- edit");
-  await game.execute("press_buttons", { frames: 600, buttons: 0 });
+  await game.execute("press_buttons", { steps: [{ frames: 600, buttons: 0 }] });
   await assert.rejects(
-    () => game.execute("press_buttons", { frames: 601, buttons: 0 }),
+    () => game.execute("press_buttons", { steps: [{ frames: 601, buttons: 0 }] }),
     /1–600/,
   );
 });

@@ -184,10 +184,10 @@ async function runCase(task, repetition, config) {
     }
     if (["edit", "compact"].includes(task.id) && game.hasGame) {
       const baseline = await game.execute("reset_game", {});
-      const moved = await game.execute("press_buttons", {
+      const moved = await game.execute("press_buttons", { steps: [{
         frames: 10,
         buttons: 2,
-      });
+      }] });
       const f = game.testFrame;
       const pixel = (x, y) => [
         ...f.rgba.slice((y * 128 + x) * 4, (y * 128 + x) * 4 + 3),
@@ -200,7 +200,7 @@ async function runCase(task, repetition, config) {
         { action: "reset_game", result: baseline },
         {
           action: "press_buttons",
-          args: { frames: 10, buttons: 2 },
+          args: { steps: [{ frames: 10, buttons: 2 }] },
           result: moved,
         },
       ];

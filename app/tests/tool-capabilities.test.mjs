@@ -102,9 +102,9 @@ function _draw() cls(0) rectfill(0,0,n,2,8) end`),
   assert.deepEqual([...g.testFrame.rgba.slice(3 * 4, 3 * 4 + 3)], [0, 0, 0]);
   assert.equal(headers(result)[0].playtest.purpose, "normal");
   for (const args of [
-    { frames: 599, buttons: 16, tap: true },
-    { frames: 1, buttons: 0, tap: true },
-    { frames: 1, buttons: 16, tap: 1 },
+    { steps: [{ frames: 599, buttons: 16, tap: true }] },
+    { steps: [{ frames: 1, buttons: 0, tap: true }] },
+    { steps: [{ frames: 1, buttons: 16, tap: 1 }] },
     { steps: [{ frames: 1, buttons: 0 }], capture: true },
     {
       steps: [
@@ -120,90 +120,31 @@ function _draw() cls(0) rectfill(0,0,n,2,8) end`),
   }
 });
 
-test("recorded routes persist, replay exact frames, and reject out-of-order calls without input", async (t) => {
+test("versioned routes persist steps; old records and replay are rejected", async (t) => {
   const g = gameFor(t);
   await g.execute("reset_game", { purpose: "normal" });
-  await g.execute("press_buttons", {
-    frames: 8,
-    buttons: 2,
-    tap: true,
-    capture: true,
-  });
-  await g.execute("press_buttons", { frames: 3, buttons: 1 });
-  const expected = g.testFrame.rgba.slice(),
-    saved = normalizeCart(newCart({ playtests: g.playtests.runs })).playtests;
-  assert.equal(saved[0].calls.length, 2);
-  assert.equal(saved[0].calls[0].frames.length, 1);
+  await g.execute("press_buttons", { steps: [{ frames: 8, buttons: 2, tap: true }] });
+  const saved = normalizeCart(newCart({ playtests: g.playtests.runs })).playtests;
+  assert.equal(saved[0].schemaVersion, 2);
+  assert.equal(saved[0].calls.length, 1);
   assert.equal(JSON.stringify(saved).includes('"rgba"'), false);
+  assert.deepEqual(normalizePlaytests([{ ...saved[0], schemaVersion: 1 }]), []);
   g.playtests = new Playtests(saved);
-  await assert.rejects(
-    g.execute("press_buttons", { replay: { run: "r1", call: 0 } }),
-    /reset_game/,
-  );
-  await g.execute("reset_game", { purpose: "normal" });
-  let before = g.session.observe().frame.frameId;
-  await assert.rejects(
-    g.execute("press_buttons", { replay: { run: "r1", call: 1 } }),
-    /order/,
-  );
+  const before = g.session.observe().frame.frameId;
+  await assert.rejects(g.execute("press_buttons", { replay: { run: "r1", call: 0 } }), /only steps/);
   assert.equal(g.session.observe().frame.frameId, before);
-  for (let call = 0; call < 2; call++) {
-    const result = await g.execute("press_buttons", {
-      replay: { run: "r1", call },
-    });
-    assert.equal(headers(result)[0].playtest.matchesRecordedFrame, true);
-    assert.equal(headers(result)[0].playtest.sameCart, true);
-  }
-  assert.deepEqual(g.testFrame.rgba, expected);
-  const index = await g.workspace.readTextFile("playtests.json");
-  assert.equal(JSON.parse(index.value).runs.length, 2);
-  assert.equal(
-    (await g.workspace.writeFile("playtests/r1.json", "{}")).ok,
-    false,
-  );
-  assert.equal(
-    JSON.parse((await g.workspace.readTextFile("playtests/r1.json")).value)
-      .calls.length,
-    2,
-  );
-});
-
-test("changed carts get new replay evidence and ordinary input breaks continuity", async (t) => {
-  const g = gameFor(t);
-  await g.execute("reset_game", { purpose: "debug" });
-  await g.execute("press_buttons", { frames: 2, buttons: 2 });
-  await g.execute("press_buttons", { frames: 2, buttons: 1 });
-  const old = g.playtests.runs[0];
-  await g.execute("load_game", { source: "function _draw() cls(8) end" });
-  await g.execute("reset_game", { purpose: "normal" });
-  const r = await g.execute("press_buttons", {
-    replay: { run: old.id, call: 0 },
-  });
-  assert.equal(headers(r)[0].playtest.sameCart, false);
-  assert.equal(headers(r)[0].playtest.matchesRecordedFrame, false);
-  assert.equal(old.purpose, "debug");
-  assert.equal(g.playtests.active.purpose, "normal");
-  await g.execute("press_buttons", { frames: 1, buttons: 0 });
-  await assert.rejects(
-    g.execute("press_buttons", { replay: { run: old.id, call: 1 } }),
-    /breaks/,
-  );
-  assert.deepEqual(
-    normalizePlaytests([
-      { ...old, calls: [{ input: { frames: 900, buttons: 0 } }] },
-    ]),
-    [],
-  );
+  assert.equal((await g.workspace.writeFile("playtests/r1.json", "{}")).ok, false);
+  assert.equal(JSON.parse((await g.workspace.readTextFile("playtests/r1.json")).value).calls.length, 1);
 });
 
 test("failed loads and worker loss cannot extend an old route", async (t) => {
   const g = gameFor(t);
   await g.execute("reset_game", { purpose: "normal" });
-  await g.execute("press_buttons", { frames: 1, buttons: 0 });
+  await g.execute("press_buttons", { steps: [{ frames: 1, buttons: 0 }] });
   const before = JSON.stringify(g.playtests.runs);
   await g.execute("load_game", { source: "this is not lua" });
   assert.equal(g.playtests.active, null);
-  await g.execute("press_buttons", { frames: 1, buttons: 0 });
+  await g.execute("press_buttons", { steps: [{ frames: 1, buttons: 0 }] });
   assert.equal(JSON.stringify(g.playtests.runs), before);
   await g.execute("reset_game", {});
   Game.prototype.cancelTests.call(g);
@@ -266,7 +207,7 @@ test("invalid complete input plans have no player or runtime side effects", asyn
   ])
     await assert.rejects(g.execute("press_buttons", args));
   assert.deepEqual(
-    inputPlan({ frames: 600, buttons: 0, captureFrames: [] }).captures,
+    inputPlan({ steps: [{ frames: 600, buttons: 0 }] }).captures,
     [600],
   );
 });
@@ -309,15 +250,15 @@ test("invalid input errors locate the bad field and explain recovery without adv
     ],
     [
       { frames: 20, buttons: 0, captureFrames: [10, 25] },
-      /captureFrames\[1\].*1–20/,
+      /only steps/,
     ],
     [
       { frames: 20, buttons: 0, captureFrames: [10, 10] },
-      /captureFrames\[1\].*greater.*cumulative/,
+      /only steps/,
     ],
     [
       { frames: 20, buttons: 0, captureFrames: [10, 5] },
-      /captureFrames\[1\].*greater.*cumulative/,
+      /only steps/,
     ],
   ]) {
     await assert.rejects(g.execute("press_buttons", args), (error) => {
@@ -349,11 +290,10 @@ test("real input sequences preserve checkpoints, exact movement and runtime stat
   await g.execute("reset_game", {});
   const result = await g.execute("press_buttons", {
     steps: [
-      { frames: 10, buttons: 2 },
-      { frames: 1, buttons: 0 },
+      { frames: 10, buttons: 2, capture: true },
+      { frames: 1, buttons: 0, capture: true },
       { frames: 5, buttons: 1 },
     ],
-    captureFrames: [10, 11],
   });
   const meta = headers(result);
   assert.deepEqual(
@@ -406,12 +346,11 @@ test("default final-only capture preserves batched movement and release timing",
   ];
   await g.execute("reset_game", {});
   const sampled = await g.execute("press_buttons", {
-    steps,
-    captureFrames: [10, 11],
+    steps: steps.map(step => ({ ...step, capture: true })),
   });
   const expected = g.testFrame.rgba.slice();
   const expectedExecution = headers(sampled)[0].execution;
-  for (const options of [{}, { captureFrames: [] }]) {
+  for (const options of [{}]) {
     await g.execute("reset_game", {});
     const result = await g.execute("press_buttons", { steps, ...options });
     const meta = headers(result);
@@ -435,9 +374,7 @@ function _draw() cls(0) rectfill(0,0,n,2,8) end`;
   await baseline.advance({ frames: 1 });
   await g.execute("reset_game", {});
   await g.execute("press_buttons", {
-    frames: 22,
-    buttons: 16,
-    captureFrames: [1, 7, 14, 20],
+    steps: [1, 6, 7, 6, 2].map(frames => ({ frames, buttons: 16, capture: true })),
   });
   for (const n of [1, 7, 14, 20, 22]) {
     while (baseline.observe().frame.frameId < n)
@@ -626,7 +563,7 @@ test("Harness delivers all eight checkpoint images and resource provenance to th
       n === 1
         ? [
             "press_buttons",
-            { frames: 8, buttons: 2, captureFrames: [1, 2, 3, 4, 5, 6, 7] },
+            { steps: Array.from({ length: 8 }, () => ({ frames: 1, buttons: 2, capture: true })) },
           ]
         : n === 2
           ? ["read_assets", { kind: "sprite", id: 1, format: "png" }]

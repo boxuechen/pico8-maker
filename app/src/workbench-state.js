@@ -65,11 +65,6 @@ const toolLabels = {
 };
 export function describeTool(tool) {
   const args = tool?.args ?? {};
-  if (tool?.toolName === "press_buttons" && args.replay)
-    return {
-      label: "Replayed recorded input",
-      meta: `${args.replay.run} · ${args.replay.call + 1}`,
-    };
   if (tool?.toolName === "press_buttons" && Array.isArray(args.steps))
     return {
       label: "Played an input sequence",
@@ -82,15 +77,6 @@ export function describeTool(tool) {
           ? "Previewed map resources"
           : "Previewed sprite resources",
       meta: args.version === "committed" ? "committed" : "draft",
-    };
-  if (tool?.toolName === "press_buttons")
-    return {
-      label: args.buttons
-        ? `${args.tap ? "Tapped" : toolLabels.press_buttons} ${formatButtons(args.buttons)}`
-        : "Let the game run",
-      meta: Number.isInteger(args.frames)
-        ? `${args.frames + (args.tap ? 2 : 0)}f`
-        : "",
     };
   if (tool?.toolName === "load_game")
     return typeof args.source === "string"

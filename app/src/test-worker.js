@@ -1,16 +1,17 @@
-let session;
+let session, lib;
 self.onmessage = async ({ data }) => {
   try {
     if (data.action === "init") {
-      const lib = await import(/* @vite-ignore */ data.url);
-      session = await lib.createPico8Session();
+      lib = await import(/* @vite-ignore */ data.url);
       self.postMessage({ id: data.id, result: true });
       return;
     }
     let result;
-    if (data.action === "load")
+    if (data.action === "load") {
+      await session?.dispose();
+      session = await lib.createPico8Session();
       result = await session.loadCart(data.cart);
-    else if (data.action === "reset") result = await session.reset();
+    }
     else if (data.action === "observe") result = session.observe();
     else if (data.action === "advance")
       result = await session.advance({
