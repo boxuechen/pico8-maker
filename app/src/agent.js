@@ -4,7 +4,7 @@ import { groupAssistantTurns } from "./workbench-state.js";
 import { BACKGROUND_CONTEXT as context } from "@earendil-works/chord/context";
 import { createModels } from "@earendil-works/pi-ai/models";
 import { compactTranscript, recoverEntries } from "./project-store.js";
-import { createConnection, readableError } from "./model-config.js";
+import { createConnection, defaultConfig, readableError } from "./model-config.js";
 import {
   Harness,
   MemoryStorage,
@@ -121,7 +121,7 @@ export class Agent {
       context,
     );
     this.root = await this.harness.root(context, {
-      agent: { extensions: [pico8], thinkingLevel: "high" },
+      agent: { extensions: [pico8], thinkingLevel: defaultConfig.thinkingLevel },
     });
     const recovered = recoverEntries(transcript);
     if (recovered.length) {

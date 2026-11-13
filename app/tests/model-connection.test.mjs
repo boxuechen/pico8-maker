@@ -61,6 +61,8 @@ test("Pi presets retain DeepSeek vision, reasoning compatibility and provider en
 });
 
 test("thinking follows model capabilities and custom limits are explicit", () => {
+  assert.equal(defaultConfig.thinkingLevel, "medium");
+  // DeepSeek does not expose medium; retain Pi capability clamping.
   assert.equal(createConnection(config).thinkingLevel, "high");
   assert.equal(
     createConnection({ ...config, thinkingLevel: "low" }).thinkingLevel,
@@ -83,6 +85,8 @@ test("thinking follows model capabilities and custom limits are explicit", () =>
     contextWindow: 200000,
     maxTokens: 64000,
   };
+  assert.equal(createConnection(custom).thinkingLevel, "medium");
+  assert.equal(thinkingOptions({ provider: "custom" }).level, "medium");
   assert.equal(createConnection(custom).model.maxTokens, 64000);
   assert.throws(
     () => createConnection({ ...custom, maxTokens: 300000 }),

@@ -32,6 +32,8 @@ This loads the unchanged cart in the bundled WASM runtime and writes actual PNG 
 
 `node scripts/evaluation/reverify-s4.mjs <archive-dir>...` reruns the current independent and Agent-route verifiers on archived S4 final carts without provider requests and writes `reverify.json` beside the untouched report. The independent oracle waits 30 idle frames after a result before pressing X (a short result lock is valid), and Agent-route evidence replays normal input before the first debug event.
 
+`SMOKE_DEEPSEEK_KEY=... node scripts/evaluation/browser-smoke.mjs` is a real-browser end-to-end smoke: it starts the dev server, opens the case-study page in headless Chrome with a temporary profile, sends one short creation prompt through the production browser Game/Worker/Agent and prints the archive, final reply and any console errors. Set `SMOKE_CHROME_NO_SANDBOX=1` where Chrome's renderer sandbox crashes inside an outer sandbox.
+
 ## Fixed suites
 
 Open `/evaluation.html` on the same local development origin as the app. The evaluator uses the browser's saved model configuration and makes normal provider requests with disposable carts. Select Workflow for the original six tasks twice, or Small mechanics for three small repair tasks twice. It records tool use, state/debug calls, scope preservation and independent pixel checks. Workflow is present at startup; document reads are not pass criteria. Review creation gameplay with the returned frames. Compaction tests use declared synthetic history and real provider summarization.

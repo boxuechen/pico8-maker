@@ -487,7 +487,7 @@ test("design references resolve and knowledge compilation rejects stale microgam
   assert.match(result.stderr, /Unverified recipe games\/lantern-vault\.lua/);
 });
 
-test("agent sends high/low/off thinking, uses model output capacity and retries transient failures", async (t) => {
+test("agent clamps default medium to supported high and sends low/off thinking, uses model output capacity and retries transient failures", async (t) => {
   const bodies = [];
   t.mock.method(globalThis, "fetch", async (_url, init) => {
     bodies.push(JSON.parse(init.body));

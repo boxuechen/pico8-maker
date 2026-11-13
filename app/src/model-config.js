@@ -25,7 +25,7 @@ export const defaultConfig = {
   baseUrl: providers[0].models.find((m) => m.id === "deepseek-flash").baseUrl,
   apiKey: "",
   remember: true,
-  thinkingLevel: "high",
+  thinkingLevel: "medium",
 };
 const thinkingLevels = [
   "off",
@@ -43,7 +43,10 @@ export function thinkingOptions(config) {
   // Custom endpoints have no capability catalog; the user selects their level.
   return {
     levels: getSupportedThinkingLevels(model),
-    level: clampThinkingLevel(model, config.thinkingLevel ?? "high"),
+    level: clampThinkingLevel(
+      model,
+      config.thinkingLevel ?? defaultConfig.thinkingLevel,
+    ),
   };
 }
 export function normalizeConfig(value = {}) {
@@ -63,7 +66,7 @@ export function normalizeConfig(value = {}) {
     apiKey: value.apiKey ?? "",
     thinkingLevel: thinkingLevels.includes(value.thinkingLevel)
       ? value.thinkingLevel
-      : "high",
+      : defaultConfig.thinkingLevel,
   };
 }
 export function validateConfig(value) {

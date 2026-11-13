@@ -110,7 +110,7 @@ function ModelSettings({ initial, onSave, onClear, onClose, pending }) {
       model: model?.id ?? "",
       baseUrl: model?.baseUrl ?? "",
       apiKey: "",
-      thinkingLevel: form.thinkingLevel ?? "high",
+      thinkingLevel: form.thinkingLevel ?? defaultConfig.thinkingLevel,
     });
     setNotice("");
   }
