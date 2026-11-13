@@ -78,6 +78,10 @@ node app/scripts/evaluation/freeze-tooling-baseline.mjs --check
 
 据此修正：覆盖统计改为计入首个 debug 事件之前的正常输入前缀（debug 事件记录 `afterCalls` 与开始时的 purpose），声明 debug 的 reset 不计入；整轮仍标 debug。这样 Sweet Garden 第二轮提交时会提示「上一版本有正常路线，需在本版本重跑」，而基线判断（不能把注入后的结果算作正常）不变。归档：`.cache/evaluations/case-sweet-garden-90833007-…/`、`.cache/evaluations/case-lodge-podge-cd504775-…/`。
 
+## 冻结（2026-11-13）
+
+Agent 流程冻结于 Maker 标签 `agent-flow-freeze-2026-11-13` 与播放器 `69521e7`（标签同名）：工具与 schema、结果 DTO、启动段 AGENT/MACHINE/WORKFLOW/Host、重开骨架、图像裁剪、音频事件与覆盖提示。此后只因评测或测试发现的缺陷修改，并在本文记录证据与前后复跑结果；评测、报告与 UI 工作不受影响。
+
 ## 后续工作
 
 - **S4 实际效果验证**：配置可用服务后，固定 prompt/runtime/知识/预算，先各跑一次射击修复与新建，再增加不同 provider；保留全部失败，Agent 正常路线与独立验证分栏。图像对照每分辨率仅一次请求，不能推断统计优势。

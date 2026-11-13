@@ -21,6 +21,10 @@
 - Preserve one comparison snapshot from before the user's latest modifying request, not an intermediate tool commit. Preview can switch between that snapshot and the current cart without changing source, export or test state. Restore current preview before the next Agent request; retain the comparison across read-only requests.
 - Pi Durable owns retry and compaction. Use provider output/timeout defaults and high thinking clamped to model support. Preserve sequential tools, STOP, bounded WASM execution and model-led completion without a tool-round cap or automatic continuation.
 
+## Agent flow freeze
+
+- The Agent flow (tools and schemas, result DTOs, startup sections AGENT/MACHINE/WORKFLOW/host, reset skeleton, image retention, audio events and coverage facts) is frozen at tag `agent-flow-freeze-2026-11-13` with player `69521e7`. Change it only to fix a defect found by an evaluation or test, and record the evidence and a before/after rerun in docs/development-status.md. Evaluations, reports and UI work may proceed without unfreezing.
+
 ## Knowledge and tools
 
 - Keep one writable source file, `/cart/main.lua`, read through `read` with draft status and budget, and native draft resources edited through structured tools. The source and resources commit together after a successful load. Failed loads retain the draft and last playable version. Undo and export operate on complete cart snapshots.
