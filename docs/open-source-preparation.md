@@ -6,7 +6,7 @@ Updated on 2026-11-13. Maker is public and the development preview is hosted at 
 
 - English README and Chinese counterpart, with an actual application screenshot, setup instructions, model/data behavior and current limitations.
 - MIT license for Maker-owned code and documentation; npm package metadata agrees.
-- Web Player `0.2.0-alpha.2` licenses its own code and artifacts under MIT; Maker pins the new static build and preserves its upstream notices.
+- Player `0.2.0-alpha.2` licenses its own code and artifacts under MIT; Maker pins the new static build and preserves its upstream notices.
 - Contribution guide, bug-report and pull-request templates, and a fresh-checkout CI workflow.
 - A third-party inventory, including all 11 community carts and the exact license embedded in the bundled Proggy Vector font.
 - Build packaging that retains Maker's license/notices, the font notice and the player's separate license files.
@@ -31,7 +31,7 @@ The maintainer authorized publishing the existing application with its community
 
 Successful `main` CI runs deploy the static build. The deployment smoke check uses a temporary browser profile and a scripted local model to verify connection probing, creation, real WASM input, `.p8` export and reload recovery against the production subdirectory. It is integration evidence, not a new real-model quality evaluation. See the [deployment guide](development.md#github-pages-deployment).
 
-The maintained public scope is Maker plus Web Player. The separate portable-runtime experiment is retained privately with maintenance paused; it is not part of the Maker build, publication or contributor setup. Web Player continues to maintain its own internal runtime and WASM sources.
+The maintained public scope is Maker plus Player. The separate portable-runtime experiment is retained privately with maintenance paused; it is not part of the Maker build, publication or contributor setup. Player continues to maintain its own internal runtime and WASM sources.
 
 ## Deployment verification — 2026-11-13
 

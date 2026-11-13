@@ -4,7 +4,7 @@ The root MIT license applies to project-owned Maker code and documentation. It d
 
 ## Player runtime
 
-Maker downloads the build pinned in `app/player.lock.json` from [pico8-web-player](https://github.com/boxuechen/pico8-web-player). Its complete `LICENSE`, `THIRD_PARTY_NOTICES.md`, and `licenses/` directory are preserved under `app/public/player/` and in the deployed `player/` directory.
+Maker downloads the build pinned in `app/player.lock.json` from [pico8-player](https://github.com/boxuechen/pico8-player). Its complete `LICENSE`, `THIRD_PARTY_NOTICES.md`, and `licenses/` directory are preserved under `app/public/player/` and in the deployed `player/` directory.
 
 The currently pinned `0.2.0-alpha.2` build at `eec7b417fd71c1ec03642ac403a5c26dbc6ccca9` licenses player-owned source and compiled components under **MIT**. Its own MIT notice is shipped separately from Maker's, alongside the upstream third-party notices. Older static build directories retain the license files with which they were published.
 

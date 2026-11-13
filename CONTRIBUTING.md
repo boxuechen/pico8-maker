@@ -19,7 +19,7 @@ Run focused tests while iterating. The CI workflow runs these checks from a fres
 - React UI, cart storage, model connections and host tools: `app/src/`.
 - Model-facing documentation and examples: `docs/pico8-agent/`.
 - Regression tests: `app/tests/`; model evaluations: `app/scripts/evaluation/`.
-- Player execution, VM and compatibility fixes: [pico8-web-player](https://github.com/boxuechen/pico8-web-player). See the [dependency guide](docs/development.md#player-updates).
+- Player execution, VM and compatibility fixes: [pico8-player](https://github.com/boxuechen/pico8-player). See the [dependency guide](docs/development.md#player-updates).
 
 Read [app/AGENTS.md](app/AGENTS.md) for product and development constraints. The Agent workflow is currently frozen: changes to its tools, schemas and startup contract need evidence of a defect and a before/after rerun recorded in [development status](docs/development-status.md). UI work, documentation and evaluation improvements can proceed independently.
 

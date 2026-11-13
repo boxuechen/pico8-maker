@@ -28,19 +28,21 @@ Serve the static site through HTTP(S); do not open `index.html` through `file://
 
 ## Player updates
 
-[pico8-web-player](https://github.com/boxuechen/pico8-web-player) owns the runtime and publishes complete static files to its [GitHub Pages site](https://boxuechen.github.io/pico8-web-player/). Maker downloads the directory pinned in `app/player.lock.json`; it does not check out or compile player source.
+[pico8-player](https://github.com/boxuechen/pico8-player) owns the runtime and publishes complete static files to its [GitHub Pages site](https://boxuechen.github.io/pico8-player/). Maker downloads the directory pinned in `app/player.lock.json`; it does not check out or compile player source.
 
 1. In the player repository, commit source changes, run its required checks, and run `pnpm run publish:pages`.
 2. Wait for the new `<source-commit>/` directory to be available on Pages.
 3. Update Maker's `app/player.lock.json`: `baseUrl`, `sourceCommit`, and the SHA-256 of the downloaded `manifest.json` bytes.
 4. Run Maker tests, build and Sites checks. The preparation script verifies the manifest and every file; a valid cache works without network access.
 
-Keep previously published directories available for older Maker checkouts. The normal distribution path does not use GitHub Releases or a separate runtime repository. Web Player owns and maintains its internal TypeScript runtime, vendored z8lua and C/C++ WASM bridge. Fix cartridge execution, graphics and audio compatibility there; keep Maker focused on authoring and agent integration.
+The repository and Pages path are now `pico8-player` (formerly `pico8-web-player`). Existing checkout directory names and the manifest artifact identifier remain compatible; the pinned download URL uses the new Pages path.
+
+Keep previously published directories available for older Maker checkouts. The normal distribution path does not use GitHub Releases or a separate runtime repository. Player owns and maintains its internal TypeScript runtime, vendored z8lua and C/C++ WASM bridge. Fix cartridge execution, graphics and audio compatibility there; keep Maker focused on authoring and agent integration.
 
 To work on both repositories locally, explicitly select a built player directory:
 
 ```sh
-PICO8_PLAYER_DIR=/absolute/path/to/pico8-web-player/apps/web-player/dist/release npm --prefix app run dev
+PICO8_PLAYER_DIR=/absolute/path/to/pico8-player/apps/web-player/dist/release npm --prefix app run dev
 ```
 
 The override verifies that build's manifest, without requiring its hash to match Maker's lock. Removing the environment variable restores the pinned build on the next preparation run.

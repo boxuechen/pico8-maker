@@ -22,7 +22,7 @@ Describe an idea, let the agent write and playtest it in a real WebAssembly runt
 - **Iterate without losing a working version.** Keep draft and committed states, undo changes, compare before/after versions, and resume saved conversations.
 - **Take the game with you.** Export the latest committed version as a `.p8` file.
 
-Maker combines React and assistant-ui, Pi Durable Agent, and [pico8-web-player](https://github.com/boxuechen/pico8-web-player). It is an independent project, not an official Lexaloffle product.
+Maker combines React and assistant-ui, Pi Durable Agent, and [pico8-player](https://github.com/boxuechen/pico8-player). It is an independent project, not an official Lexaloffle product.
 
 ## Try it online
 
@@ -76,7 +76,7 @@ See the [development guide](docs/development.md) for local mock models, player u
 | `docs/pico8-agent/` | Versioned model instructions, references and runnable examples |
 | `app/scripts/evaluation/` | Reproducible model evaluations and independent game checks |
 
-The maintained public projects are **Maker** and [**Web Player**](https://github.com/boxuechen/pico8-web-player). Maker consumes a pinned Web Player static build. Web Player contains its own TypeScript runtime and vendored C/C++ WASM sources; no separate runtime repository is required. Compatibility fixes belong in Web Player, while authoring and agent workflows belong in Maker.
+The maintained public projects are **Maker** and [**Player**](https://github.com/boxuechen/pico8-player). Maker consumes a pinned Player static build. Player contains its own TypeScript runtime and vendored C/C++ WASM sources; no separate runtime repository is required. Compatibility fixes belong in Player, while authoring and agent workflows belong in Maker.
 
 ## Status
 
