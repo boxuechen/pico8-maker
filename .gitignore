@@ -14,3 +14,5 @@ app/.vite/
 
 /app/src/generated/pico8-files.js
 /app/public/extensions/pico8/
+
+/lab/local-agent/node_modules/
