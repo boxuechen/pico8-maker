@@ -137,3 +137,27 @@ creating a game from a skeleton is unreliable and from scratch fails. MiniCPM5-2
 manages constant tweaks and is not pursued further. What moved 4B the most was the
 checker's feedback (quoting the failing code, naming common slips, flagging unchanged
 re-checks), not the model or the agent loop.
+
+## Cloud results on the just-bash environment (2026-11-14)
+
+DeepSeek V4.1 Flash (`deepseek/deepseek-flash`), thinking high, Pi SDK in process with
+read/edit/write/bash backed by just-bash (`/cart` in memory, `/skill/pico8` read-only, `p8`
+as a shell command), skill expanded into the first message, 3 runs in parallel.
+
+| Task | Result | Time | Tool calls | Tool errors |
+| --- | --- | --- | --- | --- |
+| T1–T5 (1 run each) | 5/5 | 4–12 s | 3–6 | 0–1 |
+| T6 S4 shooter-create (4 runs) | 3/4 | 38–110 s | 14–27 | 1–2 |
+| T7 S4 shooter-repair (3 runs) | 3/3 | 53–72 s | 19–23 | 1–2 |
+
+Maker's frozen flow on the same model and S4 prompts (2026-11-13): repair 3/3 in
+109–142 s with 21–25 calls; create 2/3 in 84–140 s (one hit the 180 s limit before its
+first tool call). The one lab failure drew the player blinking during invulnerability,
+which the S4 contract forbids (player centre pixel must stay green). The model also used
+`p8 look --png` and read the image to check the screen. Archives: `.cache/lab/20261113T1909-veqn`,
+`.cache/lab/20261113T1912-1wmm`.
+
+Browser probe: bundling Pi's four tool files for the browser pulls Node-only modules via
+`config.js`, `utils/paths.js`, `utils/output-files.js`, `utils/shell.js`, photon image
+resizing and pi-tui (77 unresolved imports); the main entry pulls 397. just-bash ships a
+browser entry.
