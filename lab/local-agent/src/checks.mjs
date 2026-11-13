@@ -1,6 +1,5 @@
 // Checks behind `p8 check` and task scoring. Every check runs in a fresh
 // session from boot, and every failure line says what to change.
-import { readFileSync, existsSync } from "node:fs";
 import { lint } from "./lint.mjs";
 import { BUTTONS, Runtime } from "./runtime.mjs";
 
@@ -167,12 +166,13 @@ export function formatItems(items) {
   return [...items.map((i) => `${i.pass ? "PASS" : "FAIL"} ${i.name}: ${i.detail}`), failed ? `${failed} FAILED` : "ALL PASSED"].join("\n");
 }
 
-export const loadCases = (path) => (path && existsSync(path) ? JSON.parse(readFileSync(path, "utf8")).cases ?? [] : []);
+/** Parse checks.json text into cases. */
+export const loadCasesText = (text) => JSON.parse(text).cases ?? [];
 
 /** Evaluation scoring: every item must pass, including hidden cases. */
-export async function scoreCart(mainPath, checksPath) {
-  if (!existsSync(mainPath)) return { pass: false, detail: "main.lua is missing" };
-  const items = await checkSource(readFileSync(mainPath, "utf8"), loadCases(checksPath));
+export async function scoreSource(source, cases) {
+  if (!source?.trim()) return { pass: false, detail: "main.lua is missing or empty" };
+  const items = await checkSource(source, cases);
   const failed = items.filter((i) => !i.pass);
   return { pass: !failed.length, detail: failed.length ? failed.map((i) => `${i.name}: ${i.detail}`).join(" | ").slice(0, 600) : `${items.length} checks passed` };
 }

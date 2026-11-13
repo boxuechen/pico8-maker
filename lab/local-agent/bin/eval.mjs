@@ -1,120 +1,85 @@
 #!/usr/bin/env node
-// Runs lab tasks through the stock Pi coding agent and scores them with hidden checks.
-//   node bin/eval.mjs --model qwen3.5:4b-q4_K_M [--tasks T0,T1] [--repeat 3]
-//     [--thinking off] [--time-ms 600000]
-// Each run gets a fresh workspace outside the repo and a temporary Pi agent directory; the agent sees
-// only the workspace, the pico8 skill and bin/ (p8) on PATH. Results go to .cache/lab/.
-import { execFileSync, spawn } from "node:child_process";
-import { chmodSync, cpSync, createWriteStream, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+// Runs lab tasks through the stock Pi coding agent in process and scores them.
+//   DEEPSEEK_API_KEY=... node bin/eval.mjs [--provider deepseek] [--model deepseek-flash]
+//     [--tasks T1,T2] [--repeat 1] [--thinking high] [--time-ms 600000] [--parallel 3]
+// Each run gets its own virtual environment (env.mjs): /cart seeded from the task's
+// start/ folder, /skill/pico8 read-only, p8 as a shell command. The agent never
+// touches the host disk. Scoring: hidden checks (p8 tasks) or the S4 shooter
+// oracle (s4 tasks). Results go to .cache/lab/<run>/.
+import { mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from "node:fs";
+import { join, relative, resolve } from "node:path";
 import { parseArgs } from "node:util";
+import { runAgent, skillPrompt } from "../src/agent.mjs";
+import { loadCasesText, scoreSource } from "../src/checks.mjs";
+import { CART, createEnvironment } from "../src/env.mjs";
+import { emptySnapshot, shooterCases, verifyShooter } from "../src/maker.mjs";
 
 const LAB = resolve(new URL("..", import.meta.url).pathname);
-const PI = join(LAB, "node_modules/.bin/pi");
 const { values: a } = parseArgs({
   options: {
-    model: { type: "string" },
-    tasks: { type: "string", default: "T0" },
+    provider: { type: "string", default: "deepseek" },
+    model: { type: "string", default: "deepseek-flash" },
+    "models-path": { type: "string" },
+    tasks: { type: "string", default: "T1,T2,T3,T4,T5,T6" },
     repeat: { type: "string", default: "1" },
-    thinking: { type: "string", default: "off" },
+    thinking: { type: "string", default: "high" },
     "time-ms": { type: "string", default: "600000" },
-    // Load the pico8 skill up front (/skill:pico8) instead of relying on the model to read it.
-    "force-skill": { type: "boolean", default: false },
+    parallel: { type: "string", default: "3" },
   },
 });
-if (!a.model) throw new Error("--model is required");
+const apiKey = process.env[`${a.provider.toUpperCase().replace(/-/g, "_")}_API_KEY`];
 const runId = new Date().toISOString().replace(/[-:]/g, "").slice(0, 13) + "-" + Math.random().toString(36).slice(2, 6);
 const OUT = join(LAB, "../../.cache/lab", runId);
 mkdirSync(OUT, { recursive: true });
 
-// Everything the agent can see lives outside the lab: a temporary agent dir with
-// its own copy of the skill and a p8 launcher. A run once followed the skill's
-// lab path and edited a task's original start file.
-function sandboxDirs() {
-  const agentDir = mkdtempSync(join(tmpdir(), "pi-agent-"));
-  for (const f of ["models.json", "settings.json"]) cpSync(join(LAB, "agent", f), join(agentDir, f));
-  cpSync(join(LAB, "skill/pico8"), join(agentDir, "skills/pico8"), { recursive: true });
-  mkdirSync(join(agentDir, "bin"));
-  writeFileSync(join(agentDir, "bin/p8"), `#!/bin/sh\nexec node ${JSON.stringify(join(LAB, "bin/p8"))} "$@"\n`, { mode: 0o755 });
-  return agentDir;
-}
-
-// Guards against an agent writing outside its workspace (two runs edited task
-// originals by absolute path): task files are read-only while runs are live, Pi
-// runs in its own process group that is killed with the evaluator, and every
-// workspace lives outside the git repository.
-const live = new Set();
-function setWritable(root, writable) {
-  const walk = (d) => {
-    for (const e of readdirSync(d, { withFileTypes: true })) {
-      const f = join(d, e.name);
-      if (e.isDirectory()) walk(f);
-      chmodSync(f, writable ? (e.isDirectory() ? 0o755 : 0o644) : e.isDirectory() ? 0o555 : 0o444);
+function readTree(root) {
+  const files = {};
+  const walk = (dir) => {
+    for (const name of readdirSync(dir)) {
+      const p = join(dir, name);
+      if (statSync(p).isDirectory()) walk(p);
+      else files[relative(root, p)] = readFileSync(p, "utf8");
     }
   };
   walk(root);
+  return files;
 }
-const lockTasks = (writable) => setWritable(join(LAB, "tasks"), writable);
-function cleanup() {
-  for (const c of live) try { process.kill(-c.pid, "SIGKILL"); } catch {}
-  lockTasks(true);
-}
-process.on("exit", cleanup);
-for (const sig of ["SIGINT", "SIGTERM", "SIGHUP"]) process.on(sig, () => process.exit(130));
+const skillFiles = readTree(join(LAB, "skill/pico8"));
 
-function runPi(work, prompt, log) {
-  const agentDir = sandboxDirs();
-  const args = [
-    "--mode", "json", "--no-session", "--offline", "--no-extensions", "--no-mcp",
-    "--no-context-files", "--no-prompt-templates", "--no-skills",
-    "--skill", join(agentDir, "skills/pico8"),
-    "--model", `ollama/${a.model}`, "--thinking", a.thinking, prompt,
-  ];
-  return new Promise((done) => {
-    const t0 = Date.now();
-    const child = spawn(PI, args, {
-      cwd: work,
-      env: { ...process.env, PI_CODING_AGENT_DIR: agentDir, PATH: `${join(agentDir, "bin")}:${process.env.PATH}` },
-      stdio: ["ignore", "pipe", "pipe"],
-      detached: true,
-    });
-    live.add(child);
-    // Streamed so an interrupted run still leaves its events.
-    const stream = createWriteStream(log);
-    let out = "", err = "", timedOut = false;
-    child.stdout.on("data", (d) => ((out += d), stream.write(d)));
-    child.stderr.on("data", (d) => (err += d));
-    const timer = setTimeout(() => {
-      timedOut = true;
-      try { process.kill(-child.pid, "SIGTERM"); } catch {}
-      setTimeout(() => { try { process.kill(-child.pid, "SIGKILL"); } catch {} }, 5000).unref();
-    }, Number(a["time-ms"]));
-    child.on("close", (code) => {
-      clearTimeout(timer);
-      live.delete(child);
-      try { process.kill(-child.pid, "SIGKILL"); } catch {} // leftover grandchildren
-      stream.end();
-      if (err.trim()) writeFileSync(log.replace(/\.jsonl$/, ".stderr.txt"), err);
-      done({ code, timedOut, seconds: Math.round((Date.now() - t0) / 1000), events: out });
-    });
-  });
+function loadTask(id) {
+  const dir = join(LAB, "tasks", id);
+  const task = JSON.parse(readFileSync(join(dir, "task.json"), "utf8"));
+  if (task.kind === "s4") {
+    const c = shooterCases.find((x) => x.id === task.case);
+    return { ...task, id, text: c.prompt, cart: { "main.lua": c.snapshot().source } };
+  }
+  return { ...task, id, dir, text: readFileSync(join(dir, "task.md"), "utf8").trim(), cart: readTree(join(dir, "start")) };
+}
+
+async function score(task, source) {
+  if (task.kind === "s4") {
+    if (!source.trim()) return { pass: false, detail: "main.lua is empty" };
+    const r = await verifyShooter(emptySnapshot(source));
+    const failed = Object.entries(r.checks ?? {}).filter(([, v]) => v !== true && v?.passed !== true).map(([k]) => k);
+    return { pass: r.passed, detail: r.passed ? "S4 oracle passed" : `S4 oracle failed: ${failed.join(", ") || "see report"}` };
+  }
+  return scoreSource(source, loadCasesText(readFileSync(join(task.dir, task.score), "utf8")));
 }
 
 function metrics(events) {
-  const tools = {};
-  let turns = 0, toolErrors = 0, outputTokens = 0, final = "";
-  for (const line of events.split("\n")) {
-    let e;
-    try { e = JSON.parse(line); } catch { continue; }
-    if (e.type !== "message_end") continue;
-    const m = e.message;
+  const tools = {},
+    usage = { input: 0, output: 0, cacheRead: 0 };
+  let turns = 0,
+    toolErrors = 0,
+    final = "";
+  for (const { message: m } of events) {
     if (m.role === "assistant") {
       turns++;
-      outputTokens += m.usage?.output ?? 0;
+      for (const k of Object.keys(usage)) usage[k] += m.usage?.[k] ?? 0;
       for (const p of m.content ?? []) {
         if (p.type === "toolCall") {
-          const key = p.name === "bash" && /\bp8\s+check\b/.test(p.arguments?.command ?? "") ? "bash:p8 check" : p.name;
+          const cmd = p.name === "bash" ? /\b(p8\s+\w+)/.exec(p.arguments?.command ?? "")?.[1] : null;
+          const key = cmd ? `bash:${cmd}` : p.name;
           tools[key] = (tools[key] ?? 0) + 1;
         }
         if (p.type === "text" && p.text.trim()) final = p.text.trim();
@@ -122,62 +87,55 @@ function metrics(events) {
     }
     if (m.role === "toolResult" && m.isError) toolErrors++;
   }
-  return { turns, tools, toolCalls: Object.values(tools).reduce((x, y) => x + y, 0), toolErrors, outputTokens, final: final.slice(0, 400) };
+  return { turns, tools, toolCalls: Object.values(tools).reduce((x, y) => x + y, 0), toolErrors, usage, final: final.slice(0, 600) };
 }
 
-async function score(task, dir, work) {
-  if (task.kind === "python") {
-    const scoring = mkdtempSync(join(tmpdir(), "lab-score-"));
-    cpSync(work, scoring, { recursive: true });
-    cpSync(join(dir, "hidden"), scoring, { recursive: true });
-    const [cmd, ...rest] = task.score;
-    return new Promise((done) => {
-      const c = spawn(cmd, rest, { cwd: scoring, stdio: ["ignore", "pipe", "pipe"] });
-      let text = "";
-      c.stdout.on("data", (d) => (text += d));
-      c.stderr.on("data", (d) => (text += d));
-      c.on("close", (code) => done({ pass: code === 0, detail: text.trim().split("\n").slice(-3).join(" | ") }));
-    });
-  }
-  if (task.kind === "p8") {
-    const { scoreCart } = await import(join(LAB, "src/checks.mjs"));
-    return scoreCart(join(work, "main.lua"), join(dir, task.score));
-  }
-  throw new Error(`unknown task kind ${task.kind}`);
+async function runOne(task, n) {
+  const base = join(OUT, `${task.id}-${n}`);
+  mkdirSync(base, { recursive: true });
+  const env = createEnvironment({ cartFiles: task.cart, skillFiles });
+  const run = await runAgent({
+    env,
+    prompt: skillPrompt(skillFiles["SKILL.md"], task.text),
+    model: { provider: a.provider, id: a.model, apiKey, modelsPath: a["models-path"] },
+    thinking: a.thinking,
+    timeMs: Number(a["time-ms"]),
+  });
+  writeFileSync(join(base, "events.jsonl"), run.events.map((e) => JSON.stringify(e)).join("\n") + "\n");
+  const source = (await env.fs.exists(`${CART}/main.lua`)) ? await env.fs.readFile(`${CART}/main.lua`, "utf8") : "";
+  writeFileSync(join(base, "main.lua"), source);
+  const s = await score(task, source);
+  const row = { task: task.id, n, pass: s.pass, seconds: run.seconds, status: run.status, ...(run.error ? { error: run.error } : {}), ...metrics(run.events), score: s.detail };
+  writeFileSync(join(base, "result.json"), JSON.stringify(row, null, 1));
+  console.log(JSON.stringify({ ...row, final: undefined }));
+  return row;
 }
 
-const taskHash = () => execFileSync("git", ["-C", LAB, "status", "--porcelain", "tasks"], { encoding: "utf8" });
-const before = taskHash();
-if (before) throw new Error(`lab task files have local changes; restore them first:\n${before}`);
-lockTasks(false);
-const rows = [];
+const jobs = [];
 for (const id of a.tasks.split(",")) {
-  const dir = join(LAB, "tasks", id);
-  const task = JSON.parse(readFileSync(join(dir, "task.json"), "utf8"));
-  const text = readFileSync(join(dir, "task.md"), "utf8").trim();
-  const prompt = a["force-skill"] && task.kind === "p8" ? `/skill:pico8 ${text}` : text;
-  for (let n = 1; n <= Number(a.repeat); n++) {
-    const base = join(OUT, `${id}-${n}`), work = mkdtempSync(join(tmpdir(), `lab-${id}-`));
-    mkdirSync(base, { recursive: true });
-    if (existsSync(join(dir, "start"))) cpSync(join(dir, "start"), work, { recursive: true });
-    setWritable(work, true); // copies inherit the locked originals' read-only mode
-    const run = await runPi(work, prompt, join(base, "events.jsonl"));
-    if (taskHash() !== before) throw new Error(`run ${id}-${n} modified the lab's task files; restore them with git checkout and investigate ${base}`);
-    const m = metrics(run.events);
-    const s = await score(task, dir, work);
-    cpSync(work, join(base, "work"), { recursive: true });
-    const row = { task: id, n, pass: s.pass, seconds: run.seconds, timedOut: run.timedOut, exit: run.code, ...m, score: s.detail };
-    writeFileSync(join(base, "result.json"), JSON.stringify(row, null, 1));
-    rows.push(row);
-    console.log(JSON.stringify({ ...row, final: undefined }));
-  }
+  const task = loadTask(id);
+  for (let n = 1; n <= Number(a.repeat); n++) jobs.push([task, n]);
 }
+const rows = [];
+let next = 0;
+await Promise.all(
+  Array.from({ length: Math.min(Number(a.parallel), jobs.length) }, async () => {
+    while (next < jobs.length) {
+      const [task, n] = jobs[next++];
+      rows.push(await runOne(task, n));
+    }
+  }),
+);
+rows.sort((x, y) => x.task.localeCompare(y.task) || x.n - y.n);
 const md = [
-  `# ${a.model} · thinking ${a.thinking}${a["force-skill"] ? " · skill forced" : ""} · ${runId}`,
+  `# ${a.provider}/${a.model} · thinking ${a.thinking} · ${runId}`,
   "",
-  "| task | n | pass | s | turns | tools | errors | out tok | stopped |",
+  "| task | n | pass | s | turns | tools | errors | in/out/cached tok | status |",
   "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",
-  ...rows.map((r) => `| ${r.task} | ${r.n} | ${r.pass ? "✓" : "✗"} | ${r.seconds} | ${r.turns} | ${Object.entries(r.tools).map(([k, v]) => `${k}×${v}`).join(" ")} | ${r.toolErrors} | ${r.outputTokens} | ${r.timedOut ? "timeout" : "yes"} |`),
+  ...rows.map(
+    (r) =>
+      `| ${r.task} | ${r.n} | ${r.pass ? "✓" : "✗"} | ${r.seconds} | ${r.turns} | ${Object.entries(r.tools).map(([k, v]) => `${k}×${v}`).join(" ")} | ${r.toolErrors} | ${r.usage.input}/${r.usage.output}/${r.usage.cacheRead} | ${r.status} |`,
+  ),
 ];
 writeFileSync(join(OUT, "summary.md"), md.join("\n") + "\n");
 console.log(`\n${md.join("\n")}\n\nArchive: ${OUT}`);

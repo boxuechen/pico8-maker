@@ -1,9 +1,11 @@
 #!/usr/bin/env node
-// PICO-8 checker for coding agents. See `p8` with no arguments for usage.
-import { main } from "../src/p8.mjs";
-try {
-  process.exitCode = await main(process.argv.slice(2));
-} catch (e) {
-  console.log(`error: ${e.message}`);
-  process.exitCode = 2;
-}
+// PICO-8 checker on the real disk; the same runP8 backs the agent's virtual `p8`.
+import { ReadWriteFs } from "just-bash";
+import { runP8 } from "../src/p8.mjs";
+const r = await runP8(process.argv.slice(2), {
+  fs: new ReadWriteFs({ root: "/" }),
+  cwd: process.cwd(),
+  templateDir: new URL("../skill/pico8/templates", import.meta.url).pathname,
+});
+process.stdout.write(r.stdout);
+process.exitCode = r.exitCode;

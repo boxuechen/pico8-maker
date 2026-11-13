@@ -4,7 +4,10 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, copyFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { checkSource, parsePress, scoreCart } from "../src/checks.mjs";
+import { readFileSync } from "node:fs";
+import { checkSource, loadCasesText, parsePress, scoreSource } from "../src/checks.mjs";
+
+const scoreCart = (main, checks) => scoreSource(readFileSync(main, "utf8"), loadCasesText(readFileSync(checks, "utf8")));
 
 const lab = new URL("..", import.meta.url).pathname;
 
@@ -53,10 +56,18 @@ function _draw() cls(1) print("a",1,1,7) end`;
   assert.match(await boot("g.player.inv-=1"), /field inv has no starting value/);
 });
 
-test("p8 check says when main.lua has not changed since the last failing check", () => {
-  const dir = mkdtempSync(join(tmpdir(), "p8-"));
-  writeFileSync(join(dir, "main.lua"), 'function _init() g={mode="play"} end function _update() foo() end function _draw() cls(1) print("a",1,1,7) end');
-  const run = () => { try { return execFileSync(join(lab, "bin/p8"), ["check"], { cwd: dir, encoding: "utf8" }); } catch (e) { return e.stdout; } };
-  assert.doesNotMatch(run(), /has not changed/);
-  assert.match(run(), /^NOTE: main.lua has not changed since your last p8 check/);
+test("the agent environment: p8 in the shell, unchanged re-checks, isolation from the host", async () => {
+  const { createEnvironment } = await import("../src/env.mjs");
+  const env = createEnvironment({
+    cartFiles: { "main.lua": readFileSync(join(lab, "tasks/T2/start/main.lua"), "utf8"), "checks.json": readFileSync(join(lab, "tasks/T2/start/checks.json"), "utf8") },
+    skillFiles: { "SKILL.md": "skill" },
+  });
+  const sh = async (c) => { const r = await env.exec(c); return { code: r.exitCode, out: r.stdout + r.stderr }; };
+  assert.match((await sh("p8 check")).out, /1 FAILED/);
+  assert.match((await sh("p8 check")).out, /^NOTE: main.lua has not changed/);
+  assert.equal((await sh('sed -i "s/g.player.inv=0 del/g.player.inv=20 del/" main.lua && p8 check')).code, 0);
+  assert.match((await sh("echo x > /skill/pico8/x.txt")).out, /EROFS: \/skill\/pico8 is read-only/);
+  assert.match((await sh(`cat ${join(lab, "package.json")}`)).out, /No such file or directory/);
+  assert.match((await sh("p8 look --png s.png")).out, /wrote s.png \(512x512/);
+  assert.deepEqual([...(await env.fs.readFileBuffer("/cart/s.png")).slice(1, 4)], [80, 78, 71]);
 });
