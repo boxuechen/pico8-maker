@@ -1,0 +1,1 @@
+This folder holds a PICO-8 shooter (main.lua). Bug: after the player is hit they should be invulnerable for 20 frames, but a second enemy bullet right after the first hit still costs HP. Fix the bug without changing any other rule.

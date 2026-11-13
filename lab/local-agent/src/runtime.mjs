@@ -1,13 +1,7 @@
-// One loaded cart in an inspection session: load, frame-by-frame input with
-// g.mode tracking, raw state reads, setup code and model images.
-import {
-  cartBytes,
-  compactInspected,
-  createPico8Session,
-  emptySnapshot,
-  modelImage,
-  png,
-} from "./maker.mjs";
+// One loaded cart in an inspection session: load, frame-by-frame input, raw
+// state reads, setup code and a text thumbnail of the last frame.
+import { cartBytes, compactInspected, createPico8Session } from "./maker.mjs";
+import { soundAssets } from "./sounds.mjs";
 
 export const BUTTONS = { left: 1, right: 2, up: 4, down: 8, o: 16, x: 32 };
 const input = (buttons = 0) => ({
@@ -27,7 +21,7 @@ const diagnostics = (observation) =>
   }));
 
 export class Runtime {
-  constructor(assets = emptySnapshot().assets) {
+  constructor(assets = soundAssets()) {
     this.assets = assets;
     this.session = null;
     this.frames = 0;
@@ -39,7 +33,10 @@ export class Runtime {
     this.session = await createPico8Session({ inspection: true });
     this.frames = 0;
     this.frame = null;
-    const loaded = await this.session.loadCart(cartBytes({ source, assets: this.assets }));
+    // A fixed seed makes checks repeatable; appended so line numbers stay the same.
+    // It runs after the cart's own top-level code and before _init.
+    const seeded = `${source}\nsrand(1)`;
+    const loaded = await this.session.loadCart(cartBytes({ source: seeded, assets: this.assets }));
     if (loaded.state === "faulted") return { ok: false, diagnostics: diagnostics(loaded) };
     const first = await this.advance(0, 1);
     return first.fault ? { ok: false, diagnostics: first.fault } : { ok: true, audio: first.audio };
@@ -75,10 +72,26 @@ export class Runtime {
     const r = await this.session.inspect({ mode: "debug", code });
     return r.ok ? { ok: true } : { ok: false, message: r.error?.message ?? "setup failed" };
   }
-  image() {
+  /** size×size characters 0-f: the most common palette colour of each block. */
+  ascii(size = 32) {
     if (!this.frame) return null;
-    const big = modelImage(this.frame);
-    return { type: "image", mimeType: "image/png", data: png(big.rgba, big.width, big.height).toString("base64") };
+    const { rgba } = this.frame,
+      block = 128 / size,
+      rows = [];
+    for (let by = 0; by < size; by++) {
+      let row = "";
+      for (let bx = 0; bx < size; bx++) {
+        const counts = new Array(16).fill(0);
+        for (let y = by * block; y < (by + 1) * block; y++)
+          for (let x = bx * block; x < (bx + 1) * block; x++) {
+            const i = (y * 128 + x) * 4;
+            counts[nearest(rgba[i], rgba[i + 1], rgba[i + 2])]++;
+          }
+        row += counts.indexOf(Math.max(...counts)).toString(16);
+      }
+      rows.push(row);
+    }
+    return rows.join("\n");
   }
   /** Distinct palette colours in the current frame (a blank screen has one). */
   colors() {
@@ -104,4 +117,15 @@ function plain(v) {
     return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, plain(x)]));
   }
   return v;
+}
+
+const PALETTE = [0x000000, 0x1d2b53, 0x7e2553, 0x008751, 0xab5236, 0x5f574f, 0xc2c3c7, 0xfff1e8,
+  0xff004d, 0xffa300, 0xffec27, 0x00e436, 0x29adff, 0x83769c, 0xff77a8, 0xffccaa];
+function nearest(r, g, b) {
+  let best = 0, dist = Infinity;
+  PALETTE.forEach((c, i) => {
+    const d = (r - (c >> 16)) ** 2 + (g - ((c >> 8) & 255)) ** 2 + (b - (c & 255)) ** 2;
+    if (d < dist) (dist = d), (best = i);
+  });
+  return best;
 }

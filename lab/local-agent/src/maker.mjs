@@ -5,11 +5,7 @@ export { createPico8Session } from "../../../app/public/player/main/player.mjs";
 export { cartBytes, cartText } from "../../../app/src/pico8/cart.js";
 export { editAssets, emptySnapshot } from "../../../app/src/pico8/assets.js";
 export { countTokens, TOKEN_LIMIT } from "../../../app/src/pico8/tokens.js";
-export {
-  compactInspected,
-  modelImage,
-} from "../../../app/src/pico8/observation.js";
-export { png } from "../../../app/scripts/evaluation/png.mjs";
+export { compactInspected } from "../../../app/src/pico8/observation.js";
 export {
   shooterCases,
   shooterContract,

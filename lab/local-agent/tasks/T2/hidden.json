@@ -1,0 +1,62 @@
+{
+ "cases": [
+  {
+   "name": "second bullet within 20 frames is ignored",
+   "setup": "g.hostiles={{x=64,y=112},{x=64,y=100}}",
+   "press": "wait*10",
+   "expect": [
+    {
+     "path": "g.player.hp",
+     "equals": 2
+    }
+   ]
+  },
+  {
+   "name": "a hit after 20 frames counts again",
+   "setup": "g.hostiles={{x=64,y=112},{x=64,y=37}}",
+   "press": "wait*30",
+   "expect": [
+    {
+     "path": "g.player.hp",
+     "equals": 1
+    }
+   ]
+  },
+  {
+   "name": "shooting kills an enemy",
+   "press": "o*30",
+   "expect": [
+    {
+     "path": "g.kills",
+     "atLeast": 1
+    }
+   ]
+  },
+  {
+   "name": "last enemy of wave 2 wins",
+   "setup": "g.enemies={{x=64,y=24}} g.wave=2",
+   "press": "o*30",
+   "expect": [
+    {
+     "path": "g.mode",
+     "equals": "win"
+    }
+   ]
+  },
+  {
+   "name": "last hp loses, X restarts",
+   "setup": "g.player.hp=1 g.hostiles={{x=64,y=112}}",
+   "press": "wait*5 x wait*2",
+   "expect": [
+    {
+     "path": "g.mode",
+     "equals": "play"
+    },
+    {
+     "path": "g.player.hp",
+     "equals": 3
+    }
+   ]
+  }
+ ]
+}

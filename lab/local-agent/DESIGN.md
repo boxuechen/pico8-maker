@@ -27,7 +27,7 @@ lab/local-agent/
   DESIGN.md
   package.json        pins @earendil-works/pi-coding-agent; scripts: test, eval
   agent/              PI_CODING_AGENT_DIR for runs: models.json (local Ollama), settings.json
-  skill/pico8/        SKILL.md, reference/{lua.md, api.md}, examples/*.lua, template.lua
+  skill/pico8/        SKILL.md, reference/api.md, examples/*.lua, templates/*.lua
   bin/p8              the checker CLI (on PATH during runs)
   bin/eval.mjs        runs tasks × repeats through `pi --mode json`, scores with hidden checks
   src/
@@ -68,8 +68,8 @@ run from boot in a fresh session. Tasks ship visible checks; evaluation also run
 `SKILL.md` stays under about 1,500 tokens: what PICO-8 Lua is not (a short table of
 standard-Lua habits and their PICO-8 forms), the game skeleton (global `g`, `new_game()`,
 `g.mode`, locked X retry), screen and input facts, and the working rule: **after every
-change run `p8 check`; you are done only when it prints ALL PASSED.** References (`api.md`,
-`lua.md`) and two or three complete example games are read on demand.
+change run `p8 check`; you are done only when it prints ALL PASSED.** `reference/api.md` and
+complete example games are read on demand.
 
 ## Tasks
 

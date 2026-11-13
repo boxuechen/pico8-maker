@@ -1,0 +1,88 @@
+{
+ "cases": [
+  {
+   "name": "cat moves 3 px per frame",
+   "press": "right*10",
+   "expect": [
+    {
+     "path": "g.player.x",
+     "equals": 94
+    }
+   ]
+  },
+  {
+   "name": "10 fish is not a win yet",
+   "setup": "g.caught=9 g.fish={{x=64,y=112,vy=1}}",
+   "press": "wait*5",
+   "expect": [
+    {
+     "path": "g.mode",
+     "equals": "play"
+    }
+   ]
+  },
+  {
+   "name": "15 fish win",
+   "setup": "g.caught=14 g.fish={{x=64,y=112,vy=1}}",
+   "press": "wait*5",
+   "expect": [
+    {
+     "path": "g.mode",
+     "equals": "win"
+    }
+   ]
+  },
+  {
+   "name": "14 fish is not a win yet",
+   "setup": "g.caught=13 g.fish={{x=64,y=112,vy=1}}",
+   "press": "wait*5",
+   "expect": [
+    {
+     "path": "g.mode",
+     "equals": "play"
+    },
+    {
+     "path": "g.caught",
+     "equals": 14
+    }
+   ]
+  },
+  {
+   "name": "5th miss loses",
+   "setup": "g.missed=4 g.fish={{x=10,y=126,vy=1}}",
+   "press": "wait*3",
+   "expect": [
+    {
+     "path": "g.mode",
+     "equals": "lose"
+    }
+   ]
+  },
+  {
+   "name": "4th miss keeps playing",
+   "setup": "g.missed=3 g.fish={{x=10,y=126,vy=1}}",
+   "press": "wait*3",
+   "expect": [
+    {
+     "path": "g.mode",
+     "equals": "play"
+    }
+   ]
+  },
+  {
+   "name": "retry after a loss",
+   "setup": "g.missed=4 g.fish={{x=10,y=126,vy=1}}",
+   "press": "wait*20 x",
+   "expect": [
+    {
+     "path": "g.mode",
+     "equals": "play"
+    },
+    {
+     "path": "g.missed",
+     "equals": 0
+    }
+   ]
+  }
+ ]
+}

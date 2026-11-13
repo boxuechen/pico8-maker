@@ -1,0 +1,29 @@
+{
+ "cases": [
+  {
+   "name": "starts with 3 lives",
+   "press": "wait",
+   "expect": [
+    {
+     "path": "g.lives",
+     "equals": 3
+    }
+   ]
+  },
+  {
+   "name": "a miss costs a life",
+   "setup": "g.fish={{x=10,y=126,vy=1}}",
+   "press": "wait*3",
+   "expect": [
+    {
+     "path": "g.lives",
+     "equals": 2
+    },
+    {
+     "path": "g.mode",
+     "equals": "play"
+    }
+   ]
+  }
+ ]
+}

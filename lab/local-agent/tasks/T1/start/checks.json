@@ -1,0 +1,25 @@
+{
+ "cases": [
+  {
+   "name": "cat moves 3 px per frame",
+   "press": "right*10",
+   "expect": [
+    {
+     "path": "g.player.x",
+     "equals": 94
+    }
+   ]
+  },
+  {
+   "name": "10 fish is not a win yet",
+   "setup": "g.caught=9 g.fish={{x=64,y=112,vy=1}}",
+   "press": "wait*5",
+   "expect": [
+    {
+     "path": "g.mode",
+     "equals": "play"
+    }
+   ]
+  }
+ ]
+}

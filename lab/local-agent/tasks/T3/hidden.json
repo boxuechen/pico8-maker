@@ -1,0 +1,85 @@
+{
+ "cases": [
+  {
+   "name": "starts with 3 lives",
+   "press": "wait",
+   "expect": [
+    {
+     "path": "g.lives",
+     "equals": 3
+    }
+   ]
+  },
+  {
+   "name": "a miss costs a life",
+   "setup": "g.fish={{x=10,y=126,vy=1}}",
+   "press": "wait*3",
+   "expect": [
+    {
+     "path": "g.lives",
+     "equals": 2
+    },
+    {
+     "path": "g.mode",
+     "equals": "play"
+    }
+   ]
+  },
+  {
+   "name": "last life lost loses",
+   "setup": "g.lives=1 g.fish={{x=10,y=126,vy=1}}",
+   "press": "wait*3",
+   "expect": [
+    {
+     "path": "g.mode",
+     "equals": "lose"
+    }
+   ]
+  },
+  {
+   "name": "catching keeps lives",
+   "setup": "g.fish={{x=64,y=112,vy=1}}",
+   "press": "wait*5",
+   "expect": [
+    {
+     "path": "g.lives",
+     "equals": 3
+    },
+    {
+     "path": "g.caught",
+     "equals": 1
+    }
+   ]
+  },
+  {
+   "name": "two misses keep playing",
+   "setup": "g.fish={{x=10,y=126,vy=1},{x=20,y=124,vy=1}}",
+   "press": "wait*5",
+   "expect": [
+    {
+     "path": "g.lives",
+     "equals": 1
+    },
+    {
+     "path": "g.mode",
+     "equals": "play"
+    }
+   ]
+  },
+  {
+   "name": "retry restores lives",
+   "setup": "g.lives=1 g.fish={{x=10,y=126,vy=1}}",
+   "press": "wait*20 x",
+   "expect": [
+    {
+     "path": "g.mode",
+     "equals": "play"
+    },
+    {
+     "path": "g.lives",
+     "equals": 3
+    }
+   ]
+  }
+ ]
+}

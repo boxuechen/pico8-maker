@@ -1,0 +1,9 @@
+#!/usr/bin/env node
+// PICO-8 checker for coding agents. See `p8` with no arguments for usage.
+import { main } from "../src/p8.mjs";
+try {
+  process.exitCode = await main(process.argv.slice(2));
+} catch (e) {
+  console.log(`error: ${e.message}`);
+  process.exitCode = 2;
+}

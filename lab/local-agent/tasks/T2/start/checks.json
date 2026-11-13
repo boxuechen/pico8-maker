@@ -1,0 +1,15 @@
+{
+ "cases": [
+  {
+   "name": "second bullet within 20 frames is ignored",
+   "setup": "g.hostiles={{x=64,y=112},{x=64,y=100}}",
+   "press": "wait*10",
+   "expect": [
+    {
+     "path": "g.player.hp",
+     "equals": 2
+    }
+   ]
+  }
+ ]
+}
