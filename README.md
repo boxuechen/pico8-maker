@@ -86,4 +86,4 @@ Project-owned code and documentation are licensed under [MIT](LICENSE), copyrigh
 
 Thanks to the authors of Pi, assistant-ui, React, the player and its upstream runtime components, Proggy Vector, and the community games shown in the gallery. Sources and license details are recorded in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
-**Public-release preparation is still in progress:** the pinned player is currently `UNLICENSED`, several bundled community carts have no stated license, and brand-image permissions need clarification. See the concrete remaining items in [open-source preparation](docs/open-source-preparation.md).
+The community gallery is retained with author/source attribution and its original license labels. See [open-source preparation](docs/open-source-preparation.md) for the release plan and recorded asset decisions.

@@ -82,4 +82,4 @@ npm --prefix app run test:sites
 
 感谢 Pi、assistant-ui、React、播放器及其上游组件、Proggy Vector 和社区游戏的作者。来源与许可记录见[第三方声明](THIRD_PARTY_NOTICES.md)。
 
-**正式公开发布仍在准备中**：锁定的播放器目前为 `UNLICENSED`，部分内嵌社区卡带未标注许可证，品牌图片授权仍待确认。具体待办见[开源准备记录](docs/open-source-preparation.md)。
+社区卡带按项目维护者的决定保留，继续记录作者、来源与原始许可标注。发布计划和素材决策见[开源准备记录](docs/open-source-preparation.md)。
