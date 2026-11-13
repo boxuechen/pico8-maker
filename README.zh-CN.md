@@ -26,7 +26,7 @@
 
 ## 快速开始
 
-准备 **Node.js 24**、npm 和 Chrome/Chromium。首次启动需要联网下载固定版本的播放器，不需要播放器源码或 Emscripten。
+准备 **Node.js 24.22.2**、npm 和 Chrome/Chromium。首次启动需要联网下载固定版本的播放器，不需要播放器源码或 Emscripten。
 
 ```sh
 git clone https://github.com/boxuechen/pico8-maker.git

@@ -4,7 +4,7 @@ Thanks for helping improve PICO-8 Maker. Issues and pull requests in English or 
 
 ## Start locally
 
-Follow the [quick start](README.md#quick-start). Node.js 24 is sufficient for Maker development: the pinned player downloads automatically. You do not need the player source tree, Emscripten, or a real model API key to run the regression tests.
+Follow the [quick start](README.md#quick-start). Node.js 24.22.2 is used for Maker development: the pinned player downloads automatically. You do not need the player source tree, Emscripten, or a real model API key to run the regression tests.
 
 ```sh
 npm --prefix app test

@@ -1,6 +1,6 @@
 # Maker development
 
-Start with the [README](../README.md) and [contribution guide](../CONTRIBUTING.md). Node.js 24 is recorded in `.node-version`. Use the npm lockfile in `app/`.
+Start with the [README](../README.md) and [contribution guide](../CONTRIBUTING.md). Node.js 24.22.2 is recorded in `.node-version`. Use the npm lockfile in `app/`.
 
 ## Local development
 

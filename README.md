@@ -30,7 +30,7 @@ Open [PICO-8 Maker](https://boxuechen.github.io/pico8-maker/) in Chrome/Chromium
 
 ## Quick start
 
-Use **Node.js 24**, npm, and Chrome/Chromium. The first start needs internet access to download the pinned player; no player source checkout or Emscripten installation is needed.
+Use **Node.js 24.22.2**, npm, and Chrome/Chromium. The first start needs internet access to download the pinned player; no player source checkout or Emscripten installation is needed.
 
 ```sh
 git clone https://github.com/boxuechen/pico8-maker.git
