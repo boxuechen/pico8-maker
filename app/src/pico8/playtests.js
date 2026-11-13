@@ -57,7 +57,10 @@ export function normalizePlaytests(data) {
           !["pending", "completed", "failed", "unknown"].includes(e.status) ||
           (e.executed !== undefined && typeof e.executed !== "boolean") ||
           (e.reason !== undefined &&
-            (typeof e.reason !== "string" || e.reason.length > 256))
+            (typeof e.reason !== "string" || e.reason.length > 256)) ||
+          (e.afterCalls !== undefined &&
+            (!Number.isInteger(e.afterCalls) || e.afterCalls < 0)) ||
+          (e.routePurpose !== undefined && !purposes.includes(e.routePurpose))
         )
           throw new Error("Invalid debug event");
         return {
@@ -66,6 +69,10 @@ export function normalizePlaytests(data) {
           status: e.status,
           ...(e.executed === undefined ? {} : { executed: e.executed }),
           ...(e.reason === undefined ? {} : { reason: e.reason }),
+          ...(e.afterCalls === undefined ? {} : { afterCalls: e.afterCalls }),
+          ...(e.routePurpose === undefined
+            ? {}
+            : { routePurpose: e.routePurpose }),
         };
       });
       const calls = r.calls.map((c) => {
@@ -164,8 +171,15 @@ export class Playtests {
   beginDebug(code, stateSeq) {
     if (!this.active)
       throw new Error("Reset to start a recorded test before debug execution");
+    // Input calls before the first debug event still ran from a normal start.
+    const event = {
+      code,
+      stateSeq,
+      status: "pending",
+      afterCalls: this.active.calls.length,
+      routePurpose: this.active.purpose,
+    };
     this.active.purpose = "debug";
-    const event = { code, stateSeq, status: "pending" };
     if (this.active.debugEvents.length < 32)
       this.active.debugEvents.push(event);
     else this.active.truncated = true;
@@ -245,20 +259,29 @@ export class Playtests {
   }
 }
 
-// Host-side facts about recorded routes for one committed revision. A normal
-// route started from load/reset, never ran debug code and executed input.
+// Host-side facts about recorded routes for one committed revision. Normal
+// input counts from a normal load/reset until the first debug event, so a
+// normal win followed by injected edge cases keeps its normal prefix.
 // These are coverage facts, not gameplay verdicts.
+export function normalCalls(run) {
+  const first = run.debugEvents[0];
+  if (!first) return run.purpose === "normal" ? run.calls : [];
+  if (first.routePurpose !== "normal" || first.afterCalls === undefined)
+    return [];
+  return run.calls.slice(0, first.afterCalls);
+}
 export function revisionCoverage(runs, revision) {
   const mine = (runs ?? []).filter((r) => r.revision === revision);
-  const played = (r) => r.calls.some((c) => c.completedFrames > 0);
-  const normal = mine.filter(
-    (r) => r.purpose === "normal" && !r.debugEvents.length && played(r),
-  );
+  const played = (calls) => calls.some((c) => c.completedFrames > 0);
+  const normal = mine.map(normalCalls).filter(played);
   return {
     revision,
     normalRoutes: normal.length,
-    longestNormalCalls: Math.max(0, ...normal.map((r) => r.calls.length)),
-    debugRoutes: mine.filter((r) => r.purpose === "debug" && played(r)).length,
+    longestNormalCalls: Math.max(0, ...normal.map((calls) => calls.length)),
+    debugRoutes: mine.filter(
+      (r) =>
+        r.purpose === "debug" && played(r.calls.slice(normalCalls(r).length)),
+    ).length,
   };
 }
 export function coverageNote({ revision, normalRoutes, longestNormalCalls }) {

@@ -57,6 +57,27 @@ node app/scripts/evaluation/freeze-tooling-baseline.mjs --check
 
 案例的提示词、失败、独立路线与局限见 [Sweet Garden](sweet-garden-case-study.md) 和 [Lodge Podge](lodge-podge-case-study.md)。这些是旧版流程的单模型样本，不是当前 Workflow 的效果结论。
 
+## 改造后真实模型复跑（2026-11-13）
+
+用 `app/scripts/evaluation/run-case.mjs`（正式 Agent/知识/工具/Worker 协议，Node 传输，一次性卡带）按基线相同的两轮提示词、`deepseek-flash`（DeepSeek V4.1 Flash，图像输入）/ high、每轮 15 分钟、无工具次数上限，重跑两个案例。知识版本 `pico8-files-v1-5c85adc2b37a7c45`。每案例一次样本，模型输出非确定，结果只说明方向，不是统计结论。
+
+| 案例 | 版本 | 工具调用（轮1+轮2） | observe | 单行扫描 | 状态读取 | 工具错误 | 结果文本 | 图像 |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Sweet Garden | 基线 | 176（127+49） | 88 | 68 | 0 | 2 | 267 KB | 119（128²） |
+| Sweet Garden | 复跑 | 56（45+11） | 0 | 0 | 15 | 1 | 35 KB | 30（512²） |
+| Lodge Podge | 基线 | 157（70+87） | 27 | 0 | 0 | 10 | 239 KB | 215 |
+| Lodge Podge | 复跑 | 72（42+30） | 4 | 0 | 17 | 0 | 34 KB | 42（512²） |
+
+耗时：Sweet Garden 730 s + 124 s（基线 733 s + 252 s）；Lodge Podge 545 s + 540 s（基线 549 s + 619 s）。首个可玩版本时间相近（250–264 s）。
+
+正常路线：
+
+- **Lodge Podge**：两轮最终版本都由 Agent 以正常输入走通胜利与 X 重开（第二轮 r9，10 次输入调用，无 debug）。独立重放该路线于最终卡带，实际帧为 `LODGE BUILT!`、木棍/泥/树叶 4/4、3/3、4/4，重开后 0/4、0/3、0/4 并显示操作说明。基线两轮均靠预置进度验证。
+- **Sweet Garden**：第一轮 Agent 用状态读取规划交换，以正常输入达到 710/700 胜利并重开，随后在同一路线注入 1 步验证失败；整轮因此标为 debug。第二轮只改画面和开场卡，胜利用 debug 预置 690 分验证，并在交付中如实写明 r5 没有纯正常胜利。独立重放第一轮的 15 个正常输入调用：r4 与最终 r5（先按 Z 关闭新增开场卡）都在第 13 次调用到 `win 710`，重开恢复 0 分 / 20 步。
+- 两个案例交付都使用四项格式，音效触发帧与声道来自新的 audio 事件，听感列入未验证。
+
+据此修正：覆盖统计改为计入首个 debug 事件之前的正常输入前缀（debug 事件记录 `afterCalls` 与开始时的 purpose），声明 debug 的 reset 不计入；整轮仍标 debug。这样 Sweet Garden 第二轮提交时会提示「上一版本有正常路线，需在本版本重跑」，而基线判断（不能把注入后的结果算作正常）不变。归档：`.cache/evaluations/case-sweet-garden-90833007-…/`、`.cache/evaluations/case-lodge-podge-cd504775-…/`。
+
 ## 后续工作
 
 - **S4 实际效果验证**：配置可用服务后，固定 prompt/runtime/知识/预算，先各跑一次射击修复与新建，再增加不同 provider；保留全部失败，Agent 正常路线与独立验证分栏。图像对照每分辨率仅一次请求，不能推断统计优势。
