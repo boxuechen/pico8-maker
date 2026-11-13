@@ -83,6 +83,7 @@ const report = {
     }).trim(),
     knowledge: index.version,
     limits,
+    tasks: process.env.S4_TASKS?.split(",") ?? "all",
     files: frozen,
     prompts: await Promise.all(
       shooterCases.map(async (t) => ({
@@ -114,7 +115,11 @@ for (const [i, profile] of matrix.entries()) {
   record.status = "running";
   await save();
   try {
-    for (const task of shooterCases) {
+    // S4_TASKS=shooter-create limits a rerun to selected tasks (recorded below).
+    const only = process.env.S4_TASKS?.split(",");
+    for (const task of shooterCases.filter(
+      (c) => !only || only.includes(c.id),
+    )) {
       record.activeTask = task.id;
       await save();
       console.log(`${profile.metadata.id}: ${task.id}`);
