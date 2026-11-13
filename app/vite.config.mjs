@@ -7,7 +7,7 @@ import { evaluationRecorder } from "./scripts/evaluation/evaluation-recorder.mjs
 const appEntry = fileURLToPath(new URL("./index.html", import.meta.url));
 
 export default defineConfig({
-  base: "./",
+  base: process.env.VITE_BASE_PATH || "./",
   build: {
     outDir: "dist/client",
   },
