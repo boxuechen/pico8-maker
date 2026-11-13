@@ -1,157 +1,130 @@
-# Local Agent Prototype
+# Local Agent Prototype — MiniCPM5-2B
 
-A headless prototype of a PICO-8 game agent designed around small local models
-(target: Qwen3.5-9B Q4_K_M with image input, 64K context). It runs in Node
-against any OpenAI-compatible endpoint and owns its workflow, tools and
-prompts. It is not compatible with the Maker agent and does not try to be.
+A headless PICO-8 game agent built for one model: **MiniCPM5-2B** (`openbmb/minicpm5-2b:q4_K_M`,
+1.6 GB, text only, Apache-2.0). It runs in Node against a local Ollama today; the final target
+is in-browser inference. It owns its workflow, tools, prompts and model protocol, and shares
+only the player runtime and evaluation oracles with Maker. Maker itself is not changed.
 
-## Why
+## Design constraints
 
-The Maker agent assumes a strong cloud model: one long conversation, ten fine-grained
-tools, a large resident workflow and a model that designs its own verification.
-Qwen3.5-9B on that flow (2026-11-13, shooter suite, 15 min / 40 calls per task):
+| Constraint | Consequence |
+| --- | --- |
+| 2B parameters | The model writes small, local game logic. The host owns structure, verification and every decision it can make deterministically. |
+| Text only | No screenshots. The model sees host reports: lint issues, faults, state values, mode changes, and an on-demand 32×32 ASCII thumbnail. |
+| Browser target (≈8K-token requests in the reference WebGPU Space) | Every request is assembled to fit **8K tokens** (prompt + reply). No conversation grows without bound. |
+| XML tool calls with CDATA (`<function name="…"><param name="…"><![CDATA[…]]></param></function>`) | Tool parameters are flat strings. Lua source travels in CDATA, never as escaped JSON. No nested arrays or objects in tool arguments. |
+| Ollama does not run the GGUF Jinja template; the browser engine will produce raw text too | The lab renders the chat template and parses tool calls itself. Engines only complete raw text, so local and browser runs see byte-identical prompts. |
 
-| | Repair ×3 | Create ×3 |
-| --- | --- | --- |
-| Independent oracle | 3/3 | 0/3 |
-| Finished on its own | 1/3 | 0/3 |
-| Tool errors | 3–6 | 6–23 |
-
-Observed failure classes:
-
-1. Tool misuse: `edit` on an empty file, malformed sprite rows, guessed document paths.
-2. Missing PICO-8 knowledge: LÖVE (`love.*`) code, non-ASCII comments, no main loop, `local g`.
-3. Speed: the context grows every turn; every request re-reads it and thinks at length.
-
-Principle: **the host does what it can decide deterministically; the model writes
-game logic and judges gameplay.**
+Lessons carried over from larger local models: a fixed template plus host lint and smoke makes
+building reliable; free-form self-testing does not converge; letting a verification phase edit
+code breaks correct fixes. Hence: **the model builds, the host verifies.**
 
 ## Boundaries
 
 ```
 lab/local-agent/
-  bin/        eval.mjs (tasks × repeats against one model)
-  prompts/    core.md, api.md, plan.md, build.md, test.md, template.lua, example.lua
+  bin/        eval.mjs (tasks × repeats), probe.mjs (protocol and speed check)
+  prompts/    core.md, api.md, phase files, templates/*.lua (+ checks)
   src/
-    maker.mjs     the only import path into app/: player runtime, cart codec,
-                  token counter, PNG encoder, shooter tasks and oracle
-    model.mjs     pi-ai connection; exposes complete(request) only
-    loop.mjs      generic tool loop over complete(); knows nothing about PICO-8
-    runtime.mjs   one inspection session: load, play, read, frame images
-    lint.mjs      static source checks before loading
-    smoke.mjs     host-run checks after every successful load
-    tools.mjs     model-facing tools built on runtime/lint/smoke
-    phases.mjs    plan → build → test → report controller
-    prompts.mjs   prompt assembly from prompts/
-    sounds.mjs    built-in sound bank preloaded into every new cart (sfx 0–7)
-  tests/      node --test, scripted model; no provider requests
+    engine/ollama.mjs   raw completion: complete(prompt, {stop, maxTokens, temperature, signal})
+    protocol.mjs        MiniCPM5 chat template, tool definitions, <function> parser, thinking prefill
+    budget.mjs          token estimate and 8K request assembly (truncation rules)
+    loop.mjs            tool loop over engine + protocol; PICO-8-agnostic
+    maker.mjs           the only import path into app/: player runtime, cart codec, tokens, S4 tasks/oracle
+    runtime.mjs         one inspection session: load, advance, read, ASCII thumbnail
+    lint.mjs            static checks before loading
+    verify.mjs          host verification: smoke + template checks + task checks → text report
+    tools.mjs           model-facing tools
+    phases.mjs          plan → build → verify/fix → report
+    sounds.mjs          fixed sfx 0–7 bank preloaded into new carts
+  tests/      node --test with a scripted engine; no model requests
 ```
 
 Rules:
 
-- Nothing under `app/` imports from `lab/`. The lab imports `app/` only through
-  `src/maker.mjs`, and only pure modules, the player build and evaluation oracles —
-  never `game.js`, `agent.js`, the Maker tools or the knowledge package.
-- `loop.mjs` and `model.mjs` are PICO-8-agnostic; `phases.mjs` is the only module
-  that knows the workflow; tools never call the model.
-- Results live in `.cache/lab/` (ignored). Keys come only from the environment.
+- `app/` never imports `lab/`; `lab/` imports `app/` only through `src/maker.mjs`.
+- `engine/*` knows nothing about prompts; `protocol.mjs` knows nothing about PICO-8;
+  `phases.mjs` is the only module that knows the workflow; tools never call the model.
+- No provider SDK dependency. A future `engine/webgpu.mjs` implements the same `complete`.
+- Results go to `.cache/lab/` (ignored).
+
+## Protocol
+
+- Prompt: `<|im_start|>system … # Tools <tools>{json}</tools> …<|im_end|>`, user turns,
+  assistant turns with `<function>` calls, tool results as a user turn of
+  `<tool_response>…</tool_response>` blocks — exactly the official template.
+- Thinking: off by default (`<think>\n\n</think>\n\n` prefilled); on = `<think>\n` prefilled.
+  Both are evaluated; the default follows the data.
+- Parsing: every `<function name>` block with `<param>` values (CDATA or plain). A reply with
+  malformed XML gets one corrective tool response quoting the expected form.
+- Sampling: official `temperature 1.0, top_p 0.95`; `repetition_penalty 1.05` if loops appear.
+- Stop strings: `<|im_end|>`, `</s>`.
+
+## Tasks the model is asked to do
+
+| Tier | Example | Model output | Host verification |
+| --- | --- | --- | --- |
+| T1 tweak | "make the player faster", "lose after 5 misses" on a working cart | 1–3 `edit_game` calls | lint, smoke, task check (state read) |
+| T2 repair | S4 `shooter-repair` | `edit_game` calls | smoke, S4 oracle (evaluation only) |
+| T3 create from template | "catch falling fruit" | choose a template, fill its marked slots | smoke + the template's own checks |
+| Stretch | S4 `shooter-create` | as T3 | S4 oracle |
+
+New games never start from an empty file: the host loads a genre template (catch, dodge,
+shooter, collect first) whose structure, `g`, `new_game()`, modes, retry and HUD are fixed.
+The model edits only regions marked `-- SLOT: …`.
 
 ## Workflow
 
-Each phase starts a **fresh conversation**. The host carries state between phases
-as text: task, plan, current numbered source, latest host report. Inside a phase
-only the newest image is sent; older images become a one-line note.
+Every phase request is assembled from host state (task, plan, numbered source, last report)
+and stays within the 8K budget; inside a phase, older tool responses shrink to one line.
 
-| Phase | Model sees | Tools | Ends when | Caps |
-| --- | --- | --- | --- | --- |
-| plan (create only) | task | none | text reply | 1 call |
-| build | core + api + example + build, task, plan, source | `write_game`, `edit_game`, `done` | `done` accepted: last load clean and smoke boots | 12 turns |
-| test | core + api + test, task, plan checks, build summary, source, smoke | `check`, `edit_game`, `done` | `done` after a passing no-setup case on the final version | 16 turns |
-| report | — | — | host writes the four-part reply | — |
+| Phase | Model sees | Tools | Ends when |
+| --- | --- | --- | --- |
+| plan (T3 only) | task, template list | none | a short form: `TEMPLATE / NAME / GOAL / CONTROLS` |
+| build | core + api + phase, task, plan, numbered source | `write_game`, `edit_game`, `look`, `done` | `done` accepted: clean load and smoke |
+| verify | — (host) | — | host runs smoke + template/task checks |
+| fix (≤ 2 rounds) | failing checks with actual values, numbered source | `edit_game`, `look`, `done` | `done` accepted and checks re-run |
+| report | — | — | host writes the four-part reply from host results |
 
-Global caps match S4: 15 minutes and 40 tool calls per task. Thinking is `low` for
-plan and build and `off` for test (a first 9B run spent 30K characters thinking
-before its first play call).
-
-Repairs skip plan: build starts from the existing cart with the task as the plan.
-New games start from `prompts/template.lua`, already loaded, so a model never
-writes into an empty file and always has a main loop, global `g`, `new_game()`
-and a locked X retry.
+Caps per task: 15 minutes, 30 tool calls, 8 turns per phase.
 
 ## Tools
 
-| Tool | Arguments | Host behaviour |
+| Tool | Params (strings) | Host behaviour |
 | --- | --- | --- |
-| `write_game` | `source` | Replace main.lua → lint → load → smoke. Returns issues or the smoke report and one frame. |
-| `edit_game` | `edits: [{find, replace}]` | Exact, unique replacements applied atomically, then the same pipeline. Failures quote nearby numbered lines. |
-| `play` | `reset?`, `setup?` (Lua), `steps: [{press: ["left","o",…], frames}]`, `read?: ["g.mode",…]` | Runs input on the loaded cart. Returns mode changes with frames, read values (default: `g`), audio starts and the final frame. `setup` marks the result as setup evidence. |
-| `check` | `cases: [{name, setup?, steps, expect: [{path, equals/notEquals/atLeast/atMost}]}]` | Runs each case from boot in its own session and reports PASS/FAIL with actual values and mode changes. The host, not the model, decides what is verified. |
-| `done` | build: `summary`; test: `unverified[]` | Accepted only when the phase condition holds; otherwise the reason is returned. The final report lists host-passed cases as verified and failed cases as not verified. |
-
-Buttons are names (`left right up down o x`), not bit masks. Stringified lists and
-single values are accepted. Every error says what to do next.
-
-Why `check`: in the first 9B run the test phase wandered through 16 free `play`
-calls without converging on a route; the model can state an expectation but not
-judge long state dumps. Cases turn testing into data the host evaluates. With
-`play` still offered, the next run ignored `check`, repeated identical `play` calls
-and re-implemented an already fixed bug, so the test phase now has no `play`,
-receives the build summary ("believed complete; verify"), and the loop rejects a
-call identical to the previous one. `play` remains for interactive use.
+| `write_game` | `source` | Replace main.lua → lint → load → smoke. T1/T2 do not offer it. |
+| `edit_game` | `find`, `replace` | One exact, unique replacement, then the same pipeline. Errors quote nearby numbered lines. |
+| `look` | — | 32×32 ASCII thumbnail of the current frame (`0–f`, one char per 4×4 block) plus `g` summary. |
+| `done` | `summary` | Accepted only when the phase condition holds; otherwise the reason. |
 
 ## Host checks
 
-**Lint** (blocks loading): non-ASCII characters (line and character), foreign APIs
-(`love.`, `math.*`, `string.*`, `table.insert/remove`, `os.`, `io.`, `require`),
-top-level `local g`, missing `_draw` or `_update`/`_update60`, over 8192 tokens.
-Warnings: missing `new_game`.
+**Lint** (blocks loading): non-ASCII, foreign APIs (`love.`, `math.*`, `string.*`,
+`table.insert/remove`, `os.`, `io.`, `require`), top-level `local g`, missing `_draw` or
+`_update`/`_update60`, over 8192 tokens, edits outside template slots (T3).
 
-**Smoke** (fresh session each time): boots 30 frames without fault; `g` exists and
-`g.mode` is set; the frame uses more than one colour; holding `left`, `right`, `o`
-for 10 frames changes `g` or the frame compared with idle (reports the first
-changed fields).
+**Smoke**: boots 30 frames without fault; `g.mode` set; frame uses more than one colour;
+input changes `g` or the frame.
 
-## Prompts
+**Template checks**: each template ships cases on its own `g` fields (idle loses, scoring
+increases `g.score`, win reachable with setup, X retry restores the initial state).
 
-New carts also get a fixed sound bank (pickup, shoot, hit, win, lose, jump,
-blip, explode as sfx 0–7) so games have sound without audio authoring.
-
-`core.md` (rules, ≈350 tokens), `api.md` (the 45 most used PICO-8 functions with
-signatures, ≈700 tokens), `example.lua` (a complete small game built on the
-template, ≈600 tokens), and one short file per phase. Everything is resident for
-its phase; there is no document lookup tool.
+**Task checks** (T1): a state read per task, e.g. `g.speed > 1.5`.
 
 ## Evaluation
 
-`bin/eval.mjs` runs `shooter-repair`, `shooter-create` (contract and independent
-oracle from Maker's S4 suite) and `catch` (the browser smoke prompt, no oracle),
-3 repeats each, and writes per-run `report.json`, `final.p8` and a summary table.
-Baseline: the Maker flow numbers above.
+`bin/probe.mjs`: protocol round-trips (tool call with CDATA Lua, tool response, final text)
+and speed (prefill and decode tokens/s at 2K/4K/8K).
 
-Targets for Qwen3.5-9B: create ≥ 2/3 oracle passes, repair 3/3 within 5 minutes,
-tool errors ≤ 3 per task. A DeepSeek run checks that the simpler flow does not
-hurt a strong model.
+`bin/eval.mjs`: T1 ×5 tasks, T2 `shooter-repair`, T3 catch/dodge, stretch `shooter-create`;
+3 repeats; thinking on/off. Metrics: oracle/check pass, finished within caps, tool and parse
+errors, largest request in tokens, decode tokens, wall time.
 
-## Next
+## Milestones
 
-If the targets hold, the workflow moves into Maker as an opt-in "local model"
-agent profile (default off), and browser WebGPU inference follows.
-
-## Qwen3.5-9B results (closed 2026-11-13)
-
-9B (`qwen3.5:9b-q4_K_M`, Ollama Responses API) is no longer pursued; focus moves to
-text-only observation and MiniCPM5-2B. Archives: `.cache/lab/eval-9b-*.log`,
-`.cache/s4-local/`.
-
-| Flow | Repair (oracle) | Create (oracle) | Notes |
-| --- | --- | --- | --- |
-| Maker agent, medium thinking | 3/3, 1/3 finished in 15 min | 0/3 (also 0/3 after tool-hint fixes; first load moved to call 4–6) | 3–23 tool errors per run |
-| lab v1 (free `play`) | 2/2 | not reached | build 26–32 s; test wandered to the turn cap |
-| lab v2 (`check` + `play`) | 3/3, 126–246 s | not reached | test phase never converged (turn cap), 1–11 errors |
-| lab v3 (`check` only) | stopped after 1 build | — | test-phase `edit_game` broke a correct fix |
-
-Lessons kept for the next model: a fixed template plus host lint and smoke makes
-the build phase reliable (one edit, 26–72 s, oracle-correct every time); the weak
-part is self-verification. Free-form play does not converge, and letting the test
-phase edit invites regressions of already-correct code. Qwen3.5-4B failed the
-Maker flow outright (repair 1/3, create 0/3, 57/64 tool errors in the browser smoke).
+1. **M0 protocol and speed.** Engine, protocol, probe. Exit: valid CDATA tool calls in
+   ≥ 9/10 probe turns; measured tokens/s.
+2. **M1 tweak and repair.** Flat tools, 8K assembly, host verification, text reports. Exit:
+   T1 ≥ 4/5, T2 ≥ 2/3.
+3. **M2 create from templates.** Templates with slots and checks, plan form. Exit: T3 ≥ 2/3.
+4. **M3 browser.** WebGPU engine behind the same `complete`.
