@@ -117,3 +117,23 @@ OLLAMA_HOST=127.0.0.1:11434 OLLAMA_CONTEXT_LENGTH=32768 OLLAMA_FLASH_ATTENTION=1
 ~/.local/ollama-0.40.16/ollama pull qwen3.5:4b-q4_K_M
 cd lab/local-agent && npm install && npm run eval -- --model qwen3.5:4b-q4_K_M --tasks T0,T1
 ```
+
+## Results (2026-11-14)
+
+Stock Pi coding agent, `pico8` skill loaded up front (`--force-skill`), thinking off,
+Ollama Q4_K_M, hidden checks for scoring.
+
+| Task | Qwen3.5-4B | MiniCPM5-2B (`lab-minicpm5-2b`, 1 run each) |
+| --- | --- | --- |
+| T0 Python fix | 3/3, 14–21 s | 0/1 (edited the test file, timed out) |
+| T1 change constants | 3/3, 9–10 s | 1/1, 84 s |
+| T2 fix a bug | 3/3, 15–27 s (after p8 hint fixes; 2/3 before) | 0/1 (20 edits, bug left in, timed out) |
+| T3 add a feature | 3/3, 77–220 s (after hint fixes; 1/3 before) | 0/1 (74 edits, 81 tool errors) |
+| T4 create from skeleton | 1/3 | not run |
+| T5 create from empty | 0/3 | not run |
+
+Conclusions: with this harness Qwen3.5-4B reliably changes and fixes existing carts;
+creating a game from a skeleton is unreliable and from scratch fails. MiniCPM5-2B only
+manages constant tweaks and is not pursued further. What moved 4B the most was the
+checker's feedback (quoting the failing code, naming common slips, flagging unchanged
+re-checks), not the model or the agent loop.
