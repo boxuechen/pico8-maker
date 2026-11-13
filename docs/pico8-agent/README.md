@@ -1,8 +1,8 @@
 # PICO-8 knowledge and host contract
 
-This document describes the current implementation. The [agent tooling plan](../agent-tooling-plan.md) tracks the implemented P0 tools and the pending unified startup workflow and outcome-based evaluation. Apply those contract changes together with their implementation; the plan is maintainer documentation and is not published to the model.
+The static prefix is AGENT / MACHINE / WORKFLOW / base palette / host contract, in that order. Dynamic project state follows it. [WORKFLOW.md](WORKFLOW.md) covers creation, editing, resources, playtesting, readability and delivery at startup, including after compaction. The [reference index](REFERENCE_INDEX.md) and detailed references remain on-demand through read. There is no skill catalog or skill-reading prerequisite. Stable ordering permits provider caching where supported; this host does not assume every provider caches it.
 
-[AGENT.md](AGENT.md) routes requests to the create, edit, assets or playtest skill. [MACHINE.md](MACHINE.md) defines the PICO-8 target. The base palette, project state and skill metadata are available at startup. The [reference index](REFERENCE_INDEX.md), skill bodies and references load through `read` when needed.
+[The plan](../agent-tooling-plan.md) and [implementation record](../tooling-progress.md) track completed phases and remaining evaluation/text-mode work. They are maintainer documents and are not published to the model.
 
 ## Host tools
 
@@ -31,12 +31,21 @@ Input validation names invalid fields and cumulative checkpoint bounds before an
 
 Historical validation before the tooling refactor: 110 automated tests, the production build and four Sites checks passed. Coverage includes numeric advice, atomic edits, input validation before side effects, actual tap timing, persisted/sequential replay, cancellation, changed-cart evidence and feedback-preview isolation. The two existing case routes replayed through the new Game tools with all 78 recorded-call frame comparisons matching. These are implementation checks; they do not establish improved autonomous game quality. Detailed local evidence is in `.cache/p0-p2/`.
 
-Two short optional references cover collection/construction and adjacent-swap matching. Their index entries name the applicable genres and problems. They are not included at startup; the shared author/machine instructions and skill catalog remain unchanged.
+Two short optional references cover collection/construction and adjacent-swap matching. Their index entries name the applicable genres and problems. They are not included at startup; they remain optional under the shared startup Workflow.
 
 ## Publication and validation
 
 `manifest.json` is the publication allowlist. The compiler publishes Markdown and Lua under `app/public/extensions/pico8/<version>/` and emits only paths, sizes, hashes and section mappings in the browser index. Files are verified and cached on demand. The `/extensions/pico8/` mount is read-only. The app owns the static skill catalog and registers capabilities through the [Pi Durable extension](../../app/src/pico8/extension.js).
 
-Keep full skill instructions out of startup context and use virtual paths in model-facing links. The compiler checks language, skill metadata, links and recipe source hashes against successful receipts. When Lua examples change, run the appropriate [recipe verifier](recipes/README.md) or [microgame verifier](games/README.md) before regenerating the bundle.
+Use virtual paths in model-facing links. The compiler enforces the ordered startup sections and required Workflow headings, document allowlist, English text, links, and recipe source hashes against successful receipts. Startup rules are mandatory; a failed fetch or hash check prevents Agent preparation. When Lua examples change, run the appropriate [recipe verifier](recipes/README.md) or [microgame verifier](games/README.md) before regenerating the bundle.
 
 [Sources](SOURCES.md) records the PICO-8 manual and runtime evidence. Maintainers can consult the full [API inventory](runtime-api-inventory.md). The model reads a short [browser compatibility guide](references/runtime-compatibility.md). [Research provenance](research/README.md) records the sources behind the consolidated [design guide](references/game-design.md).
+
+
+## Evidence and host details
+
+The host reports measured state, execution and frames; a label, successful compile or model declaration is not a gameplay verdict. Frame instruction counts describe the local VM rather than official PICO-8 CPU percentages. A multi-step call reports actual progress; a fault can retain the last successful image. Normal routes prove only the paths actually exercised on that committed cart. Existing authored shortcuts cannot be detected from a normal purpose label. Data checks cannot establish subjective enjoyment, art quality or audible mixing.
+
+Manual tests and live playback use separate Workers and saves. Restoring a conversation restores historical evidence rather than VM state; load/reset creates a new test session. Logs retain at most 64 entries / 8 KiB raw bytes / 1 KiB per entry; non-ASCII bytes use \xNN escapes. Log frame IDs refer to attempted frames, with null during boot; faulted frames need not have committed. Resource previews do not execute a cart and use base colors; runtime screenshots reflect actual remapping. Diagnostic overflow is explicit, and pixel matrices are bounded separately from diagnostics.
+
+The MACHINE Lua block is extracted and exercised by `app/tests/workflow.test.mjs` against the real WASM for startup, normal collection/victory, failure, retry, and complete round-state replacement. It is illustrative; preserve existing structures on focused edits. The four-line delivery structure belongs to game work, not explanation-only replies.

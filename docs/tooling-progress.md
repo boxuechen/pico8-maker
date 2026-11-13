@@ -1,6 +1,6 @@
-# S0 / P0 实施记录
+# Agent 工具与 Workflow 实施记录
 
-2026-11-13：S0 与 P0（计划 S1、S2）已完成。P1 Workflow 合并、评测矩阵和纯文本模式属于后续阶段。本轮未调用付费模型。
+2026-11-13：S0、P0（S1、S2）与 S3 已完成。S4 评测矩阵和 S5 纯文本模式待实施。各阶段验证如下；未调用付费模型。
 
 ## 交付与边界
 
@@ -34,7 +34,7 @@ node app/scripts/evaluation/freeze-tooling-baseline.mjs --check
 | Sweet Garden | 176 | 88 | 68 | 2 | 267300 | 119 |
 | Lodge Podge | 157 | 27 | 0 | 10 | 238988 | 215 |
 
-累计归档含此前轮次完整历史，按 tool-call ID 去重，不能逐轮直接相加；缺失返回值单独计数。独立案例证据有 hash，本轮未重跑历史模型批次，不将旧声明当作当前通过证据。旧 skill 检查保留为 legacy-skill-routing，S3 改造后再退役。
+累计归档含此前轮次完整历史，按 tool-call ID 去重，不能逐轮直接相加；缺失返回值单独计数。独立案例证据有 hash，本轮未重跑历史模型批次，不将旧声明当作当前通过证据。旧 skill 检查仅留在历史归档；S3 已从当前 evaluator 删除读取先决条件，改用 workflow-scope。
 
 ## 实际验证
 
@@ -49,4 +49,25 @@ node app/scripts/evaluation/freeze-tooling-baseline.mjs --check
 
 固定空卡带真实 observation 与旧编码器比较：常规头部 711 → 197 UTF-8 bytes，减少 72.3%；测试要求无日志的普通头部 ≤500 bytes。尚无新模型对照数据，不能据此宣称 Agent 总调用数或视觉识别率改善。
 
-未运行完整 Maker `npm test`、完整播放器 `pnpm test`、Sites 检查或付费模型矩阵：本次无 hosting 改动，相关共享行为已由上述扩大/定向检查覆盖，未出现需要继续扩大的失败。S3 的 Workflow/骨架合并、S4 新题材与模型对照、S5 纯文本模式均未实施。
+未运行完整 Maker `npm test`、完整播放器 `pnpm test`、Sites 检查或付费模型矩阵：本次无 hosting 改动，相关共享行为已由上述扩大/定向检查覆盖，未出现需要继续扩大的失败。上述为 P0 验证范围。S4 新题材与模型对照、S5 纯文本模式仍未实施。
+
+
+## S3：统一 Workflow（2026-11-13）
+
+已删除四份 SKILL.md、目录生成、pico8_skills section、读取先决条件和压缩后重读规则。固定前缀按 AGENT → MACHINE → WORKFLOW → 调色板 → Host 注入，动态 Project 状态在末尾。详细参考继续按需加载、校验 hash 并只读缓存；旧 skill 路径明确拒绝，不做兼容映射。发布包由 31 份降为 27 份，版本 `pico8-files-v1-1f5ab26ff1f0d473`。
+
+Workflow 包含新建、修改、资源、试玩、画面可读性与四项交付格式。试玩优先读状态规划输入、正常路线核心循环/胜利/重开，再用 debug 验证边界；12 次验证调用仅作软提醒。可读性要求和推荐配色进入启动前缀。MACHINE 增加 20 行可运行骨架，通过全局 g 和 new_game() 重建每局实体与计数，把持久数据留在局外。
+
+静态 provider system 前缀（不含动态 Project 和 tools schema）实测 **10,273 UTF-8 bytes，约 10.0 KiB**。WORKFLOW.md 为 6,381 bytes；playtest 参考从 9,185 缩至 4,546 bytes。宿主隔离、日志细节和证据局限集中到维护者 README。未从字节变化推断实际模型效率或缓存命中率。
+
+当前 evaluator 删除 selectedSkills/resourceSkillBeforeEdits 与技能读取指标，scope profile 为 workflow-scope；scope/原子编辑/实际输入/独立像素验证保留。当前入口重命名为 workflow-cases、workflow-browser 和 evaluation-recorder，使用 `/__evaluation` 与新的 evaluation-<id> 归档目录。历史归档和冻结基线仍保留原名与原 hash。新题材、模型矩阵和更完整的结果评测留给 S4。
+
+验证：
+
+- 知识/扩展/Workflow/compaction/Agent/评测关键组合 30 项通过；补充编译器顺序拒绝与必需 Workflow 离线检查后，相关入口与工具回归 33 项通过（两组有重叠）。
+- 骨架在真实 WASM 中通过启动、收集三目标获胜、左边界失败、两种重开及完整状态替换；临时字段与修改过的实体消失，局外 best score 保留。
+- 脚本化 provider 通过真实 Agent 和工具链直接 load_game 开始，无前置文档调用，完成正常胜利/重开。实际 Pi compaction 及恢复后的 provider 请求均包含完整且仅一次的有序静态正文；动态 Project 可更新，旧 catalog 不回流，工具不重放。此 fixture 不代表真实模型自主创作质量。
+- 编译器保留语言、虚拟链接、allowlist、hash 和 Lua receipt 检查；新增缺失 Workflow 必需段、缺失/乱序启动 section 拒绝；已有过期/失败 Lua receipt 检查通过。
+- 生产构建通过；Chrome 157 烟测确认新评测入口、浏览器知识加载、旧路径拒绝和本地归档 200，未调用模型，无页面错误或未处理 rejection。既有 Vite 大 chunk 提示保留。
+
+本阶段无 runtime、hosting 或共享存储实现变更，定向检查覆盖了受影响入口，未扩大到完整 npm test、runtime 回归或 Sites 检查。付费模型和 S4/S5 未运行。

@@ -5,36 +5,37 @@ const read = (path) => readFile(new URL(path, root), "utf8");
 const hash = (text) => createHash("sha256").update(text).digest("hex");
 const manifest = JSON.parse(await read("manifest.json"));
 const palette = JSON.parse(await read("palette.json"));
-// Fixed, repository-owned skills use a deliberately narrow frontmatter format.
-// This publishes metadata, not a general filesystem/package discovery service.
-const skills = [];
-const skillNames = new Set();
-const fileTexts = {};
-for (const file of manifest.skills ?? []) {
-  const text = await read(file);
-  const match = text.match(
-    /^---\nname: ([a-z0-9]+(?:-[a-z0-9]+)*)\ndescription: ([^\n]+)\n---\n/,
+const requiredSections = {
+  pico8_agent: "AGENT.md",
+  pico8_machine: "MACHINE.md",
+  pico8_workflow: "WORKFLOW.md",
+};
+if (
+  manifest.schemaVersion !== 1 ||
+  Object.hasOwn(manifest, "skills") ||
+  JSON.stringify(manifest.sections) !== JSON.stringify(requiredSections)
+)
+  throw new Error(
+    "Invalid startup sections: expected AGENT, MACHINE, WORKFLOW in order",
   );
+const fileTexts = {};
+const validPath = (file) => {
   if (
-    !match ||
-    match[1].length > 64 ||
-    match[2].length > 1024 ||
-    file !== `skills/${match[1]}/SKILL.md` ||
-    skillNames.has(match[1])
+    typeof file !== "string" ||
+    !/^[A-Za-z0-9_-]+(?:\/[A-Za-z0-9_-]+)*\.(?:md|lua)$/.test(file)
   )
-    throw new Error(`Invalid skill metadata: ${file}`);
-  if (/[\u3400-\u9fff]/u.test(text) || text.includes("/Users/"))
-    throw new Error(`Invalid skill content: ${file}`);
-  skillNames.add(match[1]);
-  skills.push({ name: match[1], description: match[2], file });
-  fileTexts[file] = text;
-}
+    throw new Error(`Invalid document path: ${file}`);
+};
 const validations = new Map();
 for (const {
   file,
   validation: receiptFile = "validation-results.json",
 } of manifest.references) {
-  if (Object.hasOwn(fileTexts, file))
+  validPath(file);
+  if (
+    Object.hasOwn(fileTexts, file) ||
+    Object.values(requiredSections).includes(file)
+  )
     throw new Error(`Duplicate reference ${file}`);
   const content = await read(file);
   if (file.endsWith(".lua")) {
@@ -58,10 +59,22 @@ for (const {
   fileTexts[file] = content;
 }
 for (const file of Object.values(manifest.sections)) {
+  validPath(file);
   const text = await read(file);
   if (/[\u3400-\u9fff]/u.test(text) || text.includes("/Users/"))
     throw new Error(`Invalid section language/path: ${file}`);
   fileTexts[file] = text;
+}
+for (const heading of [
+  "Create",
+  "Edit",
+  "Resources",
+  "Playtest",
+  "Readability",
+  "Delivery",
+]) {
+  if (!fileTexts["WORKFLOW.md"].split("\n").includes(`## ${heading}`))
+    throw new Error(`Missing Workflow section: ${heading}`);
 }
 fileTexts["PALETTE_DEFAULT.md"] =
   "Base palette in slot order 0–f: " +
@@ -83,15 +96,9 @@ await writeFile(
 );
 // Publish original model-facing files as versioned static assets. The browser imports only metadata.
 const files = {};
-fileTexts["SKILLS.md"] =
-  "# Skills\n" +
-  skills
-    .map(
-      (s) =>
-        `- ${s.name}: ${s.description}\n  Path: /extensions/pico8/${s.file}`,
-    )
-    .join("\n");
 for (const [file, text] of Object.entries(fileTexts)) {
+  if (/\]\([^)]*\.md\)/u.test(text))
+    throw new Error(`Unprocessed model content ${file}`);
   for (const [path] of text.matchAll(
     /\/extensions\/pico8\/[A-Za-z0-9_./-]+\.(?:md|lua)/g,
   ))
@@ -117,7 +124,6 @@ for (const [file, text] of Object.entries(fileTexts)) {
 const fileSections = {
   ...manifest.sections,
   pico8_palette: "PALETTE_DEFAULT.md",
-  pico8_skills: "SKILLS.md",
 };
 await writeFile(
   new URL("pico8-files.js", output),

@@ -19,12 +19,12 @@ npm --prefix app run dev -- --host 127.0.0.1 --port 5175
 
 - `app/src/` 包含 React 工作台、Pi Durable Agent 和 PICO-8 工具。用户试玩与 Agent 测试使用独立运行时。
 - `app/src/assets/carts/` 保存首页实际展示的 11 张社区卡带。构建将原始字节内嵌到应用首页，`carts.json` 保留作者和来源。
-- `docs/pico8-agent/` 提供模型规则、按需加载的四个 skill、参考和可运行示例。见[知识库与宿主契约](docs/pico8-agent/README.md)。
+- `docs/pico8-agent/` 提供模型规则、启动时注入的统一 Workflow、按需参考和可运行示例。见[知识库与宿主契约](docs/pico8-agent/README.md)。
 - `app/evaluation.html` 提供本地真实模型评测。见[评测说明与历史记录](app/scripts/evaluation/README.md)。
 
 每张卡带共享源码、原生资源和最近 12 个版本，支持多个独立对话。卡带与对话存入 IndexedDB。模型配置默认保存在浏览器，可关闭保存或清除配置。应用直接请求所选服务，交互模型默认采用 high 思考设置并按能力调整。
 
-[Agent 工具与流程改造计划](docs/agent-tooling-plan.md)中的 S0/P0 已实现：模型可读取游戏全局状态、执行有界调试并获取日志，截图放大、输入和结果契约已精简。统一 Workflow、结果评测扩展与纯文本模式留在后续阶段；验证范围见[实施记录](docs/tooling-progress.md)。
+[Agent 工具与流程改造计划](docs/agent-tooling-plan.md)中的 S0/P0/S3 已实现：模型可读取游戏全局状态、执行有界调试并获取日志，截图放大、输入和结果契约已精简。Workflow 与重开骨架已合并到静态前缀；结果评测扩展与纯文本模式留在后续阶段；验证范围见[实施记录](docs/tooling-progress.md)。
 
 ## 检查与构建
 

@@ -2,8 +2,8 @@ import { defineExtension, section } from "@earendil-works/pi-durable";
 import { createPico8Tools } from "./tools.js";
 import { mainPath } from "./workspace.js";
 
-// Like Game Studio's entry skill, AGENT.md routes to task-specific documents.
-// Pi registers code here; workflows are read lazily through the existing read tool.
+// Stable startup order: author, machine, workflow, palette, host.
+// Agent appends dynamic project state after these sections; references stay lazy.
 export function createPico8Extension({ game, knowledge }) {
   if (!knowledge?.version || !knowledge.sections || !knowledge.read)
     throw new Error("PICO-8 knowledge is required");

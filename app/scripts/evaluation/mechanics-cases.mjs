@@ -83,7 +83,6 @@ export const mechanicsCases = [
   {
     id: "jump",
     mechanic: true,
-    skills: ["pico8-edit", "pico8-playtest"],
     snapshot: () => emptySnapshot(jumpSource),
     prompt:
       "修好这个很小的跳跃场景：O 只能在地面起跳，空中再次按 O 不应再次起跳；角色要落回地面且能再次跳。保留左右移动、重力、跳跃力度和现有画面，验证起跳、空中重复按键、落地和再次起跳，不增加关卡或其他玩法。",
@@ -91,7 +90,6 @@ export const mechanicsCases = [
   {
     id: "enemy",
     mechanic: true,
-    skills: ["pico8-edit", "pico8-playtest"],
     snapshot: () => emptySnapshot(enemySource),
     prompt:
       "修好这个小场景的敌人接触伤害：每次受伤后有 20 个更新帧的无敌时间，持续接触不能每帧扣血，无敌结束后仍接触则再次受伤。保留 3 点生命、移动、到达旗帜获胜、零生命失败和 O 重试。验证扣血间隔、胜负及两种结果后的重试，重试应恢复生命和移动。保留现有画面。",
@@ -99,7 +97,6 @@ export const mechanicsCases = [
   {
     id: "map",
     mechanic: true,
-    skills: ["pico8-edit", "pico8-playtest"],
     snapshot: () => {
       const snapshot = emptySnapshot(mapSource);
       snapshot.assets = editAssets(snapshot.assets, [

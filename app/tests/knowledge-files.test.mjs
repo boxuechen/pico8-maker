@@ -9,7 +9,7 @@ import { createPico8Extension } from "../src/pico8/extension.js";
 import { knowledge, index, load } from "./helpers/knowledge.mjs";
 
 const path = "/extensions/pico8/references/audio.md";
-test("startup reads entry files and skill metadata, not skill bodies; documents are lazy and cached", async () => {
+test("startup loads the full Workflow once; references stay lazy and cached", async () => {
   const loaded = [];
   const docs = createKnowledgeFiles({
     load: async (file) => {
@@ -21,7 +21,8 @@ test("startup reads entry files and skill metadata, not skill bodies; documents 
   assert.deepEqual(loaded.sort(), Object.values(index.sections).sort());
   assert.ok(!loaded.includes("references/audio.md"));
   assert.ok(!loaded.includes("REFERENCE_INDEX.md"));
-  assert.ok(loaded.includes("SKILLS.md"));
+  assert.ok(loaded.includes("WORKFLOW.md"));
+  assert.ok(!Object.hasOwn(index.files, "SKILLS.md"));
   assert.ok(!loaded.some((file) => file.startsWith("skills/")));
   const a = mountKnowledge(null, docs),
     b = mountKnowledge(null, docs);
@@ -31,13 +32,15 @@ test("startup reads entry files and skill metadata, not skill bodies; documents 
   ]);
   assert.equal(x.value, y.value);
   assert.equal(loaded.filter((f) => f === "references/audio.md").length, 1);
-  const skill = "/extensions/pico8/skills/pico8-create/SKILL.md";
-  await Promise.all([a.readTextFile(skill), b.readTextFile(skill)]);
-  assert.equal(
-    loaded.filter((file) => file === "skills/pico8-create/SKILL.md").length,
-    1,
+  await Promise.all([
+    a.readTextFile("/extensions/pico8/WORKFLOW.md"),
+    b.readTextFile("/extensions/pico8/WORKFLOW.md"),
+  ]);
+  assert.equal(loaded.filter((file) => file === "WORKFLOW.md").length, 1);
+  await assert.rejects(
+    () => docs.read("/extensions/pico8/skills/pico8-create/SKILL.md"),
+    /Unknown/,
   );
-  assert.ok(!loaded.includes("skills/pico8-playtest/SKILL.md"));
 });
 test("HTTP loader uses versioned paths, rejects errors/hash mismatches and retries", async (t) => {
   const urls = [];
@@ -68,8 +71,9 @@ test("HTTP loader uses versioned paths, rejects errors/hash mismatches and retri
 });
 test("required entry failures prevent preparation", async () => {
   const docs = createKnowledgeFiles({
-    load: async () => {
-      throw Error("offline");
+    load: async (file) => {
+      if (file === "WORKFLOW.md") throw Error("offline");
+      return load(file);
     },
   });
   await assert.rejects(() => docs.prepare(), /offline/);
@@ -167,7 +171,6 @@ test("published Markdown and Lua are original files; metadata contains no bodies
   for (const file of new Set([
     ...Object.values(manifest.sections),
     ...manifest.references.map((r) => r.file),
-    ...manifest.skills,
   ])) {
     assert.equal(
       await load(file),

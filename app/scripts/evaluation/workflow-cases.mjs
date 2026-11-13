@@ -3,7 +3,7 @@ import { emptySnapshot, editAssets } from "../../src/pico8/assets.js";
 
 export const fixtureSource = `-- Preserve unrelated mechanics and the credit.
 speed=1
-credit="SKILL FIXTURE"
+credit="WORKFLOW FIXTURE"
 function _init() x=8 mode="play" end
 function _update()
  if mode!="play" then
@@ -32,43 +32,37 @@ export function fixtureSnapshot() {
   return snapshot;
 }
 
-export const skillCases = [
+export const workflowCases = [
   {
     id: "create",
-    skills: ["pico8-create", "pico8-playtest"],
     prompt:
       "做一个完整但很小的 PICO-8 游戏：左右键移动角色，抵达右边旗帜获胜，走出左边界失败；胜负后按 O 重试。开场就能操作，角色和旗帜清楚可见。完成并验证核心玩法即可。",
   },
   {
     id: "edit",
-    skills: ["pico8-edit", "pico8-playtest"],
     prompt:
-      "把现有游戏的水平移动速度从每帧 1 像素改为 2 像素，验证修改。保留其他规则、资源和 SKILL FIXTURE 署名。",
+      "把现有游戏的水平移动速度从每帧 1 像素改为 2 像素，验证修改。保留其他规则、资源和 WORKFLOW FIXTURE 署名。",
   },
   {
     id: "assets",
-    skills: ["pico8-assets"],
     prompt:
       "只把已有 sprite 1 的全部 8×8 像素改成粉色（颜色 14），保留它的 flags 和所有其他资源、Lua 代码。提交并检查显示。",
   },
   {
     id: "playtest",
-    skills: ["pico8-playtest"],
     prompt:
       "只试玩现有游戏：验证左右移动、右边旗帜获胜、左边越界失败和 O 重试。报告实际观察结果，不修改代码或资源。",
   },
   {
     id: "explain",
-    skills: [],
     prompt:
       "只解释现有游戏的控制、胜负和重试规则。可以读源码，但不要运行、重置、按键、修改或加载游戏。",
   },
   {
     id: "compact",
-    skills: ["pico8-edit", "pico8-playtest"],
     compact: true,
     prompt:
-      "继续之前的游戏，把水平移动速度改为每帧 2 像素并验证。保留现有资源、其他规则和 SKILL FIXTURE 署名。",
+      "继续之前的游戏，把水平移动速度改为每帧 2 像素并验证。保留现有资源、其他规则和 WORKFLOW FIXTURE 署名。",
   },
 ];
 
@@ -87,34 +81,15 @@ export function transcriptMetrics(entries) {
   const successful = calls.filter(
     (c) => results.has(c.id) && !results.get(c.id).isError,
   );
-  const skillReads = successful.filter(
-    (c) =>
-      c.name === "read" &&
-      /^\/extensions\/pico8\/skills\/[^/]+\/SKILL\.md$/.test(
-        c.arguments.path ?? "",
-      ),
-  );
   const assistant = messages.filter((m) => m.role === "assistant");
-  const firstAssetEdit = calls.findIndex((c) => c.name === "edit_assets");
-  const assetsSkillRead = calls.findIndex(
-    (c) =>
-      skillReads.includes(c) &&
-      c.arguments.path.endsWith("/pico8-assets/SKILL.md"),
-  );
   return {
     outcomes: outcomeMetrics(entries),
-    processChecksProfile: "legacy-skill-routing",
+    checksProfile: "workflow-scope",
     tools: calls.length,
     failedTools: calls.filter((c) => results.get(c.id)?.isError).length,
-    skillReads: skillReads.map((c) => c.arguments.path.split("/").at(-2)),
-    resourceSkillBeforeEdits:
-      firstAssetEdit === -1 ||
-      (assetsSkillRead >= 0 && assetsSkillRead < firstAssetEdit),
     referenceReads: successful.filter(
       (c) =>
-        c.name === "read" &&
-        c.arguments.path?.startsWith("/extensions/pico8/") &&
-        !c.arguments.path.includes("/skills/"),
+        c.name === "read" && c.arguments.path?.startsWith("/extensions/pico8/"),
     ).length,
     inputs: successful
       .filter((c) => c.name === "press_buttons")
@@ -144,10 +119,7 @@ export function transcriptMetrics(entries) {
 export function assessScope(task, before, after, metrics, settled) {
   const checks = {
     naturalCompletion: settled?.status === "done" && Boolean(metrics.finalText),
-    selectedSkills: task.skills.every((s) => metrics.skillReads.includes(s)),
   };
-  if (metrics.operations.includes("edit_assets"))
-    checks.resourceSkillBeforeEdits = metrics.resourceSkillBeforeEdits === true;
   if (task.mechanic) checks.preservedResources = before.assets === after.assets;
   if (["playtest", "explain"].includes(task.id)) {
     checks.preservedCart =
@@ -158,12 +130,18 @@ export function assessScope(task, before, after, metrics, settled) {
   }
   if (task.id === "explain")
     checks.noGameOperation = !metrics.operations.some((n) =>
-      ["load_game", "reset_game", "press_buttons", "observe_game"].includes(n),
+      [
+        "load_game",
+        "reset_game",
+        "press_buttons",
+        "observe_game",
+        "inspect_game",
+      ].includes(n),
     );
   else if (task.id !== "assets") checks.actualInput = metrics.inputs.length > 0;
   if (["edit", "compact"].includes(task.id)) {
     checks.preservedResources = before.assets === after.assets;
-    checks.preservedCredit = after.source.includes('credit="SKILL FIXTURE"');
+    checks.preservedCredit = after.source.includes('credit="WORKFLOW FIXTURE"');
   }
   if (task.id === "assets") {
     checks.sourceUnchanged = before.source === after.source;

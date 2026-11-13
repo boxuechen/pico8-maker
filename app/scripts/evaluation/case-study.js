@@ -8,7 +8,7 @@ import { readableError } from "../../src/model-config.js";
 import { newCart } from "../../src/cart-store.js";
 import { activeSession, sessionContext } from "../../src/sessions.js";
 import { defaultKnowledgeFiles } from "../../src/pico8/knowledge-files.js";
-import { transcriptMetrics } from "./skills-cases.mjs";
+import { transcriptMetrics } from "./workflow-cases.mjs";
 
 const $ = (id) => document.getElementById(id);
 const garden = new URLSearchParams(location.search).get("case") === "garden";
@@ -44,7 +44,7 @@ const safeJSON = (value) => JSON.stringify(value, (_, v) =>
   typeof v === "string" && config.apiKey ? v.replaceAll(config.apiKey, "[REDACTED]") : v, 2);
 const entries = async () => (await agent.root.entries({ order: "ascending" }, 1000, undefined, context)).items;
 async function archive() {
-  const saved = await fetch("/__skills-evaluation", {
+  const saved = await fetch("/__evaluation", {
     method: "POST", headers: { "Content-Type": "application/json" }, body: safeJSON(report),
   });
   if (!saved.ok) throw new Error(`Archive failed: ${saved.status}`);

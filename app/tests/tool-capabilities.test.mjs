@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { Game } from "../src/game.js";
 import { TestGame, input } from "./helpers/game.mjs";
-import { fixtureSnapshot } from "../scripts/evaluation/skills-cases.mjs";
+import { fixtureSnapshot } from "../scripts/evaluation/workflow-cases.mjs";
 import { inputPlan } from "../src/pico8/input-sequence.js";
 import {
   emptySnapshot,

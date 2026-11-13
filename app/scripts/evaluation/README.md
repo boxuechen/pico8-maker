@@ -28,9 +28,9 @@ This loads the unchanged cart in the bundled WASM runtime and writes actual PNG 
 
 ## Fixed suites
 
-Open `/evaluation.html` on the same local development origin as the app. The evaluator uses the browser's saved model configuration and makes normal provider requests with disposable carts. Select Workflow for the original six tasks twice, or Small mechanics for three small repair tasks twice. It records tool use, skill selection, scope preservation and independent pixel checks. Review creation gameplay with the returned frames. Compaction tests use declared synthetic history and real provider summarization.
+Open `/evaluation.html` on the same local development origin as the app. The evaluator uses the browser's saved model configuration and makes normal provider requests with disposable carts. Select Workflow for the original six tasks twice, or Small mechanics for three small repair tasks twice. It records tool use, state/debug calls, scope preservation and independent pixel checks. Workflow is present at startup; document reads are not pass criteria. Review creation gameplay with the returned frames. Compaction tests use declared synthetic history and real provider summarization.
 
-The evaluator has a 180-second and 40-tool budget per attempt. Its loopback recorder saves reports and execution snapshots under `.cache/evaluations/skills-<id>/`. Preserve failed attempts and report the scope of each check. Deterministic evaluator tests are part of `npm test`.
+The evaluator has a 180-second and 40-tool budget per attempt. Its loopback recorder saves reports and execution snapshots through `/__evaluation` under `.cache/evaluations/evaluation-<id>/`. Preserve failed attempts and report the scope of each check. Deterministic evaluator tests are part of `npm test`.
 
 ## Small mechanics suite
 
@@ -50,7 +50,9 @@ For feedback-preview QA use `fixture-comparison` on an isolated origin with the 
 
 P0–P2 integration evidence lives in `.cache/p0-p2/`: the unmodified Sweet Garden and Lodge Podge carts were recorded and replayed through `Game.execute`, with all 44 and 34 call-end frame hashes matching respectively. Browser QA used the explicit local fixture to check before/current preview, persistence and restoration before read-only feedback. This batch did not rerun unrestricted real-model creation or human enjoyment tests.
 
-## Recorded results
+## Historical results before S3
+
+These batches used the former skill-routing implementation and its checks. They are preserved historical evidence, not results for the current startup Workflow.
 
 | Batch | Saved configuration | Result |
 | --- | --- | --- |
@@ -84,7 +86,7 @@ Source reads now use `read` with draft status, budget and pagination; the model 
 
 The final batch reduced calls by 12.9% and images by 15.6% against the baseline in these twelve samples. This is an observed batch comparison, not a controlled estimate of general savings: generated games, repairs and selected checkpoints vary. A deterministic WASM regression separately confirms that the same three-step input returns one default image instead of three while preserving final pixels, input timing and execution progress. Explicit checkpoints and early-stop evidence remain covered.
 
-The first pass exposed an existing evaluator gap: fixed create checks did not require assets when a generated game called `edit_assets`. The evaluator now checks for a successful assets skill read before the first resource edit, including within create tasks; missing, failed and late reads fail. Rechecking the baseline also finds this violation in `create-2`, so its historical 12/12 result is not a pass under the expanded checks. The final batch's second creation read assets before editing sprites, loaded source and resources together, and repaired the game without loading edit.
+The first pass exposed an existing evaluator gap: fixed create checks did not require assets when a generated game called `edit_assets`. That historical evaluator checked for a successful assets skill read before the first resource edit, including within create tasks; missing, failed and late reads fail. Rechecking the baseline also finds this violation in `create-2`, so its historical 12/12 result is not a pass under the expanded checks. The final batch's second creation read assets before editing sprites, loaded source and resources together, and repaired the game without loading edit.
 
 Archived reports:
 
@@ -108,4 +110,9 @@ git show 5d7bb30:docs/pico8-agent/research/runs/2026-11-13-tools/README.md
 
 ## Tooling baseline and outcome metrics
 
-See [the frozen baseline](../../../docs/tooling-progress.md). `transcriptMetrics().outcomes` counts unique tool-call IDs, UTF-8 result bytes, PNG dimensions, errors and first successful load. Gameplay coverage remains unknown without verifier evidence. Existing skill checks are labeled `legacy-skill-routing`; they are process checks for the current implementation. Recheck archived metrics with `node scripts/evaluation/freeze-tooling-baseline.mjs --check` from `app/`.
+See [the frozen baseline](../../../docs/tooling-progress.md). `transcriptMetrics().outcomes` counts unique tool-call IDs, UTF-8 result bytes, PNG dimensions, errors and first successful load. Gameplay coverage remains unknown without verifier evidence. Current scope checks use `workflow-scope`; obsolete skill-read requirements and catalog metrics have been removed. Historical archives remain unchanged. Recheck archived metrics with `node scripts/evaluation/freeze-tooling-baseline.mjs --check` from `app/`.
+
+
+## S3 targeted checks
+
+`tests/workflow.test.mjs` runs the published MACHINE skeleton in real WASM, then a scripted provider through the real Agent/tool loop. It checks authoring as the first operation, normal victory/retry, complete ordered startup bodies, real Pi compaction and restored context, and a changing project suffix. This is an integration fixture, not a paid model result or a measure of autonomous gameplay quality. Compiler tests reject missing Workflow sections, broken links, wrong language, incorrect startup order and stale Lua receipts. The wider S4 result/model matrix remains pending.

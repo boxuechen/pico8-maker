@@ -5,12 +5,12 @@ const app = fileURLToPath(new URL("../../", import.meta.url));
 const root = resolve(app, "..");
 
 // Dev-only, loopback-only result archive. No model credentials reach this route.
-export function skillsRecorder() {
+export function evaluationRecorder() {
   const initialized = new Set();
   return {
-    name: "local-skills-evaluation",
+    name: "local-evaluation",
     configureServer(server) {
-      server.middlewares.use("/__skills-evaluation", async (req, res) => {
+      server.middlewares.use("/__evaluation", async (req, res) => {
         try {
           const origin = new URL(req.headers.origin ?? "http://invalid");
           if (
@@ -42,7 +42,7 @@ export function skillsRecorder() {
             !Array.isArray(report.runs)
           )
             throw new Error("Invalid evaluation report");
-          const path = `.cache/evaluations/skills-${report.id}`;
+          const path = `.cache/evaluations/evaluation-${report.id}`;
           const dir = resolve(root, path);
           if (!initialized.has(report.id)) {
             await mkdir(dir, { recursive: true });

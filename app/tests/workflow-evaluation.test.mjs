@@ -1,11 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  skillCases,
+  workflowCases,
   fixtureSnapshot,
   transcriptMetrics,
   assessScope,
-} from "../scripts/evaluation/skills-cases.mjs";
+} from "../scripts/evaluation/workflow-cases.mjs";
 import { editAssets } from "../src/pico8/assets.js";
 import { createPico8Session } from "../public/player/main/player.mjs";
 import { cartBytes } from "../src/pico8/cart.js";
@@ -16,20 +16,20 @@ import {
   verifyMechanics,
 } from "../scripts/evaluation/mechanics-cases.mjs";
 
-test("evaluation metrics require successful skill reads and actual tool evidence", () => {
+test("evaluation metrics use actual tool evidence without document-reading prerequisites", () => {
   const entries = [
     {
       model: [
         {
           role: "assistant",
           content: [
-            { type: "text", text: "I read every skill and tested everything." },
+            { type: "text", text: "I tested everything." },
             {
               type: "toolCall",
               id: "r",
               name: "read",
               arguments: {
-                path: "/extensions/pico8/skills/pico8-edit/SKILL.md",
+                path: "/extensions/pico8/references/playtest.md",
               },
             },
             {
@@ -52,62 +52,24 @@ test("evaluation metrics require successful skill reads and actual tool evidence
     },
   ];
   const m = transcriptMetrics(entries);
-  assert.deepEqual(m.skillReads, []);
+  assert.equal(m.referenceReads, 0);
+  assert.equal(m.checksProfile, "workflow-scope");
   assert.equal(m.failedTools, 1);
   assert.deepEqual(m.inputs, [{ steps: [{ frames: 10, buttons: 2 }] }]);
-  const task = skillCases.find((t) => t.id === "edit");
+  const task = workflowCases.find((t) => t.id === "edit");
   const checks = assessScope(task, fixtureSnapshot(), fixtureSnapshot(), m, {
     status: "done",
   });
-  assert.equal(checks.selectedSkills, false);
+  assert.ok(!Object.hasOwn(checks, "selectedSkills"));
+  assert.ok(!Object.hasOwn(checks, "resourceSkillBeforeEdits"));
   assert.equal(checks.actualInput, true);
   assert.equal(checks.naturalCompletion, true);
 });
 
-test("resource skill routing rejects missing, failed and late reads in creation tasks", () => {
-  const read = {
-    type: "toolCall",
-    id: "r",
-    name: "read",
-    arguments: { path: "/extensions/pico8/skills/pico8-assets/SKILL.md" },
-  };
-  const edit = {
-    type: "toolCall",
-    id: "e",
-    name: "edit_assets",
-    arguments: {},
-  };
-  for (const [calls, isError, expected] of [
-    [[edit], false, false],
-    [[read, edit], true, false],
-    [[edit, read], false, false],
-    [[read, edit], false, true],
-  ]) {
-    const entries = [
-      {
-        model: [
-          { role: "assistant", content: calls },
-          { role: "toolResult", toolCallId: "r", isError, content: [] },
-          { role: "toolResult", toolCallId: "e", isError: false, content: [] },
-        ],
-      },
-    ];
-    const metrics = transcriptMetrics(entries);
-    const checks = assessScope(
-      skillCases.find((t) => t.id === "create"),
-      fixtureSnapshot(),
-      fixtureSnapshot(),
-      metrics,
-      { status: "done" },
-    );
-    assert.equal(checks.resourceSkillBeforeEdits, expected);
-  }
-});
-
 test("scope assessment rejects unrequested edits, resource damage and aborted answers", () => {
   const before = fixtureSnapshot();
-  const m = { operations: [], skillReads: [], inputs: [], finalText: "Done." };
-  const explain = skillCases.find((t) => t.id === "explain");
+  const m = { operations: [], inputs: [], finalText: "Done." };
+  const explain = workflowCases.find((t) => t.id === "explain");
   assert.equal(
     assessScope(explain, before, before, m, { status: "unanswered" })
       .naturalCompletion,
@@ -123,7 +85,7 @@ test("scope assessment rejects unrequested edits, resource damage and aborted an
     ).noGameOperation,
     false,
   );
-  const assets = skillCases.find((t) => t.id === "assets");
+  const assets = workflowCases.find((t) => t.id === "assets");
   const after = {
     ...before,
     assets: editAssets(before.assets, [

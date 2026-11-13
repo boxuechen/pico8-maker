@@ -6,4 +6,29 @@ Use _init for setup, _update (30 Hz) or _update60 (60 Hz) for simulation, and _d
 
 Aim for 8192 code tokens and 65535 source characters. Tool budgets are approximate. Native resources load before _init. The lower sprite sheet overlaps the lower map. Audio uses four shared channels. cartdata selects a save namespace with numeric dget/dset slots 0–63.
 
-For new games, keep key per-run state in a global table such as g so inspect_game can read counters, entities and mode together. Recreate that table in the game reset function. Preserve existing structures when editing a cart.
+## Reset skeleton
+
+Collect three targets, lose at the left edge, retry with O. Adapt these rules for new games; preserve existing structures in focused edits. Keep round state in global g for inspection. new_game() recreates counters, entities, mode and progress; add any cooldowns, selection or timers there too. _init and retry share it. Keep persistent best scores outside g and load them separately with cartdata/dget.
+
+```lua
+function new_game()
+ g={mode="play",player={x=8},entities={{x=40},{x=72},{x=104}},score=0,progress=0}
+end
+function _init() new_game() end
+function _update()
+ if g.mode!="play" then if btnp(4) then new_game() end return end
+ if btn(0) then g.player.x-=2 end
+ if btn(1) then g.player.x+=2 end
+ for e in all(g.entities) do
+  if abs(g.player.x-e.x)<3 then del(g.entities,e) g.score+=1 end
+ end
+ g.progress=g.score/3
+ if g.score==3 then g.mode="win" elseif g.player.x<0 then g.mode="lose" end
+end
+function _draw()
+ cls(1) print("arrows: move o: retry",1,1,7)
+ for e in all(g.entities) do circfill(e.x,64,3,0) circfill(e.x,64,2,10) end
+ rectfill(g.player.x-3,60,g.player.x+3,68,0) rectfill(g.player.x-2,61,g.player.x+2,67,7)
+ print(g.mode.." "..g.score.."/3",1,114,7)
+end
+```

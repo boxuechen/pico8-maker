@@ -1,5 +1,7 @@
 # Native resource authoring
 
+The startup Workflow covers resource inspection, atomic edits and gameplay integration. Use this reference for field formats and concrete examples.
+
 Use native tools for static resources. Draft edits become playable after load_game.
 
 ## Sprite and map example

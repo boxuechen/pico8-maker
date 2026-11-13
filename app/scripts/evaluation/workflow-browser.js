@@ -10,11 +10,11 @@ import { activeSession, sessionContext } from "../../src/sessions.js";
 import { defaultKnowledgeFiles } from "../../src/pico8/knowledge-files.js";
 import { mechanicsCases, verifyMechanics } from "./mechanics-cases.mjs";
 import {
-  skillCases,
+  workflowCases,
   fixtureSnapshot,
   transcriptMetrics,
   assessScope,
-} from "./skills-cases.mjs";
+} from "./workflow-cases.mjs";
 
 const $ = (id) => document.getElementById(id);
 let active,
@@ -34,7 +34,7 @@ const allEntries = async (agent) =>
 async function saveReport(config) {
   const json = safeJSON(report, config.apiKey);
   $("result").textContent = json;
-  const saved = await fetch("/__skills-evaluation", {
+  const saved = await fetch("/__evaluation", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: json,
@@ -61,7 +61,7 @@ async function compactAndRestore(agent, game, projectContext, config) {
                 role: "user",
                 timestamp: i,
                 content:
-                  `Earlier request ${i}: preserve SKILL FIXTURE and existing assets. ` +
+                  `Earlier request ${i}: preserve WORKFLOW FIXTURE and existing assets. ` +
                   "The tiny horizontal game uses arrows and O to retry. ".repeat(
                     30,
                   ),
@@ -101,7 +101,7 @@ async function runCase(task, repetition, config) {
     task.snapshot?.() ??
     (task.id === "create" ? emptySnapshot() : fixtureSnapshot());
   const cart = newCart({
-    title: "Disposable skills evaluation",
+    title: "Disposable workflow evaluation",
     versions: task.id === "create" ? [] : [before],
     workingDraft: before,
     revision: task.id === "create" ? 0 : 1,
@@ -184,10 +184,14 @@ async function runCase(task, repetition, config) {
     }
     if (["edit", "compact"].includes(task.id) && game.hasGame) {
       const baseline = await game.execute("reset_game", {});
-      const moved = await game.execute("press_buttons", { steps: [{
-        frames: 10,
-        buttons: 2,
-      }] });
+      const moved = await game.execute("press_buttons", {
+        steps: [
+          {
+            frames: 10,
+            buttons: 2,
+          },
+        ],
+      });
       const f = game.testFrame;
       const pixel = (x, y) => [
         ...f.rgba.slice((y * 128 + x) * 4, (y * 128 + x) * 4 + 3),
@@ -247,7 +251,7 @@ async function runCase(task, repetition, config) {
   };
 }
 
-const suites = { skills: skillCases, mechanics: mechanicsCases };
+const suites = { workflow: workflowCases, mechanics: mechanicsCases };
 $("suite").onchange = () => {
   $("start").textContent =
     `Run ${suites[$("suite").value].length * 2} evaluations`;
@@ -300,7 +304,7 @@ $("start").onclick = async () => {
         $("runs").append(row);
         const result = await runCase(task, repetition, config);
         report.runs.push(result);
-        row.textContent = `${result.id}: ${result.status}; checks ${result.automaticChecksPass ? "PASS" : "FAIL"}; ${result.metrics.tools} tools; skills ${result.metrics.skillReads.join(", ") || "none"}`;
+        row.textContent = `${result.id}: ${result.status}; checks ${result.automaticChecksPass ? "PASS" : "FAIL"}; ${result.metrics.tools} tools; state reads ${result.metrics.outcomes.stateReads}`;
         await saveReport(config);
       }
       if (stopped) break;

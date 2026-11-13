@@ -1,6 +1,6 @@
 # Agent 工具与创作流程改造计划
 
-状态：S0 / P0（S1、S2）已完成，S3–S5 待实施。2026-11-13；实现与验证见[实施记录](tooling-progress.md)。后续阶段仍是计划，不表示已发布。
+状态：S0 / P0（S1、S2）及 S3 已完成，S4–S5 待实施。2026-11-13；实现与验证见[实施记录](tooling-progress.md)。后续阶段仍是计划，不表示已发布。
 
 目标：让模型直接获得可解释的游戏状态，用更少的调用完成创作和验证；画面仍用于判断可读性和反馈。先完成 P0 工具与 P1 Workflow，再用小规模结果评测决定后续投入。
 
@@ -79,7 +79,7 @@
 
 1. 保存当前 Maker commit、runtime commit、知识 hash、模型配置和两案例最终卡带 hash；从归档复算工具次数、错误率、图像数量和结果文本 bytes。不重跑历史模型批次。
 2. 明确上面的状态、日志、输入、结果 DTO 和记录格式，给各自类型与上限一个权威定义。确认 debug 对 callback/custom-loop 两类 runtime 的安全边界。
-3. 在 evaluator 中先加入新指标采集，旧 skill 过程检查标为历史，不充当改造后基线结论。
+3. 在 evaluator 中先加入新指标采集，旧 skill 过程检查标为历史，不充当改造后基线结论；S3 已删除当前评测中的读取先决条件。
 
 交付：固定基线摘要、结果样例、测试 fixture 列表。验收：使用同一归档可重复得到相同指标；正常路线和人工/独立验证分栏。
 
@@ -129,7 +129,7 @@
 
 ### S4：小规模结果评测（P2：建议 12–13）
 
-1. 移除“编辑前读 skill”的通过条件，保留请求范围、资源/源码原子提交和真实工具证据检查。复用已有 jump/enemy/map 独立验证器，增加状态查询/注入相关验收。
+1. S3 已前置移除“编辑前读 skill”的通过条件，当前评测保留请求范围、资源/源码原子提交和真实工具证据检查。S4 继续复用 jump/enemy/map 独立验证器，增加状态查询/注入相关验收。
 2. 报告固定字段：首次成功 load 的调用数、首个核心循环通过时的调用数、总调用数、观察占比、状态读取次数、debug 次数、工具错误率、结果文本 bytes、图像数量/尺寸、耗时及可获得的 token/费用。启动成功和真正可玩分列；没有独立核心循环证据则后者标 unknown。
 3. 每次同时输出 Agent 正常路线/胜利/重开覆盖和独立验证器覆盖。独立验证器以最终未改写卡带在 fresh session 中执行输入，以预先定义的状态转移加画面断言判断；不能只信模型命名的 `g.won`、最后回复、frame hash 或“没有报错”。随机 fixture 固定种子；开放创作无可靠 oracle 的部分留给人工判断。
 4. 用未来自两个案例的新任务：有限波次射击先做，跑酷和节奏待扩展。每个任务包含核心动作、胜利或阶段目标、失败、重开；参考指南只在对应题材按需提供，不把收集/消除模式放进通用前缀。
@@ -168,7 +168,7 @@
 ```sh
 npm run prepare:app
 node --test tests/observation.test.mjs tests/tool-capabilities.test.mjs tests/cart-tools.test.mjs
-node --test tests/knowledge-files.test.mjs tests/pico8-extension.test.mjs tests/skills-evaluation.test.mjs
+node --test tests/knowledge-files.test.mjs tests/pico8-extension.test.mjs tests/workflow-evaluation.test.mjs
 ```
 
 从播放器仓库执行（使用该仓库规定的 Node/pnpm/Emscripten，不混用 Maker 工具链）：
@@ -189,7 +189,7 @@ node --test tests/runtime/standalone-session.test.mjs tests/runtime/resource-lim
 - [x] S0：基线冻结，结果指标与接口确定。
 - [x] S1：唯一 steps、×4 PNG、容错裁剪、精简 DTO、明确测试轮次。
 - [x] S2：日志、只读查询、受限 debug、自动标记和 fresh reset 在真实 WASM/Worker 上通过。
-- [ ] S3：单一 Workflow 与骨架发布，旧 skill 路由及冲突文档清理。
+- [x] S3：单一 Workflow 与骨架发布，旧 skill 路由及冲突文档清理。
 - [ ] S4：结果评测替代过程评分，一个新类型完成独立正常路线验证，小规模模型对照保留实际结果。
 - [ ] S5：纯文本请求全链路支持，额外模型/题材按结果扩展。
 

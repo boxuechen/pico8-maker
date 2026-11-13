@@ -4,7 +4,6 @@ import assert from "node:assert/strict";
 import { Agent } from "./helpers/knowledge.mjs";
 import { knowledge, index, load } from "./helpers/knowledge.mjs";
 import { createPico8Extension } from "../src/pico8/extension.js";
-import { createKnowledgeFiles } from "../src/pico8/knowledge-files.js";
 import { defaultConfig } from "../src/model-config.js";
 import { compactTranscript } from "../src/project-store.js";
 import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
@@ -45,85 +44,6 @@ test("references are English, complete, bounded and isolated", async () => {
     ),
   );
 });
-test(
-  "Pi advertises skill metadata and reads only the selected SKILL.md on demand",
-  { timeout: 10000 },
-  async (t) => {
-    const loaded = [];
-    const docs = createKnowledgeFiles({
-      load: async (file) => {
-        loaded.push(file);
-        return load(file);
-      },
-    });
-    let requests = 0;
-    const path = "/extensions/pico8/skills/pico8-edit/SKILL.md";
-    const expected = await load("skills/pico8-edit/SKILL.md");
-    const bodies = [];
-    t.mock.method(globalThis, "fetch", async (_url, init) => {
-      bodies.push(JSON.parse(init.body));
-      if (++requests === 1)
-        return response(
-          {
-            role: "assistant",
-            tool_calls: [
-              {
-                index: 0,
-                id: "skill-1",
-                type: "function",
-                function: { name: "read", arguments: JSON.stringify({ path }) },
-              },
-            ],
-          },
-          "tool_calls",
-        );
-      return response(
-        { role: "assistant", content: "Editing workflow read." },
-        "stop",
-      );
-    });
-    const a = new Agent(
-      {
-        execute() {
-          throw Error("Reading a skill must not run the game");
-        },
-        cancelTests() {},
-      },
-      () => {},
-      { knowledge: docs },
-    );
-    t.after(() => a.dispose());
-    await a.open();
-    assert.ok(!loaded.some((file) => file.startsWith("skills/")));
-    await a.configure({ ...defaultConfig, apiKey: "fixture" });
-    await a.send("Read the editing skill before changing a coin animation.");
-    assert.equal(requests, 2);
-    const system = JSON.stringify(
-      bodies[0].messages.filter((m) => m.role === "system"),
-    );
-    for (const name of [
-      "pico8-create",
-      "pico8-edit",
-      "pico8-assets",
-      "pico8-playtest",
-    ])
-      assert.ok(system.includes(`/skills/${name}/SKILL.md`));
-    assert.ok(
-      !system.includes("Identify the smallest change and reproduce"),
-      "skill bodies are not permanent system sections",
-    );
-    assert.ok(
-      bodies[1].messages.some(
-        (m) => m.role === "tool" && m.content === expected,
-      ),
-      "full original skill reaches the model through read",
-    );
-    assert.deepEqual(
-      loaded.filter((file) => file.startsWith("skills/")),
-      ["skills/pico8-edit/SKILL.md"],
-    );
-  },
-);
 test("actual provider requests replace legacy rules and preserve references across restore without replay", async (t) => {
   const bodies = [];
   let gameCalls = 0;
@@ -148,10 +68,12 @@ test("actual provider requests replace legacy rules and preserve references acro
     assert.ok(system.includes("16.16"));
     assert.ok(system.includes("bright green"));
     assert.ok(system.includes("/extensions/pico8/REFERENCE_INDEX.md"));
-    assert.ok(!system.includes("references/game-design.md"));
+    assert.ok(system.includes("# Workflow"));
+    assert.ok(!system.includes("# Game design reference"));
     assert.ok(!system.includes("## Observed implementation"));
     assert.ok(!system.includes("LEGACY_JUMP_ONLY"));
     assert.ok(!system.includes("LEGACY_KEEP_PLAYTESTING_FOREVER"));
+    assert.ok(!system.includes("LEGACY_SKILL_CATALOG"));
     assert.equal(body.tools.length, 9);
     assert.ok(!body.tools.some((t) => t.function.name === "read_game"));
     assert.ok(body.tools.some((t) => t.function.name === "edit"));
@@ -201,6 +123,7 @@ test("actual provider requests replace legacy rules and preserve references acro
       sections: {
         instructions: "LEGACY_JUMP_ONLY",
         pico8_agent: "LEGACY_KEEP_PLAYTESTING_FOREVER",
+        pico8_skills: "LEGACY_SKILL_CATALOG",
       },
       timestamp: 1,
     },
@@ -255,7 +178,7 @@ test(
                 type: "function",
                 function: {
                   name: "press_buttons",
-                  arguments: "{\"steps\":[{\"frames\":1,\"buttons\":0}]}",
+                  arguments: '{"steps":[{"frames":1,"buttons":0}]}',
                 },
               },
             ],
@@ -325,7 +248,7 @@ test(
               type: "function",
               function: {
                 name: "press_buttons",
-                arguments: "{\"steps\":[{\"frames\":600,\"buttons\":2}]}",
+                arguments: '{"steps":[{"frames":600,"buttons":2}]}',
               },
             },
           ],
@@ -420,7 +343,9 @@ test("Pi delivers complete full/cropped ASCII and restores it without replaying 
       body.messages.filter((m) => m.role === "system"),
     );
     assert.ok(
-      system.includes("Establish fresh evidence after restoring a session"),
+      system.includes(
+        "Establish fresh evidence after restoring a conversation",
+      ),
     );
     assert.ok(!system.includes("no ASCII"));
     const resultText = body.messages
@@ -517,23 +442,33 @@ test("design references resolve and knowledge compilation rejects stale microgam
   const compile = () =>
     spawnSync(process.execPath, [script], { encoding: "utf8" });
   assert.equal(compile().status, 0, "fresh receipts compile");
-  const skillPath = join(docs, "skills/pico8-create/SKILL.md");
-  const skill = await readFile(skillPath, "utf8");
-  await writeFile(
-    skillPath,
-    skill.replace("name: pico8-create", "name: invalid-name"),
+  const workflowPath = join(docs, "WORKFLOW.md");
+  const workflow = await readFile(workflowPath, "utf8");
+  for (const [text, expected] of [
+    [workflow.replace("## Playtest", "## Missing"), /Missing Workflow section/],
+    [workflow + "\n/extensions/pico8/missing.md", /Unknown documentation link/],
+    [workflow + "\n中文", /Invalid section language/],
+    [workflow + "\n[local](other.md)", /Unprocessed model content/],
+  ]) {
+    await writeFile(workflowPath, text);
+    const invalid = compile();
+    assert.notEqual(invalid.status, 0);
+    assert.match(invalid.stderr, expected);
+  }
+  await writeFile(workflowPath, workflow);
+  const manifestPath = join(docs, "manifest.json");
+  const manifest = await readFile(manifestPath, "utf8");
+  const invalidManifest = JSON.parse(manifest);
+  delete invalidManifest.sections.pico8_workflow;
+  await writeFile(manifestPath, JSON.stringify(invalidManifest));
+  assert.match(compile().stderr, /Invalid startup sections/);
+  const reordered = JSON.parse(manifest);
+  reordered.sections = Object.fromEntries(
+    Object.entries(reordered.sections).reverse(),
   );
-  let invalid = compile();
-  assert.notEqual(invalid.status, 0);
-  assert.match(invalid.stderr, /Invalid skill metadata/);
-  await writeFile(
-    skillPath,
-    skill + "\nRead /extensions/pico8/skills/missing/SKILL.md\n",
-  );
-  invalid = compile();
-  assert.notEqual(invalid.status, 0);
-  assert.match(invalid.stderr, /Unknown documentation link/);
-  await writeFile(skillPath, skill);
+  await writeFile(manifestPath, JSON.stringify(reordered));
+  assert.match(compile().stderr, /Invalid startup sections/);
+  await writeFile(manifestPath, manifest);
   const source = join(docs, "games/lantern-vault.lua");
   const original = await readFile(source, "utf8");
   await writeFile(source, original + "\n-- unverified change\n");

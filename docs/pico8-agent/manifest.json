@@ -2,7 +2,8 @@
   "schemaVersion": 1,
   "sections": {
     "pico8_agent": "AGENT.md",
-    "pico8_machine": "MACHINE.md"
+    "pico8_machine": "MACHINE.md",
+    "pico8_workflow": "WORKFLOW.md"
   },
   "references": [
     {
@@ -77,11 +78,5 @@
     {
       "file": "references/runtime-compatibility.md"
     }
-  ],
-  "skills": [
-    "skills/pico8-create/SKILL.md",
-    "skills/pico8-edit/SKILL.md",
-    "skills/pico8-assets/SKILL.md",
-    "skills/pico8-playtest/SKILL.md"
   ]
 }
