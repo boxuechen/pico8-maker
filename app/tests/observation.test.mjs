@@ -193,7 +193,9 @@ test("Game validates before side effects; ASCII does not require DOM or advance 
   const session = await createPico8Session();
   t.after(() => session.dispose());
   await session.loadSource(source("extended"));
-  const game = new Game(() => {}, { versions: [emptySnapshot(source("extended"))] });
+  const game = new Game(() => {}, {
+    versions: [emptySnapshot(source("extended"))],
+  });
   let initialized = 0;
   const actions = [];
   game.ensureWorker = async () => {
@@ -257,7 +259,9 @@ test("PNG remains default and both uses one snapshot/region for image and text",
       else globalThis[key] = originals[key];
     }
   });
-  const game = new Game(() => {}, { versions: [emptySnapshot(source("extended"))] });
+  const game = new Game(() => {}, {
+    versions: [emptySnapshot(source("extended"))],
+  });
   game.ensureWorker = async () => {};
   game.player = { pause: async () => {} };
   let reads = 0;
@@ -285,24 +289,38 @@ test("PNG remains default and both uses one snapshot/region for image and text",
       rgb.get(frame.displayPalette[parseInt(char, 16)]),
     ),
   );
-  assert.deepEqual(captured[1].data, modelImage({ rgba: new Uint8ClampedArray(pixels), width: 7, height: 3 }).rgba);
+  assert.deepEqual(
+    captured[1].data,
+    modelImage({ rgba: new Uint8ClampedArray(pixels), width: 7, height: 3 })
+      .rgba,
+  );
   assert.equal(
-    JSON.parse(both.output[0].text.split("\n")[0]).frame.frameId,
+    JSON.parse(both.output[0].text.split("\n")[0]).frameId,
     frame.frameId,
   );
 });
 
-
 test("crop intersection and nearest-neighbor expansion preserve exact original pixels", () => {
-  assert.deepEqual(observationOptions({ region: { x: -2, y: 126, width: 5, height: 8 } }).region,
-    { x: 0, y: 126, width: 3, height: 2 });
-  assert.throws(() => observationOptions({ region: { x: -5, y: 0, width: 3, height: 1 } }), /intersect/);
-  const rgba = Uint8ClampedArray.from([1,2,3,255, 4,5,6,255]);
+  assert.deepEqual(
+    observationOptions({ region: { x: -2, y: 126, width: 5, height: 8 } })
+      .region,
+    { x: 0, y: 126, width: 3, height: 2 },
+  );
+  assert.throws(
+    () => observationOptions({ region: { x: -5, y: 0, width: 3, height: 1 } }),
+    /intersect/,
+  );
+  const rgba = Uint8ClampedArray.from([1, 2, 3, 255, 4, 5, 6, 255]);
   const result = modelImage({ rgba, width: 2, height: 1 });
-  assert.equal(result.width, 8); assert.equal(result.height, 4);
-  for (let y = 0; y < 4; y++) for (let x = 0; x < 8; x++) {
-    const offset = (y * 8 + x) * 4;
-    assert.deepEqual(result.rgba.slice(offset, offset + 4), rgba.slice(x < 4 ? 0 : 4, x < 4 ? 4 : 8));
-  }
-  assert.deepEqual([...rgba], [1,2,3,255,4,5,6,255]);
+  assert.equal(result.width, 8);
+  assert.equal(result.height, 4);
+  for (let y = 0; y < 4; y++)
+    for (let x = 0; x < 8; x++) {
+      const offset = (y * 8 + x) * 4;
+      assert.deepEqual(
+        result.rgba.slice(offset, offset + 4),
+        rgba.slice(x < 4 ? 0 : 4, x < 4 ? 4 : 8),
+      );
+    }
+  assert.deepEqual([...rgba], [1, 2, 3, 255, 4, 5, 6, 255]);
 });

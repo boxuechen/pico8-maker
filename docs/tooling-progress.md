@@ -46,3 +46,9 @@ P0 观察切片已实现：模型运行/资源 PNG 共享 ×4 最近邻出口，
 P0 输入切片已实现：唯一 steps schema、删除 captureFrames/replay 路由、版本 2 输入记录、normal 默认目的，以及每次 load/reset 创建新 session。第一方调用者与模型文档已更新。26 项工具/评测/实际 Worker 测试通过，覆盖 tap、held、部分 stop/fault、非法输入零执行、记录持久化和存档清零。旧记录不转换，卡带内容保留。结果 DTO 与 runtime 查询/调试/日志仍待完成。
 
 输入集成后的知识/对话工具注册/源码工作区/卡带存储/UI 分组定向检查另 31 项通过。未扩大到完整回归；生产构建安排在 runtime 与 Maker 集成完成后运行。
+
+P0 结果 DTO 已实现：模型端使用字段白名单，删除内部 session/generation、重复 cart 层与空诊断；仅 source read/load 返回预算。成功输入仅返回总进度，中断保留 execution.steps。多截图只带一次公共头，后续图保留 checkpoint/frameId/stateSeq。资源工具不再附源码预算。stateSeq 跟随实际执行帧数，reset 创建新 run 并归零重建。
+
+同一 TestGame 空卡带 reset 后的真实 WASM observation，用 `382cd97` 的原编码器与新编码器比较，头部 711 → 197 UTF-8 bytes（减少 72.3%）。新契约测试要求普通输入头部 ≤500 bytes。观察/工具/Agent 契约 32 项定向检查通过（最后一项修正 fixture 参数后单独通过），知识/注册/实际 Worker/小机制评测 21 项通过。未运行完整回归。
+
+S2 构建准备：系统 PATH 中 Homebrew Emscripten 为 6.0.6-git，不符合锁定版本；已核对 `/Users/boxue/.local/share/emsdk/upstream/emscripten/em++` 为准确的 6.0.5 + 锁定 commit。后续构建显式设置 EMXX，并使用 Node 22.22.2；无需修改全局工具链或放宽版本检查。

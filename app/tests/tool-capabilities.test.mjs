@@ -100,7 +100,7 @@ function _draw() cls(0) rectfill(0,0,n,2,8) end`),
   assert.equal(headers(result)[0].execution.completedFrames, 6);
   assert.deepEqual([...g.testFrame.rgba.slice(2 * 4, 2 * 4 + 3)], [255, 0, 77]);
   assert.deepEqual([...g.testFrame.rgba.slice(3 * 4, 3 * 4 + 3)], [0, 0, 0]);
-  assert.equal(headers(result)[0].playtest.purpose, "normal");
+  assert.equal(headers(result)[0].purpose, "normal");
   for (const args of [
     { steps: [{ frames: 599, buttons: 16, tap: true }] },
     { steps: [{ frames: 1, buttons: 0, tap: true }] },
@@ -123,18 +123,32 @@ function _draw() cls(0) rectfill(0,0,n,2,8) end`),
 test("versioned routes persist steps; old records and replay are rejected", async (t) => {
   const g = gameFor(t);
   await g.execute("reset_game", { purpose: "normal" });
-  await g.execute("press_buttons", { steps: [{ frames: 8, buttons: 2, tap: true }] });
-  const saved = normalizeCart(newCart({ playtests: g.playtests.runs })).playtests;
+  await g.execute("press_buttons", {
+    steps: [{ frames: 8, buttons: 2, tap: true }],
+  });
+  const saved = normalizeCart(
+    newCart({ playtests: g.playtests.runs }),
+  ).playtests;
   assert.equal(saved[0].schemaVersion, 2);
   assert.equal(saved[0].calls.length, 1);
   assert.equal(JSON.stringify(saved).includes('"rgba"'), false);
   assert.deepEqual(normalizePlaytests([{ ...saved[0], schemaVersion: 1 }]), []);
   g.playtests = new Playtests(saved);
   const before = g.session.observe().frame.frameId;
-  await assert.rejects(g.execute("press_buttons", { replay: { run: "r1", call: 0 } }), /only steps/);
+  await assert.rejects(
+    g.execute("press_buttons", { replay: { run: "r1", call: 0 } }),
+    /only steps/,
+  );
   assert.equal(g.session.observe().frame.frameId, before);
-  assert.equal((await g.workspace.writeFile("playtests/r1.json", "{}")).ok, false);
-  assert.equal(JSON.parse((await g.workspace.readTextFile("playtests/r1.json")).value).calls.length, 1);
+  assert.equal(
+    (await g.workspace.writeFile("playtests/r1.json", "{}")).ok,
+    false,
+  );
+  assert.equal(
+    JSON.parse((await g.workspace.readTextFile("playtests/r1.json")).value)
+      .calls.length,
+    1,
+  );
 });
 
 test("failed loads and worker loss cannot extend an old route", async (t) => {
@@ -248,18 +262,9 @@ test("invalid input errors locate the bad field and explain recovery without adv
       },
       /received 601.*Split/,
     ],
-    [
-      { frames: 20, buttons: 0, captureFrames: [10, 25] },
-      /only steps/,
-    ],
-    [
-      { frames: 20, buttons: 0, captureFrames: [10, 10] },
-      /only steps/,
-    ],
-    [
-      { frames: 20, buttons: 0, captureFrames: [10, 5] },
-      /only steps/,
-    ],
+    [{ frames: 20, buttons: 0, captureFrames: [10, 25] }, /only steps/],
+    [{ frames: 20, buttons: 0, captureFrames: [10, 10] }, /only steps/],
+    [{ frames: 20, buttons: 0, captureFrames: [10, 5] }, /only steps/],
   ]) {
     await assert.rejects(g.execute("press_buttons", args), (error) => {
       assert.match(error.message, message);
@@ -276,7 +281,7 @@ function _draw() cls(0) pset(0,0,best<0 and 8 or 11) end`;
   const result = await g.execute("load_game", { source });
   assert.equal(result.isError, false);
   assert.equal(g.source, source);
-  const warning = headers(result)[0].cart.draftSourceBudget.warnings[0];
+  const warning = headers(result)[0].draftSourceBudget.warnings[0];
   assert.match(warning, /Line 1.*99999.*16.16/);
   assert.deepEqual(
     [...g.testFrame.rgba.slice(0, 3)],
@@ -302,10 +307,7 @@ test("real input sequences preserve checkpoints, exact movement and runtime stat
   );
   assert.equal(meta[0].execution.completedFrames, 16);
   assert.equal(meta[0].execution.outcome, "completed");
-  assert.deepEqual(
-    meta[0].execution.steps.map((s) => s.completedFrames),
-    [10, 1, 5],
-  );
+  assert.equal(meta[0].execution.steps, undefined);
   assert.equal(result.output.filter((p) => p.type === "image").length, 3);
   assert.equal(g.testFrames.length, 3);
   for (const [i, x] of [18, 18, 13].entries()) {
@@ -318,12 +320,10 @@ test("real input sequences preserve checkpoints, exact movement and runtime stat
       ],
       [0, 228, 54],
     );
-    assert.equal(
-      meta[i].frame.cpuInstructions,
-      g.testFrames[i].cpuInstructions,
-    );
-    assert.equal(meta[i].frame.slowFrame, g.testFrames[i].slowFrame);
-    assert.equal(meta[i].cart.observed.cartRevision, g.revision);
+    assert.equal(meta[i].cpuInstructions, g.testFrames[i].cpuInstructions);
+    assert.equal(meta[i].slowFrame ?? false, g.testFrames[i].slowFrame);
+    assert.equal(meta[i].committedRevision, i === 0 ? g.revision : undefined);
+    assert.equal(meta[i].stateSeq, 1 + meta[i].checkpoint.afterFrames);
   }
   const before = g.session.observe();
   const observed = headers(
@@ -332,8 +332,8 @@ test("real input sequences preserve checkpoints, exact movement and runtime stat
       region: { x: 0, y: 0, width: 1, height: 1 },
     }),
   )[0];
-  assert.equal(observed.frame.frameId, before.frame.frameId);
-  assert.equal(observed.frame.cpuInstructions, before.frame.cpuInstructions);
+  assert.equal(observed.frameId, before.frame.frameId);
+  assert.equal(observed.cpuInstructions, before.frame.cpuInstructions);
   assert.equal(g.session.observe().frame.frameId, before.frame.frameId);
 });
 
@@ -346,7 +346,7 @@ test("default final-only capture preserves batched movement and release timing",
   ];
   await g.execute("reset_game", {});
   const sampled = await g.execute("press_buttons", {
-    steps: steps.map(step => ({ ...step, capture: true })),
+    steps: steps.map((step) => ({ ...step, capture: true })),
   });
   const expected = g.testFrame.rgba.slice();
   const expectedExecution = headers(sampled)[0].execution;
@@ -374,7 +374,11 @@ function _draw() cls(0) rectfill(0,0,n,2,8) end`;
   await baseline.advance({ frames: 1 });
   await g.execute("reset_game", {});
   await g.execute("press_buttons", {
-    steps: [1, 6, 7, 6, 2].map(frames => ({ frames, buttons: 16, capture: true })),
+    steps: [1, 6, 7, 6, 2].map((frames) => ({
+      frames,
+      buttons: 16,
+      capture: true,
+    })),
   });
   for (const n of [1, 7, 14, 20, 22]) {
     while (baseline.observe().frame.frameId < n)
@@ -563,7 +567,13 @@ test("Harness delivers all eight checkpoint images and resource provenance to th
       n === 1
         ? [
             "press_buttons",
-            { steps: Array.from({ length: 8 }, () => ({ frames: 1, buttons: 2, capture: true })) },
+            {
+              steps: Array.from({ length: 8 }, () => ({
+                frames: 1,
+                buttons: 2,
+                capture: true,
+              })),
+            },
           ]
         : n === 2
           ? ["read_assets", { kind: "sprite", id: 1, format: "png" }]
@@ -602,4 +612,45 @@ test("Harness delivers all eight checkpoint images and resource provenance to th
     }).meta,
     "1 steps · 8f",
   );
+});
+
+test("model result DTO omits repeated internals, preserves dirty state and stays bounded", async (t) => {
+  const g = gameFor(t);
+  const reset = headers(await g.execute("reset_game", {}))[0];
+  assert.equal(reset.stateSeq, 1);
+  const result = await g.execute("press_buttons", {
+    steps: [
+      { frames: 2, buttons: 2, capture: true },
+      { frames: 3, buttons: 0 },
+    ],
+  });
+  const [first, second] = headers(result);
+  assert.equal(first.run, reset.run);
+  assert.equal(first.stateSeq, 3);
+  assert.equal(second.stateSeq, 6);
+  assert.equal(first.execution.completedFrames, 5);
+  assert.equal(second.run, undefined);
+  assert.equal(second.execution, undefined);
+  assert.ok(Buffer.byteLength(JSON.stringify(first)) <= 500);
+  for (const meta of [first, second]) {
+    for (const key of [
+      "sessionId",
+      "generation",
+      "v",
+      "revision",
+      "draftSourceBudget",
+      "diagnostics",
+      "cart",
+    ])
+      assert.equal(Object.hasOwn(meta, key), false, key);
+  }
+  const observed = headers(await g.execute("observe_game", {}))[0];
+  assert.equal(observed.stateSeq, 6);
+  const next = headers(await g.execute("reset_game", {}))[0];
+  assert.notEqual(next.run, reset.run);
+  assert.equal(next.stateSeq, 1);
+  const assets = headers(
+    await g.execute("read_assets", { kind: "sprite", id: 1, format: "data" }),
+  );
+  assert.equal(JSON.stringify(assets).includes("draftSourceBudget"), false);
 });

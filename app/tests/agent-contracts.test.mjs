@@ -203,12 +203,12 @@ test("cart status distinguishes dirty resources, committed frames, failed drafts
     false,
     "estimates must not impose a new authoring cap",
   );
-  const status = JSON.parse(loaded.output[0].text.split("\n")[0]).cart;
+  const status = JSON.parse(loaded.output[0].text.split("\n")[0]);
   assert.ok(status.draftSourceBudget.codeTokensApprox > 8192);
   assert.equal(status.draftSourceBudget.warnings.length, 1);
   assert.match(status.draftSourceBudget.compatibility, /unverified/);
   assert.equal(status.draftDirty, false);
-  assert.equal(status.observed.cartRevision, game.revision);
+  assert.equal(status.committedRevision, game.revision);
   const committed = game.revision;
   await game.execute("edit_assets", {
     edits: [{ kind: "sprite", id: 1, flags: 1 }],
@@ -217,21 +217,17 @@ test("cart status distinguishes dirty resources, committed frames, failed drafts
     format: "ascii",
     region: { x: 0, y: 0, width: 1, height: 1 },
   });
-  const dirty = JSON.parse(observed.output[0].text.split("\n")[0]).cart;
+  const dirty = JSON.parse(observed.output[0].text.split("\n")[0]);
   assert.equal(dirty.draftDirty, true);
-  assert.deepEqual(dirty.observed, {
-    kind: "committed",
-    cartRevision: committed,
-  });
+  assert.equal(dirty.committedRevision, committed);
+  assert.equal(dirty.observedKind, undefined);
+  assert.equal(dirty.draftSourceBudget, undefined);
   const failed = await game.execute("load_game", {
     source: "function broken(",
   });
-  const failure = JSON.parse(failed.output[0].text.split("\n")[0]).cart;
+  const failure = JSON.parse(failed.output[0].text.split("\n")[0]);
   assert.equal(failure.committedRevision, committed);
   assert.equal(failure.draftDirty, true);
-  assert.deepEqual(failure.observed, {
-    kind: "failed-draft",
-    cartRevision: null,
-  });
+  assert.equal(failure.observedKind, "failed-draft");
   assert.equal(game.source, over);
 });

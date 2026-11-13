@@ -61,6 +61,7 @@ export class Game {
     this.queue = Promise.resolve();
     this.state = "loading";
     this.testFrame = null;
+    this.testStateSeq = 0;
     this.testFrames = [];
     this.muted = false;
   }
@@ -90,6 +91,12 @@ export class Game {
             },
           }
         : {}),
+    };
+  }
+  cartSummary() {
+    return {
+      committedRevision: this.hasGame ? this.revision : null,
+      draftDirty: !sameSnapshot(this.draft, this.snapshot),
     };
   }
   setDraft(text) {
@@ -206,6 +213,7 @@ export class Game {
     }
     this.pending.clear();
     this.testFrame = null;
+    this.testStateSeq = 0;
     this.changed();
   }
   async boot() {
@@ -221,6 +229,7 @@ export class Game {
   }
   async previewCart(cart) {
     this.testFrame = null;
+    this.testStateSeq = 0;
     this.activeCart = cart;
     this.changed();
     try {
@@ -251,6 +260,7 @@ export class Game {
     this.activeCart = null;
     this.previewVersion = "current";
     this.testFrame = null;
+    this.testStateSeq = 0;
     this.changed();
   }
   beginRequest() {
@@ -270,6 +280,7 @@ export class Game {
     if (this.previewLoading) return;
     this.previewLoading = true;
     this.testFrame = null;
+    this.testStateSeq = 0;
     this.changed();
     try {
       const snapshot =
@@ -291,6 +302,7 @@ export class Game {
   async play() {
     if (!this.hasGame && !this.activeCart) return;
     this.testFrame = null;
+    this.testStateSeq = 0;
     this.changed();
     if (this.player.state === "running") await this.player.pause();
     else if (this.player.state === "paused") await this.player.resume();
@@ -303,6 +315,7 @@ export class Game {
   async restart() {
     if (!this.hasGame && !this.activeCart) return;
     this.testFrame = null;
+    this.testStateSeq = 0;
     await this.player.reset();
     await this.player.start();
     this.player.canvas.focus();
@@ -349,6 +362,7 @@ export class Game {
     this.draft = { ...(draft ?? this.snapshot) };
     this.activeCart = null;
     this.testFrame = null;
+    this.testStateSeq = 0;
     if (this.player) {
       if (this.hasGame)
         await this.player.loadCart(cartBytes(this.snapshot), {
@@ -424,7 +438,7 @@ export class Game {
                 }
               : {}),
           },
-          cart: this.cartStatus(),
+          cart: this.cartSummary(),
         }),
       });
       if (preview) output.push(this.image(modelImage(preview.image)));
@@ -447,7 +461,7 @@ export class Game {
                   decodeAssets(assets),
                   args.edits,
                 ),
-                cart: this.cartStatus(),
+                cart: this.cartSummary(),
               }) +
               "\n" +
               (changed
@@ -461,11 +475,13 @@ export class Game {
       throw new Error(
         "No game has been loaded yet. Write main.lua and call load_game first.",
       );
-    const options = observationOptions(action === "observe_game" ? args : {});
+    const options = {
+      ...observationOptions(action === "observe_game" ? args : {}),
+      includeBudget: action === "load_game",
+    };
     const resolved =
       action === "press_buttons" ? this.playtests.resolve(args) : null;
-    const purpose =
-      action === "reset_game" ? resetPurpose(args) : "normal";
+    const purpose = action === "reset_game" ? resetPurpose(args) : "normal";
     await this.ensureWorker();
     await this.player.pause();
     let observation;
@@ -483,6 +499,7 @@ export class Game {
           "main.lua is empty. Write game source before loading it.",
         );
       this.playtests.stop();
+      this.testStateSeq = 0;
       observation = await this.rpc("load", { cart: cartBytes(snapshot) });
       if (observation.state !== "faulted") {
         ({ observation, ...execution } = await this.rpc("advance", {
@@ -490,12 +507,16 @@ export class Game {
           buttons: 0,
         }));
       }
+      this.testStateSeq = execution?.completedFrames ?? 0;
       if (observation.state === "faulted") {
-        const result = this.output({
-          ...observation,
-          execution,
-          cart: this.cartStatus("failed-draft"),
-        });
+        const result = this.output(
+          {
+            ...observation,
+            execution,
+            cart: this.cartStatus("failed-draft"),
+          },
+          options,
+        );
         if (this.hasGame)
           await this.rpc("load", { cart: cartBytes(this.snapshot) });
         else this.cancelTests();
@@ -545,11 +566,13 @@ export class Game {
         frame: observation.frame,
       });
     } else if (action === "press_buttons") {
+      const initialStateSeq = this.testStateSeq ?? 0;
       const run = await runInputs(
         resolved.plan,
         (args) => this.rpc("advance", args),
         signal,
       );
+      this.testStateSeq = initialStateSeq + run.execution.completedFrames;
       const playtest = await this.playtests.record(resolved, run);
       signal?.throwIfAborted();
       this.testFrames = run.captures.flatMap((c) =>
@@ -564,12 +587,16 @@ export class Game {
       );
       const output = run.captures.flatMap(
         (c, i) =>
-          this.output({
-            ...c.observation,
-            cart,
-            checkpoint: c.checkpoint,
-            ...(i === 0 ? { execution: run.execution, playtest } : {}),
-          }).output,
+          this.output(
+            {
+              ...c.observation,
+              cart,
+              checkpoint: c.checkpoint,
+              stateSeq: initialStateSeq + c.checkpoint.afterFrames,
+              ...(i === 0 ? { execution: run.execution, playtest } : {}),
+            },
+            { ...options, checkpointOnly: i > 0 },
+          ).output,
       );
       return {
         output,
@@ -579,11 +606,13 @@ export class Game {
       };
     } else if (action === "reset_game") {
       this.playtests.stop();
+      this.testStateSeq = 0;
       await this.rpc("load", { cart: cartBytes(this.snapshot) });
       ({ observation, ...execution } = await this.rpc("advance", {
         frames: 1,
         buttons: 0,
       }));
+      this.testStateSeq = execution.completedFrames;
       if (observation.state !== "faulted") {
         const cartHash = await fingerprint(cartBytes(this.snapshot));
         signal?.throwIfAborted();
@@ -618,13 +647,18 @@ export class Game {
     const output = [
       {
         type: "text",
-        text: observationText(observation, options),
+        text: observationText(
+          { stateSeq: this.testStateSeq ?? 0, ...observation },
+          options,
+        ),
       },
     ];
     if (frame && options.format !== "ascii") {
       const { width, height } = options.region;
       output.push(
-        this.image(modelImage({ rgba: cropRgba(frame, options.region), width, height })),
+        this.image(
+          modelImage({ rgba: cropRgba(frame, options.region), width, height }),
+        ),
       );
     }
     return { output, isError: observation.state === "faulted" };

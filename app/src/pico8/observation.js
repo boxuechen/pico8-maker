@@ -23,14 +23,17 @@ export function observationOptions(args = {}) {
     typeof region !== "object" ||
     Array.isArray(region) ||
     Object.keys(region).some((key) => !Object.hasOwn(fullScreen, key)) ||
-    !Object.keys(fullScreen).every((key) => Number.isSafeInteger(region[key])) ||
+    !Object.keys(fullScreen).every((key) =>
+      Number.isSafeInteger(region[key]),
+    ) ||
     region.width < 1 ||
     region.height < 1
   )
     throw new Error(
       "region requires safe integer x/y and positive integer width/height",
     );
-  const x = Math.max(0, region.x), y = Math.max(0, region.y);
+  const x = Math.max(0, region.x),
+    y = Math.max(0, region.y);
   const right = Math.min(128, region.x + region.width);
   const bottom = Math.min(128, region.y + region.height);
   if (right <= x || bottom <= y)
@@ -97,36 +100,67 @@ export function cropRgba(frame, region) {
 }
 
 export function observationText(observation, options) {
-  const { frame, ...meta } = observation;
-  // Large guest diagnostics must never consume the pixel grid's output budget.
-  if (
-    new TextEncoder().encode(JSON.stringify(meta.diagnostics ?? [])).length >
-    4096
-  ) {
-    meta.diagnostics = [
-      {
-        message: String(
-          meta.diagnostics?.[0]?.message ?? "Runtime diagnostics",
-        ).slice(0, 512),
-      },
-    ];
-    meta.diagnosticsTruncated = true;
-  }
-  const header = JSON.stringify({
-    ...meta,
-    format: options.format,
-    region: options.region,
-    frame: frame
+  const { frame, cart, playtest, execution } = observation;
+  // An allowlist keeps internal runtime protocol fields out of model context.
+  const meta = {
+    ...(options.checkpointOnly
+      ? {}
+      : {
+          committedRevision: cart?.committedRevision ?? null,
+          draftDirty: cart?.draftDirty ?? false,
+          run: playtest?.run ?? null,
+          purpose: playtest?.purpose ?? null,
+          ...(playtest?.recording ? { recording: playtest.recording } : {}),
+          ...(playtest?.truncated ? { recordingTruncated: true } : {}),
+          ...(cart?.observed?.kind && cart.observed.kind !== "committed"
+            ? { observedKind: cart.observed.kind }
+            : {}),
+          format: options.format,
+          region: options.region,
+        }),
+    state: observation.state,
+    frameId: frame?.frameId ?? null,
+    stateSeq: observation.stateSeq ?? 0,
+    ...(frame
       ? {
-          frameId: frame.frameId,
-          targetFps: frame.targetFps,
           cpuInstructions: frame.cpuInstructions,
-          slowFrame: frame.slowFrame,
-          width: frame.width,
-          height: frame.height,
+          ...(frame.slowFrame ? { slowFrame: true } : {}),
         }
-      : null,
-  });
+      : {}),
+    ...(observation.checkpoint ? { checkpoint: observation.checkpoint } : {}),
+    ...(execution
+      ? {
+          execution: {
+            requestedFrames: execution.requestedFrames,
+            completedFrames: execution.completedFrames,
+            outcome: execution.outcome,
+            ...(execution.outcome !== "completed" && execution.steps
+              ? { steps: execution.steps }
+              : {}),
+          },
+        }
+      : {}),
+    ...(options.includeBudget
+      ? { draftSourceBudget: cart?.draftSourceBudget }
+      : {}),
+  };
+  if (observation.diagnostics?.length) {
+    meta.diagnostics = observation.diagnostics;
+    // Bound guest output independently of the complete ASCII grid.
+    if (
+      new TextEncoder().encode(JSON.stringify(meta.diagnostics)).length > 4096
+    ) {
+      meta.diagnostics = [
+        {
+          message: String(
+            meta.diagnostics[0]?.message ?? "Runtime diagnostics",
+          ).slice(0, 512),
+        },
+      ];
+      meta.diagnosticsTruncated = true;
+    }
+  }
+  const header = JSON.stringify(meta);
   const text = !frame
     ? `${header}\nNo completed test frame is available. Use reset_game or press_buttons to establish a frame; observe_game does not advance time.`
     : options.format === "png"
@@ -149,8 +183,12 @@ export function modelImage({ rgba, width, height }) {
   const pixels = new Uint8ClampedArray(width * height * scale * scale * 4);
   for (let y = 0; y < height * scale; y++) {
     for (let x = 0; x < width * scale; x++) {
-      const source = (Math.floor(y / scale) * width + Math.floor(x / scale)) * 4;
-      pixels.set(rgba.subarray(source, source + 4), (y * width * scale + x) * 4);
+      const source =
+        (Math.floor(y / scale) * width + Math.floor(x / scale)) * 4;
+      pixels.set(
+        rgba.subarray(source, source + 4),
+        (y * width * scale + x) * 4,
+      );
     }
   }
   return { rgba: pixels, width: width * scale, height: height * scale };
