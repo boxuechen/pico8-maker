@@ -102,18 +102,15 @@ export function loose(value) {
   if (typeof value !== "string") return value;
   const t = value.trim();
   if (!/^[[{]/.test(t)) return value;
-  try {
-    return JSON.parse(t);
-  } catch {
+  // As sent, as a list ('[{...}], {...}'), or with a missing closing bracket.
+  for (const candidate of [t, `[${t}]`, `${t}]`, `${t}}]`])
     try {
-      return JSON.parse(`[${t}]`).flat(); // e.g. '[{...}], {...}'
-
-    } catch {
-      return value;
-    }
-  }
+      const v = JSON.parse(candidate);
+      return candidate === `[${t}]` ? v.flat() : v;
+    } catch {}
+  return value;
 }
-const list = (v) => (v === undefined ? undefined : Array.isArray((v = loose(v))) ? v : [v]);
+export const list = (v) => (v === undefined ? undefined : Array.isArray((v = loose(v))) ? v : [v]);
 
 const schema = (properties, required = []) => ({ type: "object", properties, required, additionalProperties: false });
 
@@ -252,6 +249,104 @@ export function done(parameters, description, accept) {
     async execute(args) {
       const reason = await accept(args);
       return reason ? { isError: true, content: [text(`Not done yet: ${reason}`)] } : { done: args, content: [text("Accepted.")] };
+    },
+  };
+}
+
+// Host-judged test cases: the model states what to do and what g must show;
+// the host runs every case from boot and reports PASS/FAIL with actual values.
+const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+function judge(actual, e) {
+  if ("equals" in e && !same(actual, e.equals)) return `is ${JSON.stringify(actual)}, expected ${JSON.stringify(e.equals)}`;
+  if ("notEquals" in e && same(actual, e.notEquals)) return `is ${JSON.stringify(actual)}, expected something else`;
+  if ("atLeast" in e && !(actual >= e.atLeast)) return `is ${JSON.stringify(actual)}, expected at least ${e.atLeast}`;
+  if ("atMost" in e && !(actual <= e.atMost)) return `is ${JSON.stringify(actual)}, expected at most ${e.atMost}`;
+  return null;
+}
+export async function runCase(source, assets, c) {
+  const rt = new Runtime(assets);
+  try {
+    const loaded = await rt.load(source);
+    if (!loaded.ok) return { pass: false, lines: ["the game failed to boot"] };
+    const lines = [];
+    if (c.setup) {
+      const s = await rt.setup(c.setup);
+      if (!s.ok) return { pass: false, lines: [`setup failed: ${s.message}`] };
+    }
+    let mode = (await rt.read(["g.mode"]))["g.mode"];
+    const changes = [];
+    for (const step of c.steps) {
+      const r = await rt.advance(step.bits, step.frames, async (frame) => {
+        const now = (await rt.read(["g.mode"]))["g.mode"];
+        if (now !== mode) changes.push(`${mode}→${now}@${frame}`), (mode = now);
+      });
+      if (r.fault) return { pass: false, lines: [`fault: ${r.fault.map((d) => `${d.line ? `line ${d.line}: ` : ""}${d.message}`).join("; ")}`] };
+    }
+    const values = await rt.read(c.expect.map((e) => e.path));
+    const failures = c.expect.map((e) => [e.path, judge(values[e.path], e)]).filter(([, f]) => f);
+    lines.push(failures.length ? failures.map(([p, f]) => `${p} ${f}`).join("; ") : c.expect.map((e) => `${e.path}=${JSON.stringify(values[e.path])}`).join(", "));
+    if (changes.length) lines.push(`mode ${changes.join(", ")}`);
+    return { pass: !failures.length, lines, image: rt.image() };
+  } finally {
+    await rt.dispose();
+  }
+}
+
+export function check(bench) {
+  const expectation = schema({
+    path: { type: "string", description: 'e.g. "g.mode" or "g.player.hp"' },
+    equals: {},
+    notEquals: {},
+    atLeast: { type: "number" },
+    atMost: { type: "number" },
+  }, ["path"]);
+  return {
+    name: "check",
+    description: "Run test cases on the loaded game. Each case starts from boot, optionally runs setup Lua, holds buttons for the given frames, then compares g values with the expectations. The host reports PASS or FAIL with actual values. Cases without setup count as normal play.",
+    parameters: schema({
+      cases: {
+        type: "array",
+        minItems: 1,
+        maxItems: 8,
+        items: schema({
+          name: { type: "string" },
+          setup: { type: "string", description: "Optional Lua to set up the case, e.g. g.player.hp=1" },
+          steps: { type: "array", minItems: 1, maxItems: 20, items: schema({ press: { type: "array", items: { type: "string", enum: ["left", "right", "up", "down", "o", "x"] } }, frames: { type: "integer", minimum: 1, maximum: 600 } }, ["press", "frames"]) },
+          expect: { type: "array", minItems: 1, maxItems: 6, items: expectation },
+        }, ["name", "steps", "expect"]),
+      },
+    }, ["cases"]),
+    async execute(args) {
+      if (!bench.loaded || bench.loaded !== bench.source) return { isError: true, content: [text("The current source is not loaded. Fix it with edit_game first.")] };
+      let cases;
+      try {
+        cases = (list(args.cases) ?? []).map((c, i) => {
+          const steps = (list(c?.steps) ?? []).map((s) => {
+            const press = list(s?.press) ?? [],
+              frames = Math.trunc(Number(s?.frames));
+            if (!(frames >= 1 && frames <= 600)) throw new Error(`case ${i + 1}: each step needs frames between 1 and 600`);
+            return { bits: mask(press), frames, press };
+          });
+          const expect = (list(c?.expect) ?? []).filter((e) => e && typeof e.path === "string");
+          if (!steps.length || !expect.length) throw new Error(`case ${i + 1}: needs steps and expect, e.g. {"name":"idle loses","steps":[{"press":[],"frames":300}],"expect":[{"path":"g.mode","equals":"lose"}]}`);
+          if (steps.reduce((n, s) => n + s.frames, 0) > MAX_FRAMES) throw new Error(`case ${i + 1}: at most ${MAX_FRAMES} frames`);
+          return { name: String(c.name ?? `case ${i + 1}`), setup: c.setup ? String(c.setup) : "", steps, expect };
+        });
+        if (!cases.length) throw new Error("cases is required");
+      } catch (e) {
+        return { isError: true, content: [text(e.message)] };
+      }
+      const results = [];
+      for (const c of cases) results.push({ ...c, ...(await runCase(bench.loaded, bench.assets, c)), normal: !c.setup });
+      bench.checks = { source: bench.loaded, results };
+      bench.log.push({ tool: "check", cases: results.map((r) => ({ name: r.name, pass: r.pass, normal: r.normal })) });
+      const lastImage = results.findLast((r) => r.image)?.image;
+      return {
+        content: [
+          text(results.map((r) => `${r.pass ? "PASS" : "FAIL"} ${r.name}${r.normal ? "" : " (setup)"}: ${r.lines.join(" | ")}`).join("\n") + `\n${results.filter((r) => r.pass).length}/${results.length} passed. The image is the end of the last case.`),
+          ...(lastImage ? [lastImage] : []),
+        ],
+      };
     },
   };
 }

@@ -1,7 +1,11 @@
-Phase: TEST. Play the loaded game and confirm each check from the plan.
+Phase: TEST. Prove the game works with host-judged test cases.
 
-- Use play with reset:true to start from boot. Hold buttons for enough frames (30 frames = 1 second) and read the g values that prove the check.
-- play reports g.mode changes with frame numbers; use them to confirm win, loss and retry.
-- For cases that take long to reach, you may pass setup (Lua that sets g fields, e.g. g.missed=2). Such results are setup evidence; at least one win or loss should come from normal play when it can be reached within 1800 frames.
-- If a check fails, fix the code with edit_game (the game reloads), then play again from reset.
-- Finish with done: list each check in verified with the evidence (frames, values, mode change), and list what you could not confirm in unverified. After your last edit you must have played once from reset without setup.
+- Turn the plan's CHECKS into cases and run them with check. Each case starts from boot: optional setup Lua, then steps of held buttons with frame counts (30 frames = 1 second), then expectations on g, for example:
+  {"name":"idle loses","steps":[{"press":[],"frames":400}],"expect":[{"path":"g.mode","equals":"lose"}]}
+  {"name":"retry after loss","steps":[{"press":[],"frames":400},{"press":[],"frames":20},{"press":["x"],"frames":2}],"expect":[{"path":"g.mode","equals":"play"}]}
+  {"name":"last enemy wins","setup":"g.kills=5","steps":[{"press":["o"],"frames":60}],"expect":[{"path":"g.mode","equals":"win"}]}
+- Prefer cases without setup. Use setup only to reach states that take too long to play.
+- Send several cases in one check call. Read FAIL lines: they show the actual values.
+- If the game is wrong, fix it with edit_game, then run check again. If only your case is wrong, correct the case.
+- play is available to explore before writing cases.
+- When the important cases pass, call done and list in unverified anything requested that no passing case covers.

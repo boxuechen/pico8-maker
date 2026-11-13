@@ -66,7 +66,7 @@ only the newest image is sent; older images become a one-line note.
 | --- | --- | --- | --- | --- |
 | plan (create only) | task | none | text reply | 1 call |
 | build | core + api + example + build, task, plan, source | `write_game`, `edit_game`, `done` | `done` accepted: last load clean and smoke boots | 12 turns |
-| test | core + api + test, task, plan checks, source, smoke | `play`, `edit_game`, `done` | `done` with verified/unverified lists | 16 turns |
+| test | core + api + test, task, plan checks, source, smoke | `check`, `play`, `edit_game`, `done` | `done` after a passing no-setup case on the final version | 16 turns |
 | report | — | — | host writes the four-part reply | — |
 
 Global caps match S4: 15 minutes and 40 tool calls per task. Thinking is `low` for
@@ -85,10 +85,15 @@ and a locked X retry.
 | `write_game` | `source` | Replace main.lua → lint → load → smoke. Returns issues or the smoke report and one frame. |
 | `edit_game` | `edits: [{find, replace}]` | Exact, unique replacements applied atomically, then the same pipeline. Failures quote nearby numbered lines. |
 | `play` | `reset?`, `setup?` (Lua), `steps: [{press: ["left","o",…], frames}]`, `read?: ["g.mode",…]` | Runs input on the loaded cart. Returns mode changes with frames, read values (default: `g`), audio starts and the final frame. `setup` marks the result as setup evidence. |
-| `done` | build: `summary`; test: `verified[]`, `unverified[]` | Accepted only when the phase condition holds; otherwise the reason is returned. |
+| `check` | `cases: [{name, setup?, steps, expect: [{path, equals/notEquals/atLeast/atMost}]}]` | Runs each case from boot in its own session and reports PASS/FAIL with actual values and mode changes. The host, not the model, decides what is verified. |
+| `done` | build: `summary`; test: `unverified[]` | Accepted only when the phase condition holds; otherwise the reason is returned. The final report lists host-passed cases as verified and failed cases as not verified. |
 
-Buttons are names (`left right up down o x`), not bit masks. Every error says what
-to do next.
+Buttons are names (`left right up down o x`), not bit masks. Stringified lists and
+single values are accepted. Every error says what to do next.
+
+Why `check`: in the first 9B run the test phase wandered through 16 free `play`
+calls without converging on a route; the model can state an expectation but not
+judge long state dumps. Cases turn testing into data the host evaluates.
 
 ## Host checks
 

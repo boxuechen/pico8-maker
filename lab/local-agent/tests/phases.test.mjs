@@ -37,9 +37,13 @@ test("a create task runs plan, build and test in fresh conversations and enforce
     say("TITLE: Star Catch\nCONTROLS: left/right move\nSTATE: g.caught=0\nRULES: stars fall\nWIN: caught 10\nLOSE: missed 3\nCHECKS: idle 300 frames -> lose"),
     call("write_game", { source: prompts.example }),
     call("done", { summary: "star catch" }),
-    call("done", { verified: [], unverified: [] }), // rejected: not played since the last load
-    call("play", { reset: true, steps: [{ press: [], frames: 400 }], read: ["g.mode", "g.missed"] }),
-    call("done", { verified: [{ check: "idle loses", evidence: "mode play->lose" }], unverified: ["win"] }),
+    call("done", { unverified: [] }), // rejected: no check on this version
+    call("check", { cases: [
+      { name: "idle loses", steps: [{ press: [], frames: 400 }], expect: [{ path: "g.mode", equals: "lose" }] },
+      { name: "caught wins", setup: "g.caught=9 g.stars={{x=64,y=110,vy=1}}", steps: [{ press: [], frames: 10 }], expect: [{ path: "g.mode", equals: "win" }] },
+      { name: "wrong case", steps: [{ press: [], frames: 1 }], expect: [{ path: "g.caught", atLeast: 5 }] },
+    ] }),
+    call("done", { unverified: ["win by normal play"] }),
   ]);
   const r = await runTask({ id: "catch", kind: "create", prompt: "Make a catch game." }, { complete: model.complete });
   assert.equal(r.status, "done");
@@ -49,10 +53,14 @@ test("a create task runs plan, build and test in fresh conversations and enforce
   assert.match(testIntro, /PLAN:\nTITLE: Star Catch/);
   assert.match(testIntro, /\s+1\| -- STAR CATCH/);
   assert.equal(model.seen[3].messages.length, 1);
-  assert.deepEqual(model.seen[3].tools.map((t) => t.name), ["play", "edit_game", "done"]);
+  assert.deepEqual(model.seen[3].tools.map((t) => t.name), ["check", "play", "edit_game", "done"]);
   const rejected = r.phases[2].messages.find((m) => m.role === "toolResult" && m.isError);
-  assert.match(rejected.content[0].text, /run play with reset:true/);
-  assert.match(r.reply, /Game: Star Catch[\s\S]*idle loses: mode play->lose[\s\S]*Not verified:\n- win/);
+  assert.match(rejected.content[0].text, /run check on the current version/);
+  const checked = r.phases[2].messages.find((m) => m.role === "toolResult" && m.toolName === "check").content[0].text;
+  assert.match(checked, /PASS idle loses: g.mode="lose" \| mode play→lose@\d+/);
+  assert.match(checked, /PASS caught wins \(setup\)/);
+  assert.match(checked, /FAIL wrong case: g.caught is 0, expected at least 5\n2\/3 passed/);
+  assert.match(r.reply, /Game: Star Catch[\s\S]*- idle loses: [\s\S]*- caught wins \(with setup\)[\s\S]*FAILED wrong case[\s\S]*- win by normal play/);
   assert.equal(r.toolCalls, 5);
   assert.equal(r.toolErrors, 1);
 });
@@ -62,8 +70,8 @@ test("a repair task skips planning, starts from the existing cart and passes the
   const model = scripted([
     call("edit_game", { edits: [{ find: "g.player.hp-=1 g.player.inv=0", replace: "g.player.hp-=1 g.player.inv=20" }] }),
     call("done", { summary: "fixed" }),
-    call("play", { reset: true, steps: [{ press: [], frames: 300 }], read: ["g.mode"] }),
-    call("done", { verified: [{ check: "loss", evidence: "lose at frame ~" }], unverified: [] }),
+    call("check", { cases: [{ name: "idle loses", steps: [{ press: [], frames: 300 }], expect: [{ path: "g.mode", equals: "lose" }] }] }),
+    call("done", { unverified: [] }),
   ]);
   const r = await runTask({ id: "repair", kind: "repair", prompt: "Fix invulnerability.", snapshot: emptySnapshot(broken) }, { complete: model.complete });
   assert.equal(r.status, "done");

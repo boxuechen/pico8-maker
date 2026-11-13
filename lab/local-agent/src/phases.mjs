@@ -3,7 +3,7 @@
 import { addUsage, emptyUsage, runLoop } from "./loop.mjs";
 import { prompts, systemFor } from "./prompts.mjs";
 import { soundAssets } from "./sounds.mjs";
-import { Bench, done, editGame, numbered, play, writeGame } from "./tools.mjs";
+import { Bench, check, done, editGame, list, numbered, play, writeGame } from "./tools.mjs";
 
 export const defaults = {
   timeMs: 15 * 60 * 1000,
@@ -66,25 +66,23 @@ export async function runTask(task, { complete, onEvent = () => {}, ...overrides
       )]);
     if (build.status !== "done") return finish("build_" + build.status);
 
-    // TEST: until done with verification lists after a normal run of the final version.
-    const test = await phase("test", [play(bench), editGame(bench),
+    // TEST: host-judged cases; done needs a passing normal-play case on the final version.
+    const test = await phase("test", [check(bench), play(bench), editGame(bench),
       done(
-        {
-          type: "object",
-          properties: {
-            verified: { type: "array", items: { type: "object", properties: { check: { type: "string" }, evidence: { type: "string" } }, required: ["check", "evidence"], additionalProperties: false } },
-            unverified: { type: "array", items: { type: "string" } },
-          },
-          required: ["verified", "unverified"],
-          additionalProperties: false,
-        },
-        "Finish testing with the checks you confirmed (with evidence) and those you could not confirm.",
+        { type: "object", properties: { unverified: { type: "array", items: { type: "string" }, description: "Requested behaviour no passing case covers" } }, required: ["unverified"], additionalProperties: false },
+        "Finish testing. The host reports the cases that passed; list requested behaviour you could not confirm.",
         () =>
           bench.loaded !== bench.source ? "the latest source did not load; fix it first."
-          : !bench.playedSinceLoad ? "after your last change, run play with reset:true and no setup at least once."
+          : bench.checks?.source !== bench.loaded ? "run check on the current version first (the code changed after the last check)."
+          : !bench.checks.results.some((r) => r.pass && r.normal) ? "no case passed without setup; add at least one normal-play case that passes."
           : null,
       )]);
-    return finish(test.status === "done" ? "done" : "test_" + test.status, test.done);
+    const results = bench.checks?.source === bench.loaded ? bench.checks.results : [];
+    return finish(test.status === "done" ? "done" : "test_" + test.status, {
+      passed: results.filter((r) => r.pass).map((r) => ({ name: r.name, normal: r.normal, evidence: r.lines.join(" | ") })),
+      failed: results.filter((r) => !r.pass).map((r) => ({ name: r.name, evidence: r.lines.join(" | ") })),
+      unverified: list(test.done?.unverified) ?? [],
+    });
 
     async function phase(name, tools) {
       const t0 = Date.now();
@@ -133,8 +131,12 @@ export async function runTask(task, { complete, onEvent = () => {}, ...overrides
 // The four-part delivery, written by the host from the plan and test results.
 function report(plan, verification, status) {
   const line = (label) => plan.split("\n").find((l) => l.toUpperCase().startsWith(label))?.slice(label.length + 1).trim();
-  const verified = verification?.verified?.map((v) => `- ${v.check}: ${v.evidence}`) ?? [];
-  const unverified = [...(verification?.unverified ?? []).map((u) => `- ${u}`), "- Sound and feel were not listened to or judged by a person."];
+  const verified = verification?.passed?.map((v) => `- ${v.name}${v.normal ? "" : " (with setup)"}: ${v.evidence}`) ?? [];
+  const unverified = [
+    ...(verification?.failed ?? []).map((f) => `- FAILED ${f.name}: ${f.evidence}`),
+    ...(verification?.unverified ?? []).map((u) => `- ${u}`),
+    "- Sound and feel were not listened to or judged by a person.",
+  ];
   return [
     `Game: ${line("TITLE") ?? "see plan"}${status === "done" ? "" : ` (stopped: ${status})`}`,
     `Controls: ${line("CONTROLS") ?? "see plan"}`,
