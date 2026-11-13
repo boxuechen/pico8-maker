@@ -6,7 +6,7 @@ The root MIT license applies to project-owned Maker code and documentation. It d
 
 Maker downloads the build pinned in `app/player.lock.json` from [pico8-player](https://github.com/boxuechen/pico8-player). Its complete `LICENSE`, `THIRD_PARTY_NOTICES.md`, and `licenses/` directory are preserved under `app/public/player/` and in the deployed `player/` directory.
 
-The currently pinned `0.2.0-alpha.2` build at `eec7b417fd71c1ec03642ac403a5c26dbc6ccca9` licenses player-owned source and compiled components under **MIT**. Its own MIT notice is shipped separately from Maker's, alongside the upstream third-party notices. Older static build directories retain the license files with which they were published.
+Player-owned source and compiled components are **MIT**-licensed. The exact build is recorded in `app/player.lock.json`; its own license is shipped separately from Maker's, alongside upstream notices.
 
 The player's own notices cover z8lua/Lua, Emscripten, and graphics/audio material derived from fake-08, tac08 and zepto8. Consult those files for the exact upstream revisions and terms.
 
@@ -39,7 +39,7 @@ The following license labels were checked on the linked BBS pages on **2026-11-1
 | `picotrouble2-0.p8.png` — Pico Trouble | leoocast | [BBS](https://www.lexaloffle.com/bbs/?pid=picotrouble2-0#p) | No License |
 | `30745.p8.png` — 9HOLE | paloblancogames | [BBS](https://www.lexaloffle.com/bbs/?pid=30745#p) | CC BY-NC-SA 4.0 |
 
-The maintainer has chosen to retain these community cartridges in the nonprofit project with their existing attribution and source links. This decision does not change the source-page license labels or apply Maker's MIT license to the carts. Additional permission records, if supplied, should be added to this inventory. See `docs/open-source-preparation.md` for the recorded decision.
+On 2026-11-13 the maintainer chose to retain all 11 community cartridges in the nonprofit project with their existing attribution and source links. This decision does not change the source-page license labels or apply Maker's MIT license to the carts. Additional permission records, if supplied, should be added to this inventory.
 
 ## Brand and interface images
 
