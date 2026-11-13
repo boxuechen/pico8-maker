@@ -18,4 +18,11 @@ mkdirSync(path.join(dist, ".openai"), { recursive: true });
 copyFileSync(worker, path.join(dist, "server", "index.js"));
 copyFileSync(hosting, path.join(dist, ".openai", "hosting.json"));
 
-console.log("Prepared Sites build: dist/server/index.js and dist/.openai/hosting.json");
+// Preserve the application's notices alongside the separately licensed player.
+for (const name of ["LICENSE", "THIRD_PARTY_NOTICES.md"]) {
+  copyFileSync(path.join(root, "..", name), path.join(dist, "client", name));
+}
+
+console.log(
+  "Prepared Sites build: dist/server/index.js and dist/.openai/hosting.json",
+);
