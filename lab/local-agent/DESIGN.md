@@ -136,3 +136,22 @@ hurt a strong model.
 
 If the targets hold, the workflow moves into Maker as an opt-in "local model"
 agent profile (default off), and browser WebGPU inference follows.
+
+## Qwen3.5-9B results (closed 2026-11-13)
+
+9B (`qwen3.5:9b-q4_K_M`, Ollama Responses API) is no longer pursued; focus moves to
+text-only observation and MiniCPM5-2B. Archives: `.cache/lab/eval-9b-*.log`,
+`.cache/s4-local/`.
+
+| Flow | Repair (oracle) | Create (oracle) | Notes |
+| --- | --- | --- | --- |
+| Maker agent, medium thinking | 3/3, 1/3 finished in 15 min | 0/3 (also 0/3 after tool-hint fixes; first load moved to call 4–6) | 3–23 tool errors per run |
+| lab v1 (free `play`) | 2/2 | not reached | build 26–32 s; test wandered to the turn cap |
+| lab v2 (`check` + `play`) | 3/3, 126–246 s | not reached | test phase never converged (turn cap), 1–11 errors |
+| lab v3 (`check` only) | stopped after 1 build | — | test-phase `edit_game` broke a correct fix |
+
+Lessons kept for the next model: a fixed template plus host lint and smoke makes
+the build phase reliable (one edit, 26–72 s, oracle-correct every time); the weak
+part is self-verification. Free-form play does not converge, and letting the test
+phase edit invites regressions of already-correct code. Qwen3.5-4B failed the
+Maker flow outright (repair 1/3, create 0/3, 57/64 tool errors in the browser smoke).
