@@ -147,6 +147,13 @@ export function createConnection(value) {
     },
   };
   const api = adapters[model.api]();
+  // A custom Responses endpoint (e.g. Ollama) gets no prompt-cache session:
+  // the adapter would send x-client-request-id, which Ollama's CORS preflight
+  // rejects in browsers. Local servers cache prefixes on their own.
+  const local = (o) =>
+    !preset && model.api === "openai-responses"
+      ? { ...o, cacheRetention: "none" }
+      : o;
   const provider = createProvider({
     id: model.provider,
     name: config.provider,
@@ -159,8 +166,8 @@ export function createConnection(value) {
       },
     },
     api: {
-      stream: (m, t, o) => api.stream(m, t, o),
-      streamSimple: (m, t, o) => api.streamSimple(m, t, o),
+      stream: (m, t, o) => api.stream(m, t, local(o)),
+      streamSimple: (m, t, o) => api.streamSimple(m, t, local(o)),
     },
   });
   return {

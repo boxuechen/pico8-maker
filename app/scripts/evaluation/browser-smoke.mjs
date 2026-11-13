@@ -5,6 +5,8 @@
 // from the archive by the page itself.
 //
 //   SMOKE_DEEPSEEK_KEY=... node scripts/evaluation/browser-smoke.mjs
+//   SMOKE_MODEL_CONFIG='{"provider":"custom",...}' node scripts/evaluation/browser-smoke.mjs
+// SMOKE_MODEL_CONFIG replaces the default DeepSeek configuration (for local models).
 import { spawn } from "node:child_process";
 import {
   launchChrome,
@@ -13,7 +15,18 @@ import {
 } from "./chrome-cdp.mjs";
 
 const apiKey = process.env.SMOKE_DEEPSEEK_KEY;
-if (!apiKey) throw Error("SMOKE_DEEPSEEK_KEY is required");
+const modelConfig = process.env.SMOKE_MODEL_CONFIG
+  ? { remember: true, ...JSON.parse(process.env.SMOKE_MODEL_CONFIG) }
+  : {
+      provider: "deepseek",
+      model: "deepseek-flash",
+      baseUrl: "https://api.deepseek.com",
+      apiKey,
+      remember: true,
+      thinkingLevel: "high",
+    };
+if (!modelConfig.apiKey)
+  throw Error("SMOKE_DEEPSEEK_KEY or SMOKE_MODEL_CONFIG.apiKey is required");
 const port = 5187;
 const origin = `http://127.0.0.1:${port}`;
 const prompt =
@@ -73,7 +86,7 @@ try {
   await delay(1500);
   await evaluate(
     cdp,
-    `localStorage.setItem("pico-demo-model", JSON.stringify({provider:"deepseek",model:"deepseek-flash",baseUrl:"https://api.deepseek.com",apiKey:${JSON.stringify(apiKey)},remember:true,thinkingLevel:"high"})); true`,
+    `localStorage.setItem("pico-demo-model", ${JSON.stringify(JSON.stringify(modelConfig))}); true`,
   );
   await cdp.command("Page.navigate", {
     url: origin + "/scripts/evaluation/case-study.html",

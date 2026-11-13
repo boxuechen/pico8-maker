@@ -57,7 +57,11 @@ export const editAssetsSchema = object(
             {
               kind: kind("sprite"),
               id: int(0, 255),
-              rows: array({ type: "string", pattern: "^[0-9a-f]{8}$" }, 8, 8),
+              rows: {
+                ...array({ type: "string", pattern: "^[0-9a-f]{8}$" }, 8, 8),
+                description:
+                  'Exactly 8 strings of 8 lowercase hex digits, one palette index per pixel (0 is transparent by default), e.g. "00077000".',
+              },
               flags: int(
                 0,
                 255,

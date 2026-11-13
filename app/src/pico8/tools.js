@@ -117,7 +117,21 @@ export function createPico8Tools({ game, knowledge }) {
       }
       if (args.byteOffset !== undefined || args.byteLimit !== undefined)
         throw new Error(`Byte ranges are only available for ${mainPath}`);
-      return read.execute(args, withEnv(api, env), ctx);
+      try {
+        return await read.execute(args, withEnv(api, env), ctx);
+      } catch (error) {
+        // Guessed paths (README.md, main.json...) otherwise only learn that
+        // main.lua exists; point at the real document index.
+        if (
+          error instanceof Error &&
+          /^Only \/cart\/main\.lua exists/.test(error.message)
+        )
+          throw new Error(
+            `${args.path} does not exist. Readable files: ${mainPath}, /cart/playtests.json and the knowledge documents listed in /extensions/pico8/REFERENCE_INDEX.md.`,
+            { cause: error },
+          );
+        throw error;
+      }
     },
   };
   // pi-durable's edit tool, always pointed at this cart's workspace rather than
@@ -128,6 +142,12 @@ export function createPico8Tools({ game, knowledge }) {
     description: `${edit.description} Target ${mainPath} (main.lua); changes stay in the draft until load_game. Reread the current block after a matching failure.`,
     execute: async (args, api, ctx) => {
       if (!game.workspace) throw new Error("No cart workspace is available");
+      // edit replaces existing text only; small models try it on an empty file.
+      const current = await game.workspace.readTextFile(mainPath);
+      if (current.ok && !current.value.trim())
+        throw new Error(
+          `${mainPath} is empty, so there is no text to replace. Create the game by passing the complete Lua source to load_game {source}; use edit only to change existing text afterwards.`,
+        );
       try {
         return await edit.execute(args, withEnv(api, game.workspace), ctx);
       } catch (error) {
