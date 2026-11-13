@@ -1,5 +1,7 @@
 # PICO-8 knowledge and host contract
 
+This document describes the current implementation. The [agent tooling plan](../agent-tooling-plan.md) specifies the pending state/debug tools, unified startup workflow and outcome-based evaluation. Apply those contract changes together with their implementation; the plan is maintainer documentation and is not published to the model.
+
 [AGENT.md](AGENT.md) routes requests to the create, edit, assets or playtest skill. [MACHINE.md](MACHINE.md) defines the PICO-8 target. The base palette, project state and skill metadata are available at startup. The [reference index](REFERENCE_INDEX.md), skill bodies and references load through `read` when needed.
 
 ## Host tools
