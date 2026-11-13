@@ -30,7 +30,7 @@ game logic and judges gameplay.**
 
 ```
 lab/local-agent/
-  bin/        run.mjs (one task), eval.mjs (task × repeat matrix)
+  bin/        eval.mjs (tasks × repeats against one model)
   prompts/    core.md, api.md, plan.md, build.md, test.md, template.lua, example.lua
   src/
     maker.mjs     the only import path into app/: player runtime, cart codec,
@@ -43,6 +43,7 @@ lab/local-agent/
     tools.mjs     model-facing tools built on runtime/lint/smoke
     phases.mjs    plan → build → test → report controller
     prompts.mjs   prompt assembly from prompts/
+    sounds.mjs    built-in sound bank preloaded into every new cart (sfx 0–7)
   tests/      node --test, scripted model; no provider requests
 ```
 
@@ -101,6 +102,9 @@ for 10 frames changes `g` or the frame compared with idle (reports the first
 changed fields).
 
 ## Prompts
+
+New carts also get a fixed sound bank (pickup, shoot, hit, win, lose, jump,
+blip, explode as sfx 0–7) so games have sound without audio authoring.
 
 `core.md` (rules, ≈350 tokens), `api.md` (the 45 most used PICO-8 functions with
 signatures, ≈700 tokens), `example.lua` (a complete small game built on the
