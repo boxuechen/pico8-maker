@@ -1,6 +1,6 @@
 import { createPico8Session } from "../../public/player/main/player.mjs";
 import { cartBytes } from "../../src/pico8/cart.js";
-import { fingerprint } from "../../src/pico8/playtests.js";
+import { fingerprint, normalCalls } from "../../src/pico8/playtests.js";
 import { png } from "./png.mjs";
 import { inputPlan } from "../../src/pico8/input-sequence.js";
 const keys = [
@@ -267,6 +267,7 @@ export async function verifyShooter(cart) {
       );
     }
     evidence.push(await capture("normal-win", w));
+    await settleResult(w);
     await step(w, 32);
     evidence.push(await capture("retry-win", w));
     win = w.t;
@@ -278,6 +279,7 @@ export async function verifyShooter(cart) {
     for (let i = 0; i < 300 && l.current.state.mode === "play"; i++)
       await step(l, 0);
     evidence.push(await capture("normal-loss", l));
+    await settleResult(l);
     await step(l, 32);
     evidence.push(await capture("retry-loss", l));
     loss = l.t;
@@ -311,20 +313,26 @@ export async function verifyShooter(cart) {
   };
 }
 
-// Re-run only the Agent's recorded normal routes, with the final unmodified cart.
-// Debug labels are sticky for the entire run, including a later injection.
+// The contract allows a short result lock (the published reset skeleton uses
+// one), so release every button for one second before pressing X.
+const resultSettleFrames = 30;
+async function settleResult(c) {
+  for (let i = 0; i < resultSettleFrames; i++) await step(c, 0);
+}
+
+// Re-run only the Agent's recorded normal input, with the final unmodified cart.
+// A route stays debug once code runs, but calls before its first debug event
+// started from a normal load/reset and are replayed as normal evidence; routes
+// declared debug from the start never count (same rule as host coverage).
 export async function verifyAgentRoutes(cart, runs, ledger) {
   const cartHash = await fingerprint(cartBytes(cart)),
     aggregate = tracker(),
     evidence = [];
   let firstCoreCall = null;
-  for (const run of runs.filter(
-    (r) =>
-      r.cartHash === cartHash &&
-      r.purpose === "normal" &&
-      !r.debugEvents.length &&
-      !r.truncated,
-  )) {
+  for (const run of runs
+    .filter((r) => r.cartHash === cartHash && !r.truncated)
+    .map((r) => ({ ...r, calls: normalCalls(r) }))
+    .filter((r) => r.calls.length)) {
     let c;
     try {
       c = await open(cart);

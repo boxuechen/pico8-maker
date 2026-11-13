@@ -30,6 +30,8 @@ This loads the unchanged cart in the bundled WASM runtime and writes actual PNG 
 
 `DEEPSEEK_API_KEY=... node scripts/evaluation/run-case.mjs --case garden|lodge` reruns a retained two-turn case with the production Agent, knowledge, tools and Worker protocol in Node, using the baseline prompts, `deepseek-flash` high, 15 minutes per turn and no tool cap. The key comes only from the environment and is redacted from the archive. It writes `.cache/evaluations/case-<slug>-<id>/` with `report.json` (per-turn transcript, metrics, coverage), `turn-N.p8`, `final.p8`, and PNG frames from replaying the longest final-revision normal route in a fresh session. Results of the 2026-11-13 rerun are in [development status](../../../docs/development-status.md).
 
+`node scripts/evaluation/reverify-s4.mjs <archive-dir>...` reruns the current independent and Agent-route verifiers on archived S4 final carts without provider requests and writes `reverify.json` beside the untouched report. The independent oracle waits 30 idle frames after a result before pressing X (a short result lock is valid), and Agent-route evidence replays normal input before the first debug event.
+
 ## Fixed suites
 
 Open `/evaluation.html` on the same local development origin as the app. The evaluator uses the browser's saved model configuration and makes normal provider requests with disposable carts. Select Workflow for the original six tasks twice, or Small mechanics for three small repair tasks twice. It records tool use, state/debug calls, scope preservation and independent pixel checks. Workflow is present at startup; document reads are not pass criteria. Review creation gameplay with the returned frames. Compaction tests use declared synthetic history and real provider summarization.

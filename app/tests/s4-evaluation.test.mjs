@@ -43,6 +43,16 @@ test("independent shooter oracle accepts real action/feedback, victory, loss and
     r = await verifyShooter(cart);
   assert.equal(r.passed, true);
   assert.deepEqual(cart, before);
+  // The published skeleton's short result lock is a valid retry.
+  const locked = shooterSource
+    .replace("wave=1,kills=0,tick=0,cooldown=0}", "wave=1,kills=0,tick=0,cooldown=0,wait=0}")
+    .replace(
+      "if g.mode!=\"play\" then if btnp(5) then new_game() end return end",
+      "if g.mode!=\"play\" then g.wait+=1 if g.wait>15 and btnp(5) then new_game() end return end",
+    );
+  assert.notEqual(locked, shooterSource);
+  const lockedResult = await verifyShooter(emptySnapshot(locked));
+  assert.equal(lockedResult.passed, true, JSON.stringify(lockedResult.checks));
   assert.ok(
     r.evidence.every((e) => e.steps.length && e.image.data && e.frameHash),
   );
@@ -65,7 +75,7 @@ test("oracle rejects invulnerability regression, fake progress, invisible enemie
     assert.equal((await verifyShooter(emptySnapshot(source))).passed, false);
 });
 
-test("Agent route evidence requires final cart, completed inputs and matching pixels; later debug excludes entire run", async (t) => {
+test("Agent route evidence requires final cart, completed inputs and matching pixels; only normal input before debug counts", async (t) => {
   const g = new EvaluationGame();
   t.after(() => g.dispose());
   await g.execute("load_game", { source: shooterSource });
@@ -132,7 +142,16 @@ test("Agent route evidence requires final cart, completed inputs and matching pi
   });
   assert.deepEqual(g.snapshot, bytes);
   assert.equal(g.playtests.runs[0].purpose, "debug");
+  // The normal prefix still proves the core loop; the injected win never counts.
+  await press(g, [{ frames: 1, buttons: 0 }]);
   result = await verifyAgentRoutes(g.snapshot, g.playtests.runs, ledger);
+  assert.equal(result.coverage.coreLoop, "passed");
+  assert.equal(result.coverage.victory, "unknown");
+  assert.equal(result.firstVerifiedCoreLoopCall, 3);
+  // A route declared debug from its start contributes nothing.
+  const declared = structuredClone(g.playtests.runs);
+  declared[0].debugEvents[0].routePurpose = "debug";
+  result = await verifyAgentRoutes(g.snapshot, declared, ledger);
   assert.equal(result.coverage.coreLoop, "unknown");
   assert.equal(result.firstVerifiedCoreLoopCall, null);
 });
