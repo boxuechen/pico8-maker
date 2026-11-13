@@ -31,7 +31,7 @@ The maintainer authorized publishing the existing application with its community
 
 Successful `main` CI runs deploy the static build. The deployment smoke check uses a temporary browser profile and a scripted local model to verify connection probing, creation, real WASM input, `.p8` export and reload recovery against the production subdirectory. It is integration evidence, not a new real-model quality evaluation. See the [deployment guide](development.md#github-pages-deployment).
 
-The separate `pico8-runtime` repository can choose its own license and release schedule. It is not required to build or publish Maker.
+The maintained public scope is Maker plus Web Player. The separate portable-runtime experiment is retained privately with maintenance paused; it is not part of the Maker build, publication or contributor setup. Web Player continues to maintain its own internal runtime and WASM sources.
 
 ## Deployment verification — 2026-11-13
 

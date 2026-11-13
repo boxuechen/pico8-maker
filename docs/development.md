@@ -35,7 +35,7 @@ Serve the static site through HTTP(S); do not open `index.html` through `file://
 3. Update Maker's `app/player.lock.json`: `baseUrl`, `sourceCommit`, and the SHA-256 of the downloaded `manifest.json` bytes.
 4. Run Maker tests, build and Sites checks. The preparation script verifies the manifest and every file; a valid cache works without network access.
 
-Keep previously published directories available for older Maker checkouts. The normal distribution path does not use GitHub Releases. The independent C++ `pico8-runtime` is not a dependency.
+Keep previously published directories available for older Maker checkouts. The normal distribution path does not use GitHub Releases or a separate runtime repository. Web Player owns and maintains its internal TypeScript runtime, vendored z8lua and C/C++ WASM bridge. Fix cartridge execution, graphics and audio compatibility there; keep Maker focused on authoring and agent integration.
 
 To work on both repositories locally, explicitly select a built player directory:
 

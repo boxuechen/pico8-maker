@@ -76,7 +76,7 @@ See the [development guide](docs/development.md) for local mock models, player u
 | `docs/pico8-agent/` | Versioned model instructions, references and runnable examples |
 | `app/scripts/evaluation/` | Reproducible model evaluations and independent game checks |
 
-The dependency is **Maker → Web Player static build**. [pico8-runtime](https://github.com/boxuechen/pico8-runtime) is a separate C++/Web/native runtime project; Maker does not depend on it.
+The maintained public projects are **Maker** and [**Web Player**](https://github.com/boxuechen/pico8-web-player). Maker consumes a pinned Web Player static build. Web Player contains its own TypeScript runtime and vendored C/C++ WASM sources; no separate runtime repository is required. Compatibility fixes belong in Web Player, while authoring and agent workflows belong in Maker.
 
 ## Status
 

@@ -72,7 +72,7 @@ npm --prefix app run test:sites
 | `docs/pico8-agent/` | 版本化模型规则、按需参考和可运行示例 |
 | `app/scripts/evaluation/` | 可复现模型评测与独立游戏检查 |
 
-当前依赖为 **Maker → Web Player 静态构建**。[pico8-runtime](https://github.com/boxuechen/pico8-runtime) 是独立的 C++ / Web / 原生运行时项目，不参与 Maker 构建。
+公开维护的项目为 **Maker** 和 [**Web Player**](https://github.com/boxuechen/pico8-web-player)。Maker 使用固定版本的 Web Player 静态构建；Web Player 自带 TypeScript 运行时及 C/C++ WASM 源码，不需要单独的运行时仓库。卡带兼容问题在 Web Player 修复，创作体验和 Agent 工作流在 Maker 维护。
 
 ## 当前状态与贡献
 
