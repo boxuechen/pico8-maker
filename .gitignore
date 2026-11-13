@@ -16,3 +16,5 @@ app/.vite/
 /app/public/extensions/pico8/
 
 /lab/local-agent/node_modules/
+
+/lab/local-agent/agent/*.lock
