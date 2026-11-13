@@ -1,213 +1,119 @@
-# Local Agent Prototype — MiniCPM5-2B
+# Local Agent Lab — Pi coding agent + PICO-8 skill
 
-A headless PICO-8 game agent built for one model, **MiniCPM5-2B**, running on a local Ollama.
-Browser inference is out of scope for now; no agent framework is required. The lab owns its
-workflow, prompts and model protocol, and shares only the player runtime and evaluation
-oracles with Maker. Maker is not changed.
+Can a small local model make and change PICO-8 games when it runs inside a minimal coding
+agent? The lab answers this with the stock **Pi coding agent** (`@earendil-works/pi-coding-agent`,
+pinned), a **`pico8` skill**, and a text-only **`p8` command** that checks and plays carts.
+The lab writes no agent loop of its own. Maker is not changed. Training is out of scope for
+this machine.
 
-## Goal and division of labour
+## Why this shape
 
-**From one sentence, MiniCPM5-2B reliably produces a working, themed PICO-8 game in seconds.**
+- A public test of ten agent harnesses on Qwen3.5-4B Q4_K_M (r/PiCodingAgent, 2026-10) had Pi
+  finish five small coding tasks 5/5 in 1m36s; the author's conclusion was that at that
+  difficulty the harness, not the model, is the bottleneck.
+- Our earlier 4B result in the Maker flow (repair 1/3, create 0/3, 57/64 tool errors) came from
+  a heavy harness: ten custom tools, a large resident workflow, an image on every result, and
+  38 reads of documents that did not exist.
+- The remaining gap is domain knowledge: small models write standard Lua (`math.abs`,
+  `table.insert`) and invent syntax. The skill and the checker target exactly that.
 
-| Who | Responsible for |
-| --- | --- |
-| **Templates (host)** | Game code, polish and quality: title and controls, HUD, result screen with retry lock, particles and shake, difficulty ramp, sound on every event, readable palette. Written and reviewed by a person. |
-| **Model** | Understanding the request: choose the template, name and theme the game, pick sprites and palette, set tunables; for small rule changes, pick and parameterise prepared rule options. |
-| **Host checks** | Everything verifiable: the game boots, plays, can be lost/won and retried, and the request was applied. |
+So making a game becomes the loop small models handle best: **edit a file → run a check →
+read the failure → edit again**, like fixing code until tests pass.
 
-Game quality is set by the templates; the model is judged on whether its game matches the
-request. Free-form code writing and repair are tracked as stretch tasks without targets.
-
-## Measured capability (2026-11-13 probe)
-
-Published scores (vendor, mostly thinking mode, Python-centric): LiveCodeBench v6 69.1,
-SWE-bench Verified 46.4, BFCL v4 66.6, IFEval 86.7, IFBench 66.3, τ²-Telecom 97.1,
-Terminal-Bench 8.6. Long multi-step execution is the documented weak spot.
-
-Local probe, `q4_K_M`, official template, raw generation, `temperature 1.0 / top_p 0.95`:
-
-| Task | Result |
-| --- | --- |
-| Spec form (9 keys, closed choices + ranges) | 3/3 chose the right template, roles, palette and in-range numbers; 2/3 broke the TITLE format (mixed case) — fixable by host normalisation |
-| Write a whole catch game from the template, no thinking (×3) | 0/3 runnable: `math.abs`/`math.floor`, invented syntax (`g.fish{i}`, `x:rnd(…)`), incoherent rules; 2/3 answered in plain text instead of a tool call |
-| Same with thinking (×2) | 0/2: one missing `_update`; one ran away to 56K characters of thinking and hit the 12K-token cap |
-| S4 shooter repair, find/replace edits (×5, 3 no-think, 2 think) | 0/5: no-op edits, wrong location, line-number prefixes copied into `find`; thinking used 15–34K characters without finding the bug |
-| Speed (M4 Pro) | decode ≈ 110–125 tok/s (≈ 95 with long thinking); prompt prefill ≈ 1.3–2K tok/s cold, near-instant with a cached prefix |
-
-Conclusions: closed-choice forms are reliable; PICO-8 code generation and debugging are not,
-in either thinking mode, despite the coding benchmarks. Thinking is unstable in length and
-does not help these tasks. The design keeps the model on choices and parameters.
-
-## Model and protocol facts
-
-| Item | Value |
-| --- | --- |
-| Model | `openbmb/minicpm5-2b:q4_K_M` (Ollama, 1.56 GB), Apache-2.0; `LlamaForCausalLM`, 2.5B, 131K context, text only |
-| BOS | The GGUF sets `add_bos_token = false`, but the official template starts with `<s>`. Raw prompts **must** start with `<s>`; without it the model answers incoherently. |
-| Chat format | `<s><|im_start|>system\n…<|im_end|>\n<|im_start|>user\n…<|im_end|>\n<|im_start|>assistant\n` |
-| Thinking | Off: prefill `<think>\n\n</think>\n\n`. On: prefill `<think>\n`. Default **off**. |
-| Native tool calls | `<function name="f"><param name="p">…</param></function>`. `<function`, `</function>`, `<param`, `</param>` are control tokens (type 3) that Ollama strips from returned text, leaving only ` name="f"> name="p">…`. |
-| Ollama tag template | No tool section, missing newline before `<think>`, 4096-token default context, stop list stored as one string. Not used. |
-
-Therefore: the lab renders the prompt itself, calls `POST /api/generate` with `raw: true`,
-`stop: ["<|im_end|>", "</s>"]` and an explicit `num_ctx`, and **does not use native tool
-calls**. Every reply is a plain-text format defined below, parsed by the host. This avoids the
-stripped control tokens and is the format a 2B model follows best (IFEval-style constraints).
-
-## Levels and targets
-
-| Level | Example request | Model reply | Host verification | Target |
-| --- | --- | --- | --- | --- |
-| **L1 configure** (core) | "a cat catches falling fish, avoid the bones" | spec form | spec valid; build boots; template checks; theme fit reviewed | valid ≥ 9/10 (after normalisation and ≤ 1 correction); functional 10/10 of valid specs; theme fit ≥ 8/10; ≤ 10 s end to end |
-| **L2 tweak** | "faster, and lose after 3 misses" on an L1 game | `SET` lines and `RULE` lines | spec + rule validation, template checks, task check | ≥ 4/5 per task set |
-| L3 code (stretch) | "add a power-up that slows the fish"; S4 repair | a Lua block for one slot, or `FIND`/`REPLACE` blocks | lint, smoke, checks; S4 oracle | tracked only |
-| Free create | S4 `shooter-create` | — | — | out of scope |
-
-Theme fit is a person's yes/no per game: do title, sprites, palette and texts match the request?
-
-## Reply formats
-
-All formats are `KEY: value` lines; unknown lines are ignored, missing or invalid keys get one
-correction round that lists the allowed values.
-
-**L1 spec form**
-
-```
-TEMPLATE: catch
-TITLE: FISH CATCH
-PLAYER: cat
-CATCH: fish
-AVOID: bone
-PALETTE: ocean
-SPEED: 1.2
-GOAL: 15
-LIVES: 3
-TEXT_WIN: FULL BELLY!
-TEXT_LOSE: TOO MANY MISSES
-```
-
-Host normalisation before validation: trim, upper-case TITLE and TEXT_*, clamp numbers to
-range, map close synonyms of choice values (e.g. `kitty` → `cat`) from a per-key alias list.
-
-**L2 tweak**
-
-```
-SET SPEED: 2
-SET LIVES: 3
-RULE: miss_loses_life
-RULE: speed_up_every 10
-```
-
-`SET` changes a spec key or tunable. `RULE` enables one of the template's prepared rule
-options (each a reviewed code snippet with parameters), so rule changes stay choices rather
-than code.
-
-**L3 code (stretch)**: one fenced ```` ```lua ```` block preceded by `SLOT: <name>`, or
-`FIND:`/`REPLACE:` fenced block pairs for repair.
-
-## Where quality comes from
-
-1. **Templates.** Each genre template (first: catch, dodge; later: shooter, collect) is a
-   complete, polished game with fixed structure (`g`, `new_game()`, modes, locked X retry).
-   A template is admitted after a person rates its default build ≥ 4/5 on readability,
-   feedback and fun, and its host checks pass.
-2. **Choose, don't draw.** Sprites come from a curated 8×8 library (`sprites.json`, ids per
-   role and theme) and colours from named presets (`palettes.json`).
-3. **Tunables** with documented ranges; the host clamps.
-4. **Rule options.** Each template ships a short list of prepared, reviewed rule variants
-   (e.g. `miss_loses_life`, `speed_up_every N`, `bonus_item`, `time_limit N`) that L2 enables.
-5. **Slots** exist only for L3.
-
-## Boundaries
+## Components
 
 ```
 lab/local-agent/
-  bin/        probe.mjs (format validity and speed), eval.mjs (levels × repeats)
-  prompts/    spec.md, tweak.md, code.md (L3), api.md (L3)
-  templates/  <genre>.lua, <genre>.json (keys, aliases, ranges, rule options, slots, checks)
-  assets/     sprites.json, palettes.json
+  DESIGN.md
+  package.json        pins @earendil-works/pi-coding-agent; scripts: test, eval
+  agent/              PI_CODING_AGENT_DIR for runs: models.json (local Ollama), settings.json
+  skill/pico8/        SKILL.md, reference/{lua.md, api.md}, examples/*.lua, template.lua
+  bin/p8              the checker CLI (on PATH during runs)
+  bin/eval.mjs        runs tasks × repeats through `pi --mode json`, scores with hidden checks
   src/
-    ollama.mjs     raw completion: complete(prompt, {stop, maxTokens, temperature, numCtx, signal})
-    prompt.mjs     MiniCPM5 chat rendering (<s>, roles, thinking prefill)
-    replies.mjs    parse and normalise spec / tweak / code replies
-    maker.mjs      the only import path into app/: player runtime, cart codec, tokens, S4 tasks/oracle
-    runtime.mjs    one inspection session: load, advance, read
-    build.mjs      template + spec + rules → cart (sprites, palette, tunables, texts, sounds)
-    lint.mjs       static checks (L3 code)
-    verify.mjs     smoke + template checks + task checks → report
-    flow.mjs       L1, L2, L3 flows with correction rounds
-    sounds.mjs     fixed sfx 0–7 bank
-  tests/      node --test with a scripted completion; no model requests
+    maker.mjs         the only import path into app/: player runtime, cart codec, tokens, S4 oracle
+    runtime.mjs       one inspection session: load, advance, read, ASCII thumbnail
+    lint.mjs          static checks with fix hints
+    checks.mjs        check specs: boot, smoke, scripted cases with expectations
+    p8.mjs            command implementations used by bin/p8
+    sounds.mjs        fixed sfx 0–7 bank for new carts
+  tasks/<id>/         task.md, start files, checks.json (visible), hidden.json (eval only)
+  tests/              node --test for p8 and checks; no model requests
 ```
 
-Rules: `app/` never imports `lab/`; `lab/` imports `app/` only through `src/maker.mjs`.
-`ollama.mjs` knows nothing about prompts; `prompt.mjs` and `replies.mjs` know nothing about
-PICO-8 runtime; `flow.mjs` is the only module that knows the workflow; the builder and
-checks never call the model. No provider SDK dependency. Results go to `.cache/lab/`.
+Rules: `app/` never imports `lab/`; `lab/` imports `app/` only through `src/maker.mjs`. The
+agent sees only its workspace, the skill and `p8`. Results go to `.cache/lab/` (ignored).
 
-## Flows
+## `p8` command
 
-**L1** (≤ 2 model calls): request + template catalogue (genres with one-line descriptions,
-roles, palettes, ranges) → spec form → normalise and validate (≤ 1 correction) → build →
-smoke and template checks → report. A build or check failure is a template/builder bug.
+Text output only, short, and every failure says what to change.
 
-**L2** (≤ 2 model calls): request + current spec + tunables + rule options → tweak lines →
-validate → rebuild → template checks + task check → report.
+| Command | Does |
+| --- | --- |
+| `p8 check [main.lua]` | lint → load → boot 30 frames → smoke → every case in `checks.json`. Prints `PASS`/`FAIL` per item with line numbers and actual values, then `ALL PASSED` or `N FAILED`. Exit code 0 only when all pass. |
+| `p8 run [main.lua] --press "right*30 x" --read g.score,g.mode` | Boot, hold buttons for the given frames, print mode changes, sound starts and read values. |
+| `p8 look [main.lua] [--press …]` | 32×32 ASCII thumbnail (`0–f`, one character per 4×4 block) of the frame after the presses. |
+| `p8 new <template>` | Copy a starting cart into the workspace (new-game tasks). |
+| `p8 export [main.lua] [out.p8]` | Write a `.p8` cart with the sound bank. |
 
-**L3** (stretch, ≤ 4 model calls): request + numbered slot or source + API sheet → code
-reply → lint, load, checks; failures with actual values go back once per call.
+Lint hints map the known mistakes: `math.abs → abs`, `math.floor → flr`, `math.random → rnd`,
+`table.insert → add`, `local g` at top level, non-ASCII text, missing `_update`/`_draw`, over
+8192 tokens.
 
-Requests stay small: ≤ 2K tokens for L1/L2, ≤ 6K for L3; `num_ctx` 8K.
+`checks.json` cases: `{name, setup?, press, expect: [{path, equals|atLeast|atMost|changes}]}`,
+run from boot in a fresh session. Tasks ship visible checks; evaluation also runs hidden ones.
 
-## Host checks
+## `pico8` skill
 
-**Spec/tweak**: every key known; values in allowed sets or ranges after normalisation; rule
-options exist and their parameters are in range.
+`SKILL.md` stays under about 1,500 tokens: what PICO-8 Lua is not (a short table of
+standard-Lua habits and their PICO-8 forms), the game skeleton (global `g`, `new_game()`,
+`g.mode`, locked X retry), screen and input facts, and the working rule: **after every
+change run `p8 check`; you are done only when it prints ALL PASSED.** References (`api.md`,
+`lua.md`) and two or three complete example games are read on demand.
 
-**Smoke**: boots 30 frames without fault; `g.mode` set; more than one colour on screen;
-input changes `g` or the frame.
+## Tasks
 
-**Template checks** (from `<genre>.json`): idle loses within a set time, scoring raises
-`g.score`, win reachable (with setup), X retry restores the initial state, every event plays
-its sound, plus one check per enabled rule option.
+Each task: 10 minutes, fresh workspace copy, scored only by hidden checks (which include the
+visible ones), 3 repeats.
 
-**Task checks** (L2): state reads per task, e.g. `g.lives == 3`.
+| Level | Task | Start |
+| --- | --- | --- |
+| T0 | Pi sanity: a small Python fix with a test (as in the public benchmark) | Python files |
+| T1 | Change constants: player speed, lives, goal | working catch game |
+| T2 | Fix a bug that a visible check reports (e.g. S4 shooter invulnerability) | buggy cart |
+| T3 | Add a small feature: missing a fish costs a life; speed up every 5 points | working catch game |
+| T4 | New game from a template: "dodge falling rocks, survive 30 s" | `p8 new` available |
+| T5 | New game from scratch: catch game from one sentence | empty `main.lua` |
 
-**Lint** (L3 only): non-ASCII, foreign APIs (`love.`, `math.*`, `string.*`,
-`table.insert/remove`, `os.`, `io.`, `require`), `local g`, missing callbacks, token limit,
-edits outside the slot.
+Targets for Qwen3.5-4B: T0 3/3; T1–T3 together ≥ 7/9; T4 ≥ 2/3. T5 is tracked.
 
-## Evaluation
+## Models and runtime
 
-`bin/probe.mjs`: format validity (spec and tweak replies, ×10 each) and speed.
+- Primary: `qwen3.5:4b-q4_K_M` on local Ollama (`OLLAMA_CONTEXT_LENGTH=32768`), OpenAI
+  Chat Completions, text only, thinking off (then `low` as a comparison).
+- Reference ceiling: `qwen3.5:9b-q4_K_M` on the same tasks.
+- MiniCPM5-2B is excluded: Pi needs OpenAI tool calls, and neither Ollama nor llama.cpp parses
+  its XML tool format.
 
-`bin/eval.mjs`: L1 10 fixed requests × 3 repeats; L2 5 tweak tasks × 3; L3 S4 repair and
-3 slot tasks, tracked. Metrics: validity (first try / after correction), functional pass,
-task-check pass, theme fit (reviewed), model calls, wall time. Final games are replayed to
-capture title, play and result frames for review.
+Run shape: `PI_CODING_AGENT_DIR=agent pi --mode json --no-session --offline --no-extensions
+--no-mcp --no-context-files --no-prompt-templates --no-skills --skill skill/pico8
+--model ollama/<id> --thinking off "<task.md>"`, cwd = workspace, `PATH` includes `bin/`.
+
+Metrics per run: hidden-check pass, wall time, model turns, tool calls by name, `p8 check`
+runs, tool errors, output tokens, whether the agent stopped on its own.
 
 ## Milestones
 
-1. **M0 protocol** — `ollama.mjs`, `prompt.mjs`, `replies.mjs`, `probe.mjs`. Exit: spec and
-   tweak replies valid ≥ 9/10 after normalisation (thinking off); speed recorded.
-2. **M1 configure** — catch template with manifest, aliases and checks (reviewed ≥ 4/5),
-   sprite and palette libraries, builder, L1 flow. Exit: L1 targets on catch requests.
-3. **M2 tweak** — rule options and task checks for catch; dodge template. Exit: L2 ≥ 4/5;
-   L1 targets hold across two templates.
-4. **M3 stretch** — L3 slot code and repair tracked.
-
-## Current code and migration
-
-Kept and adapted: `maker.mjs`, `runtime.mjs` (no images), `lint.mjs` (L3), `smoke.mjs`
-(into `verify.mjs`), `sounds.mjs`; `prompts/template.lua` and `prompts/example.lua` seed the
-catch template. Removed: `model.mjs` (pi-ai) and the pi-ai dependency, `loop.mjs`,
-`tools.mjs`, `phases.mjs`, `prompts/{core,build,plan,test}.md`, image handling and the old
-tests. Probe scripts from the capability check live in `.cache/minicpm-probe/` (not committed).
+1. **Harness** — agent dir, Pi run wrapper, T0. Exit: T0 3/3 on 4B.
+2. **Checker and skill** — `p8`, lint hints, checks, skill, T1–T3. Exit: T1–T3 ≥ 7/9.
+3. **New games** — templates, `p8 new`, T4/T5. Exit: T4 ≥ 2/3.
+4. **Comparison** — 9B on all tasks; the Maker-flow 4B numbers as the "heavy harness" baseline.
 
 ## Running
 
 ```sh
-OLLAMA_HOST=127.0.0.1:11434 OLLAMA_FLASH_ATTENTION=1 OLLAMA_KV_CACHE_TYPE=q8_0 \
-  ~/.local/ollama-0.40.16/ollama serve
-~/.local/ollama-0.40.16/ollama pull openbmb/minicpm5-2b:q4_K_M
+OLLAMA_HOST=127.0.0.1:11434 OLLAMA_CONTEXT_LENGTH=32768 OLLAMA_FLASH_ATTENTION=1 \
+  OLLAMA_KV_CACHE_TYPE=q8_0 ~/.local/ollama-0.40.16/ollama serve
+~/.local/ollama-0.40.16/ollama pull qwen3.5:4b-q4_K_M
+cd lab/local-agent && npm install && npm run eval -- --model qwen3.5:4b-q4_K_M --tasks T0,T1
 ```
