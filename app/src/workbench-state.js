@@ -61,6 +61,7 @@ const toolLabels = {
   edit_assets: "Edited resources",
   press_buttons: "Pressed",
   observe_game: "Looked at the screen",
+  inspect_game: "Inspected test state",
   reset_game: "Restarted the test",
 };
 export function describeTool(tool) {

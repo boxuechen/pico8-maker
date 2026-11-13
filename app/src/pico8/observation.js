@@ -121,6 +121,10 @@ export function observationText(observation, options) {
     state: observation.state,
     frameId: frame?.frameId ?? null,
     stateSeq: observation.stateSeq ?? 0,
+    ...(observation.frameStateSeq !== undefined &&
+    observation.frameStateSeq !== observation.stateSeq
+      ? { frameStateSeq: observation.frameStateSeq }
+      : {}),
     ...(frame
       ? {
           cpuInstructions: frame.cpuInstructions,

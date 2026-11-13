@@ -6,6 +6,7 @@ description: Verify behavior with actual input and frames, including after creat
 # Playtest
 
 - Define the expected result. Use reset_game with purpose "normal" for a normal-start check or "debug" for modified progress/rules. This label is a declaration, not proof. Inspect the returned frame and diagnostics.
+- Use inspect_game in read mode for counters, boards and other global state before choosing inputs. Use debug mode to inject boundary conditions without changing source; it marks the whole run debug. After an executed error or cancellation, reset before continuing. The next input renders changes; the previous image remains old evidence.
 - Batch predictable inputs within the tool limits. Use tap:true for a distinct press (one release frame before and after), and capture:true on a step whose end proves a transition. The final frame is always returned. Use separate calls when the next action depends on the result; reuse the returned PNG before requesting another observation.
 - Check execution.completedFrames and outcome. Match evidence to the current cart revision and runtime frame. Load, reset and input already return PNG. Use observe_game for a specific unresolved view.
 - Exercise each requested main mechanic and the applicable success, failure and retry paths. Verify that retry restores the playable state, including relevant counters or collectibles. A focused edit only needs checks for the changed behavior and nearby effects. Use /extensions/pico8/references/playtest.md for input and observation details.

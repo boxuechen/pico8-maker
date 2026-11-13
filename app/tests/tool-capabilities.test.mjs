@@ -129,7 +129,7 @@ test("versioned routes persist steps; old records and replay are rejected", asyn
   const saved = normalizeCart(
     newCart({ playtests: g.playtests.runs }),
   ).playtests;
-  assert.equal(saved[0].schemaVersion, 2);
+  assert.equal(saved[0].schemaVersion, 3);
   assert.equal(saved[0].calls.length, 1);
   assert.equal(JSON.stringify(saved).includes('"rgba"'), false);
   assert.deepEqual(normalizePlaytests([{ ...saved[0], schemaVersion: 1 }]), []);

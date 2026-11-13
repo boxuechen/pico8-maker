@@ -1,6 +1,6 @@
 # PICO-8 knowledge and host contract
 
-This document describes the current implementation. The [agent tooling plan](../agent-tooling-plan.md) specifies the pending state/debug tools, unified startup workflow and outcome-based evaluation. Apply those contract changes together with their implementation; the plan is maintainer documentation and is not published to the model.
+This document describes the current implementation. The [agent tooling plan](../agent-tooling-plan.md) tracks the implemented P0 tools and the pending unified startup workflow and outcome-based evaluation. Apply those contract changes together with their implementation; the plan is maintainer documentation and is not published to the model.
 
 [AGENT.md](AGENT.md) routes requests to the create, edit, assets or playtest skill. [MACHINE.md](MACHINE.md) defines the PICO-8 target. The base palette, project state and skill metadata are available at startup. The [reference index](REFERENCE_INDEX.md), skill bodies and references load through `read` when needed.
 
@@ -12,11 +12,12 @@ This document describes the current implementation. The [agent tooling plan](../
 | `load_game` | Start the draft in the test runtime and commit source and resources together after a successful load. Failed loads retain both the draft and last playable cart. |
 | `reset_game`, `press_buttons` | Operate the committed cart in a separate test Worker. Eight logical steps, 600 frames including tap releases, eight PNG checkpoints. Only steps are accepted, with optional step-end captures. Load/reset creates a fresh test session and memory saves. |
 | `observe_game` | Read the completed frame as PNG, ASCII or both. Regions clip to the screen; model PNGs use 4x nearest-neighbor enlargement while coordinates and ASCII remain native. |
+| `inspect_game` | Read raw global/table paths without running Lua, or execute bounded debug Lua in the test Worker. Debug marks the entire run before dispatch. It returns state text without a PNG. |
 | `read_assets`, `edit_assets` | Read authored draft or committed data, preview sprites and maps, and apply atomic draft edits with actual changes reported. |
 
 Runtime observations include run/frame/state identity, committed revision and draft status. Only source reads and load_game include approximate source budgets. Successful inputs omit expanded step details; partial inputs retain them. Internal session/generation identifiers remain in the host, and multi-image results share one common header. Instruction counts describe the local WASM runtime. New printh logs are returned in a separate bounded text block; repeated observations do not repeat delivered entries. The playback and test Workers have separate state. Test saves use memory, so restored conversations should establish a fresh observation baseline. Detailed contracts are in [playtest](references/playtest.md) and [asset authoring](references/asset-authoring.md).
 
-Playtest routes persist with the cart and are read on demand through `/cart/playtests.json` and its run paths. The last 12 runs retain up to 128 calls, cart hashes and frame hashes; PNGs remain in the transcript. Normal/debug purpose defaults to normal and describes the test setup. Version 2 records retain only steps; old formats are dropped. Reusing those steps produces fresh evidence on the current cart. No extra tool or startup history payload is added.
+Playtest routes persist with the cart and are read on demand through `/cart/playtests.json` and its run paths. The last 12 runs retain up to 128 calls, cart hashes and frame hashes; PNGs remain in the transcript. Normal/debug purpose defaults to normal and describes the test setup. Version 3 records retain steps and at most 32 debug events, each with code, stateSeq and status. Debug marking survives errors, timeout and STOP; only fresh load/reset starts a normal run. Old formats are dropped. Reusing those steps produces fresh evidence on the current cart. Records load on demand rather than being injected into startup.
 
 ## Creation and repair guidance
 

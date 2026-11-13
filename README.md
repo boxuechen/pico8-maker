@@ -4,7 +4,7 @@
 
 ## 本地运行
 
-应用使用 Node.js 24。在 `ref/pico8-web-player` 检出播放器仓库的 `bbcbbf6bbb2af06e114eeb9593943a02df79b83d`，按其 `docs/development.md` 准备工具链，再构建 WASM 和 standalone release。[播放器仓库](https://github.com/boxuechen/pico8-web-player)
+应用使用 Node.js 24。在 `ref/pico8-web-player` 检出播放器仓库的 `4c28b861ce8d2536229b6b723b8b7c9a57e85d07`，按其 `docs/development.md` 准备工具链，再构建 WASM 和 standalone release。[播放器仓库](https://github.com/boxuechen/pico8-web-player)
 
 ```sh
 npm --prefix app ci
@@ -24,7 +24,7 @@ npm --prefix app run dev -- --host 127.0.0.1 --port 5175
 
 每张卡带共享源码、原生资源和最近 12 个版本，支持多个独立对话。卡带与对话存入 IndexedDB。模型配置默认保存在浏览器，可关闭保存或清除配置。应用直接请求所选服务，交互模型默认采用 high 思考设置并按能力调整。
 
-实施中的[Agent 工具与流程改造计划](docs/agent-tooling-plan.md)定义状态查询、调试执行、工具精简、统一 Workflow 与结果评测的阶段和验收；实际进度与验证见[实施记录](docs/tooling-progress.md)。
+[Agent 工具与流程改造计划](docs/agent-tooling-plan.md)中的 S0/P0 已实现：模型可读取游戏全局状态、执行有界调试并获取日志，截图放大、输入和结果契约已精简。统一 Workflow、结果评测扩展与纯文本模式留在后续阶段；验证范围见[实施记录](docs/tooling-progress.md)。
 
 ## 检查与构建
 

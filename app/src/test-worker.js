@@ -9,10 +9,14 @@ self.onmessage = async ({ data }) => {
     let result;
     if (data.action === "load") {
       await session?.dispose();
-      session = await lib.createPico8Session();
+      session = await lib.createPico8Session({ inspection: true });
       result = await session.loadCart(data.cart);
-    }
-    else if (data.action === "observe") result = session.observe();
+    } else if (data.action === "observe") result = session.observe();
+    else if (data.action === "inspect")
+      result = {
+        inspection: await session.inspect(data.request),
+        observation: session.observe(),
+      };
     else if (data.action === "advance")
       result = await session.advance({
         frames: data.frames,

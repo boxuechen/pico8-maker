@@ -6,7 +6,7 @@
 
 [PICO-8 官方手册](https://www.lexaloffle.com/dl/docs/pico-8_manual.html)，读取时标题为 v0.2.7。用来核对 Lua 语义、程序结构和 API 分类。本资料使用原创说明与样例，不复制手册正文或 editor 教程。函数签名、内存布局等事实还逐项对照下列本地实现和测试。
 
-本地播放器 checkout：`bbcbbf6bbb2af06e114eeb9593943a02df79b83d`。验证报告记录实际 release JS、WASM 和合成器产物 SHA-256；更换播放器后重新运行样例，不仅更新这个提交号。
+本地播放器 checkout：`4c28b861ce8d2536229b6b723b8b7c9a57e85d07`。验证报告记录实际 release JS、WASM 和合成器产物 SHA-256；更换播放器后重新运行样例，不仅更新这个提交号。
 
 ## 本地依据
 

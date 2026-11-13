@@ -32,7 +32,7 @@ export function normalizePlaytests(data) {
     try {
       if (
         !r ||
-        r.schemaVersion !== 2 ||
+        r.schemaVersion !== 3 ||
         !/^r[1-9]\d{0,8}$/.test(r.id) ||
         ids.has(r.id) ||
         !Number.isInteger(r.revision) ||
@@ -41,9 +41,33 @@ export function normalizePlaytests(data) {
         !purposes.includes(r.purpose) ||
         !["load", "reset"].includes(r.origin) ||
         !Array.isArray(r.calls) ||
-        r.calls.length > maxCalls
+        r.calls.length > maxCalls ||
+        !Array.isArray(r.debugEvents) ||
+        r.debugEvents.length > 32 ||
+        (r.debugEvents.length > 0 && r.purpose !== "debug")
       )
         return [];
+      const debugEvents = r.debugEvents.map((e) => {
+        if (
+          !e ||
+          typeof e.code !== "string" ||
+          e.code.length > 4096 ||
+          !Number.isInteger(e.stateSeq) ||
+          e.stateSeq < 1 ||
+          !["pending", "completed", "failed", "unknown"].includes(e.status) ||
+          (e.executed !== undefined && typeof e.executed !== "boolean") ||
+          (e.reason !== undefined &&
+            (typeof e.reason !== "string" || e.reason.length > 256))
+        )
+          throw new Error("Invalid debug event");
+        return {
+          code: e.code,
+          stateSeq: e.stateSeq,
+          status: e.status,
+          ...(e.executed === undefined ? {} : { executed: e.executed }),
+          ...(e.reason === undefined ? {} : { reason: e.reason }),
+        };
+      });
       const calls = r.calls.map((c) => {
         inputPlan(c.input);
         if (
@@ -80,7 +104,7 @@ export function normalizePlaytests(data) {
       ids.add(r.id);
       return [
         {
-          schemaVersion: 2,
+          schemaVersion: 3,
           id: r.id,
           revision: r.revision,
           cartHash: r.cartHash,
@@ -89,6 +113,7 @@ export function normalizePlaytests(data) {
           startFrame: Number.isInteger(r.startFrame) ? r.startFrame : null,
           truncated: r.truncated === true,
           calls,
+          debugEvents,
         },
       ];
     } catch {
@@ -112,7 +137,7 @@ export class Playtests {
   start({ revision, cartHash, purpose, origin, frame }) {
     const id = `r${Math.max(0, ...this.runs.map((r) => Number(r.id.slice(1)))) + 1}`;
     this.active = {
-      schemaVersion: 2,
+      schemaVersion: 3,
       id,
       revision,
       cartHash,
@@ -121,6 +146,7 @@ export class Playtests {
       startFrame: frame?.frameId ?? null,
       truncated: false,
       calls: [],
+      debugEvents: [],
     };
     this.runs = [...this.runs.slice(-(maxRuns - 1)), this.active];
     this.save();
@@ -135,15 +161,33 @@ export class Playtests {
         }
       : null;
   }
+  beginDebug(code, stateSeq) {
+    if (!this.active)
+      throw new Error("Reset to start a recorded test before debug execution");
+    this.active.purpose = "debug";
+    const event = { code, stateSeq, status: "pending" };
+    if (this.active.debugEvents.length < 32)
+      this.active.debugEvents.push(event);
+    else this.active.truncated = true;
+    this.save(); // Before dispatch: errors, STOP and timeouts cannot undo this label.
+    return event;
+  }
+  finishDebug(event, status, executed, reason) {
+    event.status = status;
+    if (executed !== undefined) event.executed = executed;
+    if (typeof reason === "string") event.reason = reason.slice(0, 256);
+    this.save();
+  }
   file(path) {
     if (path === "/cart/playtests.json")
       return JSON.stringify(
         {
           note: "Recorded execution, not gameplay verdicts. PNGs remain in the transcript. Reuse recorded steps as ordinary input on the current cart.",
           active: this.active?.id ?? null,
-          runs: this.runs.map(({ calls, ...r }) => ({
+          runs: this.runs.map(({ calls, debugEvents, ...r }) => ({
             ...r,
             calls: calls.length,
+            debugEvents: debugEvents.length,
             path: `/cart/playtests/${r.id}.json`,
           })),
         },

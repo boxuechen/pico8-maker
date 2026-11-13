@@ -30,6 +30,8 @@ export function createPico8Tools({ game, knowledge }) {
     press_buttons: `Advance player 0 input in the test Worker: at most ${capabilities.maxInputSteps} steps and ${capabilities.maxInputFrames} total frames. Button masks are left=1, right=2, up=4, down=8, O/Z=16, X=32. Add masks for combinations. Zero releases all buttons. Returns actual progress and PNG checkpoints, stopping early on runtime faults or stops.`,
     observe_game:
       "Read the last completed test frame without advancing time. Use a small ASCII crop to inspect exact pixels with the frame's palette. Reset or advance if no frame exists.",
+    inspect_game:
+      "Read raw globals/table paths in the test Worker without advancing frames or calling Lua. Example: {mode:'read',paths:[['g','board']]}. Debug executes bounded Lua byte-string code, automatically marks this entire route debug and never changes authored source/resources. Example: {mode:'debug',code:'g.moves=1; return g.moves'}. The existing image predates debug writes; advance to render. Reset after an executed error, interruption or timeout.",
   };
   const parameters = {
     reset_game: schema({
@@ -47,10 +49,10 @@ export function createPico8Tools({ game, knowledge }) {
       region: {
         ...schema(
           {
-            x: { type: "integer", minimum: 0, maximum: 127 },
-            y: { type: "integer", minimum: 0, maximum: 127 },
-            width: { type: "integer", minimum: 1, maximum: 128 },
-            height: { type: "integer", minimum: 1, maximum: 128 },
+            x: { type: "integer" },
+            y: { type: "integer" },
+            width: { type: "integer", minimum: 1 },
+            height: { type: "integer", minimum: 1 },
           },
           ["x", "y", "width", "height"],
         ),
@@ -65,6 +67,24 @@ export function createPico8Tools({ game, knowledge }) {
       },
     }),
     press_buttons: inputSchema,
+    inspect_game: schema(
+      {
+        mode: { type: "string", enum: ["read", "debug"] },
+        paths: {
+          type: "array",
+          minItems: 1,
+          maxItems: 16,
+          items: {
+            type: "array",
+            minItems: 1,
+            maxItems: 16,
+            items: { type: ["string", "integer"] },
+          },
+        },
+        code: { type: "string", minLength: 1, maxLength: 4096 },
+      },
+      ["mode"],
+    ),
   };
   const env = mountKnowledge(game.workspace, knowledge);
   const read = createReadTool();
@@ -141,7 +161,7 @@ export function createPico8Tools({ game, knowledge }) {
               },
             }
           : {}),
-        ...(name === "observe_game"
+        ...(["observe_game", "inspect_game"].includes(name)
           ? {
               outputLimits: {
                 maxBytes: capabilities.observationMaxBytes,

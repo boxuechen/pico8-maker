@@ -142,6 +142,7 @@ export class Game {
       location.href,
     ).href;
     const lib = await import(/* @vite-ignore */ this.url);
+    this.prepareInspection = lib.prepareInspection;
     this.player = await lib.createPico8WebPlayer({
       root,
       shell: "hosted",
@@ -229,7 +230,6 @@ export class Game {
   }
   async previewCart(cart) {
     this.testFrame = null;
-    this.testStateSeq = 0;
     this.activeCart = cart;
     this.changed();
     try {
@@ -260,7 +260,6 @@ export class Game {
     this.activeCart = null;
     this.previewVersion = "current";
     this.testFrame = null;
-    this.testStateSeq = 0;
     this.changed();
   }
   beginRequest() {
@@ -280,7 +279,6 @@ export class Game {
     if (this.previewLoading) return;
     this.previewLoading = true;
     this.testFrame = null;
-    this.testStateSeq = 0;
     this.changed();
     try {
       const snapshot =
@@ -302,7 +300,6 @@ export class Game {
   async play() {
     if (!this.hasGame && !this.activeCart) return;
     this.testFrame = null;
-    this.testStateSeq = 0;
     this.changed();
     if (this.player.state === "running") await this.player.pause();
     else if (this.player.state === "paused") await this.player.resume();
@@ -315,7 +312,6 @@ export class Game {
   async restart() {
     if (!this.hasGame && !this.activeCart) return;
     this.testFrame = null;
-    this.testStateSeq = 0;
     await this.player.reset();
     await this.player.start();
     this.player.canvas.focus();
@@ -402,6 +398,7 @@ export class Game {
         "reset_game",
         "press_buttons",
         "observe_game",
+        "inspect_game",
       ].includes(action)
     )
       throw new Error(`未知游戏工具：${action}`);
@@ -482,6 +479,65 @@ export class Game {
       throw new Error(
         "No game has been loaded yet. Write main.lua and call load_game first.",
       );
+    if (
+      ["inspect_game", "press_buttons"].includes(action) &&
+      this.debugRequiresReset
+    )
+      throw new Error(
+        "Debug execution may have changed state. Call reset_game before continuing.",
+      );
+    if (action === "inspect_game") {
+      this.prepareInspection(args); // Shared runtime validator, before any Worker side effect.
+      if (!this.playtests.active || !this.testFrame)
+        throw new Error(
+          "inspect_game requires a recorded completed frame. Call reset_game first.",
+        );
+      let event;
+      if (args.mode === "debug") {
+        event = this.playtests.beginDebug(args.code, ++this.testStateSeq);
+        this.debugRequiresReset = true;
+      }
+      try {
+        const { inspection, observation } = await this.rpc("inspect", {
+          request: args,
+        });
+        signal?.throwIfAborted();
+        if (event) {
+          this.debugRequiresReset = !inspection.ok && inspection.executed;
+          this.playtests.finishDebug(
+            event,
+            inspection.ok ? "completed" : "failed",
+            inspection.executed,
+            inspection.error,
+          );
+        }
+        const output = [
+          {
+            type: "text",
+            text: JSON.stringify({
+              ...this.cartSummary(),
+              ...this.playtests.summary(),
+              stateSeq: this.testStateSeq,
+              frameStateSeq: this.frameStateSeq,
+              frameId: observation.frame?.frameId ?? null,
+              ...inspection,
+              ...(this.debugRequiresReset ? { requiresReset: true } : {}),
+            }),
+          },
+        ];
+        this.appendLogs(output, observation);
+        return { output, isError: !inspection.ok };
+      } catch (error) {
+        if (event)
+          this.playtests.finishDebug(
+            event,
+            "unknown",
+            undefined,
+            error.message,
+          );
+        throw error;
+      }
+    }
     const options = {
       ...observationOptions(action === "observe_game" ? args : {}),
       includeBudget: action === "load_game",
@@ -515,6 +571,8 @@ export class Game {
         }));
       }
       this.testStateSeq = execution?.completedFrames ?? 0;
+      this.frameStateSeq = this.testStateSeq;
+      this.debugRequiresReset = false;
       if (observation.state === "faulted") {
         const result = this.output(
           {
@@ -574,12 +632,14 @@ export class Game {
       });
     } else if (action === "press_buttons") {
       const initialStateSeq = this.testStateSeq ?? 0;
+      const initialFrameStateSeq = this.frameStateSeq;
       const run = await runInputs(
         resolved.plan,
         (args) => this.rpc("advance", args),
         signal,
       );
       this.testStateSeq = initialStateSeq + run.execution.completedFrames;
+      if (run.execution.completedFrames) this.frameStateSeq = this.testStateSeq;
       const playtest = await this.playtests.record(resolved, run);
       signal?.throwIfAborted();
       this.testFrames = run.captures.flatMap((c) =>
@@ -600,6 +660,10 @@ export class Game {
               cart,
               checkpoint: c.checkpoint,
               stateSeq: initialStateSeq + c.checkpoint.afterFrames,
+              frameStateSeq:
+                c.checkpoint.afterFrames > 0
+                  ? initialStateSeq + c.checkpoint.afterFrames
+                  : initialFrameStateSeq,
               ...(i === 0 ? { execution: run.execution, playtest } : {}),
             },
             { ...options, checkpointOnly: i > 0 },
@@ -620,6 +684,8 @@ export class Game {
         buttons: 0,
       }));
       this.testStateSeq = execution.completedFrames;
+      this.frameStateSeq = this.testStateSeq;
+      this.debugRequiresReset = false;
       if (observation.state !== "faulted") {
         const cartHash = await fingerprint(cartBytes(this.snapshot));
         signal?.throwIfAborted();
@@ -655,7 +721,11 @@ export class Game {
       {
         type: "text",
         text: observationText(
-          { stateSeq: this.testStateSeq ?? 0, ...observation },
+          {
+            stateSeq: this.testStateSeq ?? 0,
+            frameStateSeq: this.frameStateSeq,
+            ...observation,
+          },
           options,
         ),
       },
@@ -668,19 +738,25 @@ export class Game {
         ),
       );
     }
+    this.appendLogs(output, observation);
+    return { output, isError: observation.state === "faulted" };
+  }
+  appendLogs(output, observation) {
     if (observation.logs) {
       const identity = `${observation.sessionId}:${observation.generation}`;
       const cursor = identity === this.logIdentity ? this.logCursor : 0;
       const snapshot = observation.logs;
       const first = snapshot.entries[0]?.sequence ?? snapshot.cursor + 1;
-      const logs = { dropped: Math.max(0, first - cursor - 1),
-        entries: snapshot.entries.filter(entry => entry.sequence > cursor) };
-      if (logs.entries.length || logs.dropped) output.push({ type: "text", text: JSON.stringify({ logs }) });
+      const logs = {
+        dropped: Math.max(0, first - cursor - 1),
+        entries: snapshot.entries.filter((entry) => entry.sequence > cursor),
+      };
+      if (logs.entries.length || logs.dropped)
+        output.push({ type: "text", text: JSON.stringify({ logs }) });
       // Advance only after all result encoding succeeded; observe never consumes VM logs.
       this.logIdentity = identity;
       this.logCursor = snapshot.cursor;
     }
-    return { output, isError: observation.state === "faulted" };
   }
   image({ rgba, width, height }) {
     const canvas = document.createElement("canvas");

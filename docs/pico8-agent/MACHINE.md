@@ -5,3 +5,5 @@ Target PICO-8 v0.2.7. The screen is 128×128 with 16 palette slots and a top-lef
 Use _init for setup, _update (30 Hz) or _update60 (60 Hz) for simulation, and _draw for rendering. Keep frame work bounded. Numbers use signed 16.16 fixed point (-32768 to just below 32768); large decimal sentinels such as 99999 wrap. Use nil for an unset nearest-target distance or a bounded value, and keep squared-distance intermediates in range. Angles use turns and atan2 takes (dx,dy). Functions such as flr, max and rnd are globals.
 
 Aim for 8192 code tokens and 65535 source characters. Tool budgets are approximate. Native resources load before _init. The lower sprite sheet overlaps the lower map. Audio uses four shared channels. cartdata selects a save namespace with numeric dget/dset slots 0–63.
+
+For new games, keep key per-run state in a global table such as g so inspect_game can read counters, entities and mode together. Recreate that table in the game reset function. Preserve existing structures when editing a cart.

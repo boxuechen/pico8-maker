@@ -2,7 +2,10 @@ import { emptySnapshot } from "../../src/pico8/assets.js";
 import { cartBytes } from "../../src/pico8/cart.js";
 import { deflateSync } from "node:zlib";
 import { Game } from "../../src/game.js";
-import { createPico8Session } from "../../public/player/main/player.mjs";
+import {
+  createPico8Session,
+  prepareInspection,
+} from "../../public/player/main/player.mjs";
 
 const blankSource = "function _draw() cls(0) end";
 export const input = (buttons = 0) => ({
@@ -55,6 +58,7 @@ function png(rgba, width = 128, height = 128) {
 export class TestGame extends Game {
   constructor() {
     super(() => {}, { versions: [emptySnapshot(blankSource)] });
+    this.prepareInspection = prepareInspection;
     this.player = {
       pause: async () => {},
       loadCart: async (bytes) => {
@@ -66,22 +70,37 @@ export class TestGame extends Game {
   }
   async ensureWorker() {
     if (!this.session) {
-      this.session = await createPico8Session();
+      this.session = await createPico8Session({ inspection: true });
       await this.rpc("load", { cart: cartBytes(this.snapshot) });
     }
   }
   async rpc(action, args = {}) {
     if (action === "load") {
       await this.session?.dispose();
-      this.session = await createPico8Session();
+      this.session = await createPico8Session({ inspection: true });
       const result = await this.session.loadCart(args.cart);
       return { ...result, logs: this.session.readLogs() };
     }
     if (action === "advance") {
-      const result = await this.session.advance({ frames: args.frames, input: input(args.buttons) });
-      return { ...result, observation: { ...result.observation, logs: this.session.readLogs() } };
+      const result = await this.session.advance({
+        frames: args.frames,
+        input: input(args.buttons),
+      });
+      return {
+        ...result,
+        observation: { ...result.observation, logs: this.session.readLogs() },
+      };
     }
-    if (action === "observe") return { ...this.session.observe(), logs: this.session.readLogs() };
+    if (action === "observe")
+      return { ...this.session.observe(), logs: this.session.readLogs() };
+    if (action === "inspect")
+      return {
+        inspection: await this.session.inspect(args.request),
+        observation: {
+          ...this.session.observe(),
+          logs: this.session.readLogs(),
+        },
+      };
     throw Error("Unsupported test transport action " + action);
   }
   cancelTests() {

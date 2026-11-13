@@ -1,6 +1,6 @@
 # Agent 工具与创作流程改造计划
 
-状态：S0 / P0 实施中。2026-11-13 根据工具、runtime、知识编译器和评测代码整理。[实施记录](tooling-progress.md)区分已完成内容与待验证接口；下列目标契约未全部实现。
+状态：S0 / P0（S1、S2）已完成，S3–S5 待实施。2026-11-13；实现与验证见[实施记录](tooling-progress.md)。后续阶段仍是计划，不表示已发布。
 
 目标：让模型直接获得可解释的游戏状态，用更少的调用完成创作和验证；画面仍用于判断可读性和反馈。先完成 P0 工具与 P1 Workflow，再用小规模结果评测决定后续投入。
 
@@ -10,7 +10,7 @@
 - 不兼容旧工具参数、旧 skill 路径和旧测试记录格式。删除旧分支及对应测试，更新所有第一方调用点，不引入别名或迁移适配层。已有卡带源码、资源和版本不因此删除；旧格式测试记录不参与新验证，旧对话仅作为历史展示，不重新执行旧调用。
 - runtime 是独立仓库 `ref/pico8-web-player`，计划基线依赖提交为 `43d3ef70c07f707b2b6bec0823fa08744df0d7f3`。Maker 的 `ref/` 被忽略，底层修改必须在播放器仓库单独提交，再更新 Maker 的依赖记录与 release。
 - 计划基线中 `printh` 在 `wasm/bridge/p8w_frame_runtime.cpp` 转换字符串后丢弃；Maker 的测试 Worker 只支持 init/load/reset/observe/advance，没有 Lua 查询入口。
-- 模型 PNG 当前按原尺寸编码；输入同时支持顶层简写、steps、captureFrames 和 replay；启动只载入 skill 目录，正文按需读。
+- 计划基线的模型 PNG 按原尺寸编码；输入同时支持顶层简写、steps、captureFrames 和 replay；启动只载入 skill 目录，正文按需读。
 - 用户提供的 296 次调用、164 次观察和 144 次逐行扫描作为问题线索，实施前从固定归档按统一脚本复核，不当作已经重算的基线。两案例已有独立最终卡带路线；后续分别记录「Agent 自主验证」与「独立验证」，不混算。
 - 512×512 放大有望改善视觉输入，但不预先认定它一定增加有效图像 token 或减少调用；用同画面小样本对照验证。
 
@@ -42,10 +42,10 @@
 - `read` 只接收路径段数组：首段是全局名，后续为字符串键或整数键；使用 raw 全局/table 访问，不编译表达式，不调用函数或元方法。批量读取棋盘及计数，不改变时间、随机数、输入、RAM 或存档。只能看到全局可达数据，不能读取局部变量或闭包上值；旧卡带无需为了读取而强制改写。
 - `debug` 在当前 VM 执行 Lua chunk，可用 `return` 返回表达式结果，也可修改值。**任何 Lua 执行都算 debug**，即便看起来只是 `return f()`。不尝试静态判断表达式是否纯净。
 - 值通过有界数据快照返回，支持 nil、布尔、字符串、定点数和嵌套 table。定义明确的 table entry 编码，保留数字/字符串键与稀疏项；nil、循环引用、深度/数量截断、function/userdata/thread 使用类型标签，禁止调用 `__index`、`__pairs`、`__tostring`，禁止输出地址。定点数按真实数值解码。
-- 初始固定限额：每次最多 16 条路径、深度 4、合计 512 个 table entry、16 KiB 结果；debug 源码最多 4 KiB、50,000 条 VM 指令。达到限额返回明确截断或预算错误，不返回损坏 JSON。通过关键 fixture 校准后再锁定，不交给模型任意提高。
+- 初始固定限额：每次最多 16 条路径、深度 4、合计 512 个 table entry、16 KiB 结果；debug 源码最多 4 KiB、50,000 条 VM 指令。代码与键采用 code points 0–255 的 Lua byte string；不做 Unicode glyph 转换。公开 prepareInspection/INSPECTION_LIMITS 与 ABI 锁定该契约。达到限额返回明确截断或预算错误，不返回损坏 JSON。通过关键 fixture 校准后再锁定，不交给模型任意提高。
 - 只在已完成帧的安全边界执行；拒绝 pending host request、故障或正在加载的 session。复用 VM 指令预算和内存上限，覆盖嵌套函数、协程与元方法；禁止 debug 触发换卡、run/reset、flip/yield、外部 I/O 和持久化写入，约束落实在执行/host 入口，不能只隐藏全局函数名。
-- debug 不推进帧、不隐式调用 `_update`/`_draw`。返回 `stateSeq` 与最后完成的 `frameId`；后者是修改前画面。用下一次 `press_buttons` 获得新画面，不能把旧 PNG 当修改后证据。
-- debug 开始执行前记录本轮 debug 标记；执行失败、超预算、取消也不撤销。语法检查失败且未进入执行可保持原标签；任何可能已执行的失败都要求 reset 后继续。部分赋值不会自动回滚。
+- debug 不推进帧、不隐式调用 `_update`/`_draw`。每次 debug 尝试递增 `stateSeq`，同时返回最后完成的 `frameId`/`frameStateSeq`；后者是修改前画面。用下一次 `press_buttons` 获得新画面，不能把旧 PNG 当修改后证据。
+- debug 开始执行前记录本轮 debug 标记；执行失败、超预算、取消也不撤销。实现对语法失败也保守标记 debug；任何可能已执行的失败都要求 reset 后继续。部分赋值不会自动回滚。
 - Worker 被终止、换卡或恢复会话时旧证据失效。结果保留足够的 run/版本身份，拒绝迟到响应。
 
 ### 测试轮次与存档
@@ -186,9 +186,9 @@ node --test tests/runtime/standalone-session.test.mjs tests/runtime/resource-lim
 
 按 S0 → S1 → S2 → S3 → S4 执行，S5 单独跟进。S2 内日志可先交付，再交付查询/调试；每次底层能力先在播放器仓库落地，Maker 再更新依赖。每个实现提交同步其实际文档与测试，不能提前发布尚不存在的工具说明。
 
-- [ ] S0：基线冻结，结果指标与接口确定。
-- [ ] S1：唯一 steps、×4 PNG、容错裁剪、精简 DTO、明确测试轮次。
-- [ ] S2：日志、只读查询、受限 debug、自动标记和 fresh reset 在真实 WASM/Worker 上通过。
+- [x] S0：基线冻结，结果指标与接口确定。
+- [x] S1：唯一 steps、×4 PNG、容错裁剪、精简 DTO、明确测试轮次。
+- [x] S2：日志、只读查询、受限 debug、自动标记和 fresh reset 在真实 WASM/Worker 上通过。
 - [ ] S3：单一 Workflow 与骨架发布，旧 skill 路由及冲突文档清理。
 - [ ] S4：结果评测替代过程评分，一个新类型完成独立正常路线验证，小规模模型对照保留实际结果。
 - [ ] S5：纯文本请求全链路支持，额外模型/题材按结果扩展。

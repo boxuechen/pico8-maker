@@ -16,7 +16,7 @@ export function createPico8Extension({ game, knowledge }) {
       section(
         "pico8_host",
         () => `# Host
-The writable source is ${mainPath}. Source and native resource drafts commit together with load_game. Read-only docs live at /extensions/pico8/. Tools run sequentially. The test Worker is separate from live play and keeps saves in memory. It exposes pixels and diagnostics. Knowledge version: ${knowledge.version}.`,
+The writable source is ${mainPath}. Source and native resource drafts commit together with load_game. Read-only docs live at /extensions/pico8/. Tools run sequentially. The test Worker is separate from live play and keeps saves in memory. It exposes pixels, raw global/table state and bounded logs. inspect_game debug execution marks the entire route debug; reset for a new normal route. Knowledge version: ${knowledge.version}.`,
       ),
     ],
     tools: createPico8Tools({ game, knowledge }),
