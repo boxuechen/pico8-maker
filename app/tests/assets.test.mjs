@@ -9,8 +9,7 @@ import {
   validSnapshot,
 } from "../src/pico8/assets.js";
 import { cartBytes, cartText } from "../src/pico8/cart.js";
-import { decodeP8 } from "../../ref/pico8-web-player/packages/cart-codec/dist/public.js";
-import { createPico8Session } from "../public/player/main/player.mjs";
+import { decodeP8, createPico8Session } from "../public/player/main/player.mjs";
 import { Game } from "../src/game.js";
 import { TestGame } from "./helpers/game.mjs";
 import {

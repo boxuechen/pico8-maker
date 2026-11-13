@@ -4,8 +4,7 @@
 
 ## 本地运行
 
-应用使用 Node.js 24。在 `ref/pico8-web-player` 检出播放器仓库的 `69521e7d88d12ea193dbf0a225655c8a865e61ff`，按其 `docs/development.md` 准备工具链，再构建 WASM 和 standalone release。[播放器仓库](https://github.com/boxuechen/pico8-web-player)
-
+应用使用 Node.js 24。只需克隆本仓库并安装应用依赖，无需检出播放器源码或安装 Emscripten。启动、测试和构建会按 `app/player.lock.json` 从 [播放器静态站点](https://boxuechen.github.io/pico8-web-player/) 下载固定构建，验证文件完整性并缓存在 `app/public/player/`；缓存完整时不访问网络。
 ```sh
 npm --prefix app ci
 npm --prefix app run dev -- --host 127.0.0.1 --port 5175
@@ -40,4 +39,18 @@ npm --prefix app run test:sites
 
 ## 文件维护
 
-源码、模型知识、示例校验凭据与可复现案例入库；构建输出、依赖和详细实验记录保持忽略。`app/dist/`、`app/public/player/`、`app/public/extensions/pico8/` 和 `app/src/generated/` 可通过构建重新生成。`ref/pico8-web-player/` 与 `.cache/emsdk/` 是本地构建依赖；`.cache/evaluations/` 包含未入库的原始评测证据，不应当作普通临时缓存清空。过期计划和阶段流水账通过 Git 历史追溯，不再平行维护。
+源码、模型知识、示例校验凭据与可复现案例入库；构建输出、依赖和详细实验记录保持忽略。`app/dist/`、`app/public/player/`、`app/public/extensions/pico8/` 和 `app/src/generated/` 可通过构建重新生成。`ref/` 与 `.cache/emsdk/` 仅用于可选的底层联调，不参与默认构建；`.cache/evaluations/` 包含未入库的原始评测证据，不应当作普通临时缓存清空。过期计划和阶段流水账通过 Git 历史追溯，不再平行维护。
+
+## 播放器依赖
+
+播放器作为静态组件维护在 [pico8-web-player](https://github.com/boxuechen/pico8-web-player)，不依赖独立的 C++ `pico8-runtime` 仓库。Maker 从 Pages 下载完整 JS/WASM、Worker、CSS 和许可文件，打包到自己的站点；用户运行游戏时不跨域加载播放器。
+
+更新播放器时，在播放器仓库提交源码并运行 `pnpm run publish:pages`，然后更新 `app/player.lock.json` 的静态目录、源码 commit 和 `manifest.json` SHA-256，运行 Maker 测试及构建。静态站点保留已发布的 commit 目录，不需要 GitHub Release。
+
+需要同时修改播放器时，可以显式传入本地构建目录：
+
+```sh
+PICO8_PLAYER_DIR=/absolute/path/to/pico8-web-player/apps/web-player/dist/release npm --prefix app run dev
+```
+
+本地覆盖仍校验构建 manifest，但不要求匹配锁定版本。取消该环境变量后，准备脚本会恢复锁定构建。

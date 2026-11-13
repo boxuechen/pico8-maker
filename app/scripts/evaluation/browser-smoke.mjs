@@ -10,7 +10,7 @@ import {
   launchChrome,
   evaluate,
   delay,
-} from "../../../ref/pico8-web-player/tools/browser/chrome-cdp.mjs";
+} from "./chrome-cdp.mjs";
 
 const apiKey = process.env.SMOKE_DEEPSEEK_KEY;
 if (!apiKey) throw Error("SMOKE_DEEPSEEK_KEY is required");
