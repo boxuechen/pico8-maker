@@ -4,7 +4,7 @@
 
 ## 本地运行
 
-应用使用 Node.js 24。在 `ref/pico8-web-player` 检出播放器仓库的 `96e19b904b1c4d6dade453351adb4272484c4896`，按其 `docs/development.md` 准备工具链，再构建 WASM 和 standalone release。[播放器仓库](https://github.com/boxuechen/pico8-web-player)
+应用使用 Node.js 24。在 `ref/pico8-web-player` 检出播放器仓库的 `69521e7d88d12ea193dbf0a225655c8a865e61ff`，按其 `docs/development.md` 准备工具链，再构建 WASM 和 standalone release。[播放器仓库](https://github.com/boxuechen/pico8-web-player)
 
 ```sh
 npm --prefix app ci

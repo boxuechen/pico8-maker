@@ -22,7 +22,7 @@ Compare the affected moment before/after and check nearby effects using known in
 
 Inspect target slots or map regions with read_assets; check occupied IDs before allocating new ones. Batch scoped changes with edit_assets, preserving unrelated flags, resources and Lua. Sprite rows use hexadecimal colors with 0 transparent; map patches are rectangular; SFX/music edits replace slots. Use native resources for static data.
 
-Use PNG previews for authored sprites/maps and check their in-game appearance when integration matters. For asset-only tasks, commit with load_game and inspect the affected display. Commit combined source/resources when ready. Inspect audio slot data and trigger/channel logic; put listening in the unverified delivery item.
+Use PNG previews for authored sprites/maps and check their in-game appearance when integration matters. For asset-only tasks, commit with load_game and inspect the affected display. Commit combined source/resources when ready. Load, reset and input results list sfx()/music() starts with the channel used; overMusic marks an effect taking a music channel. Use these events to verify that each sound fires at its moment without cutting music. Listening quality stays in the unverified delivery item.
 
 Read /extensions/pico8/references/asset-authoring.md for formats and examples. Consult /extensions/pico8/references/audio.md or /extensions/pico8/references/sprites-maps.md for specific implementation questions.
 
@@ -35,7 +35,7 @@ Define the expected result. On the final committed version:
 3. For a new short finite game, reach victory through normal input and retry on the final rules. Check restored counters, entities, timers and progress, and the applicable failure path. For sandboxes/endless games, check requested goals and restart without inventing victory. Test-only requests report findings without edits.
 4. Inject failure/boundary conditions with inspect_game debug instead of editing source. A debug chunk that runs marks the entire route debug; one that fails to compile changes nothing. Debug changes state without update/draw; advance input to obtain a new frame. After an executed error, timeout or STOP you can still read state, then reset before more input; start fresh for further normal evidence.
 
-Tie evidence to committed revision, run and frameId; staleFrame marks an image older than an injection. Recheck affected routes after relevant code/resource changes. Never weaken victory conditions or prefill progress in source merely to pass a test. An injected win does not replace the normal route.
+Each new load_game version reports how many normal-input routes its revision has; earlier routes belong to earlier revisions. Tie evidence to committed revision, run and frameId; staleFrame marks an image older than an injection. Recheck affected routes after relevant code/resource changes. Never weaken victory conditions or prefill progress in source merely to pass a test. An injected win does not replace the normal route.
 
 After the first playable version, aim to obtain core evidence within about 12 verification calls. This is a planning reminder, not a stop limit. Combine observations, read state or batch inputs as calls grow. Continue necessary checks; report the specific gap if unresolved. Examples: /extensions/pico8/references/playtest.md.
 

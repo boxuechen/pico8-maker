@@ -19,7 +19,13 @@ import { CartWorkspace } from "./pico8/workspace.js";
 import { sourceBudget } from "./pico8/source-budget.js";
 import { runInputs } from "./pico8/input-sequence.js";
 import { assetPreview, assetChanges } from "./pico8/asset-preview.js";
-import { Playtests, fingerprint, resetPurpose } from "./pico8/playtests.js";
+import {
+  Playtests,
+  coverageNote,
+  fingerprint,
+  resetPurpose,
+  revisionCoverage,
+} from "./pico8/playtests.js";
 
 export class Game {
   constructor(
@@ -594,6 +600,7 @@ export class Game {
           {
             ...observation,
             execution,
+            audio: execution?.audio,
             cart: this.cartStatus("failed-draft"),
           },
           options,
@@ -610,8 +617,7 @@ export class Game {
       }
       signal?.throwIfAborted();
       if (sameSnapshot(snapshot, this.snapshot))
-        note =
-          "\nSource and resources are unchanged since the last load; no new version.";
+        note = `\nSource and resources are unchanged since the last load; no new version. ${coverageNote(revisionCoverage(this.playtests.runs, this.revision))}`;
       else {
         try {
           await this.player.loadCart(cartBytes(snapshot));
@@ -635,7 +641,17 @@ export class Game {
         this.versions = this.versions.slice(-12);
         this.revision++;
         this.save();
-        note = `\nCommitted as version ${this.revision}.`;
+        // Earlier evidence belongs to the previous revision; say so where the
+        // model commits, so final checks are rerun on the delivered version.
+        const previous = revisionCoverage(
+          this.playtests.runs,
+          this.revision - 1,
+        );
+        note =
+          `\nCommitted as version ${this.revision}. ${coverageNote(revisionCoverage(this.playtests.runs, this.revision))}` +
+          (previous.normalRoutes
+            ? ` Revision ${previous.revision} had ${previous.normalRoutes} normal-input route(s) (longest ${previous.longestNormalCalls} input calls); rerun the affected routes on this revision before reporting them as verified.`
+            : "");
       }
       const cartHash = await fingerprint(cartBytes(snapshot));
       signal?.throwIfAborted();
@@ -680,7 +696,9 @@ export class Game {
                 c.checkpoint.afterFrames > 0
                   ? initialStateSeq + c.checkpoint.afterFrames
                   : initialFrameStateSeq,
-              ...(i === 0 ? { execution: run.execution, playtest } : {}),
+              ...(i === 0
+                ? { execution: run.execution, playtest, audio: run.audio }
+                : {}),
             },
             { ...options, checkpointOnly: i > 0 },
           ).output,
@@ -720,7 +738,7 @@ export class Game {
     const result = this.output(
       {
         ...observation,
-        ...(execution ? { execution } : {}),
+        ...(execution ? { execution, audio: execution.audio } : {}),
         cart: this.cartStatus("committed"),
         ...(this.playtests.active
           ? { playtest: this.playtests.summary() }
@@ -755,6 +773,7 @@ export class Game {
       );
     }
     this.appendLogs(output, observation);
+    appendAudio(output, observation.audio);
     return { output, isError: observation.state === "faulted" };
   }
   appendLogs(output, observation) {
@@ -797,4 +816,18 @@ export class Game {
     this.offFault?.();
     await this.player?.dispose();
   }
+}
+
+// Audio calls are evidence of triggers and voice use, not of listening quality.
+function appendAudio(output, audio) {
+  if (!audio || (!audio.events?.length && !audio.dropped)) return;
+  const events = audio.events.map(({ overMusic, ...event }) =>
+    overMusic ? { ...event, overMusic: true } : event,
+  );
+  output.push({
+    type: "text",
+    text: JSON.stringify({
+      audio: { events, ...(audio.dropped ? { dropped: audio.dropped } : {}) },
+    }),
+  });
 }

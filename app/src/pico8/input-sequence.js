@@ -113,6 +113,7 @@ export async function runInputs(plan, advance, signal) {
     steps: [],
   };
   const captures = [];
+  const audio = { events: [], dropped: 0 };
   let observation;
   for (let i = 0; i < plan.steps.length; i++) {
     const step = plan.steps[i];
@@ -149,6 +150,7 @@ export async function runInputs(plan, advance, signal) {
       )
         throw new Error("Runtime returned invalid input progress");
       observation = result.observation;
+      mergeAudio(audio, result.audio);
       progress.completedFrames += result.completedFrames;
       execution.completedFrames += result.completedFrames;
       execution.outcome = progress.outcome = result.outcome;
@@ -161,8 +163,19 @@ export async function runInputs(plan, advance, signal) {
           checkpoint: { step: i + 1, afterFrames: execution.completedFrames },
         });
       if (result.outcome !== "completed")
-        return { execution, captures, observation };
+        return { execution, captures, observation, audio };
     }
   }
-  return { execution, captures, observation };
+  return { execution, captures, observation, audio };
+}
+
+// Guest sfx()/music() starts across every advance of one call, bounded as one list.
+export const maxAudioEvents = 32;
+export function mergeAudio(into, audio) {
+  if (!audio) return into;
+  into.dropped += audio.dropped ?? 0;
+  for (const event of audio.events ?? [])
+    if (into.events.length < maxAudioEvents) into.events.push(event);
+    else into.dropped++;
+  return into;
 }

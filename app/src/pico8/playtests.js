@@ -244,3 +244,25 @@ export class Playtests {
     return this.summary();
   }
 }
+
+// Host-side facts about recorded routes for one committed revision. A normal
+// route started from load/reset, never ran debug code and executed input.
+// These are coverage facts, not gameplay verdicts.
+export function revisionCoverage(runs, revision) {
+  const mine = (runs ?? []).filter((r) => r.revision === revision);
+  const played = (r) => r.calls.some((c) => c.completedFrames > 0);
+  const normal = mine.filter(
+    (r) => r.purpose === "normal" && !r.debugEvents.length && played(r),
+  );
+  return {
+    revision,
+    normalRoutes: normal.length,
+    longestNormalCalls: Math.max(0, ...normal.map((r) => r.calls.length)),
+    debugRoutes: mine.filter((r) => r.purpose === "debug" && played(r)).length,
+  };
+}
+export function coverageNote({ revision, normalRoutes, longestNormalCalls }) {
+  return normalRoutes
+    ? `Revision ${revision}: ${normalRoutes} normal-input route(s) recorded, longest ${longestNormalCalls} input call(s).`
+    : `Revision ${revision}: no normal-input route recorded yet.`;
+}

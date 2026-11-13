@@ -24,7 +24,7 @@ Map patches contain tile ids in equal-width rows. The authored map is 128×32, p
 
 SFX ids: 0–63; up to 32 notes. Pitch 0–63, waveform/volume/effect 0–7, speed 1–255. SFX edits replace the slot; missing tail notes are silent. loopStart defaults to 0; loopEnd defaults to 0 (disabled), otherwise it must exceed loopStart and be at most 32. Custom instruments and SFX filter flags are outside this first authoring interface.
 
-Music ids: 0–63, exactly four channels containing an SFX id or null (disabled). loopStart, loopEnd and stop default false. Editing a pattern replaces it. Game code calls sfx(0) or music(0) directly; data already exists before _init. Music and event sounds share four channels. No audio is returned to the agent: inspect data and distinguish that from listening verification.
+Music ids: 0–63, exactly four channels containing an SFX id or null (disabled). loopStart, loopEnd and stop default false. Editing a pattern replaces it. Game code calls sfx(0) or music(0) directly; data already exists before _init. Music and event sounds share four channels. No sound is returned to the agent; input results list sfx()/music() starts and the channels used, which verify triggers and channel sharing but not listening quality.
 
 ## Reads and persistence
 

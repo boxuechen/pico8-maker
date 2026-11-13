@@ -1,4 +1,5 @@
 import { emptySnapshot, sameSnapshot } from "./pico8/assets.js";
+import { coverageNote, revisionCoverage } from "./pico8/playtests.js";
 
 export const newId = () =>
   globalThis.crypto?.randomUUID?.() ??
@@ -56,6 +57,8 @@ export function sessionContext(cart, session) {
     !sameSnapshot(cart.workingDraft, committed ?? emptySnapshot());
   return [
     `Cart ${JSON.stringify(cart.title)} at request start. ${committed ? `Committed revision ${cart.revision}.` : "No committed game."} ${dirty ? "Draft has uncommitted changes." : "Draft is clean."} Follow tool results for current state.`,
+    committed &&
+      `Recorded playtests: ${coverageNote(revisionCoverage(cart.playtests, cart.revision))}`,
     changed &&
       "The shared cart content changed before this request. Earlier source, resources and test results are stale. Use the current draft and establish fresh evidence.",
   ]
