@@ -48,70 +48,13 @@ For manual version-view QA, run `npm run test:model`, use an isolated browser or
 
 For feedback-preview QA use `fixture-comparison` on an isolated origin with the same local mock endpoint. The first request makes a green BEFORE scene; the second makes an intermediate blue scene and a final pink AFTER scene. Confirm the selector compares green to pink, export remains current, reload retains the comparison, and a third explanation-only request restores the current preview without replacing the baseline. This is UI integration coverage, not a real-model quality result.
 
-P0–P2 integration evidence lives in `.cache/p0-p2/`: the unmodified Sweet Garden and Lodge Podge carts were recorded and replayed through `Game.execute`, with all 44 and 34 call-end frame hashes matching respectively. Browser QA used the explicit local fixture to check before/current preview, persistence and restoration before read-only feedback. This batch did not rerun unrestricted real-model creation or human enjoyment tests.
+## Baseline and historical evidence
 
-## Historical results before S3
+[Development status](../../../docs/development-status.md) preserves the frozen baseline, validation boundaries and remaining work. Current scope checks use `workflow-scope`; document reads are not pass criteria. `transcriptMetrics().outcomes` counts unique tool-call IDs, UTF-8 result bytes, PNG dimensions, errors and first successful load. Gameplay coverage remains unknown without verifier evidence.
 
-These batches used the former skill-routing implementation and its checks. They are preserved historical evidence, not results for the current startup Workflow.
+Recheck the two retained original archives with `node scripts/evaluation/freeze-tooling-baseline.mjs --check` from `app/`. A fresh checkout does not contain these private archives. Failed and interrupted attempts remain in `.cache/evaluations/`; they must not be counted as successful evaluations. Detailed tables from the retired skill-routing batches are available with `git show b25cc9b:app/scripts/evaluation/README.md` and do not measure the current Workflow.
 
-| Batch | Saved configuration | Result |
-| --- | --- | --- |
-| Initial skill routing | DeepSeek Flash, high | 7/12 checks passed. Five action attempts missed a required skill. |
-| Revised skill routing | DeepSeek Flash, high | 12/12 checks passed. All ten action attempts read the required skills. |
-| Tool improvements | DeepSeek Flash, high | 12/12 checks passed. 28 input calls ran 54 steps, with four resource PNG previews. |
-| Leaner knowledge | DeepSeek Flash, high | 12/12 checks passed. Resource inventory reads fell from 11 to zero. |
-| Unified workflow, first pass | DeepSeek Flash, high | 12/12 original checks passed; 11/12 with the added resource-skill check. One creation edited audio without reading assets. |
-| Unified workflow, explicit resource routing | DeepSeek Flash, high | 12/12 checks passed, including reading assets before resource edits. No tool errors. |
-| Small mechanics | DeepSeek Flash, high | 6/6 checks passed across jump, enemy and map, twice each. 80 tool calls, no tool errors. |
-
-The samples use the same fixed prompts and one provider. Tool call counts reflect the generated games and the model's decisions. Human gameplay quality and cross-model reliability require separate evaluation.
-
-## Small-game improvements validation
-
-Completion guidance now covers each requested main mechanic and applicable success, failure and retry paths, with focused checks for focused edits. It does not require a separate planning document.
-
-The small mechanics batch passed all named pixel and scope checks in six attempts using DeepSeek Flash with high thinking. Each attempt read edit and playtest, used actual input, and preserved authored resources. Report: `.cache/evaluations/skills-f8d907bf-4afd-4e3e-8311-84ecb4be487e/report.json`. These are small repair fixtures and one model configuration, not an unrestricted creation-quality benchmark or a Codex comparison.
-
-Validation: 98 automated tests, production build and four Sites checks passed. Browser QA with `fixture-draft` confirmed shared Code/Resources selection, corresponding source/resource content and code budgets, inspectable failed drafts, and continued playback of the committed green-sprite cart. Switching from committed inspection to a new empty cart restored draft selection with no committed option. The local fixture's deliberate Lua load failure is expected and separate from the real-model batch's zero tool errors.
-
-## Unified workflow validation
-
-Source reads now use `read` with draft status, budget and pagination; the model has eight tools instead of nine. Input sequences return only the final PNG unless checkpoints are requested. Create covers its own repair loop, and nested asset work shares the main task's load/commit.
-
-| Batch | Tool calls | Returned images | Tool errors |
-| --- | ---: | ---: | ---: |
-| Leaner knowledge baseline | 116 | 90 | 1 |
-| Unified workflow, first pass | 107 | 85 | 2 |
-| Unified workflow, explicit resource routing | 101 | 76 | 0 |
-
-The final batch reduced calls by 12.9% and images by 15.6% against the baseline in these twelve samples. This is an observed batch comparison, not a controlled estimate of general savings: generated games, repairs and selected checkpoints vary. A deterministic WASM regression separately confirms that the same three-step input returns one default image instead of three while preserving final pixels, input timing and execution progress. Explicit checkpoints and early-stop evidence remain covered.
-
-The first pass exposed an existing evaluator gap: fixed create checks did not require assets when a generated game called `edit_assets`. That historical evaluator checked for a successful assets skill read before the first resource edit, including within create tasks; missing, failed and late reads fail. Rechecking the baseline also finds this violation in `create-2`, so its historical 12/12 result is not a pass under the expanded checks. The final batch's second creation read assets before editing sprites, loaded source and resources together, and repaired the game without loading edit.
-
-Archived reports:
-
-- First pass: `.cache/evaluations/skills-880087ab-b7b8-4260-b6fd-39bd3035b67c/report.json`. Preserve its two recovered tool errors and resource-routing failure.
-- Interrupted attempt: `.cache/evaluations/skills-7c825e50-81bf-4951-bbd8-14bdbf31aa8d/report.json`. Build-time file generation triggered a development-page reload before any case completed; this is not a completed evaluation. The original partial report is retained.
-- Final batch: `.cache/evaluations/skills-b888f494-1a89-46f6-b6f5-2ebc61a0a0ce/report.json`.
-
-Validation: 95 automated tests, production build and four Sites checks passed. The browser preview loaded without reported console errors. Finish builds before starting the browser evaluator so generated-file changes cannot reload an active run.
-
-## Earlier knowledge-size comparison
-
-The leaner pack publishes 29 files and 63,713 bytes, down from 42 files and 113,294 bytes. For the same sample cart with stale evidence, startup sections total 3,366 bytes, down from 9,621. Serialized tool definitions total 8,530 bytes, down from 11,247. These are UTF-8 measurements before provider formatting.
-
-Against the tool-improvements batch, total tool calls rose from 100 to 116 and returned images from 81 to 90. The creation attempts used more load and playtest iterations. The smaller startup payload and fewer inventory reads did not lower aggregate image traffic in this batch. The local transcript is in `.cache/evaluations/skills-1e46413e-94f3-45ae-aaa1-9af2214b015c/report.json`.
-
-Detailed historical reports, raw screenshots and the retired comparison scripts remain at commit `5d7bb30`. For example, retrieve the most recent report with the following command.
-
-```sh
-git show 5d7bb30:docs/pico8-agent/research/runs/2026-11-13-tools/README.md
-```
-
-## Tooling baseline and outcome metrics
-
-See [the frozen baseline](../../../docs/tooling-progress.md). `transcriptMetrics().outcomes` counts unique tool-call IDs, UTF-8 result bytes, PNG dimensions, errors and first successful load. Gameplay coverage remains unknown without verifier evidence. Current scope checks use `workflow-scope`; obsolete skill-read requirements and catalog metrics have been removed. Historical archives remain unchanged. Recheck archived metrics with `node scripts/evaluation/freeze-tooling-baseline.mjs --check` from `app/`.
-
+Finish builds before starting the browser evaluator: generated-file changes can reload an active run.
 
 ## S3 targeted checks
 
@@ -119,8 +62,6 @@ See [the frozen baseline](../../../docs/tooling-progress.md). `transcriptMetrics
 
 ## S4 result matrix
 
-See [S4 implementation and evidence](../../../docs/s4-evaluation.md). Run `npm run test:s4` for the focused deterministic checks; run `npm run eval:s4 -- --run --matrix scripts/evaluation/s4-matrix.example.json` explicitly for real provider requests. Use a private copy of the matrix with exact model IDs/endpoints and independent credential environment variables. Unconfigured rows are `not_run`.
+See [S4 implementation, commands and evidence](../../../docs/s4-evaluation.md) for the shooter tasks, matrix configuration, metrics and same-board 128/512 experiment. `npm run test:s4` runs deterministic checks; `npm run eval:s4 -- --run --matrix scripts/evaluation/s4-matrix.example.json` explicitly makes real provider requests. Use exact model IDs/endpoints and independent credential environment variables. Unconfigured rows are `not_run`; provider failures remain errors.
 
-The CLI runs one shooter repair and one creation per configured model through the production Agent/Game/test Worker, then independently verifies the final unchanged cart. Agent normal-route coverage is separate from the independent verifier. State reads are passive; any debug execution excludes its entire route. First load and first verified core loop are distinct metrics. The report archives prompts, runtime/knowledge/source hashes, transcripts, final carts, input routes, state/pixel evidence, elapsed time and available usage. A separate same-board 128/512 comparison retains raw answers and cell scores. Missing usage stays unknown.
-
-Each attempt uses 180 seconds and the existing observed 40-tool threshold. The matrix does not retry or select the best attempt. Run artifacts stay in `.cache/evaluations/s4-<uuid>/`; failures remain visible. The initial available Kimi configuration returned a subscription 403; the user then requested skipping comparison validation. Real-model gameplay, cross-provider comparison and image recognition effects were **not validated in this delivery**. The scripted integration provider is test infrastructure, not a model benchmark.
+Real-model gameplay, cross-provider comparison and image recognition effects have not been validated. The initial Kimi configuration returned a subscription 403 and further comparisons were skipped. Scripted integration providers establish pipeline behavior only.

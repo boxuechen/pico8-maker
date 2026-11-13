@@ -2,7 +2,7 @@
 
 The static prefix is AGENT / MACHINE / WORKFLOW / base palette / host contract, in that order. Dynamic project state follows it. [WORKFLOW.md](WORKFLOW.md) covers creation, editing, resources, playtesting, readability and delivery at startup, including after compaction. The [reference index](REFERENCE_INDEX.md) and detailed references remain on-demand through read. There is no skill catalog or skill-reading prerequisite. Stable ordering permits provider caching where supported; this host does not assume every provider caches it.
 
-[The plan](../agent-tooling-plan.md) and [implementation record](../tooling-progress.md) track completed phases and remaining evaluation/text-mode work. They are maintainer documents and are not published to the model.
+[Development status](../development-status.md) tracks completed capabilities, evidence and remaining evaluation/text-mode work. It is a maintainer document and is not published to the model.
 
 ## Host tools
 
@@ -29,13 +29,11 @@ Source reads and runtime observations carry advisory warnings for decimal litera
 
 Input validation names invalid fields and cumulative checkpoint bounds before any input executes. Native edit matching remains atomic; a missing or ambiguous block explains that the batch was not applied and asks for a fresh source read. The edit tool retains its upstream same-original-source and non-overlap contract.
 
-Historical validation before the tooling refactor: 110 automated tests, the production build and four Sites checks passed. Coverage includes numeric advice, atomic edits, input validation before side effects, actual tap timing, persisted/sequential replay, cancellation, changed-cart evidence and feedback-preview isolation. The two existing case routes replayed through the new Game tools with all 78 recorded-call frame comparisons matching. These are implementation checks; they do not establish improved autonomous game quality. Detailed local evidence is in `.cache/p0-p2/`.
-
 Two short optional references cover collection/construction and adjacent-swap matching. Their index entries name the applicable genres and problems. They are not included at startup; they remain optional under the shared startup Workflow.
 
 ## Publication and validation
 
-`manifest.json` is the publication allowlist. The compiler publishes Markdown and Lua under `app/public/extensions/pico8/<version>/` and emits only paths, sizes, hashes and section mappings in the browser index. Files are verified and cached on demand. The `/extensions/pico8/` mount is read-only. The app owns the static skill catalog and registers capabilities through the [Pi Durable extension](../../app/src/pico8/extension.js).
+`manifest.json` is the publication allowlist. The compiler publishes Markdown and Lua under `app/public/extensions/pico8/<version>/` and emits only paths, sizes, hashes and section mappings in the browser index. Files are verified and cached on demand. The `/extensions/pico8/` mount is read-only. The app owns the ordered startup sections and registers capabilities through the [Pi Durable extension](../../app/src/pico8/extension.js).
 
 Use virtual paths in model-facing links. The compiler enforces the ordered startup sections and required Workflow headings, document allowlist, English text, links, and recipe source hashes against successful receipts. Startup rules are mandatory; a failed fetch or hash check prevents Agent preparation. When Lua examples change, run the appropriate [recipe verifier](recipes/README.md) or [microgame verifier](games/README.md) before regenerating the bundle.
 

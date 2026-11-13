@@ -20,11 +20,11 @@ npm --prefix app run dev -- --host 127.0.0.1 --port 5175
 - `app/src/` 包含 React 工作台、Pi Durable Agent 和 PICO-8 工具。用户试玩与 Agent 测试使用独立运行时。
 - `app/src/assets/carts/` 保存首页实际展示的 11 张社区卡带。构建将原始字节内嵌到应用首页，`carts.json` 保留作者和来源。
 - `docs/pico8-agent/` 提供模型规则、启动时注入的统一 Workflow、按需参考和可运行示例。见[知识库与宿主契约](docs/pico8-agent/README.md)。
-- `app/evaluation.html` 提供本地真实模型评测。见[评测说明与历史记录](app/scripts/evaluation/README.md)。
+- `app/evaluation.html` 提供本地真实模型评测。见[评测与案例复现](app/scripts/evaluation/README.md)。
 
 每张卡带共享源码、原生资源和最近 12 个版本，支持多个独立对话。卡带与对话存入 IndexedDB。模型配置默认保存在浏览器，可关闭保存或清除配置。应用直接请求所选服务，交互模型默认采用 high 思考设置并按能力调整。
 
-[Agent 工具与流程改造计划](docs/agent-tooling-plan.md)中的 S0/P0/S3 已实现：模型可读取游戏全局状态、执行有界调试并获取日志，截图放大、输入和结果契约已精简。Workflow 与重开骨架已合并到静态前缀；S4 已增加射击任务、独立结果验证、模型矩阵和 128/512 图像对照，真实模型/图像对照验证按要求跳过，见 [S4 记录](docs/s4-evaluation.md)。纯文本模式留在 S5；验证范围见[实施记录](docs/tooling-progress.md)。
+当前能力、验证边界与后续工作见[开发状态](docs/development-status.md)。模型已支持状态查询、有界调试和日志；真实模型与 128/512 图像对照尚未完成有效验证，纯文本模式待实现。
 
 ## 检查与构建
 
@@ -37,3 +37,7 @@ npm --prefix app run test:sites
 `npm --prefix app run test:model` 启动联调用的模拟接口 `http://127.0.0.1:8788/v1`。在自定义模型配置中选择 `fixture-tools`，填写任意非空测试 Key。普通回归测试使用模拟响应和实际 WASM。
 
 静态发布使用 `app/dist/client/`。Sites 构建还生成 `app/dist/server/index.js` 和 `app/dist/.openai/hosting.json`。
+
+## 文件维护
+
+源码、模型知识、示例校验凭据与可复现案例入库；构建输出、依赖和详细实验记录保持忽略。`app/dist/`、`app/public/player/`、`app/public/extensions/pico8/` 和 `app/src/generated/` 可通过构建重新生成。`ref/pico8-web-player/` 与 `.cache/emsdk/` 是本地构建依赖；`.cache/evaluations/` 包含未入库的原始评测证据，不应当作普通临时缓存清空。过期计划和阶段流水账通过 Git 历史追溯，不再平行维护。
