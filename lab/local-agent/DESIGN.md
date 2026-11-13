@@ -1,9 +1,13 @@
 # Local Agent Prototype — MiniCPM5-2B
 
 A headless PICO-8 game agent built for one model, **MiniCPM5-2B**, running on a local Ollama.
-Goal of this stage: get the whole flow working end to end on that model. Browser inference is
-out of scope for now. The lab owns its workflow, tools, prompts and model protocol, and shares
-only the player runtime and evaluation oracles with Maker. Maker is not changed.
+
+Goal: **MiniCPM5-2B makes PICO-8 games, and game quality is the primary measure.** A game
+that passes every check but looks bare or feels flat is not the target. First get the whole
+flow working end to end, then raise quality. Browser inference is out of scope for now; no
+agent framework (pi or other) is required. The lab owns its workflow, tools, prompts and model
+protocol, and shares only the player runtime and evaluation oracles with Maker. Maker is not
+changed.
 
 ## Model facts
 
@@ -35,12 +39,37 @@ Carried-over lessons from larger local models: a fixed template plus host lint a
 building reliable; free-form self-testing does not converge; letting a verification phase edit
 code breaks correct fixes. Hence: **the model builds, the host verifies.**
 
+## Quality strategy
+
+A 2B model will not invent polish on its own, so quality is built into what it starts from
+and into how the host chooses among its outputs:
+
+1. **Polish lives in the templates.** Every genre template already has a title screen with
+   controls, a readable HUD, a result screen with the X-retry lock, screen shake and particles
+   on hits, a difficulty ramp, sound on every event (sfx 0–7 bank) and a contrast-checked
+   palette. The model customises theme and rules inside slots and inherits all of it.
+2. **Choose, don't draw.** Sprites come from a curated 8×8 library (player, enemies, items,
+   tiles in several themes) and palettes from named presets. The model picks ids and preset
+   names; it never writes pixel data.
+3. **Tunables, not rewrites.** Each template exposes named parameters (speed, spawn rate,
+   lives, goal, ramp) at the top of the file. Most "make it harder / faster / longer"
+   requests become parameter edits, which a 2B model does reliably.
+4. **Best of N.** The model is small and fast: for creation the host builds N candidates
+   (default 3) and keeps the one with the best host quality score among those that pass
+   every functional check.
+5. **Host quality score.** Measurable proxies, reported with each game: title and result
+   screens present, controls text shown, sound on score/hit/win/lose, visual change while
+   idle (animation), contrast of player and targets against their background, idle loss
+   time within a set range (not instant, not endless), difficulty ramp observed over 60 s,
+   source within the token budget.
+
 ## Boundaries
 
 ```
 lab/local-agent/
   bin/        probe.mjs (protocol and speed), eval.mjs (tasks × repeats)
-  prompts/    core.md, api.md, phase files, templates/<genre>.lua + checks
+  prompts/    core.md, api.md, phase files, templates/<genre>.lua + checks,
+              sprites.json (curated 8×8 library), palettes.json (named presets)
   src/
     ollama.mjs     raw completion: complete(prompt, {stop, maxTokens, temperature, numCtx, signal})
     protocol.mjs   MiniCPM5 chat template, tool definitions, <function> parser, thinking prefill
@@ -50,8 +79,9 @@ lab/local-agent/
     runtime.mjs    one inspection session: load, advance, read, ASCII thumbnail
     lint.mjs       static checks before loading
     verify.mjs     host verification: smoke + template checks + task checks → text report
+    quality.mjs    host quality score from replays (screens, sound, animation, contrast, pacing)
     tools.mjs      model-facing tools
-    phases.mjs     plan → build → verify/fix → report
+    phases.mjs     plan → build → verify/fix → (best of N) → report
     sounds.mjs     fixed sfx 0–7 bank preloaded into new carts
   tests/      node --test with a scripted completion; no model requests
 ```
@@ -120,8 +150,13 @@ raises `g.score`, win reachable with setup, X retry restores the initial state.
 final text reply) and speed (prefill and decode tokens/s at 2K/4K/8K prompts).
 
 `bin/eval.mjs`: T1 ×5 tasks, T2 `shooter-repair`, T3 catch/dodge, stretch `shooter-create`;
-3 repeats; thinking on and off. Metrics: oracle/check pass, finished within caps, tool and
-parse errors, largest request in tokens, decode tokens, wall time.
+3 repeats; thinking on and off. Metrics: oracle/check pass, host quality score, finished
+within caps, tool and parse errors, largest request in tokens, decode tokens, wall time.
+
+Quality review (evaluation only, never in the loop): each final game is replayed to capture
+its title, play and result frames; a person, optionally assisted by a vision model as judge,
+rates readability, feedback, theme fit and fun on a 1–5 rubric. The rubric score is the
+headline number once functional pass rates are stable.
 
 ## Milestones
 
@@ -129,7 +164,10 @@ parse errors, largest request in tokens, decode tokens, wall time.
    calls with CDATA Lua in ≥ 9/10 probe turns; measured tokens/s; thinking on/off compared.
 2. **M1 tweak and repair** — flat tools, request assembly, host verification, text reports.
    Exit: T1 ≥ 4/5, T2 ≥ 2/3.
-3. **M2 create from templates** — templates with slots and checks, plan form. Exit: T3 ≥ 2/3.
+3. **M2 create from templates** — polished genre templates with slots, tunables and checks,
+   sprite library and palette presets, plan form. Exit: T3 ≥ 2/3.
+4. **M3 quality** — host quality score, best-of-N, frame capture and rubric review. Exit:
+   median rubric ≥ 3.5 on T3 games; iterate on templates and prompts by rubric findings.
 
 ## Current code and migration
 
