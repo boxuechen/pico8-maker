@@ -41,3 +41,22 @@ test("p8 check reads checks.json and sets the exit code", () => {
   try { execFileSync(join(lab, "bin/p8"), ["check"], { cwd: dir, encoding: "utf8" }); } catch (e) { out = e.stdout; }
   assert.match(out, /is empty.*p8 new skeleton/);
 });
+
+test("faults quote the code and name common slips", async () => {
+  const game = (update) => `function new_game() g={mode="play",lives=3,player={x=1}} end
+function _init() new_game() end
+function _update() ${update} end
+function _draw() cls(1) print("a",1,1,7) end`;
+  const boot = async (update) => (await checkSource(game(update))).find((i) => i.name === "boot").detail;
+  assert.match(await boot("lives-=1"), /lives is not a global; this game keeps it in g, so write g.lives[\s\S]*code: function _update\(\) lives-=1 end/);
+  assert.match(await boot("if g.g.lives<0 then end"), /g\.g somewhere/);
+  assert.match(await boot("g.player.inv-=1"), /field inv has no starting value/);
+});
+
+test("p8 check says when main.lua has not changed since the last failing check", () => {
+  const dir = mkdtempSync(join(tmpdir(), "p8-"));
+  writeFileSync(join(dir, "main.lua"), 'function _init() g={mode="play"} end function _update() foo() end function _draw() cls(1) print("a",1,1,7) end');
+  const run = () => { try { return execFileSync(join(lab, "bin/p8"), ["check"], { cwd: dir, encoding: "utf8" }); } catch (e) { return e.stdout; } };
+  assert.doesNotMatch(run(), /has not changed/);
+  assert.match(run(), /^NOTE: main.lua has not changed since your last p8 check/);
+});

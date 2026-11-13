@@ -1,5 +1,7 @@
 // `p8` subcommands. Text only; every error says what to do next.
+import { createHash } from "node:crypto";
 import { copyFileSync, existsSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { checkSource, explainFault, formatItems, loadCases, parsePress } from "./checks.mjs";
 import { cartText } from "./maker.mjs";
@@ -42,7 +44,7 @@ const compact = (v, max = 600) => {
 async function play(src, press) {
   const rt = new Runtime();
   const loaded = await rt.load(src);
-  if (!loaded.ok) return { rt, lines: [`does not boot: ${loaded.diagnostics.map(explainFault).join("; ")}`], ok: false };
+  if (!loaded.ok) return { rt, lines: [`does not boot: ${loaded.diagnostics.map((d) => explainFault(d, src)).join("; ")}`], ok: false };
   const lines = [];
   let mode = (await rt.read(["g.mode"]))["g.mode"];
   const sounds = (loaded.audio ?? []).map((e) => `sfx ${e.sfx ?? `music ${e.music}`}@1`);
@@ -53,7 +55,7 @@ async function play(src, press) {
     });
     for (const e of r.audio) sounds.push("sfx" in e ? `sfx ${e.sfx}@${e.frame}` : `music ${e.music}@${e.frame}`);
     if (r.fault) {
-      lines.push(`fault at frame ${rt.frames + 1}: ${r.fault.map(explainFault).join("; ")}`);
+      lines.push(`fault at frame ${rt.frames + 1}: ${r.fault.map((d) => explainFault(d, src)).join("; ")}`);
       return { rt, lines, ok: false };
     }
   }
@@ -67,9 +69,20 @@ export async function main(argv) {
   const { opts, rest } = options(args);
   switch (cmd) {
     case "check": {
-      const items = await checkSource(source(rest[0]), loadCases(resolve("checks.json")));
+      const code = source(rest[0]),
+        cases = loadCases(resolve("checks.json"));
+      const items = await checkSource(code, cases);
+      const pass = items.every((i) => i.pass);
+      // A run re-checked an unchanged file ~60 times, reading the same failure as
+      // a stuck tool. Say plainly that only an edit can change the result.
+      const key = createHash("sha256").update(JSON.stringify([code, cases])).digest("hex");
+      const memo = join(tmpdir(), `p8-last-check-${createHash("sha256").update(resolve(rest[0] ?? "main.lua")).digest("hex").slice(0, 16)}`);
+      const previous = existsSync(memo) ? readFileSync(memo, "utf8") : "";
+      writeFileSync(memo, key);
+      if (!pass && previous === key)
+        console.log("NOTE: main.lua has not changed since your last p8 check, so the result is the same. Edit the code on the line named in the FAIL below, then check again.");
       console.log(formatItems(items));
-      return items.every((i) => i.pass) ? 0 : 1;
+      return pass ? 0 : 1;
     }
     case "run": {
       const r = await play(source(rest[0]), opts.press ?? "wait*30");

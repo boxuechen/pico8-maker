@@ -26,17 +26,36 @@ export function parsePress(text = "") {
     });
 }
 
-/** Turn runtime errors into a line number and a next step. */
-export function explainFault(d) {
+/** The trimmed source text of a 1-based line, for quoting in failures. */
+export const codeAt = (source, line) => (line ? source.split("\n")[line - 1]?.trim() ?? "" : "");
+
+/**
+ * Turn runtime errors into a line number, the code on that line and a next step.
+ * Small models could not locate a fault from the variable name alone (one kept
+ * re-running checks; another rewrote lives as g.lives everywhere, giving g.g.lives).
+ */
+export function explainFault(d, source = "") {
   const where = d.line ? `line ${d.line}: ` : "";
-  let hint = "";
+  const nil = /attempt to (?:perform arithmetic on|concatenate|compare|index) (global|field|local) '(\w+)'/.exec(d.message);
   const call = /attempt to call (?:a nil value \()?(?:global|field|method) '(\w+)'/.exec(d.message);
+  let hint = "";
   if (call) hint = ` → ${call[1]} is not defined. It is not a PICO-8 function, or it is defined after it is used; see reference/api.md.`;
+  else if (nil?.[2] === "g" && /\bg\.g\./.test(source))
+    hint = " → the code says g.g somewhere; fields of g are written g.name, not g.g.name.";
+  else if (nil?.[1] === "global" && new RegExp(`\\bg\\.${nil[2]}\\b|[{,]\\s*${nil[2]}\\s*=`).test(source))
+    hint = ` → ${nil[2]} is not a global; this game keeps it in g, so write g.${nil[2]} on this line.`;
+  else if (nil?.[1] === "global")
+    hint = ` → ${nil[2]} has no value; give it one before this line runs (round state belongs in g, set in new_game()).`;
+  else if (nil?.[1] === "field" && /index/.test(d.message))
+    hint = ` → ${nil[2]} is nil here, so it cannot be indexed; create it in new_game() before _update uses it.`;
+  else if (nil?.[1] === "field")
+    hint = ` → the field ${nil[2]} has no starting value; add ${nil[2]}=... to the table that should hold it in new_game(), or fix the name on this line.`;
   else if (/attempt to index .*nil/.test(d.message))
     hint = " → a table is nil here; create it in new_game() before _update uses it.";
-  else if (/attempt to (perform arithmetic|compare) .*nil/.test(d.message))
+  else if (/attempt to (perform arithmetic|compare|concatenate) .*nil/.test(d.message))
     hint = " → a value is nil here; give every g field a starting value in new_game().";
-  return `${where}${d.message}${hint}`;
+  const code = codeAt(source, d.line);
+  return `${where}${d.message}${hint}${code ? `\n    code: ${code}` : ""}`;
 }
 
 const show = (v) => JSON.stringify(v ?? null);
@@ -77,7 +96,7 @@ export async function runCase(source, c) {
         const now = (await rt.read(["g.mode"]))["g.mode"];
         if (now !== mode) modes.push(`${mode}→${now} at frame ${frame}`), (mode = now);
       });
-      if (r.fault) return { pass: false, detail: `fault: ${r.fault.map(explainFault).join("; ")}` };
+      if (r.fault) return { pass: false, detail: `fault: ${r.fault.map((d) => explainFault(d, source)).join("; ")}` };
     }
     const values = await rt.read(paths);
     const fails = c.expect.map((e) => [e.path, judge(values[e.path], start[e.path], e)]).filter(([, f]) => f);
@@ -93,14 +112,17 @@ export async function checkSource(source, cases = []) {
   const items = [];
   const { errors, tokens } = lint(source);
   if (errors.length) {
-    for (const e of errors) items.push({ name: "lint", pass: false, detail: `${e.line ? `line ${e.line}: ` : ""}${e.message}` });
+    for (const e of errors) {
+      const code = codeAt(source, e.line);
+      items.push({ name: "lint", pass: false, detail: `${e.line ? `line ${e.line}: ` : ""}${e.message}${code ? `\n    code: ${code}` : ""}` });
+    }
     return items;
   }
   items.push({ name: "lint", pass: true, detail: `${tokens} of 8192 tokens` });
   const base = await boot(source);
   try {
     if (base.fault) {
-      items.push({ name: "boot", pass: false, detail: base.fault.map(explainFault).join("; ") });
+      items.push({ name: "boot", pass: false, detail: base.fault.map((d) => explainFault(d, source)).join("; ") });
       return items;
     }
     const { g } = await base.rt.read(["g"]);
@@ -122,7 +144,7 @@ export async function checkSource(source, cases = []) {
       const held = await boot(source);
       const r = await held.rt.advance(BUTTONS[name], HOLD_FRAMES);
       if (r.fault) {
-        items.push({ name: "input", pass: false, detail: `holding ${name}: ${r.fault.map(explainFault).join("; ")}` });
+        items.push({ name: "input", pass: false, detail: `holding ${name}: ${r.fault.map((d) => explainFault(d, source)).join("; ")}` });
         await held.rt.dispose();
         return items;
       }
