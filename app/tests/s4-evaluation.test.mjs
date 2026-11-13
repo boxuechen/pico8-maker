@@ -74,7 +74,11 @@ test("Agent route evidence requires final cart, completed inputs and matching pi
       mode: "read",
       paths: [["g", "enemies"]],
     });
-  assert.equal(head(read).values[0].entries.length, 3);
+  assert.deepEqual(head(read).values[0], [
+    { x: 32, y: 24 },
+    { x: 64, y: 24 },
+    { x: 96, y: 24 },
+  ]);
   assert.deepEqual(g.testFrame, initial);
   await press(g, [{ frames: 30, buttons: 16 }]);
   const ledger = [{ run: "r1", recordedCall: 1, ordinal: 3 }];

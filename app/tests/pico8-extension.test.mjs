@@ -307,11 +307,11 @@ test("Pi delivers complete full/cropped ASCII and restores it without replaying 
   const game = new Game(() => {}, { versions: [emptySnapshot(source)] });
   const expectedFull = observationText(
     { ...session.observe(), cart: game.cartStatus("committed") },
-    observationOptions({ format: "ascii" }),
+    { ...observationOptions({ format: "ascii" }), view: true },
   );
   const expectedCrop = observationText(
     { ...session.observe(), cart: game.cartStatus("committed") },
-    observationOptions(crop),
+    { ...observationOptions(crop), view: true },
   );
   assert.ok(
     Buffer.byteLength(expectedFull) > 16384,

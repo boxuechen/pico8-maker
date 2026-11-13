@@ -1,7 +1,7 @@
 -- SPRING COURIER: carry the parcel to the gate; optional high gem.
 -- New example code, pixel data and note sequences; no classic-game assets.
 -- Resources: sprite 1 courier, sprite 2 gem; music SFX 0 / channel 0;
--- feedback SFX 1..4 / channel 3. All state is rebuilt by _init.
+-- feedback SFX 1..4 / channel 3. Round state lives in g; new_game() rebuilds it.
 function assets()
  pal() palt()
  local art={
@@ -30,68 +30,66 @@ function banner(title,subtitle)
  print("x: start / retry",12,74,11)
 end
 
--- Arrows move, O/Z jumps. X starts or retries. 60 Hz.
+-- Arrows move, O/Z jumps. X starts or retries after a short result lock. 60 Hz.
 -- Tune speed, jump_v, gravity together; windows are update ticks.
 speed=1.2 jump_v=-3.5 gravity=0.18 grace_ticks=5 buffer_ticks=4
-function _init()
- assets() state="title" px=8 py=100 vy=0 grace=0 buffer=0
- parcel=false bonus=false ticks=0
- floors={{0,108,40,20},{56,108,28,20},{100,108,28,20},{58,88,22,4}}
+floors={{0,108,40,20},{56,108,28,20},{100,108,28,20},{58,88,22,4}}
+function new_game()
+ g={mode="play",px=8,py=100,vy=0,grace=0,buffer=0,
+  parcel=false,bonus=false,ticks=0,wait=0}
 end
-function start()
- state="play" px=8 py=100 vy=0 grace=0 buffer=0
- parcel=false bonus=false ticks=0
-end
+function _init() assets() new_game() g.mode="title" g.wait=16 end
 function standing()
  for f in all(floors) do
-  if px+6>f[1] and px<f[1]+f[3] and abs(py+8-f[2])<0.05 then return true end
+  if g.px+6>f[1] and g.px<f[1]+f[3] and abs(g.py+8-f[2])<0.05 then return true end
  end
  return false
 end
 function _update60()
- ticks+=1
- if state!="play" then
-  if btnp(5) then start() end
+ g.ticks+=1
+ if g.mode!="play" then
+  g.wait+=1
+  if g.wait>15 and btnp(5) then new_game() end
   return
  end
- if standing() then grace=grace_ticks else grace=max(0,grace-1) end
- if btnp(4) then buffer=buffer_ticks else buffer=max(0,buffer-1) end
- if buffer>0 and grace>0 then
-  vy=jump_v buffer=0 grace=0 sound(1)
+ if standing() then g.grace=grace_ticks else g.grace=max(0,g.grace-1) end
+ if btnp(4) then g.buffer=buffer_ticks else g.buffer=max(0,g.buffer-1) end
+ if g.buffer>0 and g.grace>0 then
+  g.vy=jump_v g.buffer=0 g.grace=0 sound(1)
  end
- if not btn(4) and vy<-1.5 then vy=-1.5 end
- if btn(0) then px-=speed end
- if btn(1) then px+=speed end
- px=mid(0,px,122)
- local old=py vy=min(3,vy+gravity) py+=vy
+ if not btn(4) and g.vy<-1.5 then g.vy=-1.5 end
+ if btn(0) then g.px-=speed end
+ if btn(1) then g.px+=speed end
+ g.px=mid(0,g.px,122)
+ local old=g.py g.vy=min(3,g.vy+gravity) g.py+=g.vy
  for f in all(floors) do
-  if vy>=0 and old+8<=f[2] and py+8>=f[2] and px+6>f[1] and px<f[1]+f[3] then
-   py=f[2]-8 vy=0
+  if g.vy>=0 and old+8<=f[2] and g.py+8>=f[2] and g.px+6>f[1] and g.px<f[1]+f[3] then
+   g.py=f[2]-8 g.vy=0
   end
  end
- if not parcel and abs(px-66)<8 and abs(py-78)<10 then parcel=true sound(1) end
- if not bonus and abs(px-30)<7 and abs(py-67)<8 then bonus=true sound(1) end
- if parcel and px>112 and py>92 and py<108 then state="won" sound(3) end
- if py>128 then state="lost" sound(2) end
+ if not g.parcel and abs(g.px-66)<8 and abs(g.py-78)<10 then g.parcel=true sound(1) end
+ if not g.bonus and abs(g.px-30)<7 and abs(g.py-67)<8 then g.bonus=true sound(1) end
+ if g.parcel and g.px>112 and g.py>92 and g.py<108 then g.mode="win" sound(3) end
+ if g.py>128 then g.mode="lose" sound(2) end
 end
 function _draw()
  cls(1)
  for x=0,127,16 do pset(x,30+(x%3)*6,13) end
  print("spring courier",4,3,7)
- print(parcel and "parcel: yes" or "get the parcel!",4,11,10)
+ print(g.parcel and "parcel: yes" or "get the parcel!",4,11,10)
  for f in all(floors) do
   rectfill(f[1],f[2],f[1]+f[3]-1,127,3)
   rectfill(f[1],f[2],f[1]+f[3]-1,f[2]+2,11)
  end
  -- Upper shelf is a one-way platform, not a filled ground column.
  rectfill(58,92,79,107,1)
- rect(113,94,124,107,parcel and 11 or 5)
+ rect(113,94,124,107,g.parcel and 11 or 5)
  print("exit",108,87,7)
- if not parcel then spr(2,65,78) else spr(2,px+5,py-4) end
- if not bonus then circ(33,70,3,14) end
- spr(1,px-1,py)
+ if not g.parcel then spr(2,65,78) else spr(2,g.px+5,g.py-4) end
+ if not g.bonus then circ(33,70,3,14) end
+ spr(1,g.px-1,g.py)
  print("o: jump  arrows: move",4,120,7)
- if state=="title" then banner("spring courier","parcel -> exit") end
- if state=="lost" then banner("missed the landing","try a held jump") end
- if state=="won" then banner("delivery complete",bonus and "bonus gem delivered!" or "try the high gem!") end
+ if g.mode=="title" then banner("spring courier","parcel -> exit") end
+ if g.mode=="lose" then banner("missed the landing","try a held jump") end
+ if g.mode=="win" then banner("delivery complete",g.bonus and "bonus gem delivered!" or "try the high gem!") end
 end

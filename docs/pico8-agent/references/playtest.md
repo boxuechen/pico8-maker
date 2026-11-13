@@ -18,15 +18,15 @@ reset_game({purpose:"normal"}) starts a fresh route and clears test memory saves
 {"mode":"read","paths":[["g","mode"],["g","board"],["g","moves"]]}
 ```
 
-inspect_game read follows raw global/table paths without executing Lua or metatables. Use the cart's actual global names. It cannot read local variables or closure upvalues. Values preserve booleans, numbers and byte strings; nil and non-data values have type tags. Tables return {type:"table",entries:[{key:1,value:false}]} to preserve sparse and numeric keys. Narrow paths if cycle/depth/entry/byte truncation obscures needed values. At most 16 paths, 16 segments per path, depth 4, 512 entries and 16 KiB output. String keys have at most 128 bytes; integer keys use signed 16-bit range.
+inspect_game read follows raw global/table paths without executing Lua or metatables. Use the cart's actual global names. It cannot read local variables or closure upvalues. Values preserve booleans, numbers and byte strings; nil and non-data values have type tags such as {type:"nil"}. A complete 1..n sequence returns an array ([[1,2],[3,4]] for a 2x2 board) and a string-keyed table returns an object ({x:40,y:24}). Sparse, mixed or truncated tables return {type:"table",entries:[{key:1,value:false}]} to preserve their keys. Narrow paths if cycle/depth/entry/byte truncation obscures needed values. At most 16 paths, 16 segments per path, depth 4, 512 entries and 16 KiB output. String keys have at most 128 bytes; integer keys use signed 16-bit range.
 
 ```json
 {"mode":"debug","code":"g.moves=1; return g.moves"}
 ```
 
-Use debug to set up a failure or boundary case without editing source. Code and keys use Lua byte strings (code points 0–255); debug accepts at most 4096 bytes and 50,000 VM instructions. Lifecycle calls, flip/yield, external I/O and persistence writes are unavailable. printh remains available for concise diagnostics. Every debug attempt marks the route debug, including syntax errors. Executed errors may leave partial writes; reset before continuing after an executed error, STOP or timeout.
+Use debug to set up a failure or boundary case without editing source. Code and keys use Lua byte strings (code points 0–255); debug accepts at most 4096 bytes and 50,000 VM instructions. Lifecycle calls, flip/yield, external I/O and persistence writes are unavailable. printh remains available for concise diagnostics. Debug code that runs marks the route debug, even if it then errors; a compile error leaves the route and state unchanged. Executed errors may leave partial writes: read state to see them, then reset before more input or debug. STOP and timeouts also require reset.
 
-Debug does not update or draw. stateSeq increases on debug attempts and completed frames; frameStateSeq identifies an older image after injection. press_buttons produces the next frame. Match evidence using revision, run, stateSeq and frameId, then use normal input to verify the final core loop, completion and retry independently of injection.
+Debug does not update or draw. After a debug write, results show staleFrame:true until press_buttons produces the next frame. Match evidence using revision, run and frameId, then use normal input to verify the final core loop, completion and retry independently of injection.
 
 ## Pictures and exact pixels
 
@@ -34,7 +34,7 @@ Debug does not update or draw. stateSeq increases on debug attempts and complete
 {"format":"both","region":{"x":40,"y":56,"width":16,"height":16}}
 ```
 
-observe_game reads the last completed frame without advancing. PNG is the default; ascii returns exact pixels, both returns matching text and image. Region coordinates remain native screen pixels with a top-left origin. Positive integer sizes are clipped to the screen intersection; the result reports the actual region. Fully outside or invalid rectangles are rejected. Model PNGs use nearest-neighbor ×4 (512x512 for the full screen); coordinates and ASCII stay native. Load/reset/input already return PNGs; inspect_game returns state text.
+observe_game reads the last completed frame without advancing. PNG is the default; ascii returns exact pixels, both returns matching text and image. Region coordinates remain native screen pixels with a top-left origin. Positive integer sizes are clipped to the screen intersection; the result reports the actual region. Fully outside or invalid rectangles are rejected. Model PNGs use nearest-neighbor ×4 (imageScale:4, 512x512 for the full screen); region coordinates and ASCII stay native, so divide positions seen in the image by 4. Load/reset/input already return PNGs; inspect_game returns state text.
 
 ASCII encoding pico8-slots-v1 uses one character 0–f per framebuffer slot, with exactly width columns and height rows. Read the accompanying actual display palette: pal(slot,code,1) can change colors, including extended codes 128–143. Slot 0 is a visible screen color. Use small crops for pixel questions and raw state for board contents. After cancellation or conversation restore, establish a fresh baseline before combining evidence.
 

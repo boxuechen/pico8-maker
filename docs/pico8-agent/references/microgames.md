@@ -2,7 +2,7 @@
 
 These complete, deliberately small Lua games are learning material for this host. Code, sprite rows and note sequences were newly authored for the knowledge pack. They do not contain the studied classics' code, maps, sprites or music. Use a recipe when a runnable example would help, and adapt it to the request. These examples are optional; their mechanics and features are not requirements for new games.
 
-Each recipe rebuilds assets in _init, runs at 60 updates per second, has a title, a visible objective, success/failure and X-button restart. Submit the complete source through load_game. The player's keyboard maps arrows to movement, Z (the O button) to Lua button 4, and X to Lua button 5. Tool input masks are different from Lua indices; consult /extensions/pico8/references/playtest.md.
+Each recipe rebuilds assets in _init, keeps round state in global g rebuilt by new_game() (the MACHINE skeleton convention, readable with inspect_game), runs at 60 updates per second, and has a title, a visible objective, success/failure and an X-button restart after a short result lock. Submit the complete source through load_game. The player's keyboard maps arrows to movement, Z (the O button) to Lua button 4, and X to Lua button 5. Tool input masks are different from Lua indices; consult /extensions/pico8/references/playtest.md.
 
 ## Spring Courier — /extensions/pico8/games/spring-courier.lua
 
@@ -42,6 +42,6 @@ The original music uses an eight-note loop in SFX 0. SFX 1..4 are three-note eve
 
 ## Validation and scope
 
-The developer verifier loads unmodified Lua and exported cartridges in the actual player, then exercises controls using the same WASM runtime with read-only state probes in scratch RAM. Successful and poor policies, restart, optional rewards and channel separation are checked. Probes are test instrumentation, not an observe_game capability. PNG/ASCII observations do not expose game variables. These examples do not save progress; use /extensions/pico8/recipes/save-high-score.lua if the requested design needs persistence.
+The developer verifier loads unmodified Lua and exported cartridges in the actual player, then exercises controls using the same WASM runtime with read-only state probes in scratch RAM. Successful and poor policies, restart, optional rewards and channel separation are checked. Probes are test instrumentation, not an observe_game capability. In this workbench, inspect_game reads the same g fields directly. These examples do not save progress; use /extensions/pico8/recipes/save-high-score.lua if the requested design needs persistence.
 
 Automated checks establish executable behavior, not enjoyment or sound quality. Review the visible frame, listen in a browser and ask human players about clarity, control and replay interest before making those claims.

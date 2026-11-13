@@ -115,21 +115,25 @@ export function observationText(observation, options) {
           ...(cart?.observed?.kind && cart.observed.kind !== "committed"
             ? { observedKind: cart.observed.kind }
             : {}),
-          format: options.format,
-          region: options.region,
+          // Full-screen PNG is the default for load/reset/input; only an
+          // explicit observation reports its format and actual clipped region.
+          ...(options.view
+            ? { format: options.format, region: options.region }
+            : {}),
+          ...(frame && options.format !== "ascii"
+            ? { imageScale: modelImageScale }
+            : {}),
         }),
     state: observation.state,
     frameId: frame?.frameId ?? null,
-    stateSeq: observation.stateSeq ?? 0,
+    // Internal sequences stay host-side; the model only needs to know when
+    // the latest image predates a debug write.
     ...(observation.frameStateSeq !== undefined &&
     observation.frameStateSeq !== observation.stateSeq
-      ? { frameStateSeq: observation.frameStateSeq }
+      ? { staleFrame: true }
       : {}),
-    ...(frame
-      ? {
-          cpuInstructions: frame.cpuInstructions,
-          ...(frame.slowFrame ? { slowFrame: true } : {}),
-        }
+    ...(frame?.slowFrame
+      ? { slowFrame: true, cpuInstructions: frame.cpuInstructions }
       : {}),
     ...(observation.checkpoint ? { checkpoint: observation.checkpoint } : {}),
     ...(execution
@@ -182,8 +186,10 @@ export function observationText(observation, options) {
 
 // Applied before the PNG encoder, shared by production and headless test encoders.
 // Frames, ASCII, labels and UI previews keep their original pixels.
+// Model PNGs are enlarged; coordinates, crops and ASCII stay native 128x128.
+export const modelImageScale = 4;
 export function modelImage({ rgba, width, height }) {
-  const scale = 4;
+  const scale = modelImageScale;
   const pixels = new Uint8ClampedArray(width * height * scale * scale * 4);
   for (let y = 0; y < height * scale; y++) {
     for (let x = 0; x < width * scale; x++) {
@@ -196,4 +202,31 @@ export function modelImage({ rgba, width, height }) {
     }
   }
   return { rgba: pixels, width: width * scale, height: height * scale };
+}
+
+// Compact runtime inspection values for the model without losing information:
+// a complete 1..n sequence becomes an array and a complete string-keyed table
+// becomes an object (unless a key named "type" could be mistaken for a tag).
+// Sparse, mixed or truncated tables keep the runtime's {type:"table",entries}.
+export function compactInspected(value) {
+  if (!value || typeof value !== "object" || value.type !== "table")
+    return value;
+  const entries = value.entries.map(({ key, value: v }) => ({
+    key,
+    value: compactInspected(v),
+  }));
+  if (!value.truncated) {
+    if (entries.every(({ key }, i) => key === i + 1))
+      return entries.map((e) => e.value);
+    if (entries.every(({ key }) => typeof key === "string" && key !== "type"))
+      return Object.fromEntries(entries.map((e) => [e.key, e.value]));
+  }
+  return {
+    type: "table",
+    entries,
+    ...(value.truncated ? { truncated: value.truncated } : {}),
+  };
+}
+export function modelInspection(inspection) {
+  return { ...inspection, values: inspection.values.map(compactInspected) };
 }

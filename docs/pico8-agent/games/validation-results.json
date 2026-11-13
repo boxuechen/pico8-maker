@@ -1,30 +1,30 @@
 {
-  "verifiedOn": "2026-11-12",
+  "verifiedOn": "2026-11-13",
   "checks": [
     {
       "name": "spring-courier: original Lua and exported cart",
       "passed": true,
-      "sourceSha256": "3a58be24c37faa4feb935d8d09da3db74f820da5378e5b83ed12a20591b174f4",
+      "sourceSha256": "2e371b3933eb26b51b9a9c33daf2266da7edfec9c86d846641a55731a33674eb",
       "framesPerLoad": 121
     },
     {
       "name": "signal-arena: original Lua and exported cart",
       "passed": true,
-      "sourceSha256": "7ffefb9d850c3d26de7a68e71208d1ebb7351bfebf19b1cfe86cbbbe65e256fb",
+      "sourceSha256": "33de07564bbcb1c5a0dc0c750dd7cfbc6369073cac94b11191aa46bc1ef6a365",
       "framesPerLoad": 121
     },
     {
       "name": "lantern-vault: original Lua and exported cart",
       "passed": true,
-      "sourceSha256": "54a66dd207eeaa693925536ebe21471c2d8cf87d7ef53063dca55cbeb44e2238",
+      "sourceSha256": "3f16d77a62124d92e5b5e37a79056686fc5ad68ff30f1e544024ca6d8e282398",
       "framesPerLoad": 121
     },
     {
       "name": "spring-courier: keyboard delivery, fall failure and clean retry",
       "passed": true,
-      "frames": 158,
-      "pcmBytes": 117600,
-      "pcmSha256": "a5e2ff55f24d5dd6cd1253cc8077dbde478a043e06931cbe88337a38b17245ad",
+      "frames": 190,
+      "pcmBytes": 141120,
+      "pcmSha256": "fd406ccf2d8c6106419e2c338c4f9f49daeaa5e73fe970f28050d72416d10f03",
       "listeningReview": false
     },
     {
@@ -38,9 +38,9 @@
     {
       "name": "signal-arena: dodge and strike policy wins; idle policy loses; restart clears damage",
       "passed": true,
-      "frames": 766,
-      "pcmBytes": 564480,
-      "pcmSha256": "ece1ac821b0d2644850d2a25458d73cb8726ee01e2c14b55a07d855958e79110",
+      "frames": 783,
+      "pcmBytes": 576974,
+      "pcmSha256": "d743677e6483b6bcaa5016c6f0d88222e009622a65b3b94599fcab3851a2c920",
       "listeningReview": false
     },
     {
@@ -108,17 +108,17 @@
     {
       "name": "lantern-vault: waiting can lose, restart clears relic/resources",
       "passed": true,
-      "frames": 50,
-      "pcmBytes": 38220,
-      "pcmSha256": "22e57576c8fa4488bcb8c860af9e4dbce1bbb287fc16a8566b124dcc767a98fc",
+      "frames": 66,
+      "pcmBytes": 49980,
+      "pcmSha256": "c97d02d47543ef613dd65ed7bb1511e8ce5d92a89754ab0a0a97efc973a69dca",
       "listeningReview": false
     },
     {
       "name": "spring-courier: buffered landing jump and expired edge grace",
       "passed": true,
-      "frames": 175,
-      "pcmBytes": 130094,
-      "pcmSha256": "a420c0f33b3c83b5c7d8dd5c38ccab77413688aa9aff298000e8669d5132c5ef",
+      "frames": 191,
+      "pcmBytes": 141854,
+      "pcmSha256": "187820b67973c184c19d0337cbc11030af27ffb61fb6c4238ea4fbd2d7ff9256",
       "listeningReview": false
     },
     {
@@ -187,7 +187,7 @@
     }
   ],
   "artifacts": {
-    "playerSha256": "628a421e9f1fb6291845827d1029a3137456b5d48ea5b22f08d0a5d355be597f"
+    "playerSha256": "17da3e636872a4804a5d626df349889b7a6c4def24552da4851a59b1d8fc1c60"
   },
   "limits": [
     "Original games: startup only",

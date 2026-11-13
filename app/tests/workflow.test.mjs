@@ -31,6 +31,11 @@ const read = async (g) =>
   ).values;
 const press = (g, frames, buttons, tap = false) =>
   g.execute("press_buttons", { steps: [{ frames, buttons, tap }] });
+const retrySteps = [
+  { frames: 16, buttons: 0 },
+  { frames: 1, buttons: 32, tap: true },
+];
+const retry = (g) => g.execute("press_buttons", { steps: retrySteps });
 
 test("published reset skeleton wins, loses and recreates every round field in real WASM", async (t) => {
   const g = new TestGame();
@@ -39,16 +44,21 @@ test("published reset skeleton wins, loses and recreates every round field in re
   assert.equal(loaded.isError, false);
   const initial = await read(g);
   assert.deepEqual(initial.slice(0, 4), ["play", 8, 0, 0]);
-  assert.equal(initial[4].entries.length, 3);
+  assert.deepEqual(initial[4], [{ x: 40 }, { x: 72 }, { x: 104 }]);
   await press(g, 47, 2);
   const won = await read(g);
   assert.deepEqual(won.slice(0, 4), ["win", 102, 3, 1]);
-  assert.equal(won[4].entries.length, 0);
-  await press(g, 1, 16, true);
+  assert.deepEqual(won[4], []);
+  // Holding O (a typical action button) through the result must not skip it.
+  await press(g, 60, 16);
+  assert.equal((await read(g))[0], "win");
+  await retry(g);
   assert.deepEqual(await read(g), initial);
   await press(g, 5, 1);
   assert.equal((await read(g))[0], "lose");
-  await press(g, 1, 16, true);
+  await press(g, 1, 32, true);
+  assert.equal((await read(g))[0], "lose", "result lock ignores an early X");
+  await retry(g);
   assert.deepEqual(await read(g), initial);
   assert.equal(g.playtests.active.purpose, "normal");
   // Extra/mutated round fields must disappear too, rather than only resetting a score.
@@ -56,7 +66,7 @@ test("published reset skeleton wins, loses and recreates every round field in re
     mode: "debug",
     code: 'previous_g=g; best_score=99; g.mode="lose"; g.timer=77; g.player.stale=true; g.entities[1].x=1',
   });
-  await press(g, 1, 16, true);
+  await retry(g);
   assert.deepEqual(await read(g), initial);
   const extra = head(
     await g.execute("inspect_game", {
@@ -117,7 +127,7 @@ test(
           ],
         },
       ],
-      ["press_buttons", { steps: [{ frames: 1, buttons: 16, tap: true }] }],
+      ["press_buttons", { steps: retrySteps }],
       [
         "inspect_game",
         {
@@ -157,7 +167,7 @@ test(
       return response({
         role: "assistant",
         content:
-          "Gameplay: collect three targets.\nControls: arrows and O.\nVerified: normal win and retry.\nUnverified: none in this fixture.",
+          "Gameplay: collect three targets.\nControls: arrows and X.\nVerified: normal win and retry.\nUnverified: none in this fixture.",
       });
     });
     let agent = new Agent(game, () => {}, {

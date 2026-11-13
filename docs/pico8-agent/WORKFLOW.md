@@ -33,25 +33,27 @@ Define the expected result. On the final committed version:
 1. Read counters, boards or entities with inspect_game read to plan inputs. Use existing globals, or bounded printh/targeted views for local-only state. Reuse PNGs from load/reset/input.
 2. Start a fresh normal route with reset_game and exercise the core action/feedback loop. Batch predictable steps; tap:true separates presses and capture:true samples meaningful intermediate transitions. Use separate calls when the next action depends on the result. Check execution.completedFrames and outcome.
 3. For a new short finite game, reach victory through normal input and retry on the final rules. Check restored counters, entities, timers and progress, and the applicable failure path. For sandboxes/endless games, check requested goals and restart without inventing victory. Test-only requests report findings without edits.
-4. Inject failure/boundary conditions with inspect_game debug instead of editing source. Every debug request marks the entire route debug. It changes state without update/draw; advance input to obtain a new frame. Reset after executed errors, timeout or STOP, and start fresh for further normal evidence.
+4. Inject failure/boundary conditions with inspect_game debug instead of editing source. A debug chunk that runs marks the entire route debug; one that fails to compile changes nothing. Debug changes state without update/draw; advance input to obtain a new frame. After an executed error, timeout or STOP you can still read state, then reset before more input; start fresh for further normal evidence.
 
-Tie evidence to committed revision, run and state/frame sequence; frameStateSeq identifies an image older than an injection. Recheck affected routes after relevant code/resource changes. Never weaken victory conditions or prefill progress in source merely to pass a test. An injected win does not replace the normal route.
+Tie evidence to committed revision, run and frameId; staleFrame marks an image older than an injection. Recheck affected routes after relevant code/resource changes. Never weaken victory conditions or prefill progress in source merely to pass a test. An injected win does not replace the normal route.
 
 After the first playable version, aim to obtain core evidence within about 12 verification calls. This is a planning reminder, not a stop limit. Combine observations, read state or batch inputs as calls grow. Continue necessary checks; report the specific gap if unresolved. Examples: /extensions/pico8/references/playtest.md.
 
 ## Readability
 
-Judge the 128x128 composition even though model PNGs are enlarged. Use low-contrast backgrounds, clear silhouettes and outlines for small objects, and shape/animation as well as color. Separate HUD text from scenery. Reserve bright accents for useful information. Check startup and a representative crowded or result frame.
+Judge the 128x128 composition even though model PNGs are enlarged ×4 (imageScale); crop regions and ASCII use native coordinates. Use low-contrast backgrounds, clear silhouettes and outlines for small objects, and shape/animation as well as color. Separate HUD text from scenery. Reserve bright accents for useful information. Check startup and a representative crowded or result frame.
 
-| Role | Suggested palette IDs |
-| --- | --- |
-| Background | 0 black or 1 dark blue |
-| Environment | 1 dark blue or 5 dark gray |
-| Player / primary text | 7 off white or 10 yellow |
-| Interactive targets | 9 orange or 11 bright green |
-| Object outline | 0 black |
+Separate important objects from the background by brightness, not only hue: dark objects on light ground or light objects on dark ground. Keep backgrounds and large surfaces muted, give the player and interactive targets different accent colors, and outline small objects with the opposite brightness.
 
-Adapt these colors and inspect contrast in the PNG. Avoid dark purple objects blending into dark scenery or bright grass overwhelming small collectibles. Use outline and shape to distinguish similar hues. Use small ASCII crops for exact pixel questions; read state for board contents and counters.
+| Role | Dark scene | Light or warm scene |
+| --- | --- | --- |
+| Background | 0 black, 1 dark blue | 15 light peach, 6 light gray |
+| Environment | 5 dark gray, 2 dark purple | 13 gray purple, 3 dark green |
+| Player | 7 off white | 1 dark blue, 0 black |
+| Interactive targets | 10 yellow, 11 bright green | 8 red, 12 blue |
+| Outline / HUD text | 0 black / 7 off white | 0 black / 1 dark blue |
+
+These are starting points; choose colors that suit the theme and inspect contrast in the PNG. Avoid dark purple objects on dark scenery or bright, busy grass behind small collectibles. Use outline and shape to distinguish similar hues. Use small ASCII crops for exact pixel questions; read state for board contents and counters.
 
 ## Delivery
 

@@ -1,6 +1,6 @@
 {
   "verifiedOn": "2026-11-12",
-  "node": "v24.22.2",
+  "node": "v22.22.2",
   "checks": [
     {
       "name": "sprite-from-rows: original Lua and exported cart",
@@ -91,8 +91,8 @@
     }
   ],
   "artifacts": {
-    "app/public/player/main/player.mjs": "628a421e9f1fb6291845827d1029a3137456b5d48ea5b22f08d0a5d355be597f",
-    "ref/pico8-web-player/wasm/dist/z8lua-runtime-v1.wasm": "c36199f46a906e37cc26db1aeac0fd34698737d902a7d9dcb4ed2303059e8253",
+    "app/public/player/main/player.mjs": "17da3e636872a4804a5d626df349889b7a6c4def24552da4851a59b1d8fc1c60",
+    "ref/pico8-web-player/wasm/dist/z8lua-runtime-v1.wasm": "8ada075489450bb85996708a910ab31acc28f04a0bc103f77d26236f3c7cd912",
     "ref/pico8-web-player/packages/runtime-core/dist/audio/sfx-synth.js": "57afb0d290e4aeb76cc9d28d5ea49803175a15ec7f3df675f2abac52f961de4c"
   },
   "limits": [

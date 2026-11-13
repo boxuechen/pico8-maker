@@ -29,9 +29,9 @@ export function createPico8Tools({ game, knowledge }) {
       "Reload the committed cart and advance one frame. Starts a recorded route with fresh test memory saves. Purpose normal/debug defaults to normal and describes the setup.",
     press_buttons: `Advance player 0 input in the test Worker: at most ${capabilities.maxInputSteps} steps and ${capabilities.maxInputFrames} total frames. Button masks are left=1, right=2, up=4, down=8, O/Z=16, X=32. Add masks for combinations. Zero releases all buttons. Returns actual progress and PNG checkpoints, stopping early on runtime faults or stops.`,
     observe_game:
-      "Read the last completed test frame without advancing time. Use a small ASCII crop to inspect exact pixels with the frame's palette. Reset or advance if no frame exists.",
+      "Read the last completed test frame without advancing time. Model PNGs are enlarged by imageScale (4); region coordinates always use native 128x128 pixels, so divide image positions by 4. Use a small ASCII crop to inspect exact pixels with the frame's palette. Reset or advance if no frame exists.",
     inspect_game:
-      "Read raw globals/table paths in the test Worker without advancing frames or calling Lua. Example: {mode:'read',paths:[['g','board']]}. Debug executes bounded Lua byte-string code, automatically marks this entire route debug and never changes authored source/resources. Example: {mode:'debug',code:'g.moves=1; return g.moves'}. The existing image predates debug writes; advance to render. Reset after an executed error, interruption or timeout.",
+      "Read raw globals/table paths in the test Worker without advancing frames or calling Lua. Example: {mode:'read',paths:[['g','board']]}. Sequences return arrays, string-keyed tables return objects; sparse or mixed tables keep {type:'table',entries}. Debug runs bounded Lua to set up a case without editing source; it marks the route debug unless it fails to compile. Example: {mode:'debug',code:'g.moves=1; return g.moves'}. staleFrame means the image predates a debug write; advance to render.",
   };
   const parameters = {
     reset_game: schema({
@@ -57,7 +57,7 @@ export function createPico8Tools({ game, knowledge }) {
           ["x", "y", "width", "height"],
         ),
         description:
-          "Optional crop at original pixel resolution. Clipped to the 128x128 screen; omitted means full screen. Applies to every requested format.",
+          "Optional crop in native 128x128 pixel coordinates (not enlarged image pixels). Clipped to the screen; omitted means full screen. Applies to every requested format.",
       },
     }),
     load_game: schema({
@@ -78,7 +78,7 @@ export function createPico8Tools({ game, knowledge }) {
             type: "array",
             minItems: 1,
             maxItems: 16,
-            items: { type: ["string", "integer"] },
+            items: { anyOf: [{ type: "string" }, { type: "integer" }] },
           },
         },
         code: { type: "string", minLength: 1, maxLength: 4096 },

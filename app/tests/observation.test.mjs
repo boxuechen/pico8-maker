@@ -9,6 +9,7 @@ import {
   cropRgba,
   observationText,
   modelImage,
+  compactInspected,
 } from "../src/pico8/observation.js";
 import { capabilities } from "../src/pico8/capabilities.js";
 import { Game } from "../src/game.js";
@@ -323,4 +324,42 @@ test("crop intersection and nearest-neighbor expansion preserve exact original p
       );
     }
   assert.deepEqual([...rgba], [1, 2, 3, 255, 4, 5, 6, 255]);
+});
+
+test("model state reads compact complete tables without losing sparse, tagged or truncated data", () => {
+  const t = (...pairs) => ({
+    type: "table",
+    entries: pairs.map(([key, value]) => ({ key, value })),
+  });
+  const row = t([1, 5], [2, 3], [3, 1]);
+  assert.deepEqual(compactInspected(t([1, row], [2, row])), [
+    [5, 3, 1],
+    [5, 3, 1],
+  ]);
+  assert.deepEqual(compactInspected(t(["x", 40], ["y", 24])), { x: 40, y: 24 });
+  assert.deepEqual(compactInspected(t()), []);
+  assert.deepEqual(compactInspected({ type: "nil" }), { type: "nil" });
+  // Sparse, mixed, "type"-keyed and truncated tables keep explicit entries.
+  for (const value of [
+    t([1, false], [7, 1.5]),
+    t([1, 1], ["x", 2]),
+    t(["type", "nil"]),
+    { ...t([1, 1]), truncated: "entries" },
+  ])
+    assert.equal(compactInspected(value).type, "table");
+  assert.deepEqual(compactInspected(t([2, t(["x", 1])], [9, 0])).entries[0], {
+    key: 2,
+    value: { x: 1 },
+  });
+  const board = t(
+    ...Array.from({ length: 8 }, (_, y) => [
+      y + 1,
+      t(...Array.from({ length: 8 }, (_, x) => [x + 1, ((x + y) % 5) + 1])),
+    ]),
+  );
+  assert.ok(
+    JSON.stringify(compactInspected(board)).length * 8 <
+      JSON.stringify(board).length,
+    "an 8x8 board is at least eight times smaller",
+  );
 });

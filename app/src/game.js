@@ -3,6 +3,8 @@ import {
   observationText,
   cropRgba,
   modelImage,
+  modelInspection,
+  modelImageScale,
 } from "./pico8/observation.js";
 import { cartridgeBytes } from "./cartridges.js";
 import {
@@ -438,6 +440,7 @@ export class Game {
                     ...preview.description,
                     width: preview.image.width,
                     height: preview.image.height,
+                    imageScale: modelImageScale,
                   },
                 }
               : {}),
@@ -479,12 +482,15 @@ export class Game {
       throw new Error(
         "No game has been loaded yet. Write main.lua and call load_game first.",
       );
+    // Partial debug writes may remain. Reads stay available to inspect them;
+    // further execution (input or debug) needs a fresh reset.
     if (
-      ["inspect_game", "press_buttons"].includes(action) &&
-      this.debugRequiresReset
+      this.debugRequiresReset &&
+      (action === "press_buttons" ||
+        (action === "inspect_game" && args?.mode === "debug"))
     )
       throw new Error(
-        "Debug execution may have changed state. Call reset_game before continuing.",
+        "Debug execution may have changed state. inspect_game read is still available; call reset_game before more input or debug.",
       );
     if (action === "inspect_game") {
       this.prepareInspection(args); // Shared runtime validator, before any Worker side effect.
@@ -492,8 +498,9 @@ export class Game {
         throw new Error(
           "inspect_game requires a recorded completed frame. Call reset_game first.",
         );
-      let event;
+      let event, previousPurpose;
       if (args.mode === "debug") {
+        previousPurpose = this.playtests.active.purpose;
         event = this.playtests.beginDebug(args.code, ++this.testStateSeq);
         this.debugRequiresReset = true;
       }
@@ -504,23 +511,31 @@ export class Game {
         signal?.throwIfAborted();
         if (event) {
           this.debugRequiresReset = !inspection.ok && inspection.executed;
-          this.playtests.finishDebug(
-            event,
-            inspection.ok ? "completed" : "failed",
-            inspection.executed,
-            inspection.error,
-          );
+          if (!inspection.ok && inspection.executed === false) {
+            // Compile failure: nothing ran, so the route and image stay as before.
+            this.testStateSeq--;
+            this.playtests.discardUnexecutedDebug(event, previousPurpose);
+          } else
+            this.playtests.finishDebug(
+              event,
+              inspection.ok ? "completed" : "failed",
+              inspection.executed,
+              inspection.error,
+            );
         }
+        const { run, purpose } = this.playtests.summary();
         const output = [
           {
             type: "text",
             text: JSON.stringify({
               ...this.cartSummary(),
-              ...this.playtests.summary(),
-              stateSeq: this.testStateSeq,
-              frameStateSeq: this.frameStateSeq,
+              run,
+              purpose,
               frameId: observation.frame?.frameId ?? null,
-              ...inspection,
+              ...(this.frameStateSeq !== this.testStateSeq
+                ? { staleFrame: true }
+                : {}),
+              ...modelInspection(inspection),
               ...(this.debugRequiresReset ? { requiresReset: true } : {}),
             }),
           },
@@ -541,6 +556,7 @@ export class Game {
     const options = {
       ...observationOptions(action === "observe_game" ? args : {}),
       includeBudget: action === "load_game",
+      view: action === "observe_game",
     };
     const resolved =
       action === "press_buttons" ? this.playtests.resolve(args) : null;

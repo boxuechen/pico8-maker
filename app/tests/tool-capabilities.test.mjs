@@ -320,10 +320,16 @@ test("real input sequences preserve checkpoints, exact movement and runtime stat
       ],
       [0, 228, 54],
     );
-    assert.equal(meta[i].cpuInstructions, g.testFrames[i].cpuInstructions);
+    // Instruction counts are reported only for slow frames.
     assert.equal(meta[i].slowFrame ?? false, g.testFrames[i].slowFrame);
+    assert.equal(
+      meta[i].cpuInstructions,
+      g.testFrames[i].slowFrame ? g.testFrames[i].cpuInstructions : undefined,
+    );
     assert.equal(meta[i].committedRevision, i === 0 ? g.revision : undefined);
-    assert.equal(meta[i].stateSeq, 1 + meta[i].checkpoint.afterFrames);
+    assert.equal(meta[i].imageScale, i === 0 ? 4 : undefined);
+    assert.equal(meta[i].region, undefined, "full-screen default is implicit");
+    assert.equal(meta[i].stateSeq, undefined);
   }
   const before = g.session.observe();
   const observed = headers(
@@ -333,7 +339,9 @@ test("real input sequences preserve checkpoints, exact movement and runtime stat
     }),
   )[0];
   assert.equal(observed.frameId, before.frame.frameId);
-  assert.equal(observed.cpuInstructions, before.frame.cpuInstructions);
+  assert.deepEqual(observed.region, { x: 0, y: 0, width: 1, height: 1 });
+  assert.equal(observed.format, "ascii");
+  assert.equal(observed.imageScale, undefined, "ASCII has no image");
   assert.equal(g.session.observe().frame.frameId, before.frame.frameId);
 });
 
@@ -556,7 +564,7 @@ test("Harness delivers all eight checkpoint images and resource provenance to th
     const texts = JSON.stringify(request.messages);
     if (n === 2) {
       assert.match(texts, /completedFrames/);
-      assert.match(texts, /cpuInstructions/);
+      assert.match(texts, /imageScale/);
       assert.equal((texts.match(/data:image\/png;base64/g) ?? []).length, 8);
     }
     if (n === 3) {
@@ -617,7 +625,7 @@ test("Harness delivers all eight checkpoint images and resource provenance to th
 test("model result DTO omits repeated internals, preserves dirty state and stays bounded", async (t) => {
   const g = gameFor(t);
   const reset = headers(await g.execute("reset_game", {}))[0];
-  assert.equal(reset.stateSeq, 1);
+  assert.equal(reset.imageScale, 4);
   const result = await g.execute("press_buttons", {
     steps: [
       { frames: 2, buttons: 2, capture: true },
@@ -626,8 +634,10 @@ test("model result DTO omits repeated internals, preserves dirty state and stays
   });
   const [first, second] = headers(result);
   assert.equal(first.run, reset.run);
-  assert.equal(first.stateSeq, 3);
-  assert.equal(second.stateSeq, 6);
+  assert.deepEqual(
+    [first.checkpoint.afterFrames, second.checkpoint.afterFrames],
+    [2, 5],
+  );
   assert.equal(first.execution.completedFrames, 5);
   assert.equal(second.run, undefined);
   assert.equal(second.execution, undefined);
@@ -641,14 +651,20 @@ test("model result DTO omits repeated internals, preserves dirty state and stays
       "draftSourceBudget",
       "diagnostics",
       "cart",
+      "stateSeq",
+      "frameStateSeq",
+      "staleFrame",
+      "format",
+      "region",
+      "cpuInstructions",
     ])
       assert.equal(Object.hasOwn(meta, key), false, key);
   }
   const observed = headers(await g.execute("observe_game", {}))[0];
-  assert.equal(observed.stateSeq, 6);
+  assert.equal(observed.frameId, second.frameId);
+  assert.deepEqual(observed.region, { x: 0, y: 0, width: 128, height: 128 });
   const next = headers(await g.execute("reset_game", {}))[0];
   assert.notEqual(next.run, reset.run);
-  assert.equal(next.stateSeq, 1);
   const assets = headers(
     await g.execute("read_assets", { kind: "sprite", id: 1, format: "data" }),
   );

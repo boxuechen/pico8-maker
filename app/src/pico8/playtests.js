@@ -169,8 +169,18 @@ export class Playtests {
     if (this.active.debugEvents.length < 32)
       this.active.debugEvents.push(event);
     else this.active.truncated = true;
-    this.save(); // Before dispatch: errors, STOP and timeouts cannot undo this label.
+    this.save(); // Before dispatch: runtime errors, STOP and timeouts cannot undo this label.
     return event;
+  }
+  // A chunk rejected by the compiler never ran, so it cannot alter state.
+  // Restore the route's previous label; any later uncertainty keeps debug.
+  discardUnexecutedDebug(event, previousPurpose) {
+    if (!this.active) return;
+    const index = this.active.debugEvents.indexOf(event);
+    if (index >= 0) this.active.debugEvents.splice(index, 1);
+    if (!this.active.debugEvents.length && !this.active.truncated)
+      this.active.purpose = previousPurpose;
+    this.save();
   }
   finishDebug(event, status, executed, reason) {
     event.status = status;

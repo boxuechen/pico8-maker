@@ -121,13 +121,14 @@ function harness(name) {
   });
   const fields = {
     "spring-courier":
-      "flr(px),flr(py),parcel and 1 or 0,bonus and 1 or 0,grace,buffer,flr(vy*10)+128",
+      "flr(g.px),flr(g.py),g.parcel and 1 or 0,g.bonus and 1 or 0,g.grace,g.buffer,flr(g.vy*10)+128",
     "signal-arena":
-      "gx,gy,hp,hits,({warn=0,attack=1,recover=2})[phase],timer,axis,target,cooldown",
-    "lantern-vault": "tx,ty,hp,fuel,turn,danger,relic and 1 or 0,gems",
+      "g.gx,g.gy,g.hp,g.hits,({warn=0,attack=1,recover=2})[g.phase],g.timer,g.axis,g.target,g.cooldown",
+    "lantern-vault":
+      "g.tx,g.ty,g.hp,g.fuel,g.turn,g.danger,g.relic and 1 or 0,g.gems",
   }[name];
   // Read-only probe writes a copy to unused scratch RAM. No game variables are changed.
-  const probe = `\nlocal real_update=_update60\nfunction _update60() real_update() poke(0x4300,({title=0,play=1,won=2,lost=3})[state],${fields}) end`;
+  const probe = `\nlocal real_update=_update60\nfunction _update60() real_update() poke(0x4300,({title=0,play=1,win=2,lose=3})[g.mode],${fields}) end`;
   const boot = rt.boot({
     rom: new Uint8Array(0x8000),
     code: new TextEncoder().encode(sources[name] + probe),
@@ -179,13 +180,16 @@ await check(
       a = h.read();
       assert.equal(a[0], 2, `exit must win: ${a}`);
       h.step(32);
+      assert.equal(h.read()[0], 2, "result lock ignores an immediate X");
+      h.step(0, 16);
+      h.step(32);
       a = h.read();
       assert.equal(a[0], 1);
       assert.equal(a[3], 0);
       assert.equal(a[1], 8);
       h.step(2, 60);
       assert.equal(h.read()[0], 3, "walking into a gap loses");
-      h.step(0);
+      h.step(0, 16);
       h.step(32);
       assert.equal(h.read()[0], 1);
       return h.finish();
@@ -246,7 +250,10 @@ await check(
       assert.equal(a[0], 2, `policy must win: ${a}`);
       assert.equal(a[4], 3);
       assert.equal(a[3], 3, "safe policy takes no damage");
+      // A repeated strike press right after winning must not skip the result.
       h.step(0);
+      assert.equal(h.step(32)[0], 2, "result lock ignores an immediate X");
+      h.step(0, 16);
       h.step(32);
       a = h.step(0, 600);
       assert.equal(a[0], 3, "no-input policy loses");
@@ -351,6 +358,7 @@ await check(
         h.step(0);
       }
       assert.equal(h.read()[0], 3);
+      h.step(0, 16);
       h.step(32);
       const a = h.read();
       assert.equal(a[0], 1);
@@ -385,6 +393,7 @@ await check(
       // Release, restart via falling, then test a press outside the edge window.
       h.step(2, 100);
       assert.equal(h.read()[0], 3);
+      h.step(0, 16);
       h.step(32);
       h.step(2, 36);
       a = h.read();
@@ -469,7 +478,7 @@ await writeFile(
   new URL("validation-results.json", base),
   JSON.stringify(
     {
-      verifiedOn: "2026-11-12",
+      verifiedOn: "2026-11-13",
       checks,
       artifacts: {
         playerSha256: sha(

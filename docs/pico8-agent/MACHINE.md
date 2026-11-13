@@ -8,15 +8,21 @@ Aim for 8192 code tokens and 65535 source characters. Tool budgets are approxima
 
 ## Reset skeleton
 
-Collect three targets, lose at the left edge, retry with O. Adapt these rules for new games; preserve existing structures in focused edits. Keep round state in global g for inspection. new_game() recreates counters, entities, mode and progress; add any cooldowns, selection or timers there too. _init and retry share it. Keep persistent best scores outside g and load them separately with cartdata/dget.
+Collect three targets, lose at the left edge, retry with X. Adapt these rules for new games; preserve existing structures in focused edits. Keep round state in global g for inspection. new_game() recreates counters, entities, mode and progress; add any cooldowns, selection or timers there too. _init and retry share it. Keep persistent best scores outside g and load them separately with cartdata/dget.
+
+Retry uses X after a short result lock. btnp repeats while a button stays held, so never restart on the button held for the main action, or the result screen is skipped.
 
 ```lua
 function new_game()
- g={mode="play",player={x=8},entities={{x=40},{x=72},{x=104}},score=0,progress=0}
+ g={mode="play",player={x=8},entities={{x=40},{x=72},{x=104}},score=0,progress=0,wait=0}
 end
 function _init() new_game() end
 function _update()
- if g.mode!="play" then if btnp(4) then new_game() end return end
+ if g.mode!="play" then
+  g.wait+=1
+  if g.wait>15 and btnp(5) then new_game() end
+  return
+ end
  if btn(0) then g.player.x-=2 end
  if btn(1) then g.player.x+=2 end
  for e in all(g.entities) do
@@ -26,7 +32,7 @@ function _update()
  if g.score==3 then g.mode="win" elseif g.player.x<0 then g.mode="lose" end
 end
 function _draw()
- cls(1) print("arrows: move o: retry",1,1,7)
+ cls(1) print("arrows: move x: retry",1,1,7)
  for e in all(g.entities) do circfill(e.x,64,3,0) circfill(e.x,64,2,10) end
  rectfill(g.player.x-3,60,g.player.x+3,68,0) rectfill(g.player.x-2,61,g.player.x+2,67,7)
  print(g.mode.." "..g.score.."/3",1,114,7)

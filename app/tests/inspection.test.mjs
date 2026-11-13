@@ -36,14 +36,20 @@ test("inspect reads without images; debug evidence, old frame and authored/live 
     code: 'g.moves=1; printh("injected"); return g.moves',
   });
   assert.equal(head(r).purpose, "debug");
-  assert.equal(head(r).stateSeq, seq + 1);
-  assert.equal(head(r).frameStateSeq, seq);
+  assert.equal(head(r).staleFrame, true);
+  assert.equal(
+    head(r).stateSeq,
+    undefined,
+    "internal sequences stay host-side",
+  );
+  assert.equal(g.testStateSeq, seq + 1);
   assert.equal(head(r).frameId, frame.frameId);
   assert.equal(g.testFrame, frame);
   assert.equal(head(r).run, run);
   assert.equal(JSON.parse(r.output[1].text).logs.entries[0].text, "injected");
   const observe = head(await g.execute("observe_game", {}));
-  assert.equal(observe.frameStateSeq, seq);
+  assert.equal(observe.staleFrame, true);
+  assert.equal(observe.imageScale, 4);
   assert.equal(observe.purpose, "debug");
   assert.deepEqual(cartBytes(g.snapshot), bytes);
   assert.equal(g.draft, draft);
@@ -57,6 +63,11 @@ test("inspect reads without images; debug evidence, old frame and authored/live 
     true,
   );
   assert.equal(g.frameStateSeq, g.testStateSeq);
+  assert.equal(
+    head(await g.execute("observe_game", {})).staleFrame,
+    undefined,
+    "a completed frame after debug is current",
+  );
   const restored = normalizePlaytests(g.playtests.runs);
   assert.equal(restored[0].purpose, "debug");
   assert.equal(restored[0].debugEvents[0].status, "completed");
@@ -111,11 +122,38 @@ test("invalid inspection has no dispatch; executed errors and lost replies remai
   assert.equal(result.isError, true);
   assert.equal(head(result).requiresReset, true);
   assert.equal(g.playtests.active.purpose, "debug");
+  // Partial writes stay readable; only further execution needs a reset.
+  assert.deepEqual(
+    head(
+      await g.execute("inspect_game", {
+        mode: "read",
+        paths: [["g", "moves"]],
+      }),
+    ).values,
+    [0],
+  );
   await assert.rejects(
     () => g.execute("press_buttons", { steps: [{ frames: 1, buttons: 0 }] }),
     /reset_game/,
   );
+  await assert.rejects(
+    () => g.execute("inspect_game", { mode: "debug", code: "return 1" }),
+    /reset_game/,
+  );
   await g.execute("reset_game", {});
+  // A chunk the compiler rejects never ran: no debug label, event or stale image.
+  const seqBefore = g.testStateSeq;
+  result = await g.execute("inspect_game", { mode: "debug", code: "g.moves=" });
+  assert.equal(result.isError, true);
+  assert.equal(head(result).executed, false);
+  assert.equal(head(result).purpose, "normal");
+  assert.equal(head(result).staleFrame, undefined);
+  assert.equal(head(result).requiresReset, undefined);
+  assert.equal(g.testStateSeq, seqBefore);
+  assert.equal(g.playtests.active.purpose, "normal");
+  assert.equal(g.playtests.active.debugEvents.length, 0);
+  assert.equal(normalizePlaytests(g.playtests.runs).at(-1).purpose, "normal");
+  await g.execute("press_buttons", { steps: [{ frames: 1, buttons: 0 }] });
   g.rpc = async (action, args) => {
     if (action === "inspect") {
       await rpc(action, args);
@@ -183,6 +221,7 @@ test("a fault before the next completed frame keeps the pre-debug image identity
     await g.execute("press_buttons", { steps: [{ frames: 1, buttons: 0 }] }),
   );
   assert.equal(result.execution.completedFrames, 0);
-  assert.equal(result.frameStateSeq, frameSeq);
-  assert.ok(result.stateSeq > result.frameStateSeq);
+  assert.equal(result.staleFrame, true);
+  assert.equal(g.frameStateSeq, frameSeq);
+  assert.ok(g.testStateSeq > g.frameStateSeq);
 });
