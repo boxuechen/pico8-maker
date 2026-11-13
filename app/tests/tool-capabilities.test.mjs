@@ -654,3 +654,36 @@ test("model result DTO omits repeated internals, preserves dirty state and stays
   );
   assert.equal(JSON.stringify(assets).includes("draftSourceBudget"), false);
 });
+
+test("printh is delivered once across input steps and remains separate from faults", async (t) => {
+  const g = gameFor(t, emptySnapshot('printh("boot")\nfunction _update() printh("tick") end'));
+  const logs = result => result.output.filter(p => p.type === "text").flatMap(p => {
+    try { const value = JSON.parse(p.text); return value.logs ? [value.logs] : []; } catch { return []; }
+  });
+  const reset = logs(await g.execute("reset_game", {}));
+  assert.deepEqual(reset.flatMap(l => l.entries.map(e => e.text)), ["boot", "tick"]);
+  const advance = logs(await g.execute("press_buttons", { steps: [{frames: 2, buttons: 0}, {frames: 3, buttons: 0}] }));
+  assert.equal(advance.flatMap(l => l.entries).length, 5);
+  assert.deepEqual(logs(await g.execute("observe_game", {})), []);
+  assert.deepEqual(logs(await g.execute("observe_game", {format: "ascii"})), []);
+  assert.equal(logs(await g.execute("reset_game", {}))[0].entries[0].sequence, 1);
+  const failed = await g.execute("load_game", {source: 'printh("before error") error("expected")'});
+  assert.equal(failed.isError, true);
+  assert.match(failed.output[0].text, /expected/);
+  assert.equal(logs(failed)[0].entries[0].text, "before error");
+});
+
+test("failed result encoding does not consume logs from earlier checkpoints", async (t) => {
+  const g = gameFor(t, emptySnapshot('function _update() printh("tick") end'));
+  await g.execute("reset_game", {});
+  const encode = g.image.bind(g);
+  let images = 0;
+  g.image = image => { if (++images === 2) throw Error("encoding fixture"); return encode(image); };
+  await assert.rejects(g.execute("press_buttons", { steps: [
+    {frames: 2, buttons: 0, capture: true}, {frames: 2, buttons: 0},
+  ] }), /encoding fixture/);
+  g.image = encode;
+  const observed = await g.execute("observe_game", {});
+  const logs = observed.output.filter(p => p.type === "text").map(p => JSON.parse(p.text)).find(p => p.logs).logs;
+  assert.equal(logs.entries.length, 4);
+});

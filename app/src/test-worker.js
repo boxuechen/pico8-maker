@@ -30,6 +30,10 @@ self.onmessage = async ({ data }) => {
         },
       });
     else throw new Error("Unknown test action");
+    if (result && typeof result === "object") {
+      const observation = result.observation ?? result;
+      observation.logs = session.readLogs();
+    }
     self.postMessage({ id: data.id, result });
   } catch (error) {
     self.postMessage({ id: data.id, error: error.message });

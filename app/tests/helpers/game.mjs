@@ -74,14 +74,14 @@ export class TestGame extends Game {
     if (action === "load") {
       await this.session?.dispose();
       this.session = await createPico8Session();
-      return this.session.loadCart(args.cart);
+      const result = await this.session.loadCart(args.cart);
+      return { ...result, logs: this.session.readLogs() };
     }
-    if (action === "advance")
-      return this.session.advance({
-        frames: args.frames,
-        input: input(args.buttons),
-      });
-    if (action === "observe") return this.session.observe();
+    if (action === "advance") {
+      const result = await this.session.advance({ frames: args.frames, input: input(args.buttons) });
+      return { ...result, observation: { ...result.observation, logs: this.session.readLogs() } };
+    }
+    if (action === "observe") return { ...this.session.observe(), logs: this.session.readLogs() };
     throw Error("Unsupported test transport action " + action);
   }
   cancelTests() {

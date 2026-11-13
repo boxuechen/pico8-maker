@@ -28,7 +28,7 @@ btn tests held state; btnp includes new presses and automatic repeats. Right plu
 | reset() | Reset machine/draw state; not session reset or global-variable reinitialization |
 | flip() | Frame boundary in custom loops; ordinary games should use callbacks |
 | load(filename[,breadcrumb,parameter]) | Cart switch; requires host-supplied cart bundle, not arbitrary URL access |
-| printh(text,...) | Host-dependent debug output; current model tools do not capture guest stdout |
+| printh(text,...) | Bounded test-session logs returned by game tools; no file output |
 | extcmd(command) | Platform commands; do not assume external recording/clipboard/network capabilities |
 
 Console/platform entries such as save/folder/ls/resume/reboot/info/serial are listed in the API catalog. Normal game states (title/play/win/gameover) should be implemented in Lua with input transitions rather than depending on console/editor operations.

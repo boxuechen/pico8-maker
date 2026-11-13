@@ -8,8 +8,8 @@
 
 - 保留单文件源码、原生资源、草稿与资源原子提交、试玩与测试隔离、执行前校验、知识包版本/hash、数值范围提示和用户请求前的对比快照。
 - 不兼容旧工具参数、旧 skill 路径和旧测试记录格式。删除旧分支及对应测试，更新所有第一方调用点，不引入别名或迁移适配层。已有卡带源码、资源和版本不因此删除；旧格式测试记录不参与新验证，旧对话仅作为历史展示，不重新执行旧调用。
-- runtime 是独立仓库 `ref/pico8-web-player`，当前依赖提交为 `43d3ef70c07f707b2b6bec0823fa08744df0d7f3`。Maker 的 `ref/` 被忽略，底层修改必须在播放器仓库单独提交，再更新 Maker 的依赖记录与 release。
-- `printh` 当前在 `wasm/bridge/p8w_frame_runtime.cpp` 转换字符串后丢弃；Maker 的测试 Worker 只支持 init/load/reset/observe/advance，没有 Lua 查询入口。
+- runtime 是独立仓库 `ref/pico8-web-player`，计划基线依赖提交为 `43d3ef70c07f707b2b6bec0823fa08744df0d7f3`。Maker 的 `ref/` 被忽略，底层修改必须在播放器仓库单独提交，再更新 Maker 的依赖记录与 release。
+- 计划基线中 `printh` 在 `wasm/bridge/p8w_frame_runtime.cpp` 转换字符串后丢弃；Maker 的测试 Worker 只支持 init/load/reset/observe/advance，没有 Lua 查询入口。
 - 模型 PNG 当前按原尺寸编码；输入同时支持顶层简写、steps、captureFrames 和 replay；启动只载入 skill 目录，正文按需读。
 - 用户提供的 296 次调用、164 次观察和 144 次逐行扫描作为问题线索，实施前从固定归档按统一脚本复核，不当作已经重算的基线。两案例已有独立最终卡带路线；后续分别记录「Agent 自主验证」与「独立验证」，不混算。
 - 512×512 放大有望改善视觉输入，但不预先认定它一定增加有效图像 token 或减少调用；用同画面小样本对照验证。

@@ -52,3 +52,8 @@ P0 结果 DTO 已实现：模型端使用字段白名单，删除内部 session/
 同一 TestGame 空卡带 reset 后的真实 WASM observation，用 `382cd97` 的原编码器与新编码器比较，头部 711 → 197 UTF-8 bytes（减少 72.3%）。新契约测试要求普通输入头部 ≤500 bytes。观察/工具/Agent 契约 32 项定向检查通过（最后一项修正 fixture 参数后单独通过），知识/注册/实际 Worker/小机制评测 21 项通过。未运行完整回归。
 
 S2 构建准备：系统 PATH 中 Homebrew Emscripten 为 6.0.6-git，不符合锁定版本；已核对 `/Users/boxue/.local/share/emsdk/upstream/emscripten/em++` 为准确的 6.0.5 + 锁定 commit。后续构建显式设置 EMXX，并使用 Node 22.22.2；无需修改全局工具链或放宽版本检查。
+
+
+S2 日志切片已实现并接入：播放器提交 `bbcbbf6bbb2af06e114eeb9593943a02df79b83d`，ABI 0x00010005，WASM 使用锁定编译器重建并更新真实 artifact hash。VM 有界缓冲通过 Core/session 暴露 readLogs(cursor)，启动和帧故障保留日志。Maker Worker 使用该公开 API，模型只收到新增日志；结果编码失败回退交付 cursor，避免丢日志。日志单独文本块，不挤掉 ASCII 或故障诊断。
+
+播放器日志/生命周期/资源限额/架构 40 项定向检查、standalone 14 项检查、source/ABI manifest 校验和 release 文件/归档校验通过。Maker 实际 Worker/工具 21 项检查通过，另补结果编码失败不消费日志的回归。未运行浏览器完整门禁；S2 状态查询/调试、最终组合构建及必要集成验证仍待完成。WASM 导出集合变更后的两次干净构建一致性检查安排在 S2 ABI 最终确定后执行。

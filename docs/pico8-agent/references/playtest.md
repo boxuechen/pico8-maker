@@ -47,3 +47,7 @@ Full-screen pixel text is bounded separately from read. A diagnostic overflow is
 Separate observed pixels from source inference. Do not claim a hidden velocity or variable was measured without a tool/diagnostic exposing it. Manual test and live player instances have separate state.
 
 Current model tools do not return audio. Local PCM checks do not prove subjective listening quality. Report only the persistence lifecycles actually tested. After cancellation or worker recreation, establish a new baseline rather than replaying unknown-outcome inputs.
+
+## Console logs
+
+Use printh(value) for concise game-state diagnostics. Load/reset/input/observe return newly available logs in a separate text block, without repeating already delivered entries. Each entry has sequence, attempted frameId (null during boot), text and truncated; dropped counts entries evicted before delivery. The buffer keeps at most 64 entries / 8 KiB of raw text, with 1 KiB per entry. Non-ASCII P8 bytes are escaped as \xNN. A logged frame may fail before committing; inspect runtime diagnostics separately. Load/reset starts a new buffer. Filename arguments do not write files.

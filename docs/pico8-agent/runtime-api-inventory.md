@@ -39,7 +39,7 @@ All 113 entries from the local runtime inventory. Implementation status is disti
 
 - `flip`: root custom-loop continuation is compatible; P5-KD-01 keeps single/multi-level guest-coroutine suspension as an explicit zero-side-effect nested-host-suspend Known Difference
 
-- `printh`: browser-safe diagnostic-only subset: applies PICO-8 tostr conversion and writes to a bounded null sink; cart-selected filename, overwrite, desktop, clipboard and filesystem effects are intentionally unavailable
+- `printh`: browser-safe diagnostic-only subset: applies PICO-8 tostr conversion and writes to a bounded session-local log buffer exposed by readLogs; cart-selected filename, overwrite, desktop, clipboard and filesystem effects are intentionally unavailable
 
 - `time`: committed logical-slice clock is exact across 30/60/custom and ordinary slow frames; it never reads host wall-clock
 

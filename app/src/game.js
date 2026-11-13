@@ -377,8 +377,15 @@ export class Game {
       signal?.throwIfAborted();
       const abort = () => this.cancelTests();
       signal?.addEventListener("abort", abort, { once: true });
+      const delivered = { cursor: this.logCursor, identity: this.logIdentity };
       try {
-        return await this.perform(action, args, signal);
+        const result = await this.perform(action, args, signal);
+        signal?.throwIfAborted();
+        return result;
+      } catch (error) {
+        this.logCursor = delivered.cursor;
+        this.logIdentity = delivered.identity;
+        throw error;
       } finally {
         signal?.removeEventListener("abort", abort);
       }
@@ -660,6 +667,18 @@ export class Game {
           modelImage({ rgba: cropRgba(frame, options.region), width, height }),
         ),
       );
+    }
+    if (observation.logs) {
+      const identity = `${observation.sessionId}:${observation.generation}`;
+      const cursor = identity === this.logIdentity ? this.logCursor : 0;
+      const snapshot = observation.logs;
+      const first = snapshot.entries[0]?.sequence ?? snapshot.cursor + 1;
+      const logs = { dropped: Math.max(0, first - cursor - 1),
+        entries: snapshot.entries.filter(entry => entry.sequence > cursor) };
+      if (logs.entries.length || logs.dropped) output.push({ type: "text", text: JSON.stringify({ logs }) });
+      // Advance only after all result encoding succeeded; observe never consumes VM logs.
+      this.logIdentity = identity;
+      this.logCursor = snapshot.cursor;
     }
     return { output, isError: observation.state === "faulted" };
   }
