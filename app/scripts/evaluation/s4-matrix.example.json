@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "models": [
+    {
+      "id": "kimi",
+      "family": "Kimi",
+      "provider": "kimi-coding",
+      "model": "kimi-for-coding",
+      "baseUrl": "https://api.kimi.com/coding/v1",
+      "apiKeyEnv": "S4_KIMI_KEY",
+      "thinkingLevel": "high"
+    },
+    {
+      "id": "claude",
+      "family": "Claude",
+      "provider": "anthropic",
+      "model": null,
+      "baseUrl": null,
+      "apiKeyEnv": "S4_CLAUDE_KEY",
+      "thinkingLevel": "high"
+    },
+    {
+      "id": "gpt",
+      "family": "GPT",
+      "provider": "openai",
+      "model": null,
+      "baseUrl": null,
+      "apiKeyEnv": "S4_GPT_KEY",
+      "thinkingLevel": "high"
+    },
+    {
+      "id": "glm",
+      "family": "GLM",
+      "provider": "zai",
+      "model": null,
+      "baseUrl": null,
+      "apiKeyEnv": "S4_GLM_KEY",
+      "thinkingLevel": "high"
+    }
+  ]
+}
