@@ -68,3 +68,13 @@ test("play reports mode changes, state, setup evidence and faults", async (t) =>
   assert.match(textOf(r), /setup ran[\s\S]*mode play→win/);
   assert.match(textOf(await p.execute({ steps: [{ press: ["jump"], frames: 1 }] })), /unknown button|must be equal/);
 });
+
+test("play accepts stringified steps and single values", async (t) => {
+  const bench = new Bench(emptySnapshot(""));
+  t.after(() => bench.dispose());
+  await writeGame(bench).execute({ source: shooterSource });
+  const r = await play(bench).execute({ reset: true, steps: '[{"frames": 20, "press": "left"}], {"frames": 5, "press": []}', read: "g.player.x" });
+  assert.equal(r.isError, false);
+  assert.match(textOf(r), /25f|now frame 26/);
+  assert.match(textOf(r), /"g.player.x":24/);
+});

@@ -69,8 +69,9 @@ only the newest image is sent; older images become a one-line note.
 | test | core + api + test, task, plan checks, source, smoke | `play`, `edit_game`, `done` | `done` with verified/unverified lists | 16 turns |
 | report | — | — | host writes the four-part reply | — |
 
-Global caps match S4: 15 minutes and 40 tool calls per task. Thinking defaults to
-`low`; plan may use the configured level.
+Global caps match S4: 15 minutes and 40 tool calls per task. Thinking is `low` for
+plan and build and `off` for test (a first 9B run spent 30K characters thinking
+before its first play call).
 
 Repairs skip plan: build starts from the existing cart with the task as the plan.
 New games start from `prompts/template.lua`, already loaded, so a model never

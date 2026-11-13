@@ -3,7 +3,8 @@
 //
 //   node bin/eval.mjs --model qwen3.5:9b-q4_K_M [--base-url http://127.0.0.1:11434/v1]
 //     [--api openai-responses|openai-completions] [--key-env LAB_API_KEY]
-//     [--tasks shooter-repair,shooter-create,catch] [--repeat 3] [--thinking low] [--time-ms 900000]
+//     [--tasks shooter-repair,shooter-create,catch] [--repeat 3] [--thinking low]
+//     [--test-thinking off] [--time-ms 900000]
 //
 // Writes .cache/lab/<run>/ with one directory per task run (report.json, final.p8,
 // reply.md) and summary.json / summary.md. Keys come only from the environment.
@@ -23,6 +24,7 @@ const { values: a } = parseArgs({
     tasks: { type: "string", default: "shooter-repair,shooter-create,catch" },
     repeat: { type: "string", default: "1" },
     thinking: { type: "string", default: "low" },
+    "test-thinking": { type: "string", default: "off" },
     "time-ms": { type: "string", default: "900000" },
   },
 });
@@ -44,7 +46,7 @@ const root = new URL("../../../.cache/lab/", import.meta.url);
 const run = `${new Date().toISOString().slice(0, 16).replace(/[:T]/g, "")}-${randomUUID().slice(0, 8)}`;
 const dir = new URL(`${run}/`, root);
 await mkdir(dir, { recursive: true });
-const thinking = { plan: a.thinking, build: a.thinking, test: a.thinking };
+const thinking = { plan: a.thinking, build: a.thinking, test: a["test-thinking"] };
 const redact = (value) => JSON.parse(JSON.stringify(value, (k, v) => (k === "data" && typeof v === "string" && v.length > 200 ? `[image ${v.length} b64]` : typeof v === "string" && apiKey.length > 8 ? v.replaceAll(apiKey, "[REDACTED]") : v)));
 
 const rows = [];
@@ -83,7 +85,7 @@ for (const id of a.tasks.split(",")) {
   }
 }
 const head = ["task", "n", "status", "oracle", "seconds", "toolCalls", "toolErrors", "output", "input", "cacheRead", "phases"];
-const md = [`# ${a.model} · thinking ${a.thinking} · ${run}`, "", `| ${head.join(" | ")} |`, `| ${head.map(() => "---").join(" | ")} |`, ...rows.map((r) => `| ${head.map((h) => r[h] ?? "").join(" | ")} |`)].join("\n");
+const md = [`# ${a.model} · thinking ${a.thinking}/${a["test-thinking"]} · ${run}`, "", `| ${head.join(" | ")} |`, `| ${head.map(() => "---").join(" | ")} |`, ...rows.map((r) => `| ${head.map((h) => r[h] ?? "").join(" | ")} |`)].join("\n");
 await writeFile(new URL("summary.json", dir), JSON.stringify({ model: a.model, api: a.api, thinking: a.thinking, rows }, null, 1));
 await writeFile(new URL("summary.md", dir), md + "\n");
 console.log(`\n${md}\n\nArchive: ${dir.pathname}`);

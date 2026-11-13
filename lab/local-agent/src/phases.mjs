@@ -8,7 +8,8 @@ import { Bench, done, editGame, numbered, play, writeGame } from "./tools.mjs";
 export const defaults = {
   timeMs: 15 * 60 * 1000,
   toolCalls: 40,
-  thinking: { plan: "low", build: "low", test: "low" },
+  // Testing is mechanical play; long thinking there cost minutes per reply.
+  thinking: { plan: "low", build: "low", test: "off" },
   turns: { build: 12, test: 16 },
   nudges: 2,
 };

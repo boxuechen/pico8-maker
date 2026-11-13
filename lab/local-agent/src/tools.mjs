@@ -96,6 +96,25 @@ export function applyEdits(source, edits) {
   return out;
 }
 
+// Small models sometimes send nested arguments as JSON strings or a single
+// value where a list is expected; accept the obvious intent.
+export function loose(value) {
+  if (typeof value !== "string") return value;
+  const t = value.trim();
+  if (!/^[[{]/.test(t)) return value;
+  try {
+    return JSON.parse(t);
+  } catch {
+    try {
+      return JSON.parse(`[${t}]`).flat(); // e.g. '[{...}], {...}'
+
+    } catch {
+      return value;
+    }
+  }
+}
+const list = (v) => (v === undefined ? undefined : Array.isArray((v = loose(v))) ? v : [v]);
+
 const schema = (properties, required = []) => ({ type: "object", properties, required, additionalProperties: false });
 
 export function writeGame(bench) {
@@ -125,7 +144,7 @@ export function editGame(bench) {
     async execute(args) {
       let next;
       try {
-        next = applyEdits(bench.source, args.edits ?? []);
+        next = applyEdits(bench.source, list(args.edits) ?? []);
       } catch (e) {
         return { isError: true, content: [text(`No edits applied. ${e.message}`)] };
       }
@@ -158,11 +177,18 @@ export function play(bench) {
     }, ["steps"]),
     async execute(args) {
       if (!bench.loaded) return { isError: true, content: [text("No game is loaded. Fix the source with edit_game or write_game first.")] };
-      const total = (args.steps ?? []).reduce((n, s) => n + (s.frames ?? 0), 0);
+      const rawSteps = list(args.steps) ?? [];
+      if (!rawSteps.length) return { isError: true, content: [text('steps is required, e.g. [{"press":["right"],"frames":30}].')] };
+      const total = rawSteps.reduce((n, s) => n + (Number(s?.frames) || 0), 0);
       if (total > MAX_FRAMES) return { isError: true, content: [text(`At most ${MAX_FRAMES} frames per play call (got ${total}).`)] };
       let steps;
       try {
-        steps = args.steps.map((s) => ({ bits: mask(s.press), frames: s.frames, press: s.press }));
+        steps = rawSteps.map((s) => {
+          const press = list(s?.press) ?? [],
+            frames = Math.trunc(Number(s?.frames));
+          if (!(frames >= 1 && frames <= 600)) throw new Error("each step needs frames between 1 and 600");
+          return { bits: mask(press), frames, press };
+        });
       } catch (e) {
         return { isError: true, content: [text(e.message)] };
       }
@@ -203,7 +229,8 @@ export function play(bench) {
       out.push(`Mode: ${changes.join("; ")}`);
       if (fault) out.push(`FAULT: ${fault.map((d) => `${d.line ? `line ${d.line}: ` : ""}${d.message}`).join("; ")}${hint(fault[0]?.message ?? "")}`);
       if (!fault) {
-        const values = await rt.read(args.read?.length ? args.read : ["g"]);
+        const paths = list(args.read)?.map(String) ?? [];
+        const values = await rt.read(paths.length ? paths : ["g"]);
         let shown = JSON.stringify(values);
         if (shown.length > 1500) shown = `${shown.slice(0, 1500)}… (truncated; use read for specific paths)`;
         out.push(`State: ${shown}`);
