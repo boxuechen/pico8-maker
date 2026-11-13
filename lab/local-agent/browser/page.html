@@ -1,34 +1,12 @@
-<!doctype html><meta charset="utf-8"><script type="module">
-const out = {};
-try {
-  const { createBashToolDefinition, createReadToolDefinition, createEditToolDefinition, createWriteToolDefinition, Bash, InMemoryFs, MountableFs, defineCommand } = await import("./tools.js");
-  const cart = new InMemoryFs({ "/main.lua": "player_speed=2\ngoal=10\n" });
-  const fs = new MountableFs({ base: new InMemoryFs({ "/tmp/.k": "" }), mounts: [{ mountPoint: "/cart", filesystem: cart }] });
-  const p8 = defineCommand("p8", async (args) => ({ stdout: `p8 ${args.join(" ")}: ALL PASSED\n`, stderr: "", exitCode: 0 }));
-  const bash = new Bash({ fs, cwd: "/cart", customCommands: [p8] });
-  const enc = new TextEncoder();
-  const B = (u8) => (globalThis.Buffer ? Buffer.from(u8) : u8);
-  const files = {
-    readFile: async (p) => B(await fs.readFileBuffer(p)),
-    access: async (p) => { if (!(await fs.exists(p))) throw Object.assign(new Error(`ENOENT: ${p}`), { code: "ENOENT" }); },
-    writeFile: (p, c) => fs.writeFile(p, c),
-    detectImageMimeType: async () => null,
-  };
-  const ops = { exec: async (command, cwd, { onData }) => { const r = await bash.exec(command, { cwd }); onData(B(enc.encode(r.stdout + r.stderr))); return { exitCode: r.exitCode }; } };
-  const text = (r) => r.content.map((c) => c.text ?? c.type).join("");
-  const read = createReadToolDefinition("/cart", { operations: files });
-  out.read = text(await read.execute("1", { path: "main.lua" }, undefined, undefined, {}));
-  const edit = createEditToolDefinition("/cart", { operations: files });
-  out.edit = text(await edit.execute("2", { path: "main.lua", edits: [{ oldText: "goal=10", newText: "goal=15" }] }, undefined, undefined, {}));
-  const write = createWriteToolDefinition("/cart", { operations: { writeFile: files.writeFile, mkdir: (d) => fs.mkdir(d, { recursive: true }) } });
-  out.write = text(await write.execute("3", { path: "notes/a.txt", content: "hi" }, undefined, undefined, {}));
-  const bashTool = createBashToolDefinition("/cart", { operations: ops });
-  out.bash = text(await bashTool.execute("4", { command: "cat main.lua && grep -c = main.lua && p8 check && ls notes" }, undefined, undefined, { cwd: "/cart", sessionManager: { getSessionId: () => "probe", getSessionFile: () => undefined } }));
-  const dir = await navigator.storage.getDirectory();
-  const h = await dir.getFileHandle("probe.lua", { create: true });
-  const w = await h.createWritable(); await w.write("x=1"); await w.close();
-  out.opfs = await (await h.getFile()).text();
-  out.ok = true;
-} catch (e) { out.error = String(e?.stack ?? e).slice(0, 800); }
-window.__probe = out;
+<!doctype html><meta charset="utf-8"><title>lab browser run</title><pre id="log"></pre><script type="module">
+// Fetch the job, hand it to the agent worker, relay progress and the result to the server.
+const log = (s) => (document.getElementById("log").textContent += s + "\n");
+const job = await (await fetch("/job")).json();
+const worker = new Worker("/worker.js", { type: "module" });
+worker.onerror = (e) => fetch("/result", { method: "POST", body: JSON.stringify({ status: "error", error: `worker: ${e.message}` }) });
+worker.onmessage = ({ data }) => {
+  if (data.type === "progress") { log(data.line); fetch("/progress", { method: "POST", body: data.line }); }
+  if (data.type === "result") fetch("/result", { method: "POST", body: JSON.stringify(data.result) });
+};
+worker.postMessage(job);
 </script>

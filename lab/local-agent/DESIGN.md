@@ -25,17 +25,25 @@ read the failure → edit again**, like fixing code until tests pass.
 ```
 lab/local-agent/
   DESIGN.md
-  package.json        pins @earendil-works/pi-coding-agent; scripts: test, eval
-  agent/              PI_CODING_AGENT_DIR for runs: models.json (local Ollama), settings.json
+  package.json        pins @earendil-works/pi-coding-agent and just-bash; scripts: test, eval
+  agent/              models.json for local Ollama runs (historical)
   skill/pico8/        SKILL.md, reference/api.md, examples/*.lua, templates/*.lua
-  bin/p8              the checker CLI (on PATH during runs)
-  bin/eval.mjs        runs tasks × repeats through `pi --mode json`, scores with hidden checks
+  bin/p8              the checker CLI on the real disk
+  bin/eval.mjs        runs tasks × repeats through an in-process Pi session, scores them
+  browser/            build.mjs (esbuild, Node shims), worker.mjs (agent side in a Worker),
+                      page.html, run.mjs (headless Chrome: --probe or --task)
   src/
+    env.mjs           just-bash over MountableFs: /cart writable, /skill/pico8 read-only, p8
+    pi-tools.mjs      Pi's stock read/edit/write/bash with operations on env
+    agent.mjs         Node: stock Pi AgentSession; piSystemPrompt() for the browser run
+    browser-agent.mjs browser: pi-agent-core Agent + pi-ai, same tools and system prompt
+    opfs-fs.mjs       /cart on an OPFS directory (write-through InMemoryFs)
+    tasks.mjs         Node: skill tree, task loading, scoring, run metrics
     maker.mjs         the only import path into app/: player runtime, cart codec, tokens, S4 oracle
     runtime.mjs       one inspection session: load, advance, read, ASCII thumbnail
     lint.mjs          static checks with fix hints
     checks.mjs        check specs: boot, smoke, scripted cases with expectations
-    p8.mjs            command implementations used by bin/p8
+    p8.mjs            p8 subcommands over any just-bash IFileSystem
     sounds.mjs        fixed sfx 0–7 bank for new carts
   tasks/<id>/         task.md, start files, checks.json (visible), hidden.json (eval only)
   tests/              node --test for p8 and checks; no model requests
@@ -112,10 +120,10 @@ runs, tool errors, output tokens, whether the agent stopped on its own.
 ## Running
 
 ```sh
-OLLAMA_HOST=127.0.0.1:11434 OLLAMA_CONTEXT_LENGTH=32768 OLLAMA_FLASH_ATTENTION=1 \
-  OLLAMA_KV_CACHE_TYPE=q8_0 ~/.local/ollama-0.40.16/ollama serve
-~/.local/ollama-0.40.16/ollama pull qwen3.5:4b-q4_K_M
-cd lab/local-agent && npm install && npm run eval -- --model qwen3.5:4b-q4_K_M --tasks T0,T1
+cd lab/local-agent && npm install
+DEEPSEEK_API_KEY=... npm run eval -- --tasks T1,T2,T3,T4,T5,T6,T7
+node browser/build.mjs && node browser/run.mjs --probe     # no model
+DEEPSEEK_API_KEY=... node browser/run.mjs --task T6
 ```
 
 ## Results (2026-11-14)
@@ -168,6 +176,35 @@ files plus just-bash's browser entry with esbuild, replacing Node built-ins by s
 throw) and injecting `Buffer`. `browser/run.mjs` loads it in headless Chrome: read, edit,
 write and bash all work against a just-bash MountableFs (pipes and a custom `p8` command
 included), and OPFS reads and writes a file. Bundle 2.8 MB, mostly just-bash (1.2 MB) plus
-unused pi-tui/highlight.js render code that can be trimmed. Not yet done: a real `p8` on the
-player runtime in a Worker, an OPFS-backed IFileSystem for `/cart`, and the Pi agent loop
-itself in the browser (Maker already runs pi-durable there).
+unused pi-tui/highlight.js render code that can be trimmed. The follow-ups are in place below.
+
+## Browser run (2026-11-14)
+
+The whole agent side runs in a module Worker (`browser/worker.mjs`, one 4.1 MB bundle):
+
+- `/cart` is an OPFS directory through `src/opfs-fs.mjs`: read into an InMemoryFs on open,
+  every mutation (write, append, mkdir, rm, cp, mv) mirrored to OPFS before it resolves.
+  The probe checks sed -i, mkdir/cp/mv/rm and a PNG write, then lists OPFS directly and
+  reopens it: same files, `main.lua` identical in memory and on OPFS.
+- `p8` is unchanged and runs the real player runtime in the Worker: `player.mjs` stays
+  external (served from `app/public/player/`) and loads its own wasm. `p8 check` on T1 takes
+  260 ms, `p8 run` 16 ms, `p8 look --png` 39 ms. The read-only skill mount rejects writes.
+- The loop is pi-agent-core's `Agent` with pi-ai's DeepSeek provider calling the API from
+  the Worker (CORS is fine), Pi's four stock tools over the same environment, and the
+  system prompt a Node Pi session builds for these tools (`piSystemPrompt`). Left out
+  versus the Node AgentSession: session file, compaction (off in the lab anyway), extension
+  hooks, its retry wrapper.
+
+DeepSeek Flash, thinking high, one run each, scored on the host as in `bin/eval.mjs`:
+
+| task | browser | Node lab (earlier) |
+| --- | --- | --- |
+| T1–T5 | 5/5, 4–9 s, 4–6 turns | 5/5, 4–12 s |
+| T6 S4 shooter-create | ✓ 126 s, 23 turns, used `p8 look` | 3/4, 38–110 s |
+| T7 S4 shooter-repair | ✓ 60 s, 23 turns | 3/3, 53–72 s |
+
+Same tool mix as in Node (p8 check/run/look, read, edit, write). Archives:
+`.cache/lab/browser-*`. Conclusion: the lab's agent design (Pi tools + just-bash + p8 +
+skill) runs entirely in the browser with no server beyond static files and the model API;
+this is the shape a Maker migration would take. Bundle size is dominated by just-bash
+(1.2 MB) and Pi render code (pi-tui, highlight.js, photon) that the browser never calls.
