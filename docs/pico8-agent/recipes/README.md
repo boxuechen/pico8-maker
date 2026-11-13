@@ -18,7 +18,7 @@
 node docs/pico8-agent/recipes/verify.mjs
 ```
 
-脚本依赖当前工作区已有的播放器 release 与 ref 的 runtime/WASM 构建产物。缺失时按 [播放器开发说明](../../../ref/pico8-web-player/docs/development.md) 构建；脚本不会下载新依赖、修改应用或写用户浏览器存档。
+脚本依赖当前工作区已有的播放器 release 与 ref 的 runtime/WASM 构建产物。缺失时按 [播放器开发说明](../../../ref/pico8-player/docs/development.md) 构建；脚本不会下载新依赖、修改应用或写用户浏览器存档。
 
 五个样例先分别在公开 manual session 上运行，再包装成纯 Lua `.p8` 重新加载，证明不依赖素材段。行为测试还检查像素、按键、资源 RAM、PCM、音乐 pattern 和 memory 存档生命周期。验证用的 Lua 断言和低层 RAM 读取仅属于开发侧测试，不是新的网页模型工具。
 

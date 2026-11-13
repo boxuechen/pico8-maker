@@ -5,9 +5,9 @@ import { readFile, writeFile, readdir } from "node:fs/promises";
 import { createHash } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { createPico8Session } from "../../../app/public/player/main/player.mjs";
-import { createPicoApiHost, FrameSliceRuntime } from "../../../ref/pico8-web-player/packages/runtime-core/dist/public.js";
-import { Z8LuaFrameVm, createPicoApiHostRouter } from "../../../ref/pico8-web-player/packages/z8lua-bridge/dist/public.js";
-import createModule from "../../../ref/pico8-web-player/wasm/dist/z8lua-runtime-v1.mjs";
+import { createPicoApiHost, FrameSliceRuntime } from "../../../ref/pico8-player/packages/runtime-core/dist/public.js";
+import { Z8LuaFrameVm, createPicoApiHostRouter } from "../../../ref/pico8-player/packages/z8lua-bridge/dist/public.js";
+import createModule from "../../../ref/pico8-player/wasm/dist/z8lua-runtime-v1.mjs";
 
 const base = new URL("./", import.meta.url);
 const names = ["sprite-from-rows", "map-from-rows", "sfx-from-notes", "music-from-patterns", "save-high-score"];
@@ -159,7 +159,7 @@ await check("default/display palette and packed pixel mapping", () => session(as
 await check("documentation palette, API coverage and local links", async () => {
   const root=new URL("../",base);
   const palette=JSON.parse(await readFile(new URL("palette.json",root),"utf8"));
-  const source=await readFile(new URL("../../ref/pico8-web-player/apps/web-player/src/runtime/pico-frame.ts",root),"utf8");
+  const source=await readFile(new URL("../../ref/pico8-player/apps/player/src/runtime/pico-frame.ts",root),"utf8");
   const blocks=source.split("new Uint8ClampedArray([").slice(1,3);
   const rgb=blocks.flatMap(b=>{
     const numbers=[...b.split("]);")[0].matchAll(/0x([0-9a-f]+)/g)].map(m=>parseInt(m[1],16));
@@ -168,7 +168,7 @@ await check("documentation palette, API coverage and local links", async () => {
   assert.deepEqual(palette.colors.map(c=>c.rgb),rgb);
   const readable=await readFile(new URL("PALETTE.md",root),"utf8");
   assert.deepEqual([...readable.matchAll(/\| (#[0-9a-f]{6}) \|/g)].map(m=>m[1]),rgb);
-  const inventory=JSON.parse(await readFile(new URL("../../ref/pico8-web-player/spec/pico-api-inventory.yaml",root),"utf8"));
+  const inventory=JSON.parse(await readFile(new URL("../../ref/pico8-player/spec/pico-api-inventory.yaml",root),"utf8"));
   const catalog=await readFile(new URL("runtime-api-inventory.md",root),"utf8");
   for(const item of inventory.apis) assert.ok(catalog.includes("`"+[item.name,...(item.aliases??[])].join(", ")+"`"),item.name);
   async function walk(url) {
@@ -192,10 +192,10 @@ await check("documentation palette, API coverage and local links", async () => {
 });
 
 const artifacts={};
-for(const p of ["app/public/player/main/player.mjs","ref/pico8-web-player/wasm/dist/z8lua-runtime-v1.wasm","ref/pico8-web-player/packages/runtime-core/dist/audio/sfx-synth.js"]) {
+for(const p of ["app/public/player/main/player.mjs","ref/pico8-player/wasm/dist/z8lua-runtime-v1.wasm","ref/pico8-player/packages/runtime-core/dist/audio/sfx-synth.js"]) {
   artifacts[p]=sha(await readFile(new URL("../../../"+p,base)));
 }
-const report={verifiedOn:"2026-11-12",node:process.version,checks,artifacts,
+const report={verifiedOn:new Date().toISOString().slice(0,10),node:process.version,checks,artifacts,
   limits:["No application integration or model calls","No browser persistence test","No subjective audio listening review","Probe assertions are verification-only, not new Agent tools"]};
 await writeFile(new URL("../validation-results.json",base),JSON.stringify(report,null,2)+"\n");
 console.log(`${checks.length} checks passed; report: ${fileURLToPath(new URL("../validation-results.json",base))}`);

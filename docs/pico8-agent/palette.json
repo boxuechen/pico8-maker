@@ -3,7 +3,7 @@
   "machine": "PICO-8 v0.2.7",
   "verifiedOn": "2026-11-12",
   "namePolicy": "Chinese and English names are product semantic labels; RGB values match the local runtime.",
-  "source": "../../ref/pico8-web-player/apps/web-player/src/runtime/pico-frame.ts",
+  "source": "../../ref/pico8-player/apps/player/src/runtime/pico-frame.ts",
   "slots": [
     {
       "index": 0,

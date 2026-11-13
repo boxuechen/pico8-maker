@@ -151,7 +151,7 @@ export class Game {
     ).href;
     const lib = await import(/* @vite-ignore */ this.url);
     this.prepareInspection = lib.prepareInspection;
-    this.player = await lib.createPico8WebPlayer({
+    this.player = await lib.createPico8Player({
       root,
       shell: "hosted",
       execution: "worker",

@@ -1,9 +1,9 @@
-import { createPico8WebPlayer } from '../../player/main/player.mjs';
+import { createPico8Player } from '../../player/main/player.mjs';
 const status = document.querySelector('#status');
 const versions = document.querySelector('#version');
 let player;
 try {
-  player = await createPico8WebPlayer({root: document.querySelector('#player'), execution:'worker', commandTimeoutMs:12000});
+  player = await createPico8Player({root: document.querySelector('#player'), execution:'worker', commandTimeoutMs:12000});
   player.on('fault', event => { status.textContent = event.error.message; });
   player.on('state', event => {
     if (event.state === 'running') status.textContent = '点击画面后，用方向键和 X 游玩。';

@@ -35,14 +35,14 @@ Serve the static site through HTTP(S); do not open `index.html` through `file://
 3. Update Maker's `app/player.lock.json`: `baseUrl`, `sourceCommit`, and the SHA-256 of the downloaded `manifest.json` bytes.
 4. Run Maker tests, build and Sites checks. The preparation script verifies the manifest and every file; a valid cache works without network access.
 
-The repository and Pages path are now `pico8-player` (formerly `pico8-web-player`). Existing checkout directory names and the manifest artifact identifier remain compatible; the pinned download URL uses the new Pages path.
+Pages retains only the current source-commit directory. After publishing Player, update Maker's lock and deploy it together. The manifest artifact identifier is `pico8-player`; old artifact identifiers and static directories are not supported.
 
-Keep previously published directories available for older Maker checkouts. The normal distribution path does not use GitHub Releases or a separate runtime repository. Player owns and maintains its internal TypeScript runtime, vendored z8lua and C/C++ WASM bridge. Fix cartridge execution, graphics and audio compatibility there; keep Maker focused on authoring and agent integration.
+The normal distribution path does not use GitHub Releases or a separate runtime repository. Player owns and maintains its internal TypeScript runtime, vendored z8lua and C/C++ WASM bridge. Fix cartridge execution, graphics and audio compatibility there; keep Maker focused on authoring and agent integration.
 
 To work on both repositories locally, explicitly select a built player directory:
 
 ```sh
-PICO8_PLAYER_DIR=/absolute/path/to/pico8-player/apps/web-player/dist/release npm --prefix app run dev
+PICO8_PLAYER_DIR=/absolute/path/to/pico8-player/apps/player/dist/release npm --prefix app run dev
 ```
 
 The override verifies that build's manifest, without requiring its hash to match Maker's lock. Removing the environment variable restores the pinned build on the next preparation run.

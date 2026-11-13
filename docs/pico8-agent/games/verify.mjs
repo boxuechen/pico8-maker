@@ -7,12 +7,12 @@ import { createPico8Session } from "../../../app/public/player/main/player.mjs";
 import {
   createPicoApiHost,
   FrameSliceRuntime,
-} from "../../../ref/pico8-web-player/packages/runtime-core/dist/public.js";
+} from "../../../ref/pico8-player/packages/runtime-core/dist/public.js";
 import {
   Z8LuaFrameVm,
   createPicoApiHostRouter,
-} from "../../../ref/pico8-web-player/packages/z8lua-bridge/dist/public.js";
-import createModule from "../../../ref/pico8-web-player/wasm/dist/z8lua-runtime-v1.mjs";
+} from "../../../ref/pico8-player/packages/z8lua-bridge/dist/public.js";
+import createModule from "../../../ref/pico8-player/wasm/dist/z8lua-runtime-v1.mjs";
 const base = new URL("./", import.meta.url),
   cache = new URL("../../../.cache/microgames/", base);
 await mkdir(cache, { recursive: true });

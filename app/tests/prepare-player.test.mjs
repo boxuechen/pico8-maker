@@ -23,7 +23,7 @@ async function fixture(t) {
   );
   const manifest = Buffer.from(
     JSON.stringify({
-      artifactId: "pico8-web-player",
+      artifactId: "pico8-player",
       apiVersion: 2,
       files: [...files].map(([path, bytes]) => ({
         path,

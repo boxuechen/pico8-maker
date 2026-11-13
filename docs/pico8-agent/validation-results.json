@@ -1,6 +1,6 @@
 {
-  "verifiedOn": "2026-11-12",
-  "node": "v22.22.2",
+  "verifiedOn": "2026-11-13",
+  "node": "v24.22.2",
   "checks": [
     {
       "name": "sprite-from-rows: original Lua and exported cart",
@@ -91,9 +91,9 @@
     }
   ],
   "artifacts": {
-    "app/public/player/main/player.mjs": "0df3d5be9324c714588e33bcc9d7f83b6a9df7367b0c5d8401eca9c1b45fb816",
-    "ref/pico8-web-player/wasm/dist/z8lua-runtime-v1.wasm": "8ada075489450bb85996708a910ab31acc28f04a0bc103f77d26236f3c7cd912",
-    "ref/pico8-web-player/packages/runtime-core/dist/audio/sfx-synth.js": "57afb0d290e4aeb76cc9d28d5ea49803175a15ec7f3df675f2abac52f961de4c"
+    "app/public/player/main/player.mjs": "294c50573d2c6343bbbb77cdf93fe4847451d8e10f5d28af9f90f023d86d5672",
+    "ref/pico8-player/wasm/dist/z8lua-runtime-v1.wasm": "8ada075489450bb85996708a910ab31acc28f04a0bc103f77d26236f3c7cd912",
+    "ref/pico8-player/packages/runtime-core/dist/audio/sfx-synth.js": "57afb0d290e4aeb76cc9d28d5ea49803175a15ec7f3df675f2abac52f961de4c"
   },
   "limits": [
     "No application integration or model calls",

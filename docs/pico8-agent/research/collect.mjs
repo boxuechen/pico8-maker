@@ -2,7 +2,7 @@
 // node docs/pico8-agent/research/collect.mjs [--fetch]
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { createHash } from "node:crypto";
-import { decodeCart } from "../../../ref/pico8-web-player/packages/cart-codec/dist/public.js";
+import { decodeCart } from "../../../ref/pico8-player/packages/cart-codec/dist/public.js";
 import { createPico8Session } from "../../../app/public/player/main/player.mjs";
 const root = new URL("../../../.cache/classic-study/", import.meta.url);
 const catalog = JSON.parse(

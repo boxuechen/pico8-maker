@@ -1,4 +1,4 @@
-// Maintained by PICO-8 Maker; originally from pico8-web-player tools/browser/chrome-cdp.mjs.
+// Maintained by PICO-8 Maker; originally from pico8-player tools/browser/chrome-cdp.mjs.
 import { access, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";

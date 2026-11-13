@@ -1,8 +1,8 @@
-import { createPico8WebPlayer } from '../../player/main/player.mjs';
+import { createPico8Player } from '../../player/main/player.mjs';
 const status=document.querySelector('#status'), versions=document.querySelector('#version');
 let player;
 try {
- player=await createPico8WebPlayer({root:document.querySelector('#player'),execution:'worker',commandTimeoutMs:12000});
+ player=await createPico8Player({root:document.querySelector('#player'),execution:'worker',commandTimeoutMs:12000});
  player.on('fault',e=>{status.textContent=e.error.message;});
  player.on('state',e=>{if(e.state==='running')status.textContent='点击画面后，用键盘游玩。';});
  async function load(){

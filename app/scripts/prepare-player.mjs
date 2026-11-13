@@ -22,7 +22,7 @@ function parseManifest(bytes, expectedHash) {
     throw new Error("Player manifest SHA-256 mismatch");
   const manifest = JSON.parse(bytes);
   if (
-    manifest.artifactId !== "pico8-web-player" ||
+    manifest.artifactId !== "pico8-player" ||
     manifest.apiVersion !== 2 ||
     !Array.isArray(manifest.files)
   ) {
