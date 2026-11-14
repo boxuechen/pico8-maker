@@ -26,7 +26,7 @@
 7. **资源不是文件：** 精灵、地图、音效靠两个结构化工具，不符合 Pi 的「一切皆文件 + 命令」形态。
 8. **加载：** shell 分块 1.3 MB，现在每个会话都会加载，但只在第一次打开工作台时按需拉取。
 
-## 2. P0：删除冻结流程
+## 2. P0：删除冻结流程（已完成）
 
 目标：代码里只剩一条流程，`load_game` 等名字不再出现在模型可见的地方。
 
@@ -45,9 +45,17 @@
 
 保留：S4 题目和独立 oracle、`run-s4` / `run-case` / `app-smoke` / `browser-smoke`、播放器、卡带存储与版本、路线记录与覆盖统计、图片保留钩子、`read_assets` / `edit_assets`（直到 P2-7）。
 
-需要你确认的一点：旧会话怎么处理。「不做兼容」我建议实现成：**卡带（源码、资源、版本）保留；会话转录里有冻结工具调用的，打开时清空历史**。否则 shell agent 会把不存在的工具调用带进上下文。
+旧会话：按用户决定**全部清空**。卡带存储升到 schema 4，v3 卡带加载时保留源码、资源和版本，会话换成一个空会话。
 
 验收：`npm test`、构建、S4 ×5（新建/修复）、`app-smoke` 与删除前同档。
+
+**结果（2026-11-14）：**
+
+- 删除 9 个模块（扩展、工具、工作区、知识包运行时）、`docs/pico8-agent/`（原文在标签 `agent-flow-freeze-2026-11-13`，P2-5 迁回 skill 时从那里取）、5 个冻结专属评测脚本和 9 个测试文件；`Game` 新增 `commit()`、`replayRoute()`、`readAssets()`、`editAssets()`，资源工具移到 `shell/resource-tools.js`；调色板改为静态模块 `src/pico8/palette.js`；S4 与结果指标改为统计 bash/p8 调用（`byP8`、`--read`、`look`）和 `Maker:` 提交行；`tests/mock-model.mjs` 的脚本动作自动转成 shell 调用。`Game.execute` 内部仍按旧动作名分派，模型看不到。
+- `npm test` 88/88（删掉冻结专属测试后），`npm run test:s4` 11/11，lab 单测 11/11，生产构建通过。
+- S4 ×5（DeepSeek Flash high）：新建独立检查 3/5（失败：1 次像素契约 player state/pixels disagree，1 次正常胜利路线结局为 lose），修复 5/5；中位耗时新建 84 s、修复 71 s，全部自然结束。新建累计 15/20，与删除前同档。agent 覆盖统计 2 次缺项：一次 12 条路线窗口仍被多版本的首条路线占满，见 P1-3。
+- 主界面烟测：两次 57 / 73 s，提交、试玩帧、无控制台问题；烟测现在会从 IndexedDB 列出工具调用和失败结果。第二次的调用序列里模型用 `sed` 临时改 `score=9` 测胜利再恢复，正是 P1-2 要解决的临时版本。
+- 归档：S4 `.cache/evaluations/s4-34f3b431-89fc-4672-84a4-d6ee525f73ad`、`s4-e21b5f9f-a408-490e-b7ba-28dae993f76f`、`s4-39a35ce5-4551-449f-b4f1-aa7a40af1062`、`s4-e653733c-493a-44f4-911e-a35cbc424b7c`、`s4-801c7623-fb54-4ea8-ad0f-94faebf40b9e`；烟测 `.cache/evaluations/app-smoke-*`。
 
 ## 3. P1：最影响体验的三件事
 

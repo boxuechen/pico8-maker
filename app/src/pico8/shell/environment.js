@@ -1,9 +1,8 @@
 // The shell flow's environment for one cart: a just-bash shell over /cart (with
 // /cart/main.lua mapped to the cart draft), the read-only pico8 skill at
 // /skill/pico8 and `p8` running in a separate Worker. After a p8 command that
-// runs main.lua, Maker commits a changed draft through the frozen load_game path
-// and replays the tested route (the last `p8 run` of each bash command) through
-// reset_game/press_buttons, so versions,
+// runs main.lua, Maker commits a changed draft (Game.commit)
+// and replays the tested route (Game.replayRoute), so versions,
 // preview, playtest records and coverage stay Maker's own.
 import { capabilities } from "../capabilities.js";
 import { sameSnapshot } from "../assets.js";
@@ -30,7 +29,7 @@ function readOnly(fs) {
   });
 }
 
-/** p8 press text → press_buttons calls (≤ maxInputSteps steps and ≤ maxInputFrames frames each). */
+/** p8 press text → Game route calls (≤ maxInputSteps steps and ≤ maxInputFrames frames each). */
 export function routeCalls(press) {
   const calls = [];
   let steps = [],
@@ -83,7 +82,7 @@ export async function createShellEnvironment({ game, skillFiles, sendP8 }) {
   // The sound bank goes only into a cart's first version; existing carts keep their resources.
   const cartAssets = () => (game.hasGame ? game.draft.assets : withSoundBank(game.draft.assets));
   // Maker keeps 12 routes per cart, and the model runs p8 far more often than it
-  // would call press_buttons. Replay only routes that count as evidence: the last
+  // would record a route. Replay only routes that count as evidence: the last
   // `p8 run` of a bash command (a scan loop runs p8 many times), when it changed
   // g.mode (reached a result or retried) or is the first route on this revision;
   // never the same press twice on one revision.
@@ -108,29 +107,25 @@ export async function createShellEnvironment({ game, skillFiles, sendP8 }) {
     if (!game.draft.source.trim() || sameSnapshot(game.draft, game.snapshot)) return [];
     const assets = cartAssets();
     if (assets !== game.draft.assets) game.setWorking({ ...game.draft, assets });
-    const result = await game.execute("load_game", {}, signal);
+    const result = await game.commit(signal);
     if (result.isError) {
       const first = result.output?.find((o) => o.type === "text")?.text ?? "";
       return [`not committed; the player keeps the last version. ${first.split("\n").at(-1)}`];
     }
-    // load_game's own note carries the frozen coverage facts for the new revision.
+    // The commit note carries the coverage facts for the new revision.
     const text = result.output?.find((o) => o.type === "text")?.text ?? "";
     const note = text.slice(text.indexOf("Committed as version")).split("\n")[0];
     const facts = note.startsWith("Committed as version") ? note.replace(/^Committed as version \d+\.\s*/, "") : "";
     return [`committed as version ${game.revision}; the player now runs it.${facts ? ` ${facts}` : ""} Only p8 run routes on this version count as tested.`];
   }
-  // Record the tested route on the committed cart, as press_buttons would.
+  // Record the tested route on the committed cart.
   async function replay({ press, modes }, signal) {
     const calls = routeCalls(press);
     const seen = recorded.get(game.revision) ?? new Set();
     recorded.set(game.revision, seen);
     if (!calls.length || seen.has(press) || (seen.size && !modes?.length)) return;
     seen.add(press);
-    await game.execute("reset_game", {}, signal);
-    for (const call of calls) {
-      const r = await game.execute("press_buttons", call, signal);
-      if (r.isError) break;
-    }
+    await game.replayRoute(calls, signal);
   }
 
   const bash = new Bash({ fs, cwd: CART, env: { HOME: CART, PWD: CART }, customCommands: [p8] });

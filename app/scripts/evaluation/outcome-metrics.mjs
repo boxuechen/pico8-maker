@@ -1,4 +1,5 @@
-// Transcript evidence only. Gameplay coverage is supplied by a separate verifier.
+// Transcript evidence only (bash/p8 calls, commits from the Maker: line).
+// Gameplay coverage is supplied by a separate verifier.
 // Cumulative snapshots can repeat messages: tool-call identity owns counting.
 export function outcomeMetrics(entries) {
   const calls = new Map(), results = new Map();
@@ -8,22 +9,22 @@ export function outcomeMetrics(entries) {
         if (part.type === "toolCall") calls.set(part.id, part);
     if (message.role === "toolResult") results.set(message.toolCallId, message);
   }
-  const byTool = {}, imageDimensions = {};
+  const byTool = {}, byP8 = {}, imageDimensions = {};
   let failed = 0, missing = 0, bytes = 0, chars = 0, images = 0;
-  let firstLoad = null, onePixelRows = 0, reads = 0, debug = 0;
+  let firstLoad = null, reads = 0, looks = 0;
   let index = 0;
   for (const [id, call] of calls) {
     index++;
     byTool[call.name] = (byTool[call.name] ?? 0) + 1;
+    const command = call.name === "bash" ? String(call.arguments?.command ?? "") : "";
+    for (const [, sub] of command.matchAll(/\bp8 (\w+)/g)) byP8[sub] = (byP8[sub] ?? 0) + 1;
+    if (/\bp8 run\b[^|;&]*--read/.test(command)) reads++;
+    if (/\bp8 look\b/.test(command)) looks++;
     const result = results.get(id);
     if (!result) { missing++; continue; }
     if (result.isError) failed++;
-    if (!result.isError && call.name === "load_game" && firstLoad === null) firstLoad = index;
-    if (call.name === "observe_game" && call.arguments?.region?.height === 1) onePixelRows++;
-    if (call.name === "inspect_game") {
-      if (call.arguments?.mode === "read") reads++;
-      if (call.arguments?.mode === "debug") debug++;
-    }
+    const text = (result.content ?? []).map((p) => (p.type === "text" ? p.text : "")).join("");
+    if (firstLoad === null && /Maker: committed as version \d+/.test(text)) firstLoad = index;
     for (const part of result.content ?? []) {
       if (part.type === "text") {
         chars += part.text.length;
@@ -46,12 +47,11 @@ export function outcomeMetrics(entries) {
     }
   }
   return {
-    schemaVersion: 1, toolCalls: calls.size, byTool,
+    schemaVersion: 2, toolCalls: calls.size, byTool, byP8,
     failedTools: failed, missingResults: missing,
     errorRate: calls.size ? failed / calls.size : 0,
-    observationShare: calls.size ? (byTool.observe_game ?? 0) / calls.size : 0,
-    onePixelRowObservations: onePixelRows,
-    stateReads: reads, debugExecutions: debug,
+    lookShare: calls.size ? looks / calls.size : 0,
+    stateReads: reads,
     firstSuccessfulLoadCall: firstLoad,
     firstVerifiedCoreLoopCall: null,
     resultTextBytes: bytes, resultTextCharacters: chars, images, imageDimensions,

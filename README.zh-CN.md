@@ -47,8 +47,8 @@ npm --prefix app run dev -- --host 127.0.0.1 --port 5175
 | 主题 | 指南 |
 | --- | --- |
 | 环境、测试、部署和 Player 升级 | [开发指南](docs/development.md) |
-| 当前能力、流程冻结和后续工作 | [开发状态](docs/development-status.md) |
-| Agent 指令、参考资料与宿主契约 | [知识库指南](docs/pico8-agent/README.md) |
+| 当前能力、评测证据和后续工作 | [开发状态](docs/development-status.md) |
+| Agent 设计（shell、`p8`、pico8 skill）与路线图 | [Shell 路线图](docs/shell-roadmap.md) |
 | 可复现的模型评测 | [评测指南](app/scripts/evaluation/README.md) |
 
 项目处于早期开发预览阶段，浏览器验证范围为 Chrome/Chromium；卡带兼容和模型生成质量均有局限。Maker 负责创作与 Agent 工作流，Player 负责卡带执行。

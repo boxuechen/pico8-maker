@@ -1,10 +1,7 @@
 import { Worker } from "node:worker_threads";
 import { Game } from "../../src/game.js";
 import { cartBytes } from "../../src/pico8/cart.js";
-import {
-  createPico8Session,
-  prepareInspection,
-} from "../../public/player/main/player.mjs";
+import { createPico8Session } from "../../public/player/main/player.mjs";
 import { png } from "./png.mjs";
 
 // Use the production Worker protocol and Game's timeout/cancellation, replacing
@@ -12,7 +9,6 @@ import { png } from "./png.mjs";
 export class EvaluationGame extends Game {
   constructor(options) {
     super(() => {}, options);
-    this.prepareInspection = prepareInspection;
     this.url = new URL(
       "../../public/player/main/player.mjs",
       import.meta.url,

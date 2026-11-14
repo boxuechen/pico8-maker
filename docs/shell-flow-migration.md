@@ -1,6 +1,6 @@
-# Shell 流程迁移方案（待评审）
+# Shell 流程迁移方案（已完成）
 
-更新：2026-11-14。状态：**已实施，shell 流程为默认**（M4 决定见文末）。冻结流程保留为回退，见 [development-status.md](development-status.md#agent-流程) 与 `app/AGENTS.md` 的 Agent flows。
+更新：2026-11-14。状态：**已完成并收尾**。2026-11-14 shell 成为唯一流程，冻结流程已删除（P0，见 [shell-roadmap.md](shell-roadmap.md)）；本文保留迁移过程与两条流程的对比证据，文中提到的开关、`S4_FLOW`、`--flow` 等已不存在。
 
 ## 1. 结论先行
 

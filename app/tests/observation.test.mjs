@@ -2,7 +2,7 @@ import { emptySnapshot } from "../src/pico8/assets.js";
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createPico8Session } from "../public/player/main/player.mjs";
-import palette from "../src/generated/pico8-palette.js";
+import palette from "../src/pico8/palette.js";
 import {
   observationOptions,
   encodeAscii,
@@ -187,117 +187,6 @@ test("diagnostic overflow cannot truncate the full pixel grid; absent frames are
     observation.diagnostics[0].message.length,
     300000,
     "source diagnostics stay untouched",
-  );
-});
-
-test("Game validates before side effects; ASCII does not require DOM or advance the real session", async (t) => {
-  const session = await createPico8Session();
-  t.after(() => session.dispose());
-  await session.loadSource(source("extended"));
-  const game = new Game(() => {}, {
-    versions: [emptySnapshot(source("extended"))],
-  });
-  let initialized = 0;
-  const actions = [];
-  game.ensureWorker = async () => {
-    initialized++;
-  };
-  game.player = { pause: async () => {} };
-  game.rpc = async (action) => {
-    actions.push(action);
-    assert.equal(action, "observe");
-    return structuredClone(session.observe());
-  };
-  await assert.rejects(
-    game.execute("observe_game", {
-      region: { x: 128, y: 0, width: 2, height: 1 },
-    }),
-  );
-  assert.equal(initialized, 0);
-  const empty = await game.execute("observe_game", { format: "ascii" });
-  assert.match(empty.output[0].text, /No completed test frame/);
-  await session.advance({ frames: 1 });
-  const args = {
-    format: "ascii",
-    region: { x: 1, y: 5, width: 16, height: 8 },
-  };
-  const a = await game.execute("observe_game", args);
-  const b = await game.execute("observe_game", args);
-  assert.deepEqual(a, b);
-  assert.equal(a.output.length, 1);
-  assert.equal(rowsOf(a.output[0].text).length, 8);
-  assert.deepEqual(actions, ["observe", "observe", "observe"]);
-  const controller = new AbortController();
-  controller.abort();
-  await assert.rejects(game.execute("observe_game", args, controller.signal));
-  assert.equal(actions.length, 3);
-});
-
-test("PNG remains default and both uses one snapshot/region for image and text", async (t) => {
-  const session = await createPico8Session();
-  t.after(() => session.dispose());
-  await session.loadSource(source("extended"));
-  await session.advance({ frames: 1 });
-  const captured = [];
-  const originals = {
-    document: globalThis.document,
-    ImageData: globalThis.ImageData,
-  };
-  globalThis.ImageData = class {
-    constructor(data, width, height) {
-      Object.assign(this, { data, width, height });
-    }
-  };
-  globalThis.document = {
-    createElement: () => ({
-      getContext: () => ({ putImageData: (image) => captured.push(image) }),
-      toDataURL: () => "data:image/png;base64,fixture",
-    }),
-  };
-  t.after(() => {
-    for (const key of Object.keys(originals)) {
-      if (originals[key] === undefined) delete globalThis[key];
-      else globalThis[key] = originals[key];
-    }
-  });
-  const game = new Game(() => {}, {
-    versions: [emptySnapshot(source("extended"))],
-  });
-  game.ensureWorker = async () => {};
-  game.player = { pause: async () => {} };
-  let reads = 0;
-  game.rpc = async (action) => {
-    assert.equal(action, "observe");
-    reads++;
-    return session.observe();
-  };
-  const legacy = await game.execute("observe_game", {});
-  assert.equal(legacy.output[1].type, "image");
-  assert.equal(legacy.output[1].mimeType, "image/png");
-  assert.equal(captured[0].width, 512);
-  assert.equal(captured[0].height, 512);
-  assert.deepEqual(captured[0].data, modelImage(session.observe().frame).rgba);
-  const region = { x: 1, y: 7, width: 7, height: 3 };
-  const both = await game.execute("observe_game", { format: "both", region });
-  assert.equal(reads, 2);
-  assert.equal(both.output.length, 2);
-  assert.equal(captured[1].width, 28);
-  assert.equal(captured[1].height, 12);
-  const frame = session.observe().frame;
-  const rows = rowsOf(both.output[0].text);
-  const pixels = rows.flatMap((row) =>
-    [...row].flatMap((char) =>
-      rgb.get(frame.displayPalette[parseInt(char, 16)]),
-    ),
-  );
-  assert.deepEqual(
-    captured[1].data,
-    modelImage({ rgba: new Uint8ClampedArray(pixels), width: 7, height: 3 })
-      .rgba,
-  );
-  assert.equal(
-    JSON.parse(both.output[0].text.split("\n")[0]).frameId,
-    frame.frameId,
   );
 });
 

@@ -1,16 +1,14 @@
 // Headless rerun of a retained two-turn case study (Sweet Garden / Lodge Podge)
-// with the production Agent, knowledge, tools and Worker protocol. Only the
+// with the production Agent, tools, p8 Worker and test Worker protocol. Only the
 // browser transport and PNG encoding are replaced (EvaluationGame). Uses a
 // disposable cart; never touches the user's library.
 //
-//   DEEPSEEK_API_KEY=... node scripts/evaluation/run-case.mjs --case garden [--flow shell|frozen]
+//   DEEPSEEK_API_KEY=... node scripts/evaluation/run-case.mjs --case garden
 //
 // The key is read from the environment only and redacted from the archive.
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { BACKGROUND_CONTEXT as context } from "@earendil-works/chord/context";
 import { Agent } from "../../src/agent.js";
-import index from "../../src/generated/pico8-files.js";
-import { createKnowledgeFiles } from "../../src/pico8/knowledge-files.js";
 import { newCart } from "../../src/cart-store.js";
 import { activeSession, sessionContext } from "../../src/sessions.js";
 import { emptySnapshot } from "../../src/pico8/assets.js";
@@ -48,14 +46,12 @@ const arg = (name) => {
 };
 const spec = cases[arg("case")];
 if (!spec) throw Error("--case garden|lodge is required");
-const flow = arg("flow") ?? "shell";
-if (!["frozen", "shell"].includes(flow)) throw Error("--flow frozen|shell");
 const apiKey = process.env.DEEPSEEK_API_KEY;
 if (!apiKey) throw Error("DEEPSEEK_API_KEY is required");
 const millisecondsPerTurn = 900000; // Same per-turn limit as the baseline; no tool cap.
 const id = crypto.randomUUID();
 const out = new URL(
-  `../../../.cache/evaluations/case-${spec.slug}-${flow}-${id}/`,
+  `../../../.cache/evaluations/case-${spec.slug}-${id}/`,
   import.meta.url,
 );
 await mkdir(out, { recursive: true });
@@ -67,16 +63,6 @@ const redact = (value) =>
   );
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 
-const knowledge = createKnowledgeFiles({
-  load: (file) =>
-    readFile(
-      new URL(
-        `../../public/extensions/pico8/${index.version}/${file}`,
-        import.meta.url,
-      ),
-      "utf8",
-    ),
-});
 const cart = newCart({
   title: `${spec.slug} rerun`,
   workingDraft: emptySnapshot(),
@@ -112,10 +98,8 @@ const agent = new Agent(
     lastCount = n;
   },
   {
-    knowledge,
     projectContext: () => sessionContext(cart, session),
-    flow,
-    ...(flow === "shell" ? { startP8: startNodeP8Worker } : {}),
+    startP8: startNodeP8Worker,
   },
 );
 const report = {
@@ -128,8 +112,6 @@ const report = {
     model: defaultConfig.model,
     thinkingLevel: defaultConfig.thinkingLevel,
   },
-  knowledgeVersion: index.version,
-  flow,
   limits: { millisecondsPerTurn, toolCalls: null },
   runs: [],
 };

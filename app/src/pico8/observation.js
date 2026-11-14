@@ -1,4 +1,4 @@
-import palette from "../generated/pico8-palette.js";
+import palette from "./palette.js";
 import { capabilities } from "./capabilities.js";
 
 export const observationEncoding = "pico8-slots-v1";

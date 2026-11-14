@@ -55,11 +55,6 @@ export function evaluationRecorder() {
               { recursive: true },
             );
             await cp(
-              resolve(app, "public/extensions/pico8"),
-              resolve(dir, "execution/knowledge"),
-              { recursive: true },
-            );
-            await cp(
               resolve(app, "package-lock.json"),
               resolve(dir, "execution/package-lock.json"),
             );

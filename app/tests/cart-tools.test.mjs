@@ -4,7 +4,7 @@ import assert from "node:assert/strict";
 import { countTokens } from "../src/pico8/tokens.js";
 import { sourceBudget } from "../src/pico8/source-budget.js";
 import { cartText, cartFileName, labelLines } from "../src/pico8/cart.js";
-import { formatButtons, mergeSteps } from "../src/workbench-state.js";
+import { describeTool, mergeSteps } from "../src/workbench-state.js";
 
 test("token counter follows the manual's free-token rules", () => {
   assert.equal(countTokens("x=1"), 3);
@@ -80,18 +80,15 @@ test("cart file names are short, safe slugs", () => {
   assert.equal(cartFileName("角色跳不过墙"), "my-game.p8");
 });
 
-test("tool display: button masks and merged repeat steps", () => {
-  assert.equal(formatButtons(2 | 32), "→ + X");
-  assert.equal(formatButtons(0), "release");
+test("tool display merges repeated steps and labels bash commands", () => {
   const tools = [
-    { toolCallId: "1", toolName: "press_buttons", result: "ok" },
-    { toolCallId: "2", toolName: "press_buttons", result: "ok" },
-    { toolCallId: "3", toolName: "load_game", result: "ok" },
-    { toolCallId: "4", toolName: "load_game", result: "ok" },
+    { toolCallId: "1", toolName: "bash", result: "ok" },
+    { toolCallId: "2", toolName: "bash", result: "ok" },
+    { toolCallId: "3", toolName: "edit", result: "ok" },
   ];
-  const steps = mergeSteps(tools, false);
   assert.deepEqual(
-    steps.map((s) => s.tools.length),
-    [2, 1, 1],
+    mergeSteps(tools, false).map((s) => s.tools.length),
+    [2, 1],
   );
+  assert.deepEqual(describeTool({ toolName: "bash", args: { command: "p8 check\nls" } }), { label: "Ran", meta: "p8 check" });
 });

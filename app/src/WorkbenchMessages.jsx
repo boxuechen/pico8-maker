@@ -8,7 +8,6 @@ import { MarkdownTextPrimitive } from "@assistant-ui/react-markdown";
 import { Check, X, Square, ChevronRight, Copy } from "lucide-react";
 import {
   summarizeTools,
-  toolState,
   mergeSteps,
   describeTool,
 } from "./workbench-state.js";
@@ -106,10 +105,8 @@ function ToolActivity({ tools, running }) {
 // Compact, readable tool input: line counts for whole sources, -/+ for edits.
 function toolInput(tool) {
   const args = tool.args ?? {};
-  if (tool.toolName === "load_game")
-    return typeof args.source === "string"
-      ? t("linesLuaDraft", { n: args.source.split("\n").length })
-      : t("mainLuaDraft");
+  if (tool.toolName === "bash" && typeof args.command === "string")
+    return args.command;
   if (tool.toolName === "edit" && Array.isArray(args.edits))
     return args.edits
       .map((e) =>
@@ -128,13 +125,10 @@ function toolInput(tool) {
 function VersionCard({ tool, edits, isLast }) {
   const { canUndo, onUndo, onViewCode, busy } = useContext(ActivityContext);
   useLang();
-  const detail =
-    typeof tool.args?.source === "string"
-      ? t("nLines", { n: tool.args.source.split("\n").length })
-      : t("nEdits", { n: edits });
-  const version = String(tool.result ?? "").match(
-    /Committed as version (\d+)/,
-  )?.[1];
+  const detail = t("nEdits", { n: edits });
+  const version = [
+    ...String(tool.result ?? "").matchAll(/Maker: committed as version (\d+)/g),
+  ].at(-1)?.[1];
   return (
     <div className="version-card">
       <svg
@@ -189,9 +183,8 @@ export function AssistantMessage() {
     ? null
     : tools.findLast(
         (t) =>
-          t.toolName === "load_game" &&
-          toolState(t, false) === "completed" &&
-          /Committed as version \d+/.test(String(t.result ?? "")),
+          t.toolName === "bash" &&
+          /Maker: committed as version \d+/.test(String(t.result ?? "")),
       );
   return (
     <MessagePrimitive.Root className="message assistant">
@@ -213,7 +206,10 @@ export function AssistantMessage() {
           tool={update}
           edits={
             tools.filter(
-              (t) => t.toolName === "edit" || t.toolName === "edit_assets",
+              (t) =>
+                t.toolName === "edit" ||
+                t.toolName === "write" ||
+                t.toolName === "edit_assets",
             ).length
           }
           isLast={isLast}

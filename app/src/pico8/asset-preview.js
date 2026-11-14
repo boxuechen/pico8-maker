@@ -1,4 +1,4 @@
-import palette from "../generated/pico8-palette.js";
+import palette from "./palette.js";
 import { pixel, sprite, sound, music } from "./assets.js";
 
 const colors = palette

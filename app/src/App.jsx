@@ -62,7 +62,7 @@ import { SessionSidebar } from "./SessionSidebar.jsx";
 import { NameDialog } from "./NameDialog.jsx";
 import { CartShelf, CartBody, ago } from "./CartShelf.jsx";
 import { downloadCart } from "./pico8/cart.js";
-import { currentTool, describeTool, formatButtons } from "./workbench-state.js";
+import { currentTool, describeTool } from "./workbench-state.js";
 import { countTokens } from "./pico8/tokens.js";
 import carts from "./assets/carts.json";
 import { emptySnapshot, sameSnapshot } from "./pico8/assets.js";
@@ -415,16 +415,6 @@ const showcase = {
 const isCartFile = (name) =>
   /\.p8(\.png)?$/i.test(name) || /\.png$/i.test(name);
 const defaultSessionTitles = new Set(["New session", "New conversation"]);
-// New conversations use the shell flow (docs/shell-flow-migration.md);
-// ?flow=frozen selects the earlier structured-tool flow for a new one. A stored
-// choice always wins, and older conversations with history but no stored flow
-// were made with the frozen flow's tools.
-const requestedFlow = ["shell", "frozen"].find(
-  (f) => new URLSearchParams(globalThis.location?.search ?? "").get("flow") === f,
-);
-const sessionFlow = (session) =>
-  session.flow ??
-  (session.transcript?.length ? "frozen" : (requestedFlow ?? "shell"));
 const sessionTitle = (session) =>
   !session.titleEdited && defaultSessionTitles.has(session.title)
     ? t("newConversation")
@@ -648,7 +638,6 @@ function Studio({ store }) {
         onDraft: (text) => persist({ workingDraft: text }),
       },
     );
-    g.workspace.id = project.current.id;
     gameRef.current = g;
     Promise.all([
       g.mount(mount.current),
@@ -680,9 +669,6 @@ function Studio({ store }) {
     setConfigured(false);
     if (previous)
       await previous.dispose({ preserveGame: true }).catch(() => {});
-    // A conversation keeps the flow it started with; ?flow=shell opts new ones in.
-    const flow = sessionFlow(session);
-    if (session.flow !== flow) persistSession({ flow }, cart.id, session.id);
     const a = new Agent(
       gameRef.current,
       (state, transcript) => {
@@ -699,7 +685,7 @@ function Studio({ store }) {
           session.id,
         );
       },
-      { projectContext: () => sessionContext(cart, session), flow },
+      { projectContext: () => sessionContext(cart, session) },
     );
     agentRef.current = a;
     try {
@@ -945,7 +931,6 @@ function Studio({ store }) {
         if (!previous.deleted && !isOnShelf(previous))
           void store.remove(previous.id).catch(() => {});
         project.current = next;
-        gameRef.current.workspace.id = next.id;
         setFrames([]);
         setLabel(next.label ?? null);
         setShowRestore(!!activeSession(next).interrupted);
@@ -1202,7 +1187,6 @@ function Studio({ store }) {
       .find((p) => p.id === config.provider)
       ?.models.find((m) => m.id === config.model)?.name ?? config.model;
   const tool = currentTool(chat.messages, running);
-  const pressing = tool?.toolName === "press_buttons" ? tool.args : null;
   const status = game.booting
     ? ["info", t("stPoweringOn")]
     : cartLoading
@@ -1217,17 +1201,9 @@ function Studio({ store }) {
               ? ["info", t("stPlaying")]
               : ["neutral", t("stPressPlay")];
   const readout = running
-    ? pressing
-      ? (() => {
-          const detail = describeTool({
-            toolName: "press_buttons",
-            args: pressing,
-          });
-          return `${detail.label.toLowerCase()} · ${detail.meta}`;
-        })()
-      : tool
-        ? describeTool(tool).label.toLowerCase()
-        : t("thinking").toLowerCase()
+    ? tool
+      ? describeTool(tool).label.toLowerCase()
+      : t("thinking").toLowerCase()
     : game.hasGame
       ? `v${game.previewVersion === "before" ? game.comparisonRevision : game.revision}${game.testFrame ? ` · ${t("latestFrame")}` : ""}`
       : "";
@@ -1789,11 +1765,6 @@ function Studio({ store }) {
                         />
                       )}
                       {game.booting && <BootScreen />}
-                      {inWorkbench && pressing && (
-                        <span className="ai-input-tag">
-                          {formatButtons(pressing.buttons)}
-                        </span>
-                      )}
                       {hasPlayable && !playing && !busy && (
                         <button
                           disabled={!ready}

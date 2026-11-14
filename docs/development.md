@@ -4,7 +4,7 @@ Follow the [quick start](../README.md#quick-start). Maker and Player use Node.js
 
 ## Local development
 
-`predev`, `pretest` and `prebuild` prepare the knowledge package and pinned Player automatically. Keep the same browser origin to retain carts and settings.
+`predev`, `pretest` and `prebuild` bundle the agent's pico8 skill and prepare the pinned Player automatically. Keep the same browser origin to retain carts and settings.
 
 For integration without a model account, run `npm --prefix app run test:model`. Configure Base URL `http://127.0.0.1:8788/v1`, model `fixture-tools` and a nonempty dummy key. This is a scripted fixture; real-model runs are covered in the [evaluation guide](../app/scripts/evaluation/README.md).
 
@@ -19,7 +19,7 @@ npm --prefix app run test:sites
 - `app/dist/client/`: static site, including Player and license notices.
 - `app/dist/server/index.js` and `app/dist/.openai/hosting.json`: Sites hosting outputs.
 
-Serve through HTTP(S). For a subdirectory, set `VITE_BASE_PATH` at build time; application, Player and knowledge URLs use that base.
+Serve through HTTP(S). For a subdirectory, set `VITE_BASE_PATH` at build time; application and Player URLs use that base.
 
 ## Player updates
 
@@ -58,8 +58,9 @@ The smoke check also accepts the deployed URL. It uses a temporary Chrome profil
 | Path | Purpose |
 | --- | --- |
 | `app/src/`, `app/tests/` | Application and behavioral regressions |
-| `docs/pico8-agent/` | Versioned model instructions, references and verified examples |
+| `app/src/pico8/shell/` | The agent: shell environment, `p8`, startup text and the pico8 skill (`skill/`) |
+| `lab/local-agent/` | Agent lab: the same p8 and skill on quick tasks (T1–T7), Node or browser |
 | `app/scripts/evaluation/` | Model evaluations and independent game checks |
-| `app/public/case-studies/`, `docs/tooling-baseline.json` | Retained examples and evidence |
+| `app/public/case-studies/` | Retained examples |
 
-Build outputs, dependencies and generated knowledge/Player files are ignored. `ref/` is optional local tooling. Preserve `.cache/evaluations/`, including failures; it contains untracked research evidence, not ordinary build output. Historical implementation logs remain in Git history.
+Build outputs, dependencies and generated skill/Player files are ignored. `ref/` is optional local tooling. Preserve `.cache/evaluations/`, including failures; it contains untracked research evidence, not ordinary build output. Historical implementation logs remain in Git history.

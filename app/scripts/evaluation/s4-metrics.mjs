@@ -74,12 +74,13 @@ export function s4Metrics(entries, agent, independent, elapsedMs) {
   const evidence = transcriptEvidence(entries);
   return {
     ...outcomeMetrics(entries),
-    schemaVersion: 2,
+    schemaVersion: 3,
+    // p8 commands in bash calls: state reads and looks at the screen.
     stateReads: evidence.calls.filter(
-      (c) => c.name === "inspect_game" && c.arguments?.mode === "read",
+      (c) => c.name === "bash" && /\bp8 run\b[^|;&]*--read/.test(c.arguments?.command ?? ""),
     ).length,
-    debugExecutions: evidence.calls.filter(
-      (c) => c.name === "inspect_game" && c.arguments?.mode === "debug",
+    looks: evidence.calls.filter(
+      (c) => c.name === "bash" && /\bp8 look\b/.test(c.arguments?.command ?? ""),
     ).length,
     firstVerifiedCoreLoopCall: agent.firstVerifiedCoreLoopCall,
     agentCoverage: agent.coverage,

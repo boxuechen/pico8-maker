@@ -8,7 +8,7 @@
 //   for several tool rounds instead of changing on every call.
 export const imageRetention = Object.freeze({ keep: 16, step: 16 });
 export const omittedImageText =
-  "[Earlier frame image omitted to save context. Use observe_game or a new input for a current frame.]";
+  "[Earlier frame image omitted to save context. Run p8 look again for a current frame.]";
 
 export function retainRecentImages(messages, { keep, step } = imageRetention) {
   let lastUser = -1;

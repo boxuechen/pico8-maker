@@ -3,7 +3,6 @@ import {
   observationText,
   cropRgba,
   modelImage,
-  modelInspection,
   modelImageScale,
 } from "./pico8/observation.js";
 import { cartridgeBytes } from "./cartridges.js";
@@ -15,7 +14,6 @@ import {
   decodeAssets,
 } from "./pico8/assets.js";
 import { downloadCart, cartBytes } from "./pico8/cart.js";
-import { CartWorkspace } from "./pico8/workspace.js";
 import { sourceBudget } from "./pico8/source-budget.js";
 import { runInputs } from "./pico8/input-sequence.js";
 import { assetPreview, assetChanges } from "./pico8/asset-preview.js";
@@ -58,12 +56,6 @@ export class Game {
     );
     // Immutable source/resource snapshots. Only main.lua is exposed as a file.
     this.draft = { ...(draft ?? this.snapshot) };
-    this.workspace = new CartWorkspace({
-      read: () => this.draft.source,
-      write: (text) => this.setDraft(text),
-      readOnly: (path) => this.playtests.file(path),
-      readOnlyPaths: () => this.playtests.paths(),
-    });
     this.pending = new Map();
     this.nextId = 0;
     this.queue = Promise.resolve();
@@ -150,7 +142,6 @@ export class Game {
       location.href,
     ).href;
     const lib = await import(/* @vite-ignore */ this.url);
-    this.prepareInspection = lib.prepareInspection;
     this.player = await lib.createPico8Player({
       root,
       shell: "hosted",
@@ -376,6 +367,24 @@ export class Game {
     }
     this.changed();
   }
+  /** Compile the draft, run one frame and commit it as a version on success. */
+  commit(signal) {
+    return this.execute("load_game", {}, signal);
+  }
+  /** Replay one tested route on the committed cart and record it (normal input). */
+  async replayRoute(calls, signal) {
+    await this.execute("reset_game", {}, signal);
+    for (const call of calls) {
+      const r = await this.execute("press_buttons", call, signal);
+      if (r.isError) return r;
+    }
+  }
+  readAssets(args, signal) {
+    return this.execute("read_assets", args, signal);
+  }
+  editAssets(args, signal) {
+    return this.execute("edit_assets", args, signal);
+  }
   execute(action, args, signal) {
     const job = this.queue.then(async () => {
       signal?.throwIfAborted();
@@ -405,8 +414,6 @@ export class Game {
         "load_game",
         "reset_game",
         "press_buttons",
-        "observe_game",
-        "inspect_game",
       ].includes(action)
     )
       throw new Error(`未知游戏工具：${action}`);
@@ -478,7 +485,7 @@ export class Game {
               }) +
               "\n" +
               (changed
-                ? "Resource draft updated. Call load_game to commit source and resources together."
+                ? "Resource draft updated. p8 check commits source and resources together."
                 : "Resources unchanged."),
           },
         ],
@@ -486,83 +493,12 @@ export class Game {
     }
     if (action !== "load_game" && !this.hasGame)
       throw new Error(
-        "No game has been loaded yet. Write main.lua and call load_game first.",
+        "No game has been committed yet. Write main.lua and run p8 check first.",
       );
-    // Partial debug writes may remain. Reads stay available to inspect them;
-    // further execution (input or debug) needs a fresh reset.
-    if (
-      this.debugRequiresReset &&
-      (action === "press_buttons" ||
-        (action === "inspect_game" && args?.mode === "debug"))
-    )
-      throw new Error(
-        "Debug execution may have changed state. inspect_game read is still available; call reset_game before more input or debug.",
-      );
-    if (action === "inspect_game") {
-      this.prepareInspection(args); // Shared runtime validator, before any Worker side effect.
-      if (!this.playtests.active || !this.testFrame)
-        throw new Error(
-          "inspect_game requires a recorded completed frame. Call reset_game first.",
-        );
-      let event, previousPurpose;
-      if (args.mode === "debug") {
-        previousPurpose = this.playtests.active.purpose;
-        event = this.playtests.beginDebug(args.code, ++this.testStateSeq);
-        this.debugRequiresReset = true;
-      }
-      try {
-        const { inspection, observation } = await this.rpc("inspect", {
-          request: args,
-        });
-        signal?.throwIfAborted();
-        if (event) {
-          this.debugRequiresReset = !inspection.ok && inspection.executed;
-          if (!inspection.ok && inspection.executed === false) {
-            // Compile failure: nothing ran, so the route and image stay as before.
-            this.testStateSeq--;
-            this.playtests.discardUnexecutedDebug(event, previousPurpose);
-          } else
-            this.playtests.finishDebug(
-              event,
-              inspection.ok ? "completed" : "failed",
-              inspection.executed,
-              inspection.error,
-            );
-        }
-        const { run, purpose } = this.playtests.summary();
-        const output = [
-          {
-            type: "text",
-            text: JSON.stringify({
-              ...this.cartSummary(),
-              run,
-              purpose,
-              frameId: observation.frame?.frameId ?? null,
-              ...(this.frameStateSeq !== this.testStateSeq
-                ? { staleFrame: true }
-                : {}),
-              ...modelInspection(inspection),
-              ...(this.debugRequiresReset ? { requiresReset: true } : {}),
-            }),
-          },
-        ];
-        this.appendLogs(output, observation);
-        return { output, isError: !inspection.ok };
-      } catch (error) {
-        if (event)
-          this.playtests.finishDebug(
-            event,
-            "unknown",
-            undefined,
-            error.message,
-          );
-        throw error;
-      }
-    }
     const options = {
-      ...observationOptions(action === "observe_game" ? args : {}),
+      ...observationOptions({}),
       includeBudget: action === "load_game",
-      view: action === "observe_game",
+      view: false,
     };
     const resolved =
       action === "press_buttons" ? this.playtests.resolve(args) : null;
@@ -594,7 +530,6 @@ export class Game {
       }
       this.testStateSeq = execution?.completedFrames ?? 0;
       this.frameStateSeq = this.testStateSeq;
-      this.debugRequiresReset = false;
       if (observation.state === "faulted") {
         const result = this.output(
           {
@@ -609,7 +544,7 @@ export class Game {
           await this.rpc("load", { cart: cartBytes(this.snapshot) });
         else this.cancelTests();
         result.output[0].text +=
-          "\nNot committed: source and resource drafts are retained. Fix the draft, then call load_game again." +
+          "\nNot committed: source and resource drafts are retained. Fix the draft, then run p8 check again." +
           (this.hasGame
             ? " The test session still runs the last loaded version."
             : " No playable version exists yet.");
@@ -719,7 +654,6 @@ export class Game {
       }));
       this.testStateSeq = execution.completedFrames;
       this.frameStateSeq = this.testStateSeq;
-      this.debugRequiresReset = false;
       if (observation.state !== "faulted") {
         const cartHash = await fingerprint(cartBytes(this.snapshot));
         signal?.throwIfAborted();
@@ -731,7 +665,7 @@ export class Game {
           frame: observation.frame,
         });
       }
-    } else observation = await this.rpc("observe");
+    } else throw new Error(`Unknown test action: ${action}`);
     this.testFrame = observation.frame;
     this.testFrames = observation.frame ? [observation.frame] : [];
     this.changed();

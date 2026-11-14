@@ -1,5 +1,5 @@
-// Shell flow (opt-in): environment, commits through load_game, route replay and
-// the extension surface. No model requests.
+// The agent environment: draft-backed shell, commits, route replay and the
+// extension surface. No model requests.
 import test from "node:test";
 import assert from "node:assert/strict";
 import skillFiles from "../src/generated/shell-skill.js";
@@ -8,7 +8,6 @@ import { createShellEnvironment, routeCalls } from "../src/pico8/shell/environme
 import { createShellExtension } from "../src/pico8/shell/extension.js";
 import { EvaluationGame } from "../scripts/evaluation/node-game.mjs";
 import { startNodeP8Worker } from "../scripts/evaluation/p8-worker-node.mjs";
-import { createKnowledgeFiles } from "../src/pico8/knowledge-files.js";
 
 test("p8 press text becomes bounded press_buttons calls", () => {
   assert.deepEqual(routeCalls("right*30 x wait*5"), [{ steps: [{ frames: 30, buttons: 2 }, { frames: 1, buttons: 32 }, { frames: 5, buttons: 0 }] }]);
@@ -18,7 +17,7 @@ test("p8 press text becomes bounded press_buttons calls", () => {
   assert.deepEqual(many.map((c) => c.steps.length), [8, 2]);
 });
 
-test("shell environment: draft-backed main.lua, commits via load_game, replayed routes, read-only skill", async () => {
+test("shell environment: draft-backed main.lua, commits, replayed routes, read-only skill", async () => {
   const draft = emptySnapshot();
   const game = new EvaluationGame({ versions: [], draft });
   const worker = await startNodeP8Worker(skillFiles);
@@ -64,9 +63,8 @@ test("shell environment: draft-backed main.lua, commits via load_game, replayed 
 
 test("shell extension: coding tools, the two resource tools reworded, startup sections", async () => {
   const game = new EvaluationGame({ versions: [], draft: emptySnapshot() });
-  const knowledge = createKnowledgeFiles({ load: async () => "" });
   try {
-    const ext = createShellExtension({ game, knowledge, skillFiles });
+    const ext = createShellExtension({ game, skillFiles });
     assert.deepEqual(ext.tools.map((t) => t.name), ["read", "write", "edit", "bash", "read_assets", "edit_assets"]);
     for (const t of ext.tools) assert.doesNotMatch(t.description, /load_game/);
     assert.deepEqual(ext.sections.map((s) => s.key), ["shell_prompt", "shell_skill", "pico8_host"]);
@@ -82,16 +80,12 @@ test("shell extension: coding tools, the two resource tools reworded, startup se
   }
 });
 
-test("Agent with flow shell offers the shell tools and no frozen game tools", async () => {
+test("Agent offers the shell tools and startup sections", async () => {
   const { readFile } = await import("node:fs/promises");
   const { BACKGROUND_CONTEXT: context } = await import("@earendil-works/chord/context");
   const { Agent } = await import("../src/agent.js");
-  const index = (await import("../src/generated/pico8-files.js")).default;
-  const knowledge = createKnowledgeFiles({
-    load: (file) => readFile(new URL(`../public/extensions/pico8/${index.version}/${file}`, import.meta.url), "utf8"),
-  });
   const game = new EvaluationGame({ versions: [], draft: emptySnapshot() });
-  const agent = new Agent(game, () => {}, { knowledge, flow: "shell", startP8: startNodeP8Worker, projectContext: () => "Cart test." });
+  const agent = new Agent(game, () => {}, { startP8: startNodeP8Worker, projectContext: () => "Cart test." });
   try {
     await agent.open();
     const resolved = await agent.root.agent(context);

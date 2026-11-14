@@ -19,7 +19,7 @@ const resultText = (result) =>
     : Array.isArray(result)
       ? result.map((p) => (typeof p?.text === "string" ? p.text : "")).join("")
       : "";
-// Shell flow: a command that ran and exited nonzero (a failing p8 check, grep
+// A command that ran and exited nonzero (a failing p8 check, grep
 // with no match) is an ordinary step, not a tool failure.
 const exitedNonzero = (tool) =>
   tool.toolName === "bash" &&
@@ -57,60 +57,23 @@ export function summarizeTools(tools, running) {
   };
 }
 
-const buttonNames = [
-  [1, "←"],
-  [2, "→"],
-  [4, "↑"],
-  [8, "↓"],
-  [16, "Z"],
-  [32, "X"],
-];
-/** Tool button mask (left=1 … X=32) → "→ + X". */
-export function formatButtons(mask = 0) {
-  const pressed = buttonNames.filter(([bit]) => mask & bit).map(([, n]) => n);
-  return pressed.length ? pressed.join(" + ") : t("release");
-}
 const toolNames = new Set([
   "read",
-  "read_game", // Historical transcripts only.
-  "load_game",
+  "write",
   "edit",
+  "bash",
   "read_assets",
   "edit_assets",
-  "press_buttons",
-  "observe_game",
-  "inspect_game",
-  "reset_game",
-  "write", // Shell flow.
-  "bash", // Shell flow.
 ]);
 const toolLabel = (name) => (toolNames.has(name) ? t(`tool_${name}`) : null);
 export function describeTool(tool) {
   const args = tool?.args ?? {};
-  if (tool?.toolName === "press_buttons" && Array.isArray(args.steps))
-    return {
-      label: t("toolInputSeq"),
-      meta: t("toolSeqMeta", {
-        n: args.steps.length,
-        f: args.steps.reduce(
-          (n, s) => n + (s.frames ?? 0) + (s.tap ? 2 : 0),
-          0,
-        ),
-      }),
-    };
   if (tool?.toolName === "read_assets" && ["png", "both"].includes(args.format))
     return {
       label:
         args.kind === "map" ? t("toolPreviewMap") : t("toolPreviewSprites"),
       meta: args.version === "committed" ? t("committed") : t("draft"),
     };
-  if (tool?.toolName === "load_game")
-    return typeof args.source === "string"
-      ? {
-          label: t("toolLoadedSource"),
-          meta: t("nLines", { n: args.source.split("\n").length }),
-        }
-      : { label: toolLabel("load_game"), meta: "" };
   if (tool?.toolName === "bash" && typeof args.command === "string") {
     const command = args.command.trim().split("\n")[0];
     return {
@@ -136,7 +99,6 @@ export function mergeSteps(tools, running) {
     if (
       last &&
       last.tools[0].toolName === tool.toolName &&
-      tool.toolName !== "load_game" &&
       last.state === "completed"
     ) {
       last.tools.push(tool);

@@ -2,10 +2,7 @@ import { emptySnapshot } from "../../src/pico8/assets.js";
 import { cartBytes } from "../../src/pico8/cart.js";
 import { png } from "../../scripts/evaluation/png.mjs";
 import { Game } from "../../src/game.js";
-import {
-  createPico8Session,
-  prepareInspection,
-} from "../../public/player/main/player.mjs";
+import { createPico8Session } from "../../public/player/main/player.mjs";
 
 const blankSource = "function _draw() cls(0) end";
 export const input = (buttons = 0) => ({
@@ -21,11 +18,10 @@ export const input = (buttons = 0) => ({
   },
 });
 // Reuses Game.perform/execute and the real standalone runtime. Only browser
-// rendering/storage/Worker transport are replaced; tools and observations remain.
+// rendering/storage/Worker transport are replaced.
 export class TestGame extends Game {
   constructor() {
     super(() => {}, { versions: [emptySnapshot(blankSource)] });
-    this.prepareInspection = prepareInspection;
     this.player = {
       pause: async () => {},
       loadCart: async (bytes) => {

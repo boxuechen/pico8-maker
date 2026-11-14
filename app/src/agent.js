@@ -1,5 +1,3 @@
-import { defaultKnowledgeFiles } from "./pico8/knowledge-files.js";
-import { createPico8Extension } from "./pico8/extension.js";
 import { groupAssistantTurns } from "./workbench-state.js";
 import { BACKGROUND_CONTEXT as context } from "@earendil-works/chord/context";
 import { createModels } from "@earendil-works/pi-ai/models";
@@ -84,16 +82,12 @@ export class Agent {
     game,
     onUpdate,
     {
-      knowledge = defaultKnowledgeFiles,
       projectContext,
-      // "frozen" (default) or "shell" (lab-derived, opt-in; see docs/shell-flow-migration.md)
-      flow = "frozen",
+      // Starts the p8 Worker; Node callers (tests, evaluators) pass their own.
       startP8,
     } = {},
   ) {
-    this.flow = flow;
     this.startP8 = startP8;
-    this.knowledge = knowledge;
     this.projectContext = projectContext;
     this.game = game;
     this.onUpdate = onUpdate;
@@ -101,24 +95,11 @@ export class Agent {
     this.transcriptEntries = new Map();
   }
   async open(transcript = []) {
-    await this.knowledge.prepare();
     const registry = createRegistry();
-    this.shell =
-      this.flow === "shell"
-        ? await (
-            await import("./pico8/shell/flow.js")
-          ).openShellFlow({
-            game: this.game,
-            knowledge: this.knowledge,
-            startP8: this.startP8,
-          })
-        : null;
-    const pico8 =
-      this.shell?.extension ??
-      createPico8Extension({
-        game: this.game,
-        knowledge: this.knowledge,
-      });
+    // The shell environment (just-bash, p8 Worker) loads on first use.
+    const { openShellFlow } = await import("./pico8/shell/flow.js");
+    this.shell = await openShellFlow({ game: this.game, startP8: this.startP8 });
+    const pico8 = this.shell.extension;
     if (this.projectContext)
       pico8.sections.push(
         section(
@@ -137,7 +118,7 @@ export class Agent {
           stream: { maxRetries: 0 },
           toolExecution: "sequential",
         }),
-        ...(this.shell ? { env: () => this.shell.env } : {}),
+        env: () => this.shell.env,
       },
       context,
     );

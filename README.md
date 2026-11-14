@@ -47,8 +47,8 @@ Model requests go directly to your provider and may include conversation context
 | Topic | Guide |
 | --- | --- |
 | Setup, tests, deployment and Player updates | [Development](docs/development.md) |
-| Current scope, frozen workflow and remaining work | [Development status](docs/development-status.md) |
-| Agent instructions, references and host contract | [Knowledge guide](docs/pico8-agent/README.md) |
+| Current scope, evaluation evidence and remaining work | [Development status](docs/development-status.md) |
+| Agent design (shell, `p8`, pico8 skill) and roadmap | [Shell roadmap](docs/shell-roadmap.md) |
 | Reproducible model evaluations | [Evaluation guide](app/scripts/evaluation/README.md) |
 
 This is an early development preview. Chrome/Chromium is the verified browser target; cartridge compatibility and generated game quality have limits. Maker owns authoring and agent workflows; Player owns cartridge execution.

@@ -2,7 +2,7 @@
 
 ## Open-ended case study
 
-Open `/scripts/evaluation/case-study.html` locally for the Lodge Podge experiment. This uses the same Agent, knowledge and saved provider configuration with a disposable cart. Send the initial request, then follow-up feedback in the same session. Each turn has a 15-minute timeout and no tool-call limit. It archives the original prompts, transcript, committed revisions, draft and separate evaluator inputs through the loopback recorder. It does not write to the user's cart library or score fun automatically. The page is a local research tool, not a production entry point.
+Open `/scripts/evaluation/case-study.html` locally for the Lodge Podge experiment. This uses the same Agent, p8 Worker and saved provider configuration with a disposable cart. Send the initial request, then follow-up feedback in the same session. Each turn has a 15-minute timeout and no tool-call limit. It archives the original prompts, transcript, committed revisions, draft and separate evaluator inputs through the loopback recorder. It does not write to the user's cart library or score fun automatically. The page is a local research tool, not a production entry point.
 
 Use `/scripts/evaluation/case-study.html?case=garden` for the Sweet Garden prompt inspired by OpenAI's Seedy's Sweet Garden. The model and workflow are unchanged between these case presets. The preview buttons operate the live player; independent test inputs remain in the separate test Worker.
 
@@ -28,9 +28,9 @@ This loads the unchanged cart in the bundled WASM runtime and writes actual PNG 
 
 ## Headless case rerun
 
-`DEEPSEEK_API_KEY=... node scripts/evaluation/run-case.mjs --case garden|lodge` reruns a retained two-turn case with the production Agent, knowledge, tools and Worker protocol in Node, using the baseline prompts, `deepseek-flash` high, 15 minutes per turn and no tool cap. The key comes only from the environment and is redacted from the archive. It writes `.cache/evaluations/case-<slug>-<id>/` with `report.json` (per-turn transcript, metrics, coverage), `turn-N.p8`, `final.p8`, and PNG frames from replaying the longest final-revision normal route in a fresh session. Results of the 2026-11-13 rerun are in [development status](../../../docs/development-status.md).
+`DEEPSEEK_API_KEY=... node scripts/evaluation/run-case.mjs --case garden|lodge` reruns a retained two-turn case with the production Agent, tools, p8 Worker and test Worker protocol in Node, using the baseline prompts, `deepseek-flash` high, 15 minutes per turn and no tool cap. The key comes only from the environment and is redacted from the archive. It writes `.cache/evaluations/case-<slug>-<id>/` with `report.json` (per-turn transcript, metrics, coverage), `turn-N.p8`, `final.p8`, and PNG frames from replaying the longest final-revision normal route in a fresh session. Results of the 2026-11-13 rerun are in [development status](../../../docs/development-status.md).
 
-`node scripts/evaluation/reverify-s4.mjs <archive-dir>...` reruns the current independent and Agent-route verifiers on archived S4 final carts without provider requests and writes `reverify.json` beside the untouched report. The independent oracle waits 30 idle frames after a result before pressing X (a short result lock is valid), and Agent-route evidence replays normal input before the first debug event.
+`node scripts/evaluation/reverify-s4.mjs <archive-dir>...` reruns the current independent and Agent-route verifiers on archived S4 final carts without provider requests and writes `reverify.json` beside the untouched report. The independent oracle waits 30 idle frames after a result before pressing X (a short result lock is valid) and Agent-route evidence replays the recorded normal-input routes.
 
 `SMOKE_DEEPSEEK_KEY=... node scripts/evaluation/app-smoke.mjs` drives the product entry instead (home composer → MAKE → workbench, temporary Chrome profile) and saves `summary.json` and a workbench screenshot under `.cache/evaluations/app-smoke-*`.
 
@@ -58,20 +58,14 @@ For manual version-view QA, run `npm run test:model`, use an isolated browser or
 
 For feedback-preview QA use `fixture-comparison` on an isolated origin with the same local mock endpoint. The first request makes a green BEFORE scene; the second makes an intermediate blue scene and a final pink AFTER scene. Confirm the selector compares green to pink, export remains current, reload retains the comparison, and a third explanation-only request restores the current preview without replacing the baseline. This is UI integration coverage, not a real-model quality result.
 
-## Baseline and historical evidence
+## Historical evidence
 
-[Development status](../../../docs/development-status.md) preserves the frozen baseline, validation boundaries and remaining work. Current scope checks use `workflow-scope`; document reads are not pass criteria. `transcriptMetrics().outcomes` counts unique tool-call IDs, UTF-8 result bytes, PNG dimensions, errors and first successful load. Gameplay coverage remains unknown without verifier evidence.
-
-Recheck the two retained original archives with `node scripts/evaluation/freeze-tooling-baseline.mjs --check` from `app/`. A fresh checkout does not contain these private archives. Failed and interrupted attempts remain in `.cache/evaluations/`; they must not be counted as successful evaluations. Detailed tables from the retired skill-routing batches are available with `git show b25cc9b:app/scripts/evaluation/README.md` and do not measure the current Workflow.
+[Development status](../../../docs/development-status.md) records the evaluation evidence and remaining work. The earlier structured-tool agent and its evaluators were removed on 2026-11-14 (last state at tag `agent-flow-freeze-2026-11-13`); its results are kept in docs/shell-flow-migration.md. Failed and interrupted attempts remain in `.cache/evaluations/`; they must not be counted as successful evaluations.
 
 Finish builds before starting the browser evaluator: generated-file changes can reload an active run.
 
-## S3 targeted checks
-
-`tests/workflow.test.mjs` runs the published MACHINE skeleton in real WASM, then a scripted provider through the real Agent/tool loop. It checks authoring as the first operation, normal victory/retry, complete ordered startup bodies, real Pi compaction and restored context, and a changing project suffix. This is an integration fixture, not a paid model result or a measure of autonomous gameplay quality. Compiler tests reject missing Workflow sections, broken links, wrong language, incorrect startup order and stale Lua receipts. The S4 result/model matrix is implemented separately; real-model and image comparisons were explicitly skipped for this delivery.
-
 ## S4 result matrix
 
-See [S4 implementation, commands and evidence](../../../docs/s4-evaluation.md) for the shooter tasks, matrix configuration, metrics and same-board 128/512 experiment. `npm run test:s4` runs deterministic checks; `npm run eval:s4 -- --run --matrix scripts/evaluation/s4-matrix.example.json` explicitly makes real provider requests. Use exact model IDs/endpoints and independent credential environment variables. Unconfigured rows are `not_run`; provider failures remain errors. Runs use Maker's default shell flow; `S4_FLOW=frozen` (recorded as `freeze.flow`), `SMOKE_FLOW=frozen`, `run-case.mjs --flow frozen` and `case-study.html?flow=frozen` run the earlier frozen flow.
+See [S4 implementation, commands and evidence](../../../docs/s4-evaluation.md) for the shooter tasks, matrix configuration, metrics and same-board 128/512 experiment. `npm run test:s4` runs deterministic checks; `npm run eval:s4 -- --run --matrix scripts/evaluation/s4-matrix.example.json` explicitly makes real provider requests. Use exact model IDs/endpoints and independent credential environment variables. Unconfigured rows are `not_run`; provider failures remain errors.
 
 Real-model gameplay, cross-provider comparison and image recognition effects have not been validated. The initial Kimi configuration returned a subscription 403 and further comparisons were skipped. Scripted integration providers establish pipeline behavior only.

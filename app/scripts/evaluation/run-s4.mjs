@@ -9,7 +9,6 @@ import { resolve, relative, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { execFileSync } from "node:child_process";
 import { randomUUID } from "node:crypto";
-import index from "../../src/generated/pico8-files.js";
 import { fingerprint } from "../../src/pico8/playtests.js";
 import { cartBytes } from "../../src/pico8/cart.js";
 import { shooterCases } from "./shooter-case.mjs";
@@ -52,7 +51,6 @@ const frozen = [];
 for (const path of [
   "app/src",
   "app/scripts/evaluation",
-  `app/public/extensions/pico8/${index.version}`,
   "app/public/player",
 ]) {
   for (const file of await filesUnder(resolve(root, path))) {
@@ -81,11 +79,8 @@ const report = {
       cwd: root,
       encoding: "utf8",
     }).trim(),
-    knowledge: index.version,
     limits,
     tasks: process.env.S4_TASKS?.split(",") ?? "all",
-    // The shell flow is Maker's default; S4_FLOW=frozen runs the earlier flow.
-    flow: process.env.S4_FLOW ?? "shell",
     files: frozen,
     prompts: await Promise.all(
       shooterCases.map(async (t) => ({
@@ -129,7 +124,6 @@ for (const [i, profile] of matrix.entries()) {
         task,
         profile.config,
         (p) => console.log(`${p.task}: ${p.toolCalls} tools`),
-        { flow: process.env.S4_FLOW ?? "shell" },
       );
       record.runs.push(run);
       await save();

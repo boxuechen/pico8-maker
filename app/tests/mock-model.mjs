@@ -20,6 +20,42 @@ function probeColor(body) {
       ? "green"
       : "blue";
 }
+// The scripts below were written as game actions; the agent only has
+// read/write/edit/bash and the resource tools, so turn each action into the
+// shell call a model would make.
+const BUTTON_NAMES = [[1, "left"], [2, "right"], [4, "up"], [8, "down"], [16, "o"], [32, "x"]];
+const pressText = (steps) =>
+  steps
+    .map(({ frames, buttons }) => {
+      const names = BUTTON_NAMES.filter(([bit]) => buttons & bit).map(([, n]) => n);
+      return `${names.join("+") || "wait"}${frames > 1 ? `*${frames}` : ""}`;
+    })
+    .join(" ");
+function toShell(actions) {
+  const out = [];
+  let route = null;
+  const flush = () => {
+    if (route) out.push(["bash", { command: `p8 run --press "${pressText(route)}"` }]);
+    route = null;
+  };
+  for (const [name, args] of actions) {
+    if (name === "press_buttons") {
+      (route ??= []).push(...args.steps);
+      continue;
+    }
+    flush();
+    if (name === "reset_game") route = [];
+    else if (name === "load_game") {
+      if (args.source !== undefined) out.push(["write", { path: "/cart/main.lua", content: args.source }]);
+      out.push(["bash", { command: "p8 check" }]);
+    } else if (name === "observe_game") {
+      out.push(["bash", { command: "p8 look --png /tmp/screen.png" }]);
+      out.push(["read", { path: "/tmp/screen.png" }]);
+    } else out.push([name, args]);
+  }
+  flush();
+  return out;
+}
 const server = http.createServer(async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
@@ -83,13 +119,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     const offered = new Set(body.tools?.map((t) => t.function.name));
-    for (const name of [
-      "read",
-      "load_game",
-      "reset_game",
-      "press_buttons",
-      "observe_game",
-    ])
+    for (const name of ["read", "write", "edit", "bash", "read_assets", "edit_assets"])
       if (!offered.has(name))
         throw new Error(`Missing registered game tool: ${name}`);
     const resourceFixture = body.model === "fixture-resources";
@@ -115,7 +145,7 @@ const server = http.createServer(async (req, res) => {
     const observationFixture = body.model === "fixture-observation";
     // Repair through the workspace: targeted edit, then load the edited file.
     const editFixture = body.model === "fixture-edit";
-    const operations = comparisonFixture
+    const operations = toShell(comparisonFixture
       ? round > 2
         ? []
         : [
@@ -304,7 +334,7 @@ const server = http.createServer(async (req, res) => {
                   ["press_buttons", { steps: [{ frames: 1, buttons: 34 }] }],
                   ["press_buttons", { steps: [{ frames: 45, buttons: 2 }] }],
                   ["observe_game", {}],
-                ];
+                ]);
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
       "Cache-Control": "no-cache",
@@ -343,14 +373,9 @@ const server = http.createServer(async (req, res) => {
           const png = Buffer.from(p.image_url.url.split(",")[1], "base64");
           return `${png.readUInt32BE(16)}x${png.readUInt32BE(20)}`;
         });
-        if (
-          !text.includes("8 = deep rose (#be1250), display code 136") ||
-          !text.includes("region: x=1 y=3 width=7 height=5") ||
-          !sizes.includes("7x5") ||
-          !sizes.includes("128x128")
-        )
+        if (!text.includes("screen 32x32") || !sizes.includes("512x512"))
           throw new Error(
-            "Observation fixture did not receive the expected palette, crop and PNG sizes",
+            "Observation fixture did not receive the p8 look text picture and its 512x512 PNG",
           );
       }
       send({
@@ -360,7 +385,7 @@ const server = http.createServer(async (req, res) => {
             : resourceFixture
               ? "资源联调完成：源码与资源已提交两版，仅资源变化也生成了版本。此响应来自本地测试服务，不是实际模型推理。"
               : observationFixture
-                ? "联调模拟响应：完整 ASCII、实际扩展调色板、7×5 同帧裁剪和默认 128×128 PNG 已收到。此响应来自本地测试服务，不是实际模型推理。"
+                ? "联调模拟响应：p8 look 的 32×32 字符画和 512×512 PNG 已收到。此响应来自本地测试服务，不是实际模型推理。"
                 : "联调模拟响应：已执行读取、修复前测试、修改和修复后测试。此响应来自本地测试服务，不是实际模型推理。",
       });
       send({}, "stop");

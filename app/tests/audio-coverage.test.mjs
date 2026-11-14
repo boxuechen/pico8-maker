@@ -83,16 +83,13 @@ test("coverage facts follow the committed revision without judging gameplay", as
   await g.execute("reset_game", {});
   await g.execute("press_buttons", { steps: [{ frames: 1, buttons: 0 }] });
   await g.execute("press_buttons", { steps: [{ frames: 1, buttons: 0 }] });
-  // A debug route and an input-free route do not count as normal coverage.
-  await g.execute("reset_game", {});
-  await g.execute("inspect_game", { mode: "debug", code: "x=1" });
-  await g.execute("press_buttons", { steps: [{ frames: 1, buttons: 0 }] });
+  // An input-free route does not count as normal coverage.
   await g.execute("reset_game", {});
   assert.deepEqual(revisionCoverage(g.playtests.runs, rev), {
     revision: rev,
     normalRoutes: 2,
     longestNormalCalls: 2,
-    debugRoutes: 1,
+    debugRoutes: 0,
   });
   const unchanged = await g.execute("load_game", {});
   assert.match(
@@ -124,44 +121,5 @@ test("coverage facts follow the committed revision without judging gameplay", as
   assert.equal(
     coverageNote({ revision: 3, normalRoutes: 1, longestNormalCalls: 4 }),
     "Revision 3: 1 normal-input route(s) recorded, longest 4 input call(s).",
-  );
-});
-
-test("normal input before the first debug event keeps its coverage; declared debug starts do not", async (t) => {
-  const g = new TestGame();
-  t.after(() => g.dispose());
-  await g.execute("load_game", {
-    source: "x=0 function _update() x+=1 end function _draw() cls(1) end",
-  });
-  const rev = g.revision;
-  // Normal play (e.g. a full win and retry), then edge cases injected in the same route.
-  await g.execute("press_buttons", { steps: [{ frames: 2, buttons: 0 }] });
-  await g.execute("press_buttons", { steps: [{ frames: 2, buttons: 0 }] });
-  await g.execute("inspect_game", { mode: "debug", code: "x=99" });
-  await g.execute("press_buttons", { steps: [{ frames: 1, buttons: 0 }] });
-  assert.equal(
-    g.playtests.active.purpose,
-    "debug",
-    "the route itself stays debug",
-  );
-  // A route declared debug from its start never counts as normal input.
-  await g.execute("reset_game", { purpose: "debug" });
-  await g.execute("press_buttons", { steps: [{ frames: 1, buttons: 0 }] });
-  await g.execute("inspect_game", { mode: "debug", code: "x=1" });
-  await g.execute("press_buttons", { steps: [{ frames: 1, buttons: 0 }] });
-  assert.deepEqual(revisionCoverage(g.playtests.runs, rev), {
-    revision: rev,
-    normalRoutes: 1,
-    longestNormalCalls: 2,
-    debugRoutes: 2,
-  });
-  const next = await g.execute("load_game", {
-    source: "function _draw() cls(2) end",
-  });
-  assert.match(
-    next.output[0].text,
-    new RegExp(
-      `Revision ${rev} had 1 normal-input route\\(s\\) \\(longest 2 input calls\\)`,
-    ),
   );
 });

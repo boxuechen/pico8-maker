@@ -7,8 +7,19 @@ import { readModelConfig } from "../../src/model-store.js";
 import { readableError } from "../../src/model-config.js";
 import { newCart } from "../../src/cart-store.js";
 import { activeSession, sessionContext } from "../../src/sessions.js";
-import { defaultKnowledgeFiles } from "../../src/pico8/knowledge-files.js";
-import { transcriptMetrics } from "./workflow-cases.mjs";
+// Tool count, operations and the last reply of a transcript slice.
+function transcriptMetrics(entries) {
+  const messages = entries.flatMap((e) => e.model ?? []);
+  const calls = messages.flatMap((m) => (m.role === "assistant" ? m.content.filter((p) => p.type === "toolCall") : []));
+  const last = messages.filter((m) => m.role === "assistant").at(-1);
+  const failed = new Set(messages.filter((m) => m.role === "toolResult" && m.isError).map((m) => m.toolCallId));
+  return {
+    tools: calls.length,
+    failedTools: calls.filter((c) => failed.has(c.id)).length,
+    operations: calls.map((c) => (c.name === "bash" ? c.arguments?.command?.split(/\s+/).slice(0, 2).join(" ") : c.name)),
+    finalText: (last?.content ?? []).filter((p) => p.type === "text").map((p) => p.text).join("\n"),
+  };
+}
 
 const $ = (id) => document.getElementById(id);
 const garden = new URLSearchParams(location.search).get("case") === "garden";
@@ -32,7 +43,6 @@ const report = {
   startedAt: new Date().toISOString(),
   model: { provider: config.provider, model: config.model, thinkingLevel: config.thinkingLevel },
   reference,
-  knowledgeVersion: defaultKnowledgeFiles.version,
   limits: { millisecondsPerTurn: 900000 },
   limitations: ["One model, one case; no general quality or human enjoyment claim.", "Independent test inputs are separate from model playtesting.", "Audio authoring is inspectable; listening is not verified by agent tools."],
   revisions: [],
@@ -83,7 +93,7 @@ try {
     const metrics = transcriptMetrics(all.slice(turnStart));
     if (busy) $("status").textContent = `创作中 · ${Math.round((performance.now() - startTime) / 1000)}s · ${metrics.tools} tools · ${metrics.operations.at(-1) ?? "thinking"}`;
     if (metrics.finalText) $("response").textContent = metrics.finalText;
-  }, { projectContext: () => sessionContext(cart, session), flow: new URLSearchParams(location.search).get("flow") === "frozen" ? "frozen" : "shell" });
+  }, { projectContext: () => sessionContext(cart, session) });
   await agent.open();
   if (config.apiKey) await agent.configure(config);
   await archive();

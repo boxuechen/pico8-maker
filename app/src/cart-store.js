@@ -15,7 +15,7 @@ export function newCart(patch = {}) {
   return {
     id: newId(),
     title: "Untitled cartridge",
-    schemaVersion: 3,
+    schemaVersion: 4,
     sessions: [session],
     activeSessionId: session.id,
     contentVersion: 0,
@@ -35,9 +35,15 @@ export function newCart(patch = {}) {
 
 /** Validate a stored record; returns a complete cart or null. */
 export function normalizeCart(data) {
+  // Version 3 conversations were made with the earlier agent tools; the shell
+  // agent cannot resume them, so they are cleared and the cart keeps its game.
+  if (data?.schemaVersion === 3 && Array.isArray(data.sessions)) {
+    const session = newSession();
+    data = { ...data, schemaVersion: 4, sessions: [session], activeSessionId: session.id };
+  }
   if (
     !data ||
-    data.schemaVersion !== 3 ||
+    data.schemaVersion !== 4 ||
     typeof data.id !== "string" ||
     !Array.isArray(data.sessions) ||
     !data.sessions.length ||

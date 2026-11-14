@@ -75,21 +75,10 @@ test("oracle rejects invulnerability regression, fake progress, invisible enemie
     assert.equal((await verifyShooter(emptySnapshot(source))).passed, false);
 });
 
-test("Agent route evidence requires final cart, completed inputs and matching pixels; only normal input before debug counts", async (t) => {
+test("Agent route evidence requires final cart, completed inputs and matching pixels", async (t) => {
   const g = new EvaluationGame();
   t.after(() => g.dispose());
   await g.execute("load_game", { source: shooterSource });
-  const initial = structuredClone(g.testFrame),
-    read = await g.execute("inspect_game", {
-      mode: "read",
-      paths: [["g", "enemies"]],
-    });
-  assert.deepEqual(head(read).values[0], [
-    { x: 32, y: 24 },
-    { x: 64, y: 24 },
-    { x: 96, y: 24 },
-  ]);
-  assert.deepEqual(g.testFrame, initial);
   await press(g, [{ frames: 30, buttons: 16 }]);
   const ledger = [{ run: "r1", recordedCall: 1, ordinal: 3 }];
   let result = await verifyAgentRoutes(g.snapshot, g.playtests.runs, ledger);
@@ -135,25 +124,6 @@ test("Agent route evidence requires final cart, completed inputs and matching pi
     ).coverage.coreLoop,
     "unknown",
   );
-  const bytes = structuredClone(g.snapshot);
-  await g.execute("inspect_game", {
-    mode: "debug",
-    code: 'g.kills=6; g.mode="win"',
-  });
-  assert.deepEqual(g.snapshot, bytes);
-  assert.equal(g.playtests.runs[0].purpose, "debug");
-  // The normal prefix still proves the core loop; the injected win never counts.
-  await press(g, [{ frames: 1, buttons: 0 }]);
-  result = await verifyAgentRoutes(g.snapshot, g.playtests.runs, ledger);
-  assert.equal(result.coverage.coreLoop, "passed");
-  assert.equal(result.coverage.victory, "unknown");
-  assert.equal(result.firstVerifiedCoreLoopCall, 3);
-  // A route declared debug from its start contributes nothing.
-  const declared = structuredClone(g.playtests.runs);
-  declared[0].debugEvents[0].routePurpose = "debug";
-  result = await verifyAgentRoutes(g.snapshot, declared, ledger);
-  assert.equal(result.coverage.coreLoop, "unknown");
-  assert.equal(result.firstVerifiedCoreLoopCall, null);
 });
 
 test("normal retry resets per-round oracle counters without losing prior coverage", async (t) => {
@@ -195,22 +165,14 @@ function response(delta, finish = "stop") {
     { headers: { "content-type": "text/event-stream" } },
   );
 }
-test("scripted provider exercises real Agent, Worker and S4 reports (not a real-model result)", async (t) => {
+test("scripted provider exercises real Agent, p8 Worker and S4 reports (not a real-model result)", async (t) => {
+  // p8 press text for winSteps, then retry, lose by waiting, retry.
+  const win = "o*20 left*16 o*20 right*32 o*26 left*16 o*20 left*16 o*20";
   const route = [
-    ["load_game", { source: shooterSource }],
-    ["inspect_game", { mode: "read", paths: [["g", "enemies"]] }],
-    ["press_buttons", { steps: winSteps.slice(0, 5) }],
-    ["press_buttons", { steps: winSteps.slice(5) }],
-    [
-      "press_buttons",
-      {
-        steps: [
-          { frames: 1, buttons: 32 },
-          { frames: 240, buttons: 0 },
-          { frames: 1, buttons: 32 },
-        ],
-      },
-    ],
+    ["write", { path: "/cart/main.lua", content: shooterSource }],
+    ["bash", { command: "p8 check" }],
+    ["bash", { command: `p8 run --press "${win}" --read g.mode,g.kills` }],
+    ["bash", { command: `p8 run --press "${win} x wait*240 x" --read g.mode` }],
   ];
   for (const task of shooterCases) {
     let next = 0;
@@ -242,14 +204,11 @@ test("scripted provider exercises real Agent, Worker and S4 reports (not a real-
     const r = await runS4Case(task, { ...defaultConfig, apiKey: "fixture" });
     assert.equal(r.status, "done");
     assert.equal(r.passed, true, JSON.stringify(r.checks));
-    assert.equal(r.metrics.firstSuccessfulLoadCall, 1);
-    assert.equal(r.metrics.firstVerifiedCoreLoopCall, 3);
-    assert.equal(r.metrics.stateReads, 1);
-    assert.equal(r.metrics.onePixelRowObservations, 0);
-    assert.equal(r.metrics.toolCalls, 5);
-    assert.equal(r.metrics.usage.tokens.total, 660);
-    assert.equal(r.metrics.imageDimensions["512x512"], 4);
-    assert.equal(transcriptEvidence(r.entries).ledger.length, 3);
+    assert.equal(r.metrics.firstSuccessfulLoadCall, 2);
+    assert.equal(r.metrics.stateReads, 2);
+    assert.equal(r.metrics.toolCalls, 4);
+    assert.deepEqual(r.metrics.byP8, { check: 1, run: 2 });
+    assert.ok(r.metrics.usage.tokens.total > 0);
     t.mock.restoreAll();
   }
 });

@@ -20,8 +20,7 @@ import {
   normalizeCart,
 } from "../src/cart-store.js";
 import { sessionContext, activeSession, addSession } from "../src/sessions.js";
-import { createPico8Extension } from "../src/pico8/extension.js";
-import { knowledge } from "./helpers/knowledge.mjs";
+import { createResourceTools } from "../src/pico8/shell/resource-tools.js";
 
 const rows = (color) => Array(8).fill(color.repeat(8));
 const edits = [
@@ -250,17 +249,16 @@ test("asset-only drafts persist, duplicate and invalidate resumed conversations"
   );
 });
 
-test("Pi resource tools edit the shared draft while built-in read still exposes only main.lua", async () => {
+test("resource tools edit the shared draft without committing it", async () => {
   const g = new Game(() => {});
-  const extension = createPico8Extension({ game: g, knowledge });
-  const write = extension.tools.find((t) => t.name === "edit_assets");
-  const read = extension.tools.find((t) => t.name === "read_assets");
+  const tools = createResourceTools(g);
+  const write = tools.find((t) => t.name === "edit_assets");
+  const read = tools.find((t) => t.name === "read_assets");
   await write.execute({ edits }, {}, {});
   const result = await read.execute({ kind: "sprite", id: 1 }, {}, {});
   assert.equal(JSON.parse(result.output[0].text)[0].flags, 129);
   assert.equal(g.hasGame, false);
-  assert.equal((await g.workspace.readTextFile("main.lua")).value, "");
-  assert.equal((await g.workspace.writeFile("assets.lua", "")).ok, false);
+  assert.equal(g.draft.source, "");
   const aborted = new AbortController();
   aborted.abort();
   await assert.rejects(() =>

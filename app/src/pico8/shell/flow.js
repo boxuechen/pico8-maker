@@ -1,4 +1,4 @@
-// Open the shell flow for one Agent: start p8's Worker, build the environment
+// Open the agent environment for one Agent: start p8's Worker, build the environment
 // and the extension. Node callers (tests, evaluators) pass startP8.
 import skillFiles from "../../generated/shell-skill.js";
 import { createShellEnvironment } from "./environment.js";
@@ -7,7 +7,7 @@ import { createShellExtension } from "./extension.js";
 const playerUrl = () =>
   new URL(`${import.meta.env?.BASE_URL ?? "/"}player/main/player.mjs`, globalThis.location?.href).href;
 
-export async function openShellFlow({ game, knowledge, startP8 }) {
+export async function openShellFlow({ game, startP8 }) {
   const start =
     startP8 ??
     (async (files) => {
@@ -21,7 +21,7 @@ export async function openShellFlow({ game, knowledge, startP8 }) {
     return {
       env,
       exec,
-      extension: createShellExtension({ game, knowledge, skillFiles }),
+      extension: createShellExtension({ game, skillFiles }),
       close: () => worker.close(),
     };
   } catch (e) {

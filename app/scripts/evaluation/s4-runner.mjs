@@ -1,8 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { BACKGROUND_CONTEXT as context } from "@earendil-works/chord/context";
 import { Agent } from "../../src/agent.js";
-import index from "../../src/generated/pico8-files.js";
-import { createKnowledgeFiles } from "../../src/pico8/knowledge-files.js";
 import { newCart } from "../../src/cart-store.js";
 import { activeSession, sessionContext } from "../../src/sessions.js";
 import { EvaluationGame } from "./node-game.mjs";
@@ -14,19 +12,8 @@ export const limits = Object.freeze({
   milliseconds: Number(process.env.S4_TIME_LIMIT_MS) || 180000,
   tools: 40,
 });
-const knowledge = createKnowledgeFiles({
-  load: (file) =>
-    readFile(
-      new URL(
-        `../../public/extensions/pico8/${index.version}/${file}`,
-        import.meta.url,
-      ),
-      "utf8",
-    ),
-});
 
-/** `flow`: "frozen" (default) or "shell" (docs/shell-flow-migration.md). */
-export async function runS4Case(task, config, progress = () => {}, { flow = "frozen" } = {}) {
+export async function runS4Case(task, config, progress = () => {}) {
   const before = task.snapshot(),
     started = performance.now();
   const cart = newCart({
@@ -55,11 +42,10 @@ export async function runS4Case(task, config, progress = () => {}, { flow = "fro
     stopReason,
     firstLoadMs = null,
     lastCount = 0;
-  const execute = game.execute.bind(game);
-  game.execute = async (action, args, signal) => {
-    const r = await execute(action, args, signal);
-    if (action === "load_game" && !r.isError)
-      firstLoadMs ??= Math.round(performance.now() - started);
+  const commit = game.commit.bind(game);
+  game.commit = async (signal) => {
+    const r = await commit(signal);
+    if (!r.isError) firstLoadMs ??= Math.round(performance.now() - started);
     return r;
   };
   const agent = new Agent(
@@ -77,10 +63,8 @@ export async function runS4Case(task, config, progress = () => {}, { flow = "fro
       }
     },
     {
-      knowledge,
       projectContext: () => sessionContext(cart, session),
-      flow,
-      ...(flow === "shell" ? { startP8: startNodeP8Worker } : {}),
+      startP8: startNodeP8Worker,
     },
   );
   const timer = setTimeout(() => {

@@ -1,10 +1,9 @@
 // Real-browser smoke of the product entry: home composer → MAKE → workbench,
-// with the default Agent flow, a real provider and a temporary Chrome profile
+// with a real provider and a temporary Chrome profile
 // (the user's cart library is never touched). Reports the committed version,
 // the tool steps shown in the conversation, console problems and a screenshot.
 //
 //   SMOKE_DEEPSEEK_KEY=... node scripts/evaluation/app-smoke.mjs
-//   SMOKE_FLOW=frozen ... opens /?flow=frozen instead.
 // Set SMOKE_CHROME_NO_SANDBOX=1 where Chrome's renderer sandbox crashes inside an outer sandbox.
 import { spawn } from "node:child_process";
 import { mkdir, writeFile } from "node:fs/promises";
@@ -58,14 +57,13 @@ const onMessage = ({ data }) => {
 };
 cdp.socket.addEventListener("message", onMessage);
 const page = (expr) => evaluate(cdp, expr);
-const query = process.env.SMOKE_FLOW === "frozen" ? "?flow=frozen" : "";
 let exit = 1;
 try {
   log(`Chrome ${chrome.version}`);
   await cdp.command("Page.navigate", { url: origin + "/" });
   await delay(1500);
   await page(`localStorage.setItem("pico-demo-model", ${JSON.stringify(JSON.stringify(modelConfig))}); localStorage.setItem("pico8-maker-lang", "en"); true`);
-  await cdp.command("Page.navigate", { url: origin + "/" + query });
+  await cdp.command("Page.navigate", { url: origin + "/" });
   for (let i = 0; ; i++) {
     if (await page(`!!document.querySelector('textarea[aria-label="Message"]') && !!document.querySelector('.composer-model-button:not(.unconfigured)')`)) break;
     if (i > 300) throw Error("home composer not ready");
@@ -90,7 +88,7 @@ try {
   for (;;) {
     const s = await page(`({
       running: !!document.querySelector('button.send.stop'),
-      version: document.querySelector('.cart-version')?.textContent ?? "",
+      version: document.querySelector('.version-badge')?.textContent ?? "",
       steps: [...document.querySelectorAll('.tool-step, .tool-label, [class*="tool"]')].map((e) => e.textContent.trim()).filter(Boolean).slice(-6).join(" | ").slice(0, 300),
     })`);
     if (s.running) sawRunning = true;
@@ -102,11 +100,37 @@ try {
   await delay(1500);
   const summary = await page(`({
     url: location.href,
-    version: document.querySelector('.cart-version')?.textContent ?? "",
+    version: document.querySelector('.version-badge')?.textContent ?? "",
     tools: [...new Set([...document.querySelectorAll('[class*="tool"]')].map((e) => e.textContent.trim().split("\\n")[0]).filter(Boolean))].slice(0, 30),
     reply: [...document.querySelectorAll('[data-message-role="assistant"], .assistant, .message.assistant')].map((e) => e.textContent).at(-1)?.slice(0, 1200) ?? "",
     canvas: !!document.querySelector('canvas'),
   })`);
+  // Tool calls and failed results from the stored conversation (IndexedDB).
+  Object.assign(summary, await page(`new Promise((resolve) => {
+    const open = indexedDB.open("pico8-maker", 1);
+    open.onsuccess = () => {
+      const req = open.result.transaction("carts").objectStore("carts").getAll();
+      req.onsuccess = () => {
+        const messages = [];
+        const walk = (v) => {
+          if (Array.isArray(v)) v.forEach(walk);
+          else if (v && typeof v === "object") {
+            if (v.role === "assistant" || v.role === "toolResult") messages.push(v);
+            else Object.values(v).forEach(walk);
+          }
+        };
+        walk(req.result);
+        const calls = new Map();
+        for (const m of messages) if (m.role === "assistant") for (const p of m.content ?? []) if (p.type === "toolCall") calls.set(p.id, p);
+        const text = (m) => (m.content ?? []).map((p) => p.text ?? "").join("").slice(0, 400);
+        const label = (c) => c ? (c.name === "bash" ? "bash: " + String(c.arguments?.command ?? "").slice(0, 120) : c.name + " " + JSON.stringify(c.arguments ?? {}).slice(0, 120)) : "?";
+        resolve({
+          calls: [...calls.values()].map(label),
+          failedTools: messages.filter((m) => m.role === "toolResult" && m.isError).map((m) => ({ call: label(calls.get(m.toolCallId)), result: text(m) })),
+        });
+      };
+    };
+  })`));
   const shot = await cdp.command("Page.captureScreenshot", { format: "png" });
   await writeFile(new URL("workbench.png", out), Buffer.from(shot.data, "base64"));
   summary.seconds = Math.round((Date.now() - started) / 1000);

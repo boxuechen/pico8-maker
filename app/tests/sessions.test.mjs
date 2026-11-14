@@ -13,7 +13,7 @@ import {
   openCartStore,
   memoryBackend,
 } from "../src/cart-store.js";
-import { Agent } from "./helpers/knowledge.mjs";
+import { Agent } from "./helpers/agent.mjs";
 import { defaultConfig } from "../src/model-config.js";
 import { Game } from "../src/game.js";
 
@@ -124,7 +124,7 @@ test("real Pi conversations isolate histories and read the current shared game o
   await run(first, "SESSION_A_ONLY");
   first.lastContentVersion = 0;
   const second = addSession(cart);
-  await game.workspace.writeFile("main.lua", "print('session B changes')");
+  game.setDraft("print('session B changes')");
   cart.contentVersion++;
   await run(second, "SESSION_B_ONLY");
   assert.ok(!JSON.stringify(requests[1]).includes("SESSION_A_ONLY"));
@@ -134,7 +134,7 @@ test("real Pi conversations isolate histories and read the current shared game o
   assert.ok(!resumed.includes("SESSION_B_ONLY"));
   assert.ok(resumed.includes("shared cart content changed"));
   assert.equal(
-    (await game.workspace.readTextFile("main.lua")).value,
+    game.draft.source,
     "print('session B changes')",
   );
 });
@@ -142,6 +142,7 @@ test("real Pi conversations isolate histories and read the current shared game o
 test("closing an idle session can preserve the shared game runtime", async () => {
   let cancellations = 0;
   const game = {
+    draft: { source: "" },
     cancelTests() {
       cancellations++;
     },

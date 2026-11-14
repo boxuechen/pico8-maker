@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { TestGame } from "./helpers/game.mjs";
-import { Agent } from "./helpers/knowledge.mjs";
+import { Agent } from "./helpers/agent.mjs";
 import { defaultConfig } from "../src/model-config.js";
 import {
   retainRecentImages,
@@ -49,18 +49,10 @@ test("provider requests omit earlier-request frames while the transcript keeps t
   const g = new TestGame();
   const bodies = [];
   let n = 0;
+  // One p8 look writes a PNG; each read returns it as an image block.
   const route = [
-    ["load_game", { source: "function _draw() cls(1) end" }],
-    ...Array.from({ length: 4 }, () => [
-      "press_buttons",
-      {
-        steps: Array.from({ length: 8 }, () => ({
-          frames: 1,
-          buttons: 0,
-          capture: true,
-        })),
-      },
-    ]),
+    ["bash", { command: "p8 look --png s.png > /dev/null" }],
+    ...Array.from({ length: 33 }, () => ["read", { path: "s.png" }]),
   ];
   t.mock.method(globalThis, "fetch", async (_url, init) => {
     const body = JSON.parse(init.body);
@@ -95,11 +87,11 @@ test("provider requests omit earlier-request frames while the transcript keeps t
   const images = (body) =>
     (JSON.stringify(body.messages).match(/data:image\/png;base64/g) ?? [])
       .length;
-  // load (1) + 4 x 8 captures = 33 images before the final reply.
-  assert.equal(images(bodies[4]), 25, "1 load + 3 x 8 captures");
-  assert.equal(images(bodies[5]), 33 - 16, "cut of 16 once 32 are exceeded");
+  // bodies[k] follows the bash call and k-1 reads.
+  assert.equal(images(bodies[25]), 24, "24 reads, all kept");
+  assert.equal(images(bodies[34]), 33 - 16, "cut of 16 once 32 are exceeded");
   assert.match(
-    JSON.stringify(bodies[5].messages),
+    JSON.stringify(bodies[34].messages),
     /Earlier frame image omitted/,
   );
   route.length = 0;

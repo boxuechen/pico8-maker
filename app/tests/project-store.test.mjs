@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { BACKGROUND_CONTEXT as context } from "@earendil-works/chord/context";
-import { Agent } from "./helpers/knowledge.mjs";
+import { Agent } from "./helpers/agent.mjs";
 import { compactTranscript, recoverTranscript } from "../src/project-store.js";
 const user = { role: "user", content: "把小猫变成蓝色", timestamp: 1 };
 const call = {
@@ -39,6 +39,7 @@ test("restored history is in the actual model context, with no automatic generat
   let view;
   const agent = new Agent(
     {
+      draft: { source: "" },
       execute() {
         called = true;
       },
@@ -88,6 +89,7 @@ test("actual Pi compaction survives two reopenings without expanding context or 
     );
   });
   const game = {
+    draft: { source: "" },
     cancelTests() {},
     execute() {
       throw new Error("tools must not replay");
@@ -159,6 +161,7 @@ test("thinking signatures and interrupted tools survive structured snapshots", a
   ]);
   const agent = new Agent(
     {
+      draft: { source: "" },
       cancelTests() {},
       execute() {
         throw new Error("no replay");
