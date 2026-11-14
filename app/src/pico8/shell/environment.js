@@ -97,7 +97,8 @@ export async function createShellEnvironment({ game, skillFiles, sendP8 }) {
     const file = args.slice(1).find((a, i, all) => !a.startsWith("--") && !all[i - 1]?.startsWith("--"));
     if (RUNS_MAIN.has(args[0]) && (!file || ctx.fs.resolvePath(ctx.cwd, file) === `${CART}/main.lua`)) {
       notes.push(...(await commit(ctx.signal)));
-      const run = plays.findLast((p) => p.command === "run" && p.ok);
+      // Runs with --setup changed state by hand: not normal play, never recorded.
+      const run = plays.findLast((p) => p.command === "run" && p.ok && !p.setup);
       if (run && game.hasGame && !game.cartSummary().draftDirty) pendingRoute = run;
     }
     return { ...r, stdout: r.stdout + notes.map((n) => `Maker: ${n}\n`).join("") };

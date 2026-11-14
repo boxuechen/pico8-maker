@@ -16,6 +16,7 @@ description: Make, change and fix PICO-8 games in main.lua and check them with t
 Other commands:
 
 - `p8 run --press "right*30 wait*60" --read g.score,g.mode` plays the game and prints mode changes, sounds and values.
+- `--setup "g.score=9 g.lives=1"` on `p8 run` or `p8 look` runs Lua after boot and before the presses. Use it to test a win, a loss, a late level or a rare event quickly. Never edit `main.lua` just to test something: such edits end up in the game the user gets.
 - `p8 look --press "right*30"` prints the screen as 32x32 characters (colours 0-f). Add `--png screen.png` to also write a 512x512 image, then open it with `read` to see the screen.
 - `p8 new skeleton` starts an empty `main.lua` from a working game skeleton with win/lose; `p8 new toy` from a toy without a result.
 

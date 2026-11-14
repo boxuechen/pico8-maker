@@ -13,9 +13,10 @@ export const TEMPLATE_DIR = "/skill/pico8/templates";
 
 const usage = (templates) => `usage:
   p8 check [main.lua]                        lint, boot, input and every case in checks.json
-  p8 run [main.lua] --press "right*30 x" [--read g.score,g.mode]
-  p8 look [main.lua] [--press "..."] [--png screen.png]
+  p8 run [main.lua] --press "right*30 x" [--read g.score,g.mode] [--setup "g.score=9"]
+  p8 look [main.lua] [--press "..."] [--png screen.png] [--setup "lua"]
                                              32x32 text picture of the screen; --png also writes a 512x512 image
+                                             --setup runs Lua after boot, before the presses (main.lua is unchanged)
   p8 new <template>                          start main.lua from a template (${templates.join(", ")})
   p8 export [main.lua] [game.p8]             write a PICO-8 cart`;
 
@@ -36,16 +37,21 @@ const compact = (v, max = 600) => {
 class UserError extends Error {}
 
 /** Tell the host what a run or look played (Maker shows the last frame and records the route). */
-const report = (onPlay, command, press, r) =>
-  onPlay?.({ command, press, frames: r.rt.frames, ok: r.ok, modes: r.modes ?? [], frame: r.rt.frame ? { width: 128, height: 128, rgba: r.rt.frame.rgba } : null });
+const report = (onPlay, command, press, r, setup) =>
+  onPlay?.({ command, press, ...(setup ? { setup } : {}), frames: r.rt.frames, ok: r.ok, modes: r.modes ?? [], frame: r.rt.frame ? { width: 128, height: 128, rgba: r.rt.frame.rgba } : null });
 
-/** Boot, play the presses, and report mode changes, sounds and the final state. */
-async function play(src, press, assets) {
+/** Boot, run optional setup Lua, play the presses, and report mode changes, sounds and the final state. */
+async function play(src, press, assets, setup) {
   const rt = new Runtime(assets);
   const loaded = await rt.load(src);
   if (!loaded.ok) return { rt, lines: [`does not boot: ${loaded.diagnostics.map((d) => explainFault(d, src)).join("; ")}`], ok: false };
   const lines = [],
     modes = [];
+  if (setup) {
+    const s = await rt.setup(setup);
+    if (!s.ok) return { rt, lines: [`setup failed: ${s.message}. --setup runs Lua statements after boot, e.g. --setup "g.score=9 g.player.x=10"`], modes, ok: false };
+    lines.push("setup ran (main.lua unchanged; this run is not recorded as normal play)");
+  }
   let mode = (await rt.read(["g.mode"]))["g.mode"];
   const sounds = (loaded.audio ?? []).map((e) => `sfx ${e.sfx ?? `music ${e.music}`}@1`);
   for (const step of parsePress(press)) {
@@ -59,7 +65,7 @@ async function play(src, press, assets) {
       return { rt, lines, modes, ok: false };
     }
   }
-  lines.unshift(`ran ${rt.frames} frames`);
+  lines.splice(setup ? 1 : 0, 0, `ran ${rt.frames} frames`);
   if (sounds.length) lines.push(`sounds: ${sounds.slice(0, 12).join(", ")}${sounds.length > 12 ? ", …" : ""}`);
   return { rt, lines, modes, ok: true };
 }
@@ -115,9 +121,9 @@ async function dispatch(argv, { fs, cwd, templateDir = TEMPLATE_DIR, memo = new 
       return pass ? 0 : 1;
     }
     case "run": {
-      const r = await play(await source(rest[0]), opts.press ?? "wait*30", assets);
+      const r = await play(await source(rest[0]), opts.press ?? "wait*30", assets, opts.setup);
       try {
-        await report(onPlay, "run", opts.press ?? "wait*30", r);
+        await report(onPlay, "run", opts.press ?? "wait*30", r, opts.setup);
         if (r.ok) {
           const paths = opts.read ? opts.read.split(",").map((p) => p.trim()).filter(Boolean) : ["g"];
           const values = await r.rt.read(paths);
@@ -130,9 +136,9 @@ async function dispatch(argv, { fs, cwd, templateDir = TEMPLATE_DIR, memo = new 
       }
     }
     case "look": {
-      const r = await play(await source(rest[0]), opts.press ?? "wait*30", assets);
+      const r = await play(await source(rest[0]), opts.press ?? "wait*30", assets, opts.setup);
       try {
-        await report(onPlay, "look", opts.press ?? "wait*30", r);
+        await report(onPlay, "look", opts.press ?? "wait*30", r, opts.setup);
         const pic = r.rt.ascii(32);
         const lines = [...r.lines, ...(pic ? ["screen 32x32 (one character per 4x4 pixels, colour 0-f):", pic] : [])];
         if (opts.png !== undefined && r.rt.frame) {

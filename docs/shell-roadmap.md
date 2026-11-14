@@ -69,6 +69,8 @@
 
 - **P1-1 放宽契约（2026-11-14）：** `p8 check` 的 boot 不再要求 `g`/`g.mode`，只报告状态（`g.mode="play"` / `no g.mode (no result tracking)` / `no global g`），仍要求画面多于一种颜色、至少一个按键改变 `g` 或画面。skill 的「Game rules the checker expects」改为「How games are written」：有胜负的游戏用 `g.mode`，玩具/沙盒不加任务没要求的结果；新增 `p8 new toy` 模板。lab 新增 T8（空卡带做画画玩具，隐藏用例含「长时间游玩后 `g.mode` 为 nil」）。DeepSeek Flash durable + worker p8：T1–T8 8/8，T8 23 s、12 次调用；T1–T5 5–24 s，T6 56 s，T7 47 s（归档 `.cache/lab/20261114T0405-t68d`）。
 
+- **P1-2 `p8 run/look --setup`（2026-11-14）：** 加载后、按键前执行 Lua（复用 `Runtime.setup`），输出首行注明「setup ran (main.lua unchanged; this run is not recorded as normal play)」，出错时给示例；Maker 不回放带 setup 的运行。skill 说明用它测胜利、失败、后期关卡，「不要为了测试改 main.lua」；host 规则补一句。lab T1–T8 8/8（归档 `.cache/lab/20261114T0408-7an2`）；主界面烟测两次（41 / 55 s）模型分别用了 6 次和 6 次 `--setup`，不再出现 `sed` 临时改代码，版本数 v2 / v3（此前 v4）。S4 与 P1-3 一起复跑。
+
 ## 4. P2：质量
 
 | # | 事项 | 做法 | 验证 |

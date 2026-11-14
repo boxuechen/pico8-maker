@@ -125,3 +125,33 @@ function _draw() cls(1) circfill(g.x,64,4,8) end`;
     await game.dispose();
   }
 });
+
+test("p8 --setup changes state without touching main.lua and is never recorded as a route", async () => {
+  const source = `function new_game() g={mode="play",score=0} end
+function _init() new_game() end
+function _update() if btnp(5) then g.score+=1 end if g.score>=10 then g.mode="win" end end
+function _draw() cls(1) print(g.score,2,2,7) end`;
+  const committed = { ...emptySnapshot(), source };
+  const game = new EvaluationGame({ versions: [committed], draft: committed });
+  const worker = await startNodeP8Worker(skillFiles);
+  try {
+    const { exec } = await createShellEnvironment({ game, skillFiles, sendP8: worker.send });
+    const before = game.playtests.runs.length;
+    const r = await exec(`p8 run --setup "g.score=9" --press "x wait" --read g.mode,g.score`);
+    assert.equal(r.exitCode, 0, r.stdout);
+    assert.match(r.stdout, /setup ran \(main.lua unchanged/);
+    assert.match(r.stdout, /g.mode "play"→"win"/);
+    assert.match(r.stdout, /g.score = 10/);
+    assert.equal(game.draft.source, source);
+    assert.equal(game.revision, 1);
+    assert.equal(game.playtests.runs.length, before, "setup runs are not replayed");
+    const bad = await exec(`p8 look --setup "g.score=" --press wait`);
+    assert.equal(bad.exitCode, 1);
+    assert.match(bad.stdout, /setup failed: .*--setup runs Lua statements/);
+    await exec(`p8 run --press "x"`);
+    assert.equal(game.playtests.runs.length, before + 1, "a normal run is still recorded");
+  } finally {
+    await worker.close();
+    await game.dispose();
+  }
+});

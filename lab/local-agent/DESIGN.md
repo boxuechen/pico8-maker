@@ -273,3 +273,10 @@ still requires more than one colour, and input still requires some button to cha
 result and tells the model not to add results to toys; `p8 new toy` is a template without
 one. T8 is a new task (paint toy from an empty cart, hidden case: `g.mode` stays nil).
 DeepSeek Flash, durable loop, worker p8: T1–T8 8/8. Archive `.cache/lab/20261114T0405-t68d`.
+
+## p8 --setup (P1-2, 2026-11-14)
+
+`p8 run` and `p8 look` take `--setup "lua"`, run after boot and before the presses
+(`Runtime.setup`, the same hook `checks.json` cases use); output says main.lua is unchanged
+and the run is not normal play. Maker never replays setup runs. T1–T8 8/8
+(`.cache/lab/20261114T0408-7an2`).
