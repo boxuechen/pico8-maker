@@ -39,7 +39,7 @@
 
 ## 后续工作
 
-- **Shell 流程（已接入，默认关闭）：** lab 的 read/edit/write/bash + `p8` 形态作为第二条流程接入，`?flow=shell` 仅对无历史的新会话生效，`S4_FLOW=shell` / `SMOKE_FLOW=shell` 用于评测。冻结流程的工具、schema、启动段与代码路径未改。2026-11-14 单次 S4 复跑：shell 修复/新建全部检查通过（55/67 s），frozen 修复通过、新建 180 s 截断。下一步按 [shell-flow-migration.md](shell-flow-migration.md) 第 6 节扩大样本（M3）。
+- **Shell 流程（已接入，默认关闭）：** lab 的 read/edit/write/bash + `p8` 形态作为第二条流程接入，`?flow=shell` 仅对无历史的新会话生效，`S4_FLOW=shell` / `SMOKE_FLOW=shell` / `run-case.mjs --flow shell` 用于评测。冻结流程的工具、schema、启动段与代码路径未改。M3（2026-11-14，各 ×5）：S4 新建独立检查 shell 4/5、frozen 5/5（frozen 4 次撞 180 s 时限），修复均 5/5，shell 中位耗时约为一半；两个案例各 ×2 全部完成，胜利/重开两条流程都未自动验证。结论：不转默认，先补路线覆盖与交付证据再复跑，详见 [shell-flow-migration.md](shell-flow-migration.md)。
 - **扩展效果验证：** 在已有 S4 小样本基础上固定 prompt/runtime/知识/预算，增加重复次数与不同 provider；分别报告 Agent 正常路线和独立验证，保留失败。
 - **首版延迟：** 新建任务存在长时间思考、首次加载迟的情况。缩小首版规模或调整思考强度需要独立对照，冻结期内不直接改流程。
 - **纯文本模式：** 当前要求图像与工具调用。后续需验证 text+tools、vision+tools、跨模式恢复和正常输入通关；纯文本请求不能携带 image block，视觉检查须明确未验证。

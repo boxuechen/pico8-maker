@@ -92,7 +92,7 @@ Agent (app/src/agent.js, 不变)
 | **M0 lab 对齐（已完成）** | lab 增加 `--loop durable`：pi-durable Harness + 它自带的 CodingTools + just-bash ExecutionEnv，系统提示用 coding agent 生成的原文 | 只动 `lab/` | 已通过：T1–T5 5/5，T6 3/4，T7 4/4，与 session 循环同档，见下文 |
 | **M1 p8 跨线程（已完成）** | `remoteP8` / `p8Host` / Worker 入口；`createEnvironment({ p8 })` | 只动 `lab/` | 已通过：进程内与 worker 线程输出、退出码、文件逐字节一致；durable 循环 + worker p8 跑 T1–T7 7/7 |
 | **M2 Maker 接入（已完成）** | p8 核心与 skill 移入 `app/src/pico8/shell/`（lab 经 `maker.mjs` 复用同一份代码）；shell 环境、扩展、p8 Worker、D2 提交、D7 路线、D8 开关 | `app/src/pico8/shell/` 新目录；`agent.js` 按 flow 选扩展（懒加载）；App/评测脚本加 flow 入口 | 已通过：`npm test` 150/150、生产构建；S4 两条流程同时复跑；浏览器烟测通过，见下文 |
-| **M3 评测门槛** | 第 6 节矩阵，两条流程同模型同输入 | 只动评测脚本与文档 | 见第 6 节 |
+| **M3 评测门槛（已执行）** | 第 6 节矩阵，两条流程同模型同输入 | 只动评测脚本与文档 | **未全部达标**：S4 新建独立检查 shell 4/5 < frozen 5/5，见下文 |
 | **M4 决策** | 记入 development-status.md：转为默认 / 保持开关 / 放弃 | 文档；转默认需另起评审 | — |
 
 M0 结果（2026-11-14，DeepSeek Flash high）：首个请求逐项核对，系统提示与 coding agent 会话**逐字节相同**；工具定义只差键顺序、工具顺序和两三个词。`read` 能把 `p8 look --png` 的图片作为图像块返回。成绩与 session 循环同档（T6 失败是模型的游戏没过 S4 偏轴路线，不是 harness 问题），归档 `.cache/lab/20261114T0027-5p8a`、`.cache/lab/20261114T0032-ve7i`。结论：**循环不是变量**，换成 pi-durable 不丢效果；第 2 节边界 4 解除。
@@ -115,7 +115,27 @@ DeepSeek Flash high，修正后两条流程同时各跑一次 S4：
 | 修复 | 全部检查通过，54.5 s，18 次调用 | 全部检查通过，112.8 s，27 次调用 |
 | 新建 | 全部检查通过，66.9 s，22 次调用 | 180 s 时限截断（naturalCompletion 失败），独立玩法检查通过，39 次调用 |
 
-归档：`.cache/evaluations/s4-cb70566a-90f2-4b3d-9a1f-97e5b509210c`（shell）、`s4-69c1c6c2-0dcb-4f8a-9256-a4f168797124`（frozen）；修正前的 shell 复跑 `s4-71db22d0-…`（两项独立玩法通过，修复任务 preservedAssets、agentNormalCoverage 失败）。真实浏览器烟测（接水果，`SMOKE_FLOW=shell`）：12 s、6 次调用，提交版本 1，页面无异常，归档 `.cache/evaluations/evaluation-23a9959c-69e4-4cca-afb8-f2f76d06e2ab`。都是单次样本。下一步 M3。
+归档：`.cache/evaluations/s4-cb70566a-90f2-4b3d-9a1f-97e5b509210c`（shell）、`s4-69c1c6c2-0dcb-4f8a-9256-a4f168797124`（frozen）；修正前的 shell 复跑 `s4-71db22d0-…`（两项独立玩法通过，修复任务 preservedAssets、agentNormalCoverage 失败）。真实浏览器烟测（接水果，`SMOKE_FLOW=shell`）：12 s、6 次调用，提交版本 1，页面无异常，归档 `.cache/evaluations/evaluation-23a9959c-69e4-4cca-afb8-f2f76d06e2ab`。都是单次样本。
+
+M3 结果（2026-11-14，DeepSeek Flash，S4 thinking high、案例用 Maker 默认配置；两条流程同时运行）：
+
+| 套件 | shell | frozen |
+| --- | --- | --- |
+| S4 新建 ×5：独立玩法检查 | **4/5** | **5/5** |
+| S4 新建：自然完成（未撞 180 s 时限） | 5/5 | 1/5 |
+| S4 新建：耗时 / 调用 | 51–138 s（中位 103）/ 13–35 | 140–180 s（4 次截断）/ 9–21 |
+| S4 修复 ×5：全部检查 | 5/5 | 5/5 |
+| S4 修复：耗时 / 调用 | 48–97 s（中位 54）/ 12–25 | 80–155 s（中位 99）/ 18–26 |
+| S4 输入+输出 token 中位（新建 / 修复） | 20.5k / 10.6k | 35.1k / 21.1k |
+| Sweet Garden ×2（两轮）：完成、草稿已提交 | 2/2，258 / 481 s，40 / 69 次调用 | 2/2，658 / 804 s，32 / 71 次调用 |
+| Lodge Podge ×2（两轮）：完成、草稿已提交 | 2/2，1361 / 753 s，238 / 96 次调用 | 2/2，905 / 915 s，83 / 63 次调用 |
+
+- **S4 新建门槛未达标（4/5 对 5/5）。** shell 那次失败是画面与状态不一致（`player state/pixels disagree`），和 lab 里出现过的像素契约失败同类，是模型写的游戏问题。另有 1 次独立检查通过，但 agent 自己的覆盖统计缺「失败」：12 条路线窗口仍被不同按键的 `p8 run` 填满。n=5 下 4 对 5 不能说明差异，但按门槛就是没过。
+- **frozen 新建 4/5 撞 180 s 时限**，独立检查仍然通过（提交的版本可玩），`naturalCompletion` 失败；shell 全部自然结束。
+- **案例：** 两条流程 8 次全部完成两轮、草稿已提交。第 6 节要求的「最终版本从正常开局可胜利并重开（独立重放）」**两条流程都没有自动证据**：重放的最长 agent 路线最后一帧都停在游戏中途（Lodge shell 有一次停在标题说明画面）。需要按案例报告的方式人工试玩，本轮没做。shell 在 Garden 上约快一半；Lodge 一次 238 次调用、1361 s，明显离群（read 50、p8 check 41）。shell 第一轮结束时 Garden 的最终版本 normal 路线数为 0（最后一次提交在最后一次 `p8 run` 之后）。
+- **归档：** S4 `.cache/evaluations/s4-248c789b-85ca-4691-958b-3cf6f6aa2ed3`、`s4-f1ce671f-bbd0-4ac4-9135-55b893b43333`、`s4-0c204628-2276-4bd8-b628-d0fa59ec8793`、`s4-16c31b32-5b6a-4941-a026-02e85b623817`、`s4-f1e2903c-2bba-4764-8676-0cce658dfad1`、`s4-dfc45b6c-c08f-4b1c-806c-cf80cab6bce9`、`s4-664455e1-531b-475c-8406-b3e4a9d598da`、`s4-561a4f09-6af4-452d-a35d-d7db1619a058`、`s4-e053a5fa-d0d2-4334-9331-8ac85fc4ef5b`、`s4-c8f7d721-b826-4d8c-9ec0-8c463a544ce5`；案例 `.cache/evaluations/case-sweet-garden-83a72047-cb7a-4f5a-bb89-569686a8bbba`、`case-sweet-garden-22652432-ddb3-4f90-8ab8-218f1fee1040`、`case-sweet-garden-shell-d700b6ba-bf13-424a-a6c3-0d99987ae416`、`case-sweet-garden-shell-92c8e109-1a0a-45c8-9954-1c56a7f68a0b`、`case-lodge-podge-6c1314ba-84a7-4fbe-9c49-ba3546582526`、`case-lodge-podge-c8d821bb-fdaa-44fb-9c95-d2a546813fbb`、`case-lodge-podge-shell-3f49a047-070a-4b93-80ef-7eb0ac54dcfd`、`case-lodge-podge-shell-5c09364e-a1d0-4e19-a185-8c43af27f10f`。
+
+M4 建议：**保持开关、不转默认**。先修两处 shell 侧差距，再复跑 S4 新建 ×5：(1) 路线窗口：只回放改变了 `g.mode` 的 `p8 run`，或把 shell 测试结果直接计入覆盖，而不是挤占 12 条窗口；(2) 交付前证据：最后一次提交之后没有 normal 路线时，在 `Maker:` 行提示。案例的胜利/重开需要人工试玩或补一个通用重放检查。
 
 ## 6. 评测门槛（M3）
 
