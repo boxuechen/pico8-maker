@@ -128,6 +128,33 @@ function _draw() cls(1) if g.inv==0 or g.t%2==0 then rectfill(g.p.x-2,g.p.y-2,g.
   assert.match(by["off screen"].detail, /is off screen/);
 });
 
+test("checks.json `always` judges every pressed frame and `each` every list element", async () => {
+  // Enemies fire every 20 frames from their centre, so a shot covers one enemy's centre for one frame;
+  // a hit sets inv to 21 (one more than the rule allows).
+  const src = `function new_game() g={t=0,inv=0,enemies={{x=32,y=24},{x=64,y=24}},shots={}} end
+function _init() new_game() end
+function _update() g.t+=1 if g.inv>0 then g.inv-=1 end
+ for s in all(g.shots) do s.y+=3 end
+ if g.t%20==0 then add(g.shots,{x=64,y=24}) end
+ if btnp(5) then g.inv=21 end end
+function _draw() cls(0) for e in all(g.enemies) do rectfill(e.x-3,e.y-3,e.x+3,e.y+3,8) end
+ for s in all(g.shots) do circfill(s.x,s.y,1,9) end end`;
+  const cases = [
+    { name: "enemies stay red", press: "wait*30", expect: [{ each: "g.enemies", pixel: ["x", "y"], equals: 8, always: true }] },
+    { name: "enemies red at the end only", press: "wait*30", expect: [{ each: "g.enemies", pixel: ["x", "y"], equals: 8 }] },
+    { name: "inv stays in range", press: "wait*3 x wait*3", expect: [{ path: "g.inv", atMost: 20, always: true }] },
+    { name: "enemy fields", press: "wait", expect: [{ each: "g.enemies", path: "y", equals: 24 }] },
+  ];
+  const by = Object.fromEntries((await checkSource(src, cases)).map((i) => [i.name, i]));
+  assert.equal(by["enemies stay red"].pass, false);
+  assert.match(by["enemies stay red"].detail, /g.enemies\[2\] pixel \["x","y"\]=\(64,24\) is 9, expected 8 after 19 pressed frames \(wait\*30\)/);
+  assert.equal(by["enemies red at the end only"].pass, true, "the end frame alone misses the one-frame overdraw");
+  assert.equal(by["inv stays in range"].pass, false);
+  assert.match(by["inv stays in range"].detail, /g.inv is 21, expected at most 20 after 4 pressed frames \(x\)/);
+  assert.equal(by["enemy fields"].pass, true, by["enemy fields"].detail);
+  assert.match(by["enemy fields"].detail, /each g.enemies \(2\)/);
+});
+
 test("p8 look --crop prints exact pixels and rejects bad rectangles", async () => {
   const { createEnvironment } = await import("../src/env.mjs");
   const env = createEnvironment({ cartFiles: { "main.lua": "function _update() end\nfunction _draw() cls(1) rectfill(10,10,12,11,11) pset(13,10,8) end" }, skillFiles: { "SKILL.md": "x" } });

@@ -70,6 +70,40 @@ function judge(actual, start, e) {
   return null;
 }
 
+// An expectation names a state path, or a screen pixel whose x and y are numbers or paths.
+// With `each` (a path to a list) the path and pixel names are fields of every element.
+const needs = (e) =>
+  e.each ? [e.each] : [...(e.path ? [e.path] : []), ...(Array.isArray(e.pixel) ? e.pixel.filter((v) => typeof v === "string") : [])];
+
+function pixelAt(rt, e, at) {
+  const [x, y] = e.pixel.map(at);
+  if (typeof x !== "number" || typeof y !== "number") return [x, y, null, "has no numeric position"];
+  const colour = rt.pixel(x, y);
+  return [x, y, colour, colour === null ? "is off screen" : judge(colour, undefined, e)];
+}
+
+/** → [label, value, failure or null] for one expectation against read values and the last frame. */
+function evaluate(rt, e, values, start) {
+  if (e.each) {
+    const list = values[e.each];
+    const items = Array.isArray(list) ? list : list && typeof list === "object" ? Object.values(list) : null;
+    if (!items) return [`each ${e.each}`, list, "is not a list"];
+    for (const [i, item] of items.entries()) {
+      const field = (k) => (typeof k === "string" ? item?.[k] : k);
+      if (Array.isArray(e.pixel)) {
+        const [x, y, colour, fail] = pixelAt(rt, e, field);
+        if (fail) return [`${e.each}[${i + 1}] pixel ${JSON.stringify(e.pixel)}=(${show(x)},${show(y)})`, colour, fail];
+      } else {
+        const fail = judge(item?.[e.path], undefined, e);
+        if (fail) return [`${e.each}[${i + 1}].${e.path}`, item?.[e.path], fail];
+      }
+    }
+    return [`each ${e.each} (${items.length})`, "ok", null];
+  }
+  if (!Array.isArray(e.pixel)) return [e.path, values[e.path], judge(values[e.path], start[e.path], e)];
+  const [x, y, colour, fail] = pixelAt(rt, e, (v) => (typeof v === "string" ? values[v] : v));
+  return [`pixel ${JSON.stringify(e.pixel)}=(${show(x)},${show(y)})`, colour, fail];
+}
 
 async function boot(source, assets) {
   const rt = new Runtime(assets);
@@ -89,31 +123,40 @@ export async function runCase(source, c, assets) {
       const s = await rt.setup(c.setup);
       if (!s.ok) return { pass: false, detail: `setup failed: ${s.message}` };
     }
-    // An expectation names a state path, or a screen pixel whose x and y are numbers or paths.
-    const pixelPaths = (c.expect ?? []).flatMap((e) => (Array.isArray(e.pixel) ? e.pixel.filter((v) => typeof v === "string") : []));
-    const paths = (c.expect ?? []).filter((e) => e.path).map((e) => e.path);
+    const expects = c.expect ?? [];
+    const paths = expects.filter((e) => e.path && !e.each).map((e) => e.path);
     const start = await rt.read(paths.length ? paths : ["g.mode"]);
     let mode = (await rt.read(["g.mode"]))["g.mode"];
     const modes = [];
+    // `always` expectations are judged after every pressed frame; the first broken frame is reported.
+    const always = expects.filter((e) => e.always);
+    const alwaysPaths = [...new Set(always.flatMap(needs))];
+    const broken = new Map();
+    let pressed = 0;
     for (const step of parsePress(c.press)) {
       const r = await rt.advance(step.bits, step.frames, async (frame) => {
+        pressed++;
         const now = (await rt.read(["g.mode"]))["g.mode"];
         if (now !== mode) modes.push(`${mode}→${now} at frame ${frame}`), (mode = now);
+        const pending = always.filter((e) => !broken.has(e));
+        if (!pending.length) return;
+        const values = alwaysPaths.length ? await rt.read(alwaysPaths) : {};
+        for (const e of pending) {
+          const [label, , fail] = evaluate(rt, e, values, start);
+          if (fail) broken.set(e, `${label} ${fail} after ${pressed} pressed frames (${step.label})`);
+        }
       });
       if (r.fault) return { pass: false, detail: `fault: ${r.fault.map((d) => explainFault(d, source)).join("; ")}` };
     }
-    const wanted = [...new Set([...paths, ...pixelPaths])];
+    const wanted = [...new Set(expects.flatMap(needs))];
     const values = wanted.length ? await rt.read(wanted) : {};
-    const results = c.expect.map((e) => {
-      if (!Array.isArray(e.pixel)) return [e.path, values[e.path], judge(values[e.path], start[e.path], e)];
-      const [x, y] = e.pixel.map((v) => (typeof v === "string" ? values[v] : v));
-      const label = `pixel ${JSON.stringify(e.pixel)}=(${show(x)},${show(y)})`;
-      if (typeof x !== "number" || typeof y !== "number") return [label, null, "has no numeric position"];
-      const colour = rt.pixel(x, y);
-      return [label, colour, colour === null ? "is off screen" : judge(colour, undefined, e)];
+    const results = expects.map((e) => {
+      if (broken.has(e)) return [null, null, broken.get(e)];
+      const [label, value, fail] = evaluate(rt, e, values, start);
+      return [label, value, fail && `${label} ${fail}`];
     });
     const fails = results.filter(([, , f]) => f);
-    const facts = fails.length ? fails.map(([p, , f]) => `${p} ${f}`) : results.map(([p, v]) => `${p}=${show(v)}`);
+    const facts = fails.length ? fails.map(([, , f]) => f) : results.map(([p, v]) => `${p}=${show(v)}`);
     return { pass: !fails.length, detail: [...facts, ...(modes.length ? [`mode ${modes.join(", ")}`] : [])].join("; ") };
   } finally {
     await rt.dispose();

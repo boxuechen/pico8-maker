@@ -105,7 +105,7 @@
 - **P2-8 资源即文件（2026-11-14）：** `/cart` 下 `gfx.txt`、`gff.txt`、`map.txt`、`sfx.txt`、`music.txt`，就是 .p8 各段的文本格式（`shell/resource-files.js`：导出、严格校验——行数/长度/十六进制错误带文件和行号、按段覆盖）。Maker 侧与草稿双向同步：每次操作前后同步，只在草稿资源被别处改动（撤销、别的会话）或文件被删时重写，所以模型写坏的文件会留着由 p8 报错，而不是被覆盖；新卡带一开始就把音效库写进 sfx 0-7。p8 每条命令都读这些文件（坏文件直接报错、不运行），新增 `p8 sheet --png`（精灵表 4x 带网格）、`p8 map x,y,w,h --png`、`p8 sfx <id>`（用文字描述音符）。删除 `read_assets`/`edit_assets` 工具、`Game.readAssets/editAssets` 和对应界面标签；`reference/asset-authoring.md` 改写为文件格式说明（精灵坐标、flag 位、地图单元、sfx 头与音符、music 标志），SKILL.md 与 host 规则同步。lab 任务也带资源文件，评分使用最终资源；新增 T9（不改 main.lua，只在 gfx/gff 里画一个金币并设 flag，隐藏用例查像素与 `fget`）。mock 模型的资源动作改成整文件写入。
 - **P2-8 验收：** S4 ×5 新建 5/5、修复 5/5（中位 101 / 39 s）；lab T1–T9 9/9（T9 15 s，模型用 sed 改 gfx.txt/gff.txt）；主界面烟测 v1、147 s，模型用 `p8 sfx` 和读 sfx.txt 核对音效；案例各 1 次：Lodge Podge 两轮 382 + 376 s 完成，Sweet Garden 第一轮撞 900 s 时限（80 次调用，已提交 r1）、第二轮 612 s 完成。两个案例都主要用图形函数作画，资源文件操作每轮只有个位数，Garden 变慢不来自资源文件；是否稳定变慢需要更多样本。单测 app 91/91、lab 14/14、`test:s4` 11/11。归档：S4 `.cache/evaluations/s4-1fb9d72d-7da4-4250-a4ac-1f870cd10c07`、`s4-4ea6d57c-f7b1-4b1a-971d-e871deb63e89`、`s4-e482443a-8057-49b6-84fd-9a3b65fd7dfe`、`s4-10f0dd16-466d-483b-bebc-774e2e1bdf49`、`s4-c599b9b7-6eaf-4d11-9a5a-3d1f9ff6bcb0`；lab `.cache/lab/20261114T0728-ng4v`；案例 `.cache/evaluations/case-sweet-garden-5afda7aa-b2f5-46a6-ae2b-e9e459f6dd50`、`case-lodge-podge-2d5a5590-d5d8-44db-80d5-266e8b6123f8`。
 
-## 5. P3：评测与工程（P3-4 评测待补）
+## 5. P3：评测与工程（已完成）
 
 - **评测分层：** lab T1–T7（约 2 分钟，每次改 skill 或 p8 都跑）→ S4 ×5（约 6 分钟，每次改面向模型的行为都跑）→ 案例 ×2 + 人工试玩（大改时跑）→ `app-smoke`（改 UI 或环境时跑）。所有结果记在 `development-status.md`，失败保留。
 - **案例的通用重放检查：** 用 agent 记录的最长 normal 路线在新会话重放，读取 `g.mode`（有的话）判断胜负/重开，替代纯看截图。
@@ -120,10 +120,15 @@
 
 - **P3-3 预取（2026-11-14）：** 页面空闲时（`requestIdleCallback`，最多 5 s）加载 shell 分块（1.4 MB，gzip 410 KB）并预热一个 p8 Worker（含播放器模块和 wasm）；第一个会话直接接管它，随后再预热一个。主界面烟测新增 `firstStepMs`（点击发送到出现第一个工具步骤）和 `SMOKE_IDLE_MS`（发送前等待，模拟用户输入）。本机 dev server 上：不等待 1350 ms，等待 8 s 后 1128 ms——本地加载本来就快，差约 0.2 s；收益主要在慢网络，尚未实测。just-bash 命令裁剪没有做（它的浏览器包是单文件，按命令裁剪需要改打包方式，收益待评估）。
 
-- **P3-4 纯文本模型（2026-11-14，实现完成，评测未完成）：** 模型目录改为列出所有支持文本的模型（如 `deepseek-v4-pro` 只支持文本，此前被过滤掉）；连接测试对纯文本模型用文字描述颜色，工具调用往返不变。Agent 按所选模型的 `input` 判断：纯文本时 host 规则追加一句（看不到图片，不写也不打开 PNG，用 `p8 look` 字符画、`--crop` 和 `--read` 判断画面，「已验证」里注明画面是按字符画检查的），并且请求里所有工具结果图片换成文字说明（`textOnlyImages`），而不是让 pi-ai 发「(see attached image)」。lab 的 durable 循环同样处理。`eval:tier` 新增 `--s4-time-ms` 和 `--parallel`。
+- **P3-4 纯文本模型（2026-11-14）：** 模型目录改为列出所有支持文本的模型（如 `deepseek-v4-pro` 只支持文本，此前被过滤掉）；连接测试对纯文本模型用文字描述颜色，工具调用往返不变。Agent 按所选模型的 `input` 判断：纯文本时 host 规则追加一句（看不到图片，不写也不打开 PNG，用 `p8 look` 字符画、`--crop` 和 `--read` 判断画面，「已验证」里注明画面是按字符画检查的），并且请求里所有工具结果图片换成文字说明（`textOnlyImages`），而不是让 pi-ai 发「(see attached image)」。lab 的 durable 循环同样处理。`eval:tier` 新增 `--s4-time-ms` 和 `--parallel`。
   - **已有证据（deepseek-v4-pro）：** 主界面烟测通过（v1，147 s，17 次调用，没有读过 PNG，回复写明「Visual checks from text pictures」，胜利和失败都用按键玩过）；lab T1–T9 9/9（第一轮，397 s）；S4 修复独立检查 5/5（180 s 时限）。S4 新建在 180 s 时限下 0/5，全部超时——v4-pro 明显慢于 flash。
-  - **未完成：** 把时限放宽到 600 s 复跑时，DeepSeek 账户先报 429（「concurrency limit of 8 based on your remaining balance」），随后报 402「Insufficient Balance」，结果被限流污染（新建 1/5、修复 5/5 但多数未正常结束），不能作为结论。需要充值后用 `npm run eval:tier -- --tier agent --model deepseek-v4-pro --s4-time-ms 600000 --parallel 5` 重跑。
+  - **充值后复跑（600 s 时限，`--parallel 5`）：** lab 8/9（T6 像素不一致）、修复 5/5（中位 235 s）、新建 3/5（中位 436 s，1 次撞 40 次工具上限）。失败都在 oracle 的 `stateAndPixels`：敌弹在敌人中心生成、每 60 帧有一帧盖住敌人中心像素；`inv=21` 的补偿写法让致命一击那帧 inv=21。都是只在个别帧出现的偏差，按键结束时判一次的 checks 抓不到。
+  - 直接探测 DeepSeek API：`deepseek-flash` 能识别图片颜色；`deepseek-v4-pro` 不报错，但服务端把图片替换成「[Unsupported Image]」——v4-pro 仍是纯文本，继续走本节的纯文本路径。
   - 自定义端点仍按支持图片处理（设置里没有「仅文本」开关），留作后续。
+
+- **P3-5 每帧不变量（2026-11-14）：** `checks.json` 期望新增 `"always": true`（每个按键帧后都判，报告第一帧违例：`… is 9, expected 8 after 19 pressed frames (wait*30)`）和 `"each": "g.enemies"`（对列表每个元素判，`path`/`pixel` 写元素字段名，如 `"pixel":["x","y"]`）。SKILL.md 第 2 步和 playtest.md 说明用途（画面与状态每帧一致、计时器范围）。lab 单测复现了上面两种单帧故障。
+  - **评测：** flash lab 9/9、新建 5/5（中位 91 s，模型自发写了 `each`+`always` 的敌人颜色和 x 范围不变量）、修复独立 5/5（全部检查 3/5：2 次失败路线只用 --setup 验证，修复任务不写 checks，与本改动无关）。v4-pro lab 8/9、修复 5/5（中位 172 s）、新建独立 4/5（此前 3/5，像素类失败消失；剩 1 次是致命一击不设 inv=20 的语义分歧），但 2 次游戏已正确却撞 600 s 时限——v4-pro 首次成功加载在 200–509 s、单次输出 3–6 万 token。
+  - **结论：** v4-pro 比 flash 慢约 5 倍、质量不更高，保持 flash 为默认；v4-pro 作为纯文本可选模型可用，评测需 900 s 时限。
 
 ## 6. 建议顺序
 

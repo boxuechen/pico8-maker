@@ -36,11 +36,15 @@ Runs Lua after boot (after `_init`) and before the presses. Use it to reach a wi
  {"name":"last life lost loses","setup":"g.lives=1 g.fish={{x=10,y=126,vy=1}}","press":"wait*3","expect":[{"path":"g.mode","equals":"lose"}]},
  {"name":"x restarts","setup":"g.mode='lose' g.wait=20","press":"x wait","expect":[{"path":"g.mode","equals":"play"},{"path":"g.lives","equals":3}]},
  {"name":"right moves","press":"right*10","expect":[{"path":"g.player.x","changes":true}]},
- {"name":"player stays green when hit","setup":"g.inv=30","press":"wait*7","expect":[{"pixel":["g.player.x","g.player.y"],"equals":11}]}
+ {"name":"player stays green when hit","setup":"g.inv=30","press":"wait*7","expect":[{"pixel":["g.player.x","g.player.y"],"equals":11}]},
+ {"name":"enemies drawn red on every frame","press":"left+o*90","expect":[{"each":"g.enemies","pixel":["x","y"],"equals":8,"always":true}]},
+ {"name":"invincibility never exceeds 20","setup":"g.player.hp=1","press":"wait*200","expect":[{"path":"g.player.inv","atMost":20,"always":true}]}
 ]}
 ```
 
 Each case boots fresh, runs `setup` (optional), then `press`, then compares. Expectations: `equals`, `notEquals`, `atLeast`, `atMost`, `changes` (true/false compared with the value right after setup). `equals: null` means the value is nil. `pixel: [x, y]` checks the screen colour (0-15) at a point of the last frame instead of a path; x and y are numbers or paths such as `"g.player.x"`. Use pixel cases for rules about what is drawn (a colour that must not change, an object that must stay visible); check a few different frames (`wait*6`, `wait*7`) when something could flicker. Keep cases short (a few frames after setup) so they stay exact.
+
+`"always": true` judges the expectation after every pressed frame and reports the first frame that breaks it — use it for rules that must hold all the time (an object drawn in its colour, a timer within its range), since a one-frame fault (a shot drawn over an enemy as it fires, a timer one too high on the frame it is set) is easy to miss at the end of a press. `"each": "g.enemies"` applies the expectation to every element of a list; its `path` and `pixel` names are fields of the element (`"pixel":["x","y"]`, `"path":"y"`).
 
 ## What to check
 
