@@ -2,13 +2,23 @@
 
 ## Layers
 
-`DEEPSEEK_API_KEY=... npm run eval:tier -- --tier quick|agent|full [--model deepseek-flash] [--repeat 5]` runs the layers in parallel and prints one summary (logs under `.cache/evaluations/tier-*`):
+`DEEPSEEK_API_KEY=... npm run eval:tier -- --tier quick|agent|turns|full [--model deepseek-flash] [--repeat 5] [--parallel N] [--s4-time-ms N]` runs the layers in parallel and prints one summary (logs under `.cache/evaluations/tier-*`):
 
 | Tier | Runs | When |
 | --- | --- | --- |
 | quick | lab T1–T9 (`lab/local-agent`, about 2–3 min) | every skill or p8 change |
 | agent | quick + S4 ×N (create and repair, about 6–10 min) | every agent-facing change (startup text, skill, p8 output, tools) |
-| full | agent + Garden and Lodge reruns + app smoke (about 30 min) | large changes; then play the case results by hand |
+| turns | multi-turn suites only (about 5–10 min): `edits` ×N and `snake`, `meteor`, `paint` once | changes to editing, versions, routes or checks |
+| full | agent + turns + Garden and Lodge reruns + app smoke (about 30 min) | large changes; then play the case results by hand |
+
+## Multi-turn suites
+
+`node scripts/evaluation/run-turns.mjs --case edits|snake|meteor|paint [--model ...]` runs one conversation with the production Agent (`conversation.mjs`, shared with `run-case.mjs`; `TURN_TIME_LIMIT_MS`, default 10 min per turn). Cases are in `turn-cases.mjs`:
+
+- `edits` starts from a fixed fruit-catch game (version 1) and asks for four follow-ups: a streak bonus, double fall speed, new colours, a pause on X. After every turn the cart is scored with hidden `checks.json` cases for that request, every earlier one and the base rules, using only names the base game has. `tests/turn-cases.test.mjs` keeps the checks honest: each turn's reference solution passes them, the previous turn's cart fails the new ones (`guard` cases catch wrong changes, such as a streak that never resets).
+- `snake`, `meteor`, `paint` are one-line requests plus one follow-up, scored generically (lint, boot, input), with a result replay of the Agent's normal routes and a screenshot per turn (`turn-N.png`, after 90 idle frames) for review.
+
+Each turn also reports the versions it made (one per request is expected). Archives: `.cache/evaluations/turns-<case>-<id>/`.
 
 Record results, failures included, in docs/development-status.md.
 

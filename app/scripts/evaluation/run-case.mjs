@@ -7,19 +7,11 @@
 //
 // The key is read from the environment only and redacted from the archive.
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { BACKGROUND_CONTEXT as context } from "@earendil-works/chord/context";
-import { Agent } from "../../src/agent.js";
-import { newCart } from "../../src/cart-store.js";
-import { activeSession, sessionContext } from "../../src/sessions.js";
-import { emptySnapshot } from "../../src/pico8/assets.js";
 import { cartBytes, cartText } from "../../src/pico8/cart.js";
 import { defaultConfig } from "../../src/model-config.js";
 import { inputPlan } from "../../src/pico8/input-sequence.js";
-import { revisionCoverage } from "../../src/pico8/playtests.js";
 import { createPico8Session } from "../../public/player/main/player.mjs";
-import { EvaluationGame } from "./node-game.mjs";
-import { startNodeP8Worker } from "./p8-worker-node.mjs";
-import { outcomeMetrics } from "./outcome-metrics.mjs";
+import { runConversation } from "./conversation.mjs";
 import { png } from "./png.mjs";
 import { resultReplay } from "./result-replay.mjs";
 
@@ -66,45 +58,6 @@ const redact = (value) =>
   );
 const log = (...a) => console.log(new Date().toISOString().slice(11, 19), ...a);
 
-const cart = newCart({
-  title: `${spec.slug} rerun`,
-  workingDraft: emptySnapshot(),
-});
-const session = activeSession(cart);
-let firstPlayableMs, turnStarted;
-const revisions = [];
-const game = new EvaluationGame({
-  versions: [],
-  draft: cart.workingDraft,
-  onDraft: (d) => {
-    cart.workingDraft = d;
-    cart.contentVersion++;
-  },
-  onSave: (versions, revision) => {
-    cart.versions = versions;
-    cart.revision = revision;
-    cart.contentVersion++;
-    firstPlayableMs ??= Math.round(performance.now() - turnStarted);
-    revisions.push({ revision, at: new Date().toISOString() });
-    log(`commit r${revision}`);
-  },
-});
-game.playtests.onChange = (runs) => {
-  cart.playtests = runs;
-};
-let lastCount = 0;
-const agent = new Agent(
-  game,
-  (_view, all) => {
-    const n = outcomeMetrics(all).toolCalls;
-    if (n !== lastCount && n % 10 === 0) log(`${n} tool calls`);
-    lastCount = n;
-  },
-  {
-    projectContext: () => sessionContext(cart, session),
-    startP8: startNodeP8Worker,
-  },
-);
 const report = {
   schemaVersion: 1,
   suite: `${spec.slug}-case-rerun`,
@@ -118,71 +71,21 @@ const report = {
   limits: { millisecondsPerTurn, toolCalls: null },
   runs: [],
 };
-const entries = async () =>
-  (await agent.root.entries({ order: "ascending" }, 5000, undefined, context))
-    .items;
-
-await agent.open();
-await agent.configure({ ...config, apiKey });
-for (const [i, prompt] of spec.prompts.entries()) {
-  const before = (await entries()).length;
-  turnStarted = performance.now();
-  firstPlayableMs = undefined;
-  log(`turn ${i + 1} start`);
-  let timedOut = false,
-    settled,
-    error;
-  const timer = setTimeout(() => {
-    timedOut = true;
-    void agent.abort();
-  }, millisecondsPerTurn);
-  try {
-    settled = await agent.send(prompt);
-  } catch (e) {
-    error = String(e.message).replaceAll(apiKey, "[REDACTED]");
-  } finally {
-    clearTimeout(timer);
-  }
-  const all = await entries();
-  const turn = all.slice(before);
-  const metrics = outcomeMetrics(turn);
-  const finalText = turn
-    .flatMap((e) => e.model ?? [])
-    .filter((m) => m.role === "assistant")
-    .flatMap((m) => (Array.isArray(m.content) ? m.content : []))
-    .filter((p) => p.type === "text")
-    .map((p) => p.text)
-    .at(-1);
-  const run = {
-    id: `turn-${i + 1}`,
-    prompt,
-    status: timedOut ? "time_limit" : error ? "error" : settled?.status,
-    error,
-    elapsedMs: Math.round(performance.now() - turnStarted),
-    firstPlayableMs: firstPlayableMs ?? null,
-    revision: game.revision,
-    draftDirty: game.cartStatus().draftDirty,
-    coverage: revisionCoverage(game.playtests.runs, game.revision),
-    metrics,
-    finalText,
-    after: structuredClone(game.snapshot),
-    entries: turn,
-  };
-  report.runs.push(run);
-  session.lastContentVersion = cart.contentVersion;
-  log(
-    `turn ${i + 1} ${run.status} ${Math.round(run.elapsedMs / 1000)}s ${metrics.toolCalls} tools`,
-  );
-  await writeFile(
-    new URL("report.json", out),
-    redact({ ...report, playtests: game.playtests.runs, revisions }),
-  );
-  await writeFile(new URL(`turn-${i + 1}.p8`, out), cartText(game.snapshot));
-}
-report.playtests = structuredClone(game.playtests.runs);
-report.revisions = revisions;
-await agent.dispose({ preserveGame: true });
-await game.dispose();
+const result = await runConversation({
+  title: `${spec.slug} rerun`,
+  prompts: spec.prompts,
+  config,
+  apiKey,
+  millisecondsPerTurn,
+  log,
+  afterTurn: async (run, game) => {
+    report.runs.push(run);
+    await writeFile(new URL("report.json", out), redact({ ...report, playtests: game.playtests.runs }));
+    await writeFile(new URL(`${run.id}.p8`, out), cartText(run.after));
+  },
+});
+report.playtests = result.playtests;
+report.revisions = result.revisions;
 
 // Replay the longest normal-input route the Agent recorded on the final
 // revision in a fresh session, keeping every call-end frame for review.

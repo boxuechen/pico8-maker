@@ -2,7 +2,9 @@
 // Layered evaluation in one command (real provider requests; DeepSeek models):
 //   quick  lab T1–T9 (about 2 min)            every skill or p8 change
 //   agent  quick + S4 ×N (about 6–10 min)     every agent-facing change
-//   full   agent + Garden/Lodge reruns + app smoke (about 30 min)   large changes
+//   turns  multi-turn suites only: follow-up edits and asset edits ×N with hidden checks, and
+//          one-line requests (snake, meteor, paint) + a follow-up (about 5–10 min)
+//   full   agent + turns + Garden/Lodge reruns + app smoke (about 30 min)   large changes
 //
 //   DEEPSEEK_API_KEY=... node scripts/evaluation/eval-tier.mjs --tier agent [--model deepseek-flash] [--repeat 5] [--s4-time-ms 600000] [--parallel 3]
 //
@@ -28,10 +30,11 @@ const { values: a } = parseArgs({
   },
 });
 const tiers = ["quick", "agent", "full"];
-if (!tiers.includes(a.tier)) throw new Error("--tier quick|agent|full");
+const turnsOnly = a.tier === "turns";
+if (!tiers.includes(a.tier) && !turnsOnly) throw new Error("--tier quick|agent|turns|full");
 const key = process.env.DEEPSEEK_API_KEY;
 if (!key) throw new Error("set DEEPSEEK_API_KEY");
-const level = tiers.indexOf(a.tier);
+const level = turnsOnly ? -1 : tiers.indexOf(a.tier);
 const APP = new URL("../../", import.meta.url).pathname;
 const LAB = new URL("../../../lab/local-agent/", import.meta.url).pathname;
 const id = new Date().toISOString().replace(/[-:]/g, "").slice(0, 13) + "-" + Math.random().toString(36).slice(2, 6);
@@ -40,7 +43,7 @@ mkdirSync(out, { recursive: true });
 const matrix = join(out, "matrix.json");
 writeFileSync(matrix, JSON.stringify({ schemaVersion: 1, models: [{ id: a.model, family: "DeepSeek", provider: "deepseek", model: a.model, baseUrl: "https://api.deepseek.com", apiKeyEnv: "DEEPSEEK_API_KEY", thinkingLevel: a.thinking }] }));
 
-const env = { ...process.env, ...(a["s4-time-ms"] ? { S4_TIME_LIMIT_MS: a["s4-time-ms"] } : {}), S4_DEEPSEEK_KEY: key, SMOKE_DEEPSEEK_KEY: key, SMOKE_MODEL: a.model, SMOKE_CHROME_NO_SANDBOX: process.env.SMOKE_CHROME_NO_SANDBOX ?? "1" };
+const env = { ...process.env, ...(a["s4-time-ms"] ? { S4_TIME_LIMIT_MS: a["s4-time-ms"], TURN_TIME_LIMIT_MS: a["s4-time-ms"] } : {}), S4_DEEPSEEK_KEY: key, SMOKE_DEEPSEEK_KEY: key, SMOKE_MODEL: a.model, SMOKE_CHROME_NO_SANDBOX: process.env.SMOKE_CHROME_NO_SANDBOX ?? "1" };
 const run = (name, cwd, args, extra = {}) =>
   new Promise((resolve) => {
     const log = join(out, `${name}.log`);
@@ -60,23 +63,31 @@ const labJob = () => run("lab", LAB, ["bin/eval.mjs", "--loop", "durable", "--p8
 const later = [];
 if (level >= 1)
   for (let i = 1; i <= Number(a.repeat); i++) later.push(() => run(`s4-${i}`, APP, ["scripts/evaluation/run-s4.mjs", "--run", "--matrix", matrix]));
+if (level >= 2 || turnsOnly) {
+  for (const c of ["edits", "assets"])
+    for (let i = 1; i <= Number(a.repeat); i++) later.push(() => run(`turns-${c}-${i}`, APP, ["scripts/evaluation/run-turns.mjs", "--case", c, "--model", a.model]));
+  for (const c of ["snake", "meteor", "paint"]) later.push(() => run(`turns-${c}`, APP, ["scripts/evaluation/run-turns.mjs", "--case", c, "--model", a.model]));
+}
 if (level >= 2) {
   for (const c of ["garden", "lodge"]) later.push(() => run(`case-${c}`, APP, ["scripts/evaluation/run-case.mjs", "--case", c, "--model", a.model]));
   later.push(() => run("app-smoke", APP, ["scripts/evaluation/app-smoke.mjs"]));
 }
 let results;
-if (!limit) results = await Promise.all([labJob(), ...later.map((f) => f())]);
+const first = turnsOnly ? [] : [labJob()];
+if (!limit) results = await Promise.all([...first, ...later.map((f) => f())]);
 else {
-  results = [await labJob()];
+  results = await Promise.all(first);
   for (let i = 0; i < later.length; i += limit) results.push(...(await Promise.all(later.slice(i, i + limit).map((f) => f()))));
 }
 
 const lines = [`# tier ${a.tier} · deepseek/${a.model} · thinking ${a.thinking}${a["s4-time-ms"] ? ` · S4 limit ${a["s4-time-ms"]} ms` : ""} · ${id}`, ""];
 const lab = results.find((r) => r.name === "lab");
-const labRows = lab.text.split("\n").filter((l) => /^\| T\d/.test(l));
-const labPass = labRows.filter((l) => l.split("|")[3].trim() === "✓").length;
-lines.push(`lab: ${labPass}/${labRows.length} (${lab.seconds} s)` + (labRows.length ? "" : ` — exit ${lab.code}, see lab.log`));
-for (const l of labRows) if (l.split("|")[3].trim() !== "✓") lines.push(`  failed ${l.slice(0, 160)}`);
+if (lab) {
+  const labRows = lab.text.split("\n").filter((l) => /^\| T\d/.test(l));
+  const labPass = labRows.filter((l) => l.split("|")[3].trim() === "✓").length;
+  lines.push(`lab: ${labPass}/${labRows.length} (${lab.seconds} s)` + (labRows.length ? "" : ` — exit ${lab.code}, see lab.log`));
+  for (const l of labRows) if (l.split("|")[3].trim() !== "✓") lines.push(`  failed ${l.slice(0, 160)}`);
+}
 const s4 = {};
 for (const r of results.filter((r) => r.name.startsWith("s4-")))
   for (const line of r.text.split("\n").filter((l) => l.startsWith("{"))) {
@@ -91,6 +102,30 @@ for (const r of results.filter((r) => r.name.startsWith("s4-")))
 const median = (v) => [...v].sort((x, y) => x - y)[Math.floor(v.length / 2)];
 for (const [task, t] of Object.entries(s4))
   lines.push(`S4 ${task}: independent ${t.independent}/${t.n}, all checks ${t.all}/${t.n}, median ${median(t.seconds)} s${t.errors ? `, ${t.errors} not done` : ""}`);
+// Multi-turn suites: per turn pass/checks, seconds and versions made (one per request).
+const turnRows = results.filter((r) => r.name.startsWith("turns-"));
+for (const r of turnRows) {
+  const last = r.text.trim().split("\n").at(-1);
+  let j = null;
+  try {
+    j = JSON.parse(last);
+  } catch {}
+  if (!j) {
+    lines.push(`${r.name}: exit ${r.code}, see ${r.name}.log`);
+    continue;
+  }
+  const cell = (t) => `${t.pass ? "✓" : "✗"}${t.checks} ${t.seconds}s${t.newVersions === 1 ? "" : ` v+${t.newVersions}`}${t.status === "done" ? "" : ` ${t.status}`}`;
+  lines.push(`${r.name}: ${j.turns.map(cell).join(" | ")}`);
+  for (const [i, t] of j.turns.entries()) if (t.failed.length) lines.push(`  turn ${i + 1} failed: ${t.failed.join("; ")}`);
+  if (!/^turns-(edits|assets)/.test(r.name)) lines.push(`  replay: ${j.turns.map((t) => t.replay).join(" | ")} · ${j.archive}`);
+}
+for (const suite of ["edits", "assets"]) {
+  const done = turnRows.filter((r) => r.name.startsWith(`turns-${suite}-`)).map((r) => { try { return JSON.parse(r.text.trim().split("\n").at(-1)); } catch { return null; } }).filter(Boolean);
+  if (!done.length) continue;
+  const n = Math.max(...done.map((j) => j.turns.length));
+  const perTurn = Array.from({ length: n }, (_, i) => done.filter((j) => j.turns[i]?.pass).length);
+  lines.push(`${suite}: per turn ${perTurn.map((p) => `${p}/${done.length}`).join(", ")}; all turns ${done.filter((j) => j.turns.length === n && j.turns.every((t) => t.pass)).length}/${done.length}`);
+}
 for (const r of results.filter((r) => r.name.startsWith("case-"))) {
   const archive = /archive (\S+)/.exec(r.text)?.[1];
   let detail = `exit ${r.code}`;
