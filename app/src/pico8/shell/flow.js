@@ -12,7 +12,8 @@ export async function openShellFlow({ game, knowledge, startP8 }) {
     startP8 ??
     (async (files) => {
       const { startBrowserP8Worker } = await import("./p8-client.js");
-      return startBrowserP8Worker({ playerUrl: playerUrl(), skillFiles: files });
+      // Game.mount sets game.url first thing; the same player module serves p8.
+      return startBrowserP8Worker({ playerUrl: game.url ?? playerUrl(), skillFiles: files });
     });
   const worker = await start(skillFiles);
   try {

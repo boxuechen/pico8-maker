@@ -1,10 +1,11 @@
-// Real-browser end-to-end smoke for the frozen agent flow: dev server, headless
+// Real-browser end-to-end smoke for the agent flow (frozen by default): dev server, headless
 // Chrome, the production Game (browser Worker, canvas PNG) and Agent driven
 // through the case-study page with a real provider. The key is read from the
 // environment, written only into the temporary Chrome profile, and redacted
 // from the archive by the page itself.
 //
 //   SMOKE_DEEPSEEK_KEY=... node scripts/evaluation/browser-smoke.mjs
+//   SMOKE_FLOW=shell ... runs the opt-in shell flow instead of the frozen one.
 //   SMOKE_MODEL_CONFIG='{"provider":"custom",...}' node scripts/evaluation/browser-smoke.mjs
 // SMOKE_MODEL_CONFIG replaces the default DeepSeek configuration (for local models).
 import { spawn } from "node:child_process";
@@ -89,7 +90,7 @@ try {
     `localStorage.setItem("pico-demo-model", ${JSON.stringify(JSON.stringify(modelConfig))}); true`,
   );
   await cdp.command("Page.navigate", {
-    url: origin + "/scripts/evaluation/case-study.html",
+    url: origin + "/scripts/evaluation/case-study.html" + (process.env.SMOKE_FLOW === "shell" ? "?flow=shell" : ""),
   });
   for (let i = 0; ; i++) {
     const status = await evaluate(

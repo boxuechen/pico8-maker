@@ -83,7 +83,7 @@ try {
     const metrics = transcriptMetrics(all.slice(turnStart));
     if (busy) $("status").textContent = `创作中 · ${Math.round((performance.now() - startTime) / 1000)}s · ${metrics.tools} tools · ${metrics.operations.at(-1) ?? "thinking"}`;
     if (metrics.finalText) $("response").textContent = metrics.finalText;
-  }, { projectContext: () => sessionContext(cart, session) });
+  }, { projectContext: () => sessionContext(cart, session), flow: new URLSearchParams(location.search).get("flow") === "shell" ? "shell" : "frozen" });
   await agent.open();
   if (config.apiKey) await agent.configure(config);
   await archive();

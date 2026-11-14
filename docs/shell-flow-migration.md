@@ -91,13 +91,31 @@ Agent (app/src/agent.js, 不变)
 | --- | --- | --- | --- |
 | **M0 lab 对齐（已完成）** | lab 增加 `--loop durable`：pi-durable Harness + 它自带的 CodingTools + just-bash ExecutionEnv，系统提示用 coding agent 生成的原文 | 只动 `lab/` | 已通过：T1–T5 5/5，T6 3/4，T7 4/4，与 session 循环同档，见下文 |
 | **M1 p8 跨线程（已完成）** | `remoteP8` / `p8Host` / Worker 入口；`createEnvironment({ p8 })` | 只动 `lab/` | 已通过：进程内与 worker 线程输出、退出码、文件逐字节一致；durable 循环 + worker p8 跑 T1–T7 7/7 |
-| **M2 Maker 接入** | `createShellExtension`、ShellEnv、p8 走 `game.rpc`、D2 提交、D7 路线、D8 开关 | `app/src/pico8/` 新文件；`agent.js` 只加按 flow 选扩展 | `npm test` 全绿；冻结流程的 S4 复跑结果不变；shell 流程手动烟测通过 |
+| **M2 Maker 接入（已完成）** | p8 核心与 skill 移入 `app/src/pico8/shell/`（lab 经 `maker.mjs` 复用同一份代码）；shell 环境、扩展、p8 Worker、D2 提交、D7 路线、D8 开关 | `app/src/pico8/shell/` 新目录；`agent.js` 按 flow 选扩展（懒加载）；App/评测脚本加 flow 入口 | 已通过：`npm test` 150/150、生产构建；S4 两条流程同时复跑；浏览器烟测通过，见下文 |
 | **M3 评测门槛** | 第 6 节矩阵，两条流程同模型同输入 | 只动评测脚本与文档 | 见第 6 节 |
 | **M4 决策** | 记入 development-status.md：转为默认 / 保持开关 / 放弃 | 文档；转默认需另起评审 | — |
 
 M0 结果（2026-11-14，DeepSeek Flash high）：首个请求逐项核对，系统提示与 coding agent 会话**逐字节相同**；工具定义只差键顺序、工具顺序和两三个词。`read` 能把 `p8 look --png` 的图片作为图像块返回。成绩与 session 循环同档（T6 失败是模型的游戏没过 S4 偏轴路线，不是 harness 问题），归档 `.cache/lab/20261114T0027-5p8a`、`.cache/lab/20261114T0032-ve7i`。结论：**循环不是变量**，换成 pi-durable 不丢效果；第 2 节边界 4 解除。
 
-M1 结果（2026-11-14）：方案从「p8 走测试 Worker 逐帧 RPC」改为「整条命令发给独立 p8 Worker」。顺带修掉 lab 一个不稳定的检查：Lua 表的键顺序在会话间会变，按 `JSON.stringify(g)` 比较会误报按键有响应，现改为排序后比较。durable 循环 + worker p8，T1–T7 7/7（归档 `.cache/lab/20261114T0041-dzcu`）。下一步是 M2，第一次改 `app/`。
+M1 结果（2026-11-14）：方案从「p8 走测试 Worker 逐帧 RPC」改为「整条命令发给独立 p8 Worker」。顺带修掉 lab 一个不稳定的检查：Lua 表的键顺序在会话间会变，按 `JSON.stringify(g)` 比较会误报按键有响应，现改为排序后比较。durable 循环 + worker p8，T1–T7 7/7（归档 `.cache/lab/20261114T0041-dzcu`）。
+
+M2 结果（2026-11-14）：
+
+- **实现：** `app/src/pico8/shell/`：`environment.js`（just-bash，`/cart/main.lua` 每次操作前后与草稿同步，`/skill/pico8` 只读）、`extension.js`（pi-durable 的 read/write/edit/bash + 改写了 load_game 字样的 `read_assets`/`edit_assets`，启动段为 coding agent 提示去掉 Pi 文档段 + skill + host 规则）、`p8-worker.js`/`p8-client.js`、`flow.js`。`Agent` 新增 `flow`/`startP8` 选项，shell 代码整体懒加载（主包 +1 KB，`flow` 分块 1.3 MB、p8 Worker 255 KB）。冻结流程的代码路径未改。
+- **提交：** p8 check/run/look 跑 `main.lua` 后，若草稿有变化，直接调用冻结的 `load_game` 提交，输出末尾加一行 `Maker:`。
+- **路线：** 每条 bash 命令只回放最后一次成功的 `p8 run`（走 `reset_game` + `press_buttons`），同一版本同一按键序列不重复记录。第一次 S4 复跑时，修复任务里的扫描循环（`for n in …; p8 run`）把有效路线挤出了 Maker 每卡 12 条的窗口，覆盖统计失败，因此改成这样。
+- **音效库：** 只写进新卡带的第一个版本。第一次复跑时修复任务的 `preservedAssets` 失败，原因是把音效库写进了已有卡带。
+- **入口：** 会话首次连接时，`?flow=shell` 且会话没有历史，才选 shell 流程，并把 `flow` 存进会话；评测用 `S4_FLOW=shell`、`SMOKE_FLOW=shell`、case-study 页 `?flow=shell`。
+- **D4 未做：** skill 的游戏契约原样保留，放宽留到 M3 单独对照。
+
+DeepSeek Flash high，修正后两条流程同时各跑一次 S4：
+
+| 任务 | shell | frozen |
+| --- | --- | --- |
+| 修复 | 全部检查通过，54.5 s，18 次调用 | 全部检查通过，112.8 s，27 次调用 |
+| 新建 | 全部检查通过，66.9 s，22 次调用 | 180 s 时限截断（naturalCompletion 失败），独立玩法检查通过，39 次调用 |
+
+归档：`.cache/evaluations/s4-cb70566a-90f2-4b3d-9a1f-97e5b509210c`（shell）、`s4-69c1c6c2-0dcb-4f8a-9256-a4f168797124`（frozen）；修正前的 shell 复跑 `s4-71db22d0-…`（两项独立玩法通过，修复任务 preservedAssets、agentNormalCoverage 失败）。真实浏览器烟测（接水果，`SMOKE_FLOW=shell`）：12 s、6 次调用，提交版本 1，页面无异常，归档 `.cache/evaluations/evaluation-23a9959c-69e4-4cca-afb8-f2f76d06e2ab`。都是单次样本。下一步 M3。
 
 ## 6. 评测门槛（M3）
 
