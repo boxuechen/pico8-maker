@@ -46,7 +46,18 @@ Write code, comments and on-screen text in plain ASCII English.
 - Drawing: `rectfill(x0,y0,x1,y1,c)`, `circfill(x,y,r,c)`, `line(...)`, `print(str,x,y,c)`. Colours: 0 black, 1 dark blue, 7 white, 8 red, 9 orange, 10 yellow, 11 green, 12 blue.
 - Sounds: `sfx(0)` pickup, `1` shoot, `2` hit, `3` win, `4` lose, `5` jump, `6` blip, `7` explode.
 
-## More
+## References (read only what the task needs)
 
-- `reference/api.md`: every common function with arguments.
-- `examples/star-catch.lua`: a complete small game following these rules.
+| Topic | File (under /skill/pico8) |
+| --- | --- |
+| Designing, editing, readability, colours, machine limits | reference/workflow.md, reference/game-design.md |
+| p8 presses, `--read`, `--setup`, `checks.json` format, what to verify | reference/playtest.md |
+| Every common function | reference/api.md |
+| Lua differences, numbers, tables | reference/lua.md |
+| Drawing, palette, sprites, maps | reference/graphics.md, reference/palette.md, reference/sprites-maps.md |
+| Resource formats for read_assets/edit_assets, sound and music | reference/asset-authoring.md, reference/audio.md |
+| Saves, memory, input, menus | reference/memory-storage.md, reference/input-system.md |
+| Browser runtime limits | reference/runtime-compatibility.md |
+| Collect/build loops, match puzzles | reference/collect-build.md, reference/match-puzzle.md |
+| Complete small games | examples/star-catch.lua; examples/spring-courier.lua, signal-arena.lua, lantern-vault.lua (described in reference/microgames.md) |
+| Snippets that build sprites, maps, sfx, music or a high-score save in code (not complete games) | examples/recipes/*.lua |

@@ -67,6 +67,11 @@ export class Runtime {
     }
     return { audio };
   }
+  /** printh lines since load: [{ frame, text }] (bounded by the player's log buffer). */
+  logs() {
+    const snap = this.session?.readLogs?.();
+    return (snap?.entries ?? []).map((e) => ({ frame: e.frameId ?? null, text: String(e.text ?? "") }));
+  }
   /** Read dotted paths such as "g.player.x" (or "#g.enemies" for a length); values are plain JSON. */
   async read(paths) {
     const keys = paths.map((p) => p.replace(/^#/, "").split(".").map((k) => (/^\d+$/.test(k) ? Number(k) : k)));

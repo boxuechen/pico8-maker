@@ -40,6 +40,14 @@ class UserError extends Error {}
 const report = (onPlay, command, press, r, setup) =>
   onPlay?.({ command, press, ...(setup ? { setup } : {}), frames: r.rt.frames, ok: r.ok, modes: r.modes ?? [], frame: r.rt.frame ? { width: 128, height: 128, rgba: r.rt.frame.rgba } : null });
 
+/** printh output of the run, the last 20 lines. */
+function printhLines(rt, lines) {
+  const logs = rt.logs();
+  if (!logs.length) return;
+  lines.push(`printh (${logs.length} line${logs.length > 1 ? "s" : ""}${logs.length > 20 ? ", last 20" : ""}):`);
+  for (const l of logs.slice(-20)) lines.push(`  ${l.text.slice(0, 200)}`);
+}
+
 /** Boot, run optional setup Lua, play the presses, and report mode changes, sounds and the final state. */
 async function play(src, press, assets, setup) {
   const rt = new Runtime(assets);
@@ -61,12 +69,14 @@ async function play(src, press, assets, setup) {
     });
     for (const e of r.audio) sounds.push("sfx" in e ? `sfx ${e.sfx}@${e.frame}` : `music ${e.music}@${e.frame}`);
     if (r.fault) {
+      printhLines(rt, lines);
       lines.push(`fault at frame ${rt.frames + 1}: ${r.fault.map((d) => explainFault(d, src)).join("; ")}`);
       return { rt, lines, modes, ok: false };
     }
   }
   lines.splice(setup ? 1 : 0, 0, `ran ${rt.frames} frames`);
   if (sounds.length) lines.push(`sounds: ${sounds.slice(0, 12).join(", ")}${sounds.length > 12 ? ", …" : ""}`);
+  printhLines(rt, lines);
   return { rt, lines, modes, ok: true };
 }
 

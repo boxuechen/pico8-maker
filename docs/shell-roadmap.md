@@ -84,6 +84,10 @@
 | 7 | 交付格式 | host 规则加四段回复（玩法 / 操作 / 已验证 / 未验证），已验证里区分正常输入和 setup | 案例回复人工检查 |
 | 8 | 资源即文件 | `/cart/gfx.txt`、`map.txt`、`sfx.txt`、`music.txt`（.p8 文本段格式）与草稿资源同步，用 read/edit 改，p8 提交；之后移除 `read_assets` / `edit_assets` | 案例 Garden/Lodge（资源较多）；新增一个画精灵的 lab 任务 |
 
+**P2 结果**
+
+- **P2-5 知识回迁（2026-11-14）：** 从标签 `agent-flow-freeze-2026-11-13` 的 `docs/pico8-agent/` 迁入 `skill/reference/`：lua、graphics、palette、sprites-maps、audio、asset-authoring、input-system、memory-storage、game-design、collect-build、match-puzzle、microgames、runtime-compatibility（路径改到 `/skill/pico8/...`，旧工具名改成 p8/bash 写法）；新写 `reference/playtest.md`（按键语法、`--read`、`--setup`、`look`、`checks.json` 格式、该检查什么）和 `reference/workflow.md`（原 WORKFLOW 的创作/修改/资源/可读性配色表 + MACHINE 的机器事实）；3 个示例游戏和 5 个 recipe 进 `examples/`（游戏和模板都过 `p8 check`；两个音频 recipe 没有输入，标为片段）。SKILL.md 末尾改成参考索引表（+1 KB）。顺带补上 `p8 run/look` 输出 printh（最后 20 行），此前 skill 让用 printh 但 p8 不显示。lab T1–T8 8/8，模型在 T6–T8 主动读了 playtest.md/workflow.md；T6 这次 187 s（模型自己写了 awk 模拟器算路线），其余 3–62 s（归档 `.cache/lab/20261114T0656-svwo`）。
+
 ## 5. P3：评测与工程
 
 - **评测分层：** lab T1–T7（约 2 分钟，每次改 skill 或 p8 都跑）→ S4 ×5（约 6 分钟，每次改面向模型的行为都跑）→ 案例 ×2 + 人工试玩（大改时跑）→ `app-smoke`（改 UI 或环境时跑）。所有结果记在 `development-status.md`，失败保留。
