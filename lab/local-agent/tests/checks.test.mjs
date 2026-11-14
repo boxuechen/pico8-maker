@@ -127,3 +127,12 @@ function _draw() cls(1) if g.inv==0 or g.t%2==0 then rectfill(g.p.x-2,g.p.y-2,g.
   assert.match([by["still green while invincible (odd frame)"], by["still green while invincible (even frame)"]].find((i) => !i.pass).detail, /pixel \["g.p.x","g.p.y"\]=\(40,50\) is 1, expected 11/);
   assert.match(by["off screen"].detail, /is off screen/);
 });
+
+test("p8 look --crop prints exact pixels and rejects bad rectangles", async () => {
+  const { createEnvironment } = await import("../src/env.mjs");
+  const env = createEnvironment({ cartFiles: { "main.lua": "function _update() end\nfunction _draw() cls(1) rectfill(10,10,12,11,11) pset(13,10,8) end" }, skillFiles: { "SKILL.md": "x" } });
+  const r = await env.exec("p8 look --crop 9,9,6,4");
+  assert.match(r.stdout, /pixels x=9..14, y=9..12[^\n]*\n111111\n1bbb81\n1bbb11\n111111\n$/);
+  assert.match((await env.exec("p8 look --crop 120,120,20,20")).stdout, /x=120..127, y=120..127/);
+  for (const bad of ["1,2", "0,0,65,10", "200,0,4,4"]) assert.equal((await env.exec(`p8 look --crop ${bad}`)).exitCode, 2, bad);
+});

@@ -24,7 +24,7 @@ Runs Lua after boot (after `_init`) and before the presses. Use it to reach a wi
 
 ## p8 look
 
-`p8 look --press "right*30"` prints the screen as 32x32 characters (one per 4x4 block, the most common colour 0-f). `--png s.png` also writes a 512x512 image (4x); open it with `read`. Positions in the image divide by 4 to give screen pixels.
+`p8 look --press "right*30"` prints the screen as 32x32 characters (one per 4x4 block, the most common colour 0-f). `--png s.png` also writes a 512x512 image (4x); open it with `read`. Positions in the image divide by 4 to give screen pixels. `--crop x,y,w,h` prints the exact pixels of a rectangle instead (one character 0-f per pixel, at most 64x64), e.g. `p8 look --setup "g.inv=30" --press wait*7 --crop 56,96,16,16` to see whether the player is drawn on that frame.
 
 ## checks.json
 

@@ -109,6 +109,17 @@ export class Runtime {
     }
     return rows.join("\n");
   }
+  /** Exact pixels of a screen rectangle: one character 0-f per pixel, one row per line. */
+  crop({ x, y, w, h }) {
+    if (!this.frame) return null;
+    const rows = [];
+    for (let j = y; j < y + h; j++) {
+      let row = "";
+      for (let i = x; i < x + w; i++) row += this.pixel(i, j).toString(16);
+      rows.push(row);
+    }
+    return rows.join("\n");
+  }
   /** Palette colour 0-15 of one screen pixel in the last frame (null off screen or before a frame). */
   pixel(x, y) {
     if (!this.frame || !(x >= 0 && x < 128 && y >= 0 && y < 128)) return null;

@@ -98,6 +98,10 @@
 
   10 次新建都写了 `checks.json`。规则 A 唯一的失败仍是受伤闪烁的像素契约。agent 正常覆盖统计缺项 B 轮 2 次（模型用用例和 `--setup` 验证失败路径）。代价：新建中位耗时比 P1 的 62 s 多约 30 s。归档：A `.cache/evaluations/s4-c736b81e-c213-49d8-97a1-0a39a991e5c7`、`s4-67f13a6d-7e62-49e6-8c51-3e363e5efa51`、`s4-c12d0e15-794a-4007-b82f-bc98f53ea114`、`s4-522e4c56-3298-493b-baeb-d95c8b383064`、`s4-a80d6223-b5b3-466b-81ec-37941af585ad`、`s4-f152b806-e2b3-4b5f-baf4-4fc3305ea96c`、`s4-da4b4dc5-5fe3-4dd9-9c88-e1ce1bf40329`、`s4-f4154b91-c628-4494-960f-eeb9e4f450c8`、`s4-0ee2c631-e06e-49e4-9c2f-3e9eddc58b8b`、`s4-0e21c0e5-4c88-4349-8100-54c76ac3ae7b`，`.cache/lab/20261114T0702-x5p4`；B `.cache/evaluations/s4-19f14955-8db5-41c1-9cf0-d95a71969e20`、`s4-588a0aad-9a18-4915-bc71-ce728dabf2db`、`s4-8613d9a5-2830-4e3a-9fa8-30f6897426da`、`s4-9daa4d5c-7559-4622-b7d2-023e9a1424e1`、`s4-5c87f458-5dbf-478f-89a5-2306d849b603`、`s4-9eccb8ae-4933-4e24-91f6-3b9168d8892a`、`s4-98294c9b-76f7-4ff8-a654-2c60c6d569fb`、`s4-4605b44f-feb0-441a-a60c-037cfdf40bb3`、`s4-df9b50e3-331d-47c3-90eb-379078855acd`、`s4-06980de2-0d17-49ce-988b-4daf10a49922`，`.cache/lab/20261114T0708-pi3a`。
 
+- **P2-6 `p8 look --crop x,y,w,h`（2026-11-14）：** 按屏幕坐标输出矩形内逐像素颜色（0-f，最多 64x64，越界裁剪，非法参数给示例）；SKILL.md 和 playtest.md 写了用法（例如查无敌帧上玩家是否被画出）。
+- **P2-7 交付格式：** host 规则要求做完或测完游戏后用四项回复：Gameplay / Controls / Verified（区分只用按键玩过的路径和用 `--setup`/`checks.json` 检查的）/ Unverified；问题和计划直接回答。SKILL.md 第 6 步改成「简短说明改了什么、查了什么（宿主可能指定格式）」。
+- **P2-6/7 验收：** S4 ×5 新建 4/5（失败为敌人状态与像素不一致）、修复 5/5，中位 101 / 76 s；与 P2-4 合计新建 14/15、修复 10/10。lab T1–T8 8/8（T1 5 s）。主界面烟测两次都只到 v1，回复都按四项写，Verified 里分开写了「presses only」和「--setup」的路径，Unverified 写了没盲玩完整胜利、音质等；其中一次模型为了按键玩出完整胜利用了 236 s、57 次调用（另一次 61 s、19 次）。归档 `.cache/evaluations/s4-9b722b97-70f4-4b20-92e9-290d81367f36`、`s4-6a3439df-2446-42d3-b84b-17ee246c487a`、`s4-9fa4fbb4-1661-4a2a-be39-14f31110b95a`、`s4-7b89bc66-21eb-4a97-96db-8921a4bcdf8f`、`s4-5ca9af68-b95b-416a-99a5-ee9f1367dbf6`，`.cache/lab/20261114T0714-w1di`。
+
 ## 5. P3：评测与工程
 
 - **评测分层：** lab T1–T7（约 2 分钟，每次改 skill 或 p8 都跑）→ S4 ×5（约 6 分钟，每次改面向模型的行为都跑）→ 案例 ×2 + 人工试玩（大改时跑）→ `app-smoke`（改 UI 或环境时跑）。所有结果记在 `development-status.md`，失败保留。

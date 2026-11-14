@@ -12,13 +12,13 @@ description: Make, change and fix PICO-8 games in main.lua and check them with t
 3. Make the smallest change that does the task; keep existing variable names. Edit one place per `edit` call: copy a short `oldText` (one or two lines) exactly from the file, including its leading spaces. If an edit fails, read those lines again with `read` and retry. Never rewrite the whole game to make a small change.
 4. After **every** change run `p8 check` with bash. Read each `FAIL` line: it gives the line number, the code on that line (`code:`) and what to change. Change only what the task and the FAIL ask; do not add extra conditions. Running `p8 check` again without editing gives the same result.
 5. Repeat until `p8 check` prints `ALL PASSED` (lint, boot, input and every case). Never finish while something fails.
-6. Reply with a one-paragraph summary of what you changed.
+6. Reply briefly with what you changed and what you checked (a host may ask for a specific format).
 
 Other commands:
 
 - `p8 run --press "right*30 wait*60" --read g.score,g.mode` plays the game and prints mode changes, sounds and values.
 - `--setup "g.score=9 g.lives=1"` on `p8 run` or `p8 look` runs Lua after boot and before the presses. Use it to test a win, a loss, a late level or a rare event quickly. Never edit `main.lua` just to test something: such edits end up in the game the user gets.
-- `p8 look --press "right*30"` prints the screen as 32x32 characters (colours 0-f). Add `--png screen.png` to also write a 512x512 image, then open it with `read` to see the screen.
+- `p8 look --press "right*30"` prints the screen as 32x32 characters (colours 0-f). Add `--crop 56,96,16,16` (x,y,w,h, at most 64x64) for exact pixels, or `--png screen.png` to also write a 512x512 image, then open it with `read` to see the screen.
 - `p8 new skeleton` starts an empty `main.lua` from a working game skeleton with win/lose; `p8 new toy` from a toy without a result.
 
 ## PICO-8 Lua is not standard Lua

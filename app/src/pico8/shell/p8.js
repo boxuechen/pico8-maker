@@ -14,8 +14,9 @@ export const TEMPLATE_DIR = "/skill/pico8/templates";
 const usage = (templates) => `usage:
   p8 check [main.lua]                        lint, boot, input and every case in checks.json
   p8 run [main.lua] --press "right*30 x" [--read g.score,g.mode] [--setup "g.score=9"]
-  p8 look [main.lua] [--press "..."] [--png screen.png] [--setup "lua"]
-                                             32x32 text picture of the screen; --png also writes a 512x512 image
+  p8 look [main.lua] [--press "..."] [--png screen.png] [--crop x,y,w,h] [--setup "lua"]
+                                             32x32 text picture of the screen; --crop prints exact pixels
+                                             (at most 64x64); --png also writes a 512x512 image
                                              --setup runs Lua after boot, before the presses (main.lua is unchanged)
   p8 new <template>                          start main.lua from a template (${templates.join(", ")})
   p8 export [main.lua] [game.p8]             write a PICO-8 cart`;
@@ -35,6 +36,18 @@ const compact = (v, max = 600) => {
 };
 
 class UserError extends Error {}
+
+/** "x,y,w,h" in screen pixels, clipped to the screen, at most 64x64. */
+function parseCrop(text) {
+  const n = String(text).split(",").map((v) => Number(v.trim()));
+  if (n.length !== 4 || n.some((v) => !Number.isInteger(v)) || n[2] < 1 || n[3] < 1)
+    throw new UserError(`--crop takes x,y,w,h in screen pixels, e.g. --crop 56,96,16,16 (got "${text}")`);
+  const x = Math.max(0, n[0]), y = Math.max(0, n[1]);
+  const w = Math.min(n[0] + n[2], 128) - x, h = Math.min(n[1] + n[3], 128) - y;
+  if (w < 1 || h < 1) throw new UserError(`--crop ${text} is outside the 128x128 screen`);
+  if (w > 64 || h > 64) throw new UserError(`--crop is at most 64x64 pixels; use the 32x32 picture or --png for the whole screen`);
+  return { x, y, w, h };
+}
 
 /** Tell the host what a run or look played (Maker shows the last frame and records the route). */
 const report = (onPlay, command, press, r, setup) =>
@@ -149,8 +162,12 @@ async function dispatch(argv, { fs, cwd, templateDir = TEMPLATE_DIR, memo = new 
       const r = await play(await source(rest[0]), opts.press ?? "wait*30", assets, opts.setup);
       try {
         await report(onPlay, "look", opts.press ?? "wait*30", r, opts.setup);
-        const pic = r.rt.ascii(32);
-        const lines = [...r.lines, ...(pic ? ["screen 32x32 (one character per 4x4 pixels, colour 0-f):", pic] : [])];
+        const crop = opts.crop !== undefined ? parseCrop(opts.crop) : null;
+        const pic = crop ? r.rt.crop(crop) : r.rt.ascii(32);
+        const title = crop
+          ? `pixels x=${crop.x}..${crop.x + crop.w - 1}, y=${crop.y}..${crop.y + crop.h - 1} (one character per pixel, colour 0-f; row 1 is y=${crop.y}):`
+          : "screen 32x32 (one character per 4x4 pixels, colour 0-f):";
+        const lines = [...r.lines, ...(pic ? [title, pic] : [])];
         if (opts.png !== undefined && r.rt.frame) {
           const file = opts.png || "screen.png";
           await fs.writeFile(at(file), await encodePng(r.rt.frame.rgba, 128, 128, 4));
