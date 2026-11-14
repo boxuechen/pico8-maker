@@ -190,9 +190,9 @@ export function formatItems(items) {
 export const loadCasesText = (text) => JSON.parse(text).cases ?? [];
 
 /** Evaluation scoring: every item must pass, including hidden cases. */
-export async function scoreSource(source, cases) {
+export async function scoreSource(source, cases, { assets } = {}) {
   if (!source?.trim()) return { pass: false, detail: "main.lua is missing or empty" };
-  const items = await checkSource(source, cases);
+  const items = await checkSource(source, cases, { assets });
   const failed = items.filter((i) => !i.pass);
   return { pass: !failed.length, detail: failed.length ? failed.map((i) => `${i.name}: ${i.detail}`).join(" | ").slice(0, 600) : `${items.length} checks passed` };
 }

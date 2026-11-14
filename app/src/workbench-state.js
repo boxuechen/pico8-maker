@@ -62,18 +62,10 @@ const toolNames = new Set([
   "write",
   "edit",
   "bash",
-  "read_assets",
-  "edit_assets",
 ]);
 const toolLabel = (name) => (toolNames.has(name) ? t(`tool_${name}`) : null);
 export function describeTool(tool) {
   const args = tool?.args ?? {};
-  if (tool?.toolName === "read_assets" && ["png", "both"].includes(args.format))
-    return {
-      label:
-        args.kind === "map" ? t("toolPreviewMap") : t("toolPreviewSprites"),
-      meta: args.version === "committed" ? t("committed") : t("draft"),
-    };
   if (tool?.toolName === "bash" && typeof args.command === "string") {
     const command = args.command.trim().split("\n")[0];
     return {
@@ -81,7 +73,7 @@ export function describeTool(tool) {
       meta: command.length > 60 ? `${command.slice(0, 59)}…` : command,
     };
   }
-  if (tool?.toolName === "edit" || tool?.toolName === "edit_assets") {
+  if (tool?.toolName === "edit") {
     const n = Array.isArray(args.edits) ? args.edits.length : 1;
     return { label: toolLabel(tool.toolName), meta: t("nChanges", { n }) };
   }

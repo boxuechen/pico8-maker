@@ -1,5 +1,6 @@
 // The shell flow's environment for one cart: a just-bash shell over /cart (with
-// /cart/main.lua mapped to the cart draft), the read-only pico8 skill at
+// /cart/main.lua and the resource files gfx/gff/map/sfx/music.txt mapped to the
+// cart draft), the read-only pico8 skill at
 // /skill/pico8 and `p8` running in a separate Worker. After a p8 command that
 // runs main.lua, Maker commits a changed draft (Game.commit)
 // and replays the tested route (Game.replayRoute), so versions,
@@ -11,6 +12,7 @@ import { durableEnv } from "./durable-env.js";
 import { remoteP8 } from "./p8-remote.js";
 import { CART, SKILL } from "./prompt.js";
 import { withSoundBank } from "./sounds.js";
+import { applyResourceFiles, assetFiles, RESOURCE_FILES } from "./resource-files.js";
 
 const WRITES = new Set(["writeFile", "appendFile", "mkdir", "rm", "cp", "mv", "chmod", "symlink", "link", "utimes"]);
 const RUNS_MAIN = new Set(["check", "run", "look"]);
@@ -68,16 +70,40 @@ export async function createShellEnvironment({ game, skillFiles, sendP8 }) {
       { mountPoint: SKILL, filesystem: skill },
     ],
   });
-  // The draft is the truth for main.lua: copy it in before each operation and
-  // back out after, so undo/restore and agent edits never diverge.
+  // The draft is the truth for main.lua and the resource files: copy it in
+  // before each operation and back out after, so undo/restore and agent edits
+  // never diverge. Resource files are rewritten only when the draft's resources
+  // changed elsewhere (undo, another conversation) or a file is missing, so a
+  // malformed edit stays for p8 to report instead of being overwritten.
+  let synced = null;
   const pull = async () => {
+    // A new cart gets the skill's sound bank in sfx 0-7 before anything reads sfx.txt.
+    if (!game.hasGame) {
+      const banked = withSoundBank(game.draft.assets);
+      if (banked !== game.draft.assets) game.setWorking({ ...game.draft, assets: banked });
+    }
     const draft = game.draft.source;
     const here = (await cart.exists("/main.lua")) ? await cart.readFile("/main.lua", "utf8") : null;
     if (here !== draft) await cart.writeFile("/main.lua", draft);
+    const assets = game.draft.assets;
+    const missing = [];
+    for (const name of RESOURCE_FILES) if (!(await cart.exists(`/${name}`))) missing.push(name);
+    if (assets !== synced || missing.length) {
+      const files = assetFiles(assets);
+      for (const name of assets !== synced ? RESOURCE_FILES : missing) await cart.writeFile(`/${name}`, files[name]);
+      synced = assets;
+    }
   };
   const push = async () => {
     const here = (await cart.exists("/main.lua")) ? await cart.readFile("/main.lua", "utf8") : "";
     if (here !== game.draft.source) game.setDraft(here);
+    const files = {};
+    for (const name of RESOURCE_FILES) if (await cart.exists(`/${name}`)) files[name] = await cart.readFile(`/${name}`, "utf8");
+    const { assets, errors } = applyResourceFiles(game.draft.assets, files);
+    if (!errors.length && assets !== game.draft.assets) {
+      game.setWorking({ ...game.draft, assets });
+      synced = assets;
+    }
   };
   // The sound bank goes only into a cart's first version; existing carts keep their resources.
   const cartAssets = () => (game.hasGame ? game.draft.assets : withSoundBank(game.draft.assets));

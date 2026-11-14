@@ -289,3 +289,12 @@ coordinates are numbers or paths). The skill now has the model write a new game'
 rules as at most 8 cases before coding; edits and fixes add none. With that rule S4
 create 10/10 and repair 5/5 (median 92 / 66 s); applying it to every task cost more time
 (T1 18 s) without a measured gain. T1–T8 8/8.
+
+## Resources as files (P2-8, 2026-11-14)
+
+Carts carry `gfx.txt`, `gff.txt`, `map.txt`, `sfx.txt` and `music.txt` (.p8 section text,
+`app/src/pico8/shell/resource-files.js`). p8 applies the files present over the base
+resources and stops with file and line on a malformed one; `p8 sheet`, `p8 map` and
+`p8 sfx` show them. Lab tasks start with them (sound bank) and scoring uses the final
+files. T9: draw a coin in gfx.txt and set its flag in gff.txt without touching main.lua.
+T1–T9 9/9.

@@ -1,0 +1,8 @@
+{
+ "cases": [
+  { "name": "coin centre is yellow", "press": "wait", "expect": [ { "pixel": [63, 63], "equals": 10 }, { "pixel": [64, 64], "equals": 10 }, { "pixel": [63, 64], "equals": 10 }, { "pixel": [64, 63], "equals": 10 } ] },
+  { "name": "corners are transparent", "press": "wait", "expect": [ { "pixel": [60, 60], "equals": 1 }, { "pixel": [67, 60], "equals": 1 }, { "pixel": [60, 67], "equals": 1 }, { "pixel": [67, 67], "equals": 1 } ] },
+  { "name": "flag 0 is set", "press": "wait*2", "expect": [ { "path": "g.flag", "equals": true } ] },
+  { "name": "coin moves with g.x", "press": "right*4", "expect": [ { "pixel": [67, 63], "equals": 10 } ] }
+ ]
+}

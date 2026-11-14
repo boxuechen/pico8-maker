@@ -8,6 +8,9 @@ import { cartText } from "../cart.js";
 import { encodePng } from "./png.js";
 import { Runtime } from "./runtime.js";
 import { soundAssets } from "./sounds.js";
+import { applyResourceFiles, describeSfx, RESOURCE_FILES } from "./resource-files.js";
+import { renderMap, renderSheet } from "../asset-preview.js";
+import { decodeAssets } from "../assets.js";
 
 export const TEMPLATE_DIR = "/skill/pico8/templates";
 
@@ -18,6 +21,9 @@ const usage = (templates) => `usage:
                                              32x32 text picture of the screen; --crop prints exact pixels
                                              (at most 64x64); --png also writes a 512x512 image
                                              --setup runs Lua after boot, before the presses (main.lua is unchanged)
+  p8 sheet [--png sheet.png]                 the sprite sheet (gfx.txt) as a 512x512 image with an 8x8 grid
+  p8 map [x,y,w,h] [--png map.png]           map cells drawn with their sprites (default 0,0,16,16)
+  p8 sfx <id>                                one sound effect from sfx.txt in words
   p8 new <template>                          start main.lua from a template (${templates.join(", ")})
   p8 export [main.lua] [game.p8]             write a PICO-8 cart`;
 
@@ -36,6 +42,18 @@ const compact = (v, max = 600) => {
 };
 
 class UserError extends Error {}
+
+/** Scale an RGBA image by k and draw a one-pixel grey line every `step` source pixels. */
+function gridImage(rgba, width, height, k, step) {
+  const W = width * k, H = height * k, out = new Uint8ClampedArray(W * H * 4);
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      const line = (x % (step * k) === 0 || y % (step * k) === 0) && x && y;
+      const i = (Math.floor(y / k) * width + Math.floor(x / k)) * 4;
+      out.set(line ? [95, 87, 79, 255] : rgba.subarray(i, i + 4), (y * W + x) * 4);
+    }
+  return { rgba: out, width: W, height: H };
+}
 
 /** "x,y,w,h" in screen pixels, clipped to the screen, at most 64x64. */
 function parseCrop(text) {
@@ -124,6 +142,15 @@ async function dispatch(argv, { fs, cwd, templateDir = TEMPLATE_DIR, memo = new 
     if (!text.trim()) throw new UserError(`${file} is empty. Write the game, or start from a template with: p8 new skeleton (or p8 new toy)`);
     return text;
   };
+  // gfx.txt, gff.txt, map.txt, sfx.txt and music.txt in the cart folder override
+  // the base resources; a malformed file stops the command with its line.
+  const resources = async () => {
+    const files = {};
+    for (const name of RESOURCE_FILES) if (await fs.exists(at(name))) files[name] = await fs.readFile(at(name), "utf8");
+    const r = applyResourceFiles(assets ?? soundAssets(), files);
+    if (r.errors.length) throw new UserError(`${r.errors.join("\n")}\nFix the file (formats: /skill/pico8/reference/asset-authoring.md); nothing was run.`);
+    return r.assets;
+  };
   const [cmd, ...args] = argv;
   const { opts, rest } = options(args);
   switch (cmd) {
@@ -131,7 +158,7 @@ async function dispatch(argv, { fs, cwd, templateDir = TEMPLATE_DIR, memo = new 
       const code = await source(rest[0]);
       const casesPath = at("checks.json");
       const cases = (await fs.exists(casesPath)) ? loadCasesText(await fs.readFile(casesPath, "utf8")) : [];
-      const items = await checkSource(code, cases, { assets });
+      const items = await checkSource(code, cases, { assets: await resources() });
       const pass = items.every((i) => i.pass);
       // A run re-checked an unchanged file ~60 times, reading the same failure as
       // a stuck tool. Say plainly that only an edit can change the result.
@@ -144,7 +171,7 @@ async function dispatch(argv, { fs, cwd, templateDir = TEMPLATE_DIR, memo = new 
       return pass ? 0 : 1;
     }
     case "run": {
-      const r = await play(await source(rest[0]), opts.press ?? "wait*30", assets, opts.setup);
+      const r = await play(await source(rest[0]), opts.press ?? "wait*30", await resources(), opts.setup);
       try {
         await report(onPlay, "run", opts.press ?? "wait*30", r, opts.setup);
         if (r.ok) {
@@ -159,7 +186,7 @@ async function dispatch(argv, { fs, cwd, templateDir = TEMPLATE_DIR, memo = new 
       }
     }
     case "look": {
-      const r = await play(await source(rest[0]), opts.press ?? "wait*30", assets, opts.setup);
+      const r = await play(await source(rest[0]), opts.press ?? "wait*30", await resources(), opts.setup);
       try {
         await report(onPlay, "look", opts.press ?? "wait*30", r, opts.setup);
         const crop = opts.crop !== undefined ? parseCrop(opts.crop) : null;
@@ -179,6 +206,33 @@ async function dispatch(argv, { fs, cwd, templateDir = TEMPLATE_DIR, memo = new 
         await r.rt.dispose();
       }
     }
+    case "sheet": {
+      const bytes = decodeAssets(await resources());
+      const sheet = renderSheet(bytes);
+      const file = opts.png || "sheet.png";
+      const g = gridImage(sheet.rgba, 128, 128, 4, 8);
+      await fs.writeFile(at(file), await encodePng(g.rgba, g.width, g.height));
+      log(`wrote ${file} (512x512: the 128x128 sprite sheet at 4x, grey lines every 8 pixels). Sprite n is at x=(n%16)*8, y=flr(n/16)*8; sprites 128-255 share memory with map rows 32-63. Open it with the read tool.`);
+      return 0;
+    }
+    case "map": {
+      const n = (rest[0] ?? "0,0,16,16").split(",").map(Number);
+      if (n.length !== 4 || n.some((v) => !Number.isInteger(v)) || n[0] < 0 || n[1] < 0 || n[2] < 1 || n[3] < 1 || n[0] + n[2] > 128 || n[1] + n[3] > 32 || n[2] > 32 || n[3] > 32)
+        throw new UserError(`p8 map takes x,y,w,h in map cells inside 128x32, at most 32x32 (got "${rest[0]}")`);
+      const [x, y, width, height] = n;
+      const img = renderMap(decodeAssets(await resources()), { x, y, width, height });
+      const file = opts.png || "map.png";
+      const g = gridImage(img.rgba, img.width, img.height, 2, 8);
+      await fs.writeFile(at(file), await encodePng(g.rgba, g.width, g.height));
+      log(`wrote ${file} (${img.width * 2}x${img.height * 2}: cells x=${x}..${x + width - 1}, y=${y}..${y + height - 1} at 2x, grey lines between cells; tile 0 is empty). Open it with the read tool.`);
+      return 0;
+    }
+    case "sfx": {
+      const id = Number(rest[0]);
+      if (!Number.isInteger(id) || id < 0 || id > 63) throw new UserError("p8 sfx takes an sfx id 0-63, e.g. p8 sfx 3");
+      log(describeSfx(await resources(), id));
+      return 0;
+    }
     case "new": {
       const name = rest[0],
         names = await templates();
@@ -193,7 +247,7 @@ async function dispatch(argv, { fs, cwd, templateDir = TEMPLATE_DIR, memo = new 
     }
     case "export": {
       const file = rest[1] ?? "game.p8";
-      await fs.writeFile(at(file), cartText({ source: await source(rest[0]), assets: assets ?? soundAssets() }, "game"));
+      await fs.writeFile(at(file), cartText({ source: await source(rest[0]), assets: await resources() }, "game"));
       log(`wrote ${file}`);
       return 0;
     }

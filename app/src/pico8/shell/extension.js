@@ -1,10 +1,9 @@
 // Maker's agent: Pi's coding tools (pi-durable's read/write/edit/bash) over the
-// shell environment, the pico8 skill and Maker host rules as startup text, and
-// the two resource tools.
+// shell environment (main.lua and the resource files), the pico8 skill and
+// Maker host rules as startup text.
 import { defineExtension, GenerationTask, hook, section } from "@earendil-works/pi-durable";
 import { createBashTool, createEditTool, createReadTool, createWriteTool } from "@earendil-works/pi-durable/tools";
 import { retainRecentImages } from "../image-retention.js";
-import { createResourceTools } from "./resource-tools.js";
 import { codingPrompt, hostRules, skillBlock } from "./prompt.js";
 
 export function createShellExtension({ game, skillFiles }) {
@@ -16,7 +15,7 @@ export function createShellExtension({ game, skillFiles }) {
       section("shell_skill", () => skillBlock(skillFiles["SKILL.md"]), { tag: false }),
       section("pico8_host", () => hostRules),
     ],
-    tools: [createReadTool(), createWriteTool(), createEditTool(), createBashTool(), ...createResourceTools(game)],
+    tools: [createReadTool(), createWriteTool(), createEditTool(), createBashTool()],
     hooks: [
       hook(GenerationTask, {
         beforeRequest: ({ messages }) => ({ messages: retainRecentImages(messages) }),

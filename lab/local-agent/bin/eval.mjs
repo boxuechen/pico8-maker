@@ -13,7 +13,7 @@ import { parseArgs } from "node:util";
 import { piSystemPrompt, runAgent, skillPrompt } from "../src/agent.mjs";
 import { runDurableAgent } from "../src/durable-agent.mjs";
 import { CART, createEnvironment } from "../src/env.mjs";
-import { remoteP8 } from "../src/maker.mjs";
+import { applyResourceFiles, remoteP8, RESOURCE_FILES } from "../src/maker.mjs";
 import { startP8Worker } from "../src/p8-worker-node.mjs";
 import { loadTask, metrics, score, skillFiles } from "../src/tasks.mjs";
 
@@ -51,7 +51,10 @@ async function runOne(task, n) {
   writeFileSync(join(base, "events.jsonl"), run.events.map((e) => JSON.stringify(e)).join("\n") + "\n");
   const source = (await env.fs.exists(`${CART}/main.lua`)) ? await env.fs.readFile(`${CART}/main.lua`, "utf8") : "";
   writeFileSync(join(base, "main.lua"), source);
-  const s = await score(task, source);
+  // Final resources: the task's start with the cart's resource files applied (malformed files count as unchanged).
+  const files = {};
+  for (const name of RESOURCE_FILES) if (await env.fs.exists(`${CART}/${name}`)) files[name] = await env.fs.readFile(`${CART}/${name}`, "utf8");
+  const s = await score(task, source, applyResourceFiles(task.assets, files).assets);
   const row = { task: task.id, n, pass: s.pass, seconds: run.seconds, status: run.status, ...(run.error ? { error: run.error } : {}), ...metrics(run.events), score: s.detail };
   writeFileSync(join(base, "result.json"), JSON.stringify(row, null, 1));
   console.log(JSON.stringify({ ...row, final: undefined }));

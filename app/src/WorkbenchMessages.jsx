@@ -206,10 +206,7 @@ export function AssistantMessage() {
           tool={update}
           edits={
             tools.filter(
-              (t) =>
-                t.toolName === "edit" ||
-                t.toolName === "write" ||
-                t.toolName === "edit_assets",
+              (t) => t.toolName === "edit" || t.toolName === "write",
             ).length
           }
           isLast={isLast}

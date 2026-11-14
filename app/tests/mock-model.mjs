@@ -33,6 +33,9 @@ const pressText = (steps) =>
     .join(" ");
 function toShell(actions) {
   const out = [];
+  // Resource edits become full writes of the changed resource files; fixtures
+  // start from a new cart, which has the sound bank in sfx 0-7.
+  let assets = withSoundBank(emptyAssets());
   let route = null;
   const flush = () => {
     if (route) out.push(["bash", { command: `p8 run --press "${pressText(route)}"` }]);
@@ -48,6 +51,14 @@ function toShell(actions) {
     else if (name === "load_game") {
       if (args.source !== undefined) out.push(["write", { path: "/cart/main.lua", content: args.source }]);
       out.push(["bash", { command: "p8 check" }]);
+    } else if (name === "edit_assets") {
+      const next = editAssets(assets, args.edits);
+      const [before, after] = [assetFiles(assets), assetFiles(next)];
+      for (const file of RESOURCE_FILES) if (before[file] !== after[file]) out.push(["write", { path: `/cart/${file}`, content: after[file] }]);
+      assets = next;
+    } else if (name === "read_assets") {
+      out.push(["bash", { command: "p8 sheet --png /tmp/sheet.png" }]);
+      out.push(["read", { path: "/tmp/sheet.png" }]);
     } else if (name === "observe_game") {
       out.push(["bash", { command: "p8 look --png /tmp/screen.png" }]);
       out.push(["read", { path: "/tmp/screen.png" }]);
@@ -56,6 +67,9 @@ function toShell(actions) {
   flush();
   return out;
 }
+import { editAssets, emptyAssets } from "../src/pico8/assets.js";
+import { assetFiles, RESOURCE_FILES } from "../src/pico8/shell/resource-files.js";
+import { withSoundBank } from "../src/pico8/shell/sounds.js";
 const server = http.createServer(async (req, res) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader(
@@ -119,7 +133,7 @@ const server = http.createServer(async (req, res) => {
       return;
     }
     const offered = new Set(body.tools?.map((t) => t.function.name));
-    for (const name of ["read", "write", "edit", "bash", "read_assets", "edit_assets"])
+    for (const name of ["read", "write", "edit", "bash"])
       if (!offered.has(name))
         throw new Error(`Missing registered game tool: ${name}`);
     const resourceFixture = body.model === "fixture-resources";

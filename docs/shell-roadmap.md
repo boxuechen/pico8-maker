@@ -74,7 +74,7 @@
 - **P1-3 每次请求一个版本（2026-11-14）：** `Game.beginRequest()` 起记录本次请求的版本；同一请求里再次提交时替换该版本（版本号不变），并清掉旧代码上的路线（`Playtests.dropRevision`），提交行写明「It replaces this request's earlier version N; routes on that code were cleared」；下一次请求才新建版本，撤销按请求回退。host 规则说明这一点。单测覆盖替换、路线清空、跨请求新版本和撤销。
 - **P1 验收（DeepSeek Flash high）：** S4 ×5：新建独立检查 4/5（失败仍是受伤闪烁的像素契约），修复 5/5；中位耗时新建 62 s、修复 35 s（P0 时 84 / 71 s）。主界面烟测两次：29 / 59 s，**都只产生 v1**（P0 前 v4、P1-2 后 v2/v3），分别用了 3 / 4 次 `--setup`、0 次 `sed` 临时改代码，无控制台问题。新观察：agent 覆盖统计 2 次缺项，模型用 `--setup` 直接置 `g.mode='lose'` 看画面，没有正常玩到失败——这类证据不算 normal 路线，是 `--setup` 带来的取舍，留到 P2-4（交付格式写明已验证/未验证）一起处理。归档 `.cache/evaluations/s4-25a9e703-1ec2-4073-bf1a-46753774dd25`、`s4-627fbfce-f815-4063-965b-f14cf6c0c332`、`s4-4e193b4d-a85c-44a6-9250-2f418682dd09`、`s4-53bdd4af-18f5-487c-a5a3-543e9e499d4b`、`s4-2d9afbd7-96fd-4a8b-8464-6ea1b7ac6b3f`。
 
-## 4. P2：质量
+## 4. P2：质量（已完成）
 
 | # | 事项 | 做法 | 验证 |
 | --- | --- | --- | --- |
@@ -101,6 +101,9 @@
 - **P2-6 `p8 look --crop x,y,w,h`（2026-11-14）：** 按屏幕坐标输出矩形内逐像素颜色（0-f，最多 64x64，越界裁剪，非法参数给示例）；SKILL.md 和 playtest.md 写了用法（例如查无敌帧上玩家是否被画出）。
 - **P2-7 交付格式：** host 规则要求做完或测完游戏后用四项回复：Gameplay / Controls / Verified（区分只用按键玩过的路径和用 `--setup`/`checks.json` 检查的）/ Unverified；问题和计划直接回答。SKILL.md 第 6 步改成「简短说明改了什么、查了什么（宿主可能指定格式）」。
 - **P2-6/7 验收：** S4 ×5 新建 4/5（失败为敌人状态与像素不一致）、修复 5/5，中位 101 / 76 s；与 P2-4 合计新建 14/15、修复 10/10。lab T1–T8 8/8（T1 5 s）。主界面烟测两次都只到 v1，回复都按四项写，Verified 里分开写了「presses only」和「--setup」的路径，Unverified 写了没盲玩完整胜利、音质等；其中一次模型为了按键玩出完整胜利用了 236 s、57 次调用（另一次 61 s、19 次）。归档 `.cache/evaluations/s4-9b722b97-70f4-4b20-92e9-290d81367f36`、`s4-6a3439df-2446-42d3-b84b-17ee246c487a`、`s4-9fa4fbb4-1661-4a2a-be39-14f31110b95a`、`s4-7b89bc66-21eb-4a97-96db-8921a4bcdf8f`、`s4-5ca9af68-b95b-416a-99a5-ee9f1367dbf6`，`.cache/lab/20261114T0714-w1di`。
+
+- **P2-8 资源即文件（2026-11-14）：** `/cart` 下 `gfx.txt`、`gff.txt`、`map.txt`、`sfx.txt`、`music.txt`，就是 .p8 各段的文本格式（`shell/resource-files.js`：导出、严格校验——行数/长度/十六进制错误带文件和行号、按段覆盖）。Maker 侧与草稿双向同步：每次操作前后同步，只在草稿资源被别处改动（撤销、别的会话）或文件被删时重写，所以模型写坏的文件会留着由 p8 报错，而不是被覆盖；新卡带一开始就把音效库写进 sfx 0-7。p8 每条命令都读这些文件（坏文件直接报错、不运行），新增 `p8 sheet --png`（精灵表 4x 带网格）、`p8 map x,y,w,h --png`、`p8 sfx <id>`（用文字描述音符）。删除 `read_assets`/`edit_assets` 工具、`Game.readAssets/editAssets` 和对应界面标签；`reference/asset-authoring.md` 改写为文件格式说明（精灵坐标、flag 位、地图单元、sfx 头与音符、music 标志），SKILL.md 与 host 规则同步。lab 任务也带资源文件，评分使用最终资源；新增 T9（不改 main.lua，只在 gfx/gff 里画一个金币并设 flag，隐藏用例查像素与 `fget`）。mock 模型的资源动作改成整文件写入。
+- **P2-8 验收：** S4 ×5 新建 5/5、修复 5/5（中位 101 / 39 s）；lab T1–T9 9/9（T9 15 s，模型用 sed 改 gfx.txt/gff.txt）；主界面烟测 v1、147 s，模型用 `p8 sfx` 和读 sfx.txt 核对音效；案例各 1 次：Lodge Podge 两轮 382 + 376 s 完成，Sweet Garden 第一轮撞 900 s 时限（80 次调用，已提交 r1）、第二轮 612 s 完成。两个案例都主要用图形函数作画，资源文件操作每轮只有个位数，Garden 变慢不来自资源文件；是否稳定变慢需要更多样本。单测 app 91/91、lab 14/14、`test:s4` 11/11。归档：S4 `.cache/evaluations/s4-1fb9d72d-7da4-4250-a4ac-1f870cd10c07`、`s4-4ea6d57c-f7b1-4b1a-971d-e871deb63e89`、`s4-e482443a-8057-49b6-84fd-9a3b65fd7dfe`、`s4-10f0dd16-466d-483b-bebc-774e2e1bdf49`、`s4-c599b9b7-6eaf-4d11-9a5a-3d1f9ff6bcb0`；lab `.cache/lab/20261114T0728-ng4v`；案例 `.cache/evaluations/case-sweet-garden-5afda7aa-b2f5-46a6-ae2b-e9e459f6dd50`、`case-lodge-podge-2d5a5590-d5d8-44db-80d5-266e8b6123f8`。
 
 ## 5. P3：评测与工程
 

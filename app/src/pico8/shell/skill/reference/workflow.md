@@ -16,7 +16,7 @@ Compare the affected moment before and after with the same presses, and check ne
 
 ## Resources
 
-Read the target sprites or map area with `read_assets` and check which ids are free before using new ones. Change them in one `edit_assets` batch, keeping unrelated flags and data. Sprite rows are hex colours with 0 transparent; map patches are rectangles; sfx/music edits replace whole slots. Formats: asset-authoring.md, audio.md, sprites-maps.md.
+Look at the target sprites or map area first (`p8 sheet --png`, `p8 map x,y,w,h --png`, `p8 sfx id`) and check which ids are free before using new ones. Change only the lines and characters you need in `gfx.txt`, `gff.txt`, `map.txt`, `sfx.txt` or `music.txt`, keeping unrelated data. Formats: asset-authoring.md, audio.md, sprites-maps.md.
 
 ## Readability
 

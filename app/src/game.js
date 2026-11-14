@@ -382,12 +382,6 @@ export class Game {
       if (r.isError) return r;
     }
   }
-  readAssets(args, signal) {
-    return this.execute("read_assets", args, signal);
-  }
-  editAssets(args, signal) {
-    return this.execute("edit_assets", args, signal);
-  }
   execute(action, args, signal) {
     const job = this.queue.then(async () => {
       signal?.throwIfAborted();

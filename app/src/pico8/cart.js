@@ -72,7 +72,7 @@ export function cartText(snapshot, label) {
   if (!validSnapshot(snapshot)) throw new Error("Invalid cart snapshot");
   if (/^__[a-zA-Z0-9_]+__\s*$/m.test(snapshot.source))
     throw new Error(
-      "main.lua must contain Lua only; use edit_assets for resources",
+      "main.lua must contain Lua only; resources go in gfx.txt, map.txt, sfx.txt and music.txt",
     );
   const lines = Array.isArray(label) ? label : labelLines(label);
   return `pico-8 cartridge // http://www.pico-8.com\nversion 43\n__lua__\n${snapshot.source}\n${assetSections(snapshot.assets)}${

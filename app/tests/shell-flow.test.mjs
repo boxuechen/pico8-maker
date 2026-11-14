@@ -61,11 +61,11 @@ test("shell environment: draft-backed main.lua, commits, replayed routes, read-o
   }
 });
 
-test("shell extension: coding tools, the two resource tools reworded, startup sections", async () => {
+test("shell extension: coding tools and startup sections", async () => {
   const game = new EvaluationGame({ versions: [], draft: emptySnapshot() });
   try {
     const ext = createShellExtension({ game, skillFiles });
-    assert.deepEqual(ext.tools.map((t) => t.name), ["read", "write", "edit", "bash", "read_assets", "edit_assets"]);
+    assert.deepEqual(ext.tools.map((t) => t.name), ["read", "write", "edit", "bash"]);
     for (const t of ext.tools) assert.doesNotMatch(t.description, /load_game/);
     assert.deepEqual(ext.sections.map((s) => s.key), ["shell_prompt", "shell_skill", "pico8_host"]);
     const text = await Promise.all(ext.sections.map((s) => s.render({}, {})));
@@ -73,8 +73,7 @@ test("shell extension: coding tools, the two resource tools reworded, startup se
     assert.doesNotMatch(text[0], /Pi documentation/);
     assert.match(text[1], /^<skill name="pico8" location="\/skill\/pico8\/SKILL.md">/);
     assert.match(text[2], /commits it/);
-    const edited = await ext.tools.find((t) => t.name === "edit_assets").execute({ edits: [{ kind: "sfx", id: 9, speed: 4, notes: [{ pitch: 30, waveform: 1, volume: 5, effect: 0 }] }] }, {}, {});
-    assert.doesNotMatch(JSON.stringify(edited.output), /load_game/);
+    assert.match(text[2], /gfx.txt \(sprite sheet\)/);
   } finally {
     await game.dispose();
   }
@@ -90,7 +89,7 @@ test("Agent offers the shell tools and startup sections", async () => {
     await agent.open();
     const resolved = await agent.root.agent(context);
     const names = resolved.tools.map((t) => t.name).sort();
-    assert.deepEqual(names, ["bash", "edit", "edit_assets", "read", "read_assets", "write"]);
+    assert.deepEqual(names, ["bash", "edit", "read", "write"]);
     assert.deepEqual(resolved.sections.map((s) => s.key), ["shell_prompt", "shell_skill", "pico8_host", "pico8_project"]);
     const r = await agent.shell.exec("p8 new skeleton && p8 check | tail -1");
     assert.match(r.stdout, /Maker: committed as version 1/);
@@ -184,6 +183,40 @@ function _draw() cls(${c}) circfill(g.x,64,3,8) end`;
     assert.equal(game.revision, 3, "the next request makes a new version");
     await game.undo();
     assert.match(game.snapshot.source, /cls\(3\)/, "undo steps back one request");
+  } finally {
+    await worker.close();
+    await game.dispose();
+  }
+});
+
+test("resource files in /cart follow the draft, commit with main.lua and keep a malformed edit for p8 to report", async () => {
+  const source = `function _update() if btn(1) then x=(x or 0)+1 end end
+function _draw() cls(1) spr(1,60,60) end`;
+  const committed = { ...emptySnapshot(), source };
+  const game = new EvaluationGame({ versions: [committed], draft: committed });
+  const worker = await startNodeP8Worker(skillFiles);
+  try {
+    const { exec, env } = await createShellEnvironment({ game, skillFiles, sendP8: worker.send });
+    const ls = await exec("ls");
+    assert.match(ls.stdout, /gfx.txt[\s\S]*main.lua[\s\S]*sfx.txt/);
+    assert.deepEqual(assetSummary(game.draft.assets).sfx, [], "an existing cart gets no sound bank");
+    // Sprite 1 (x 8-15, y 0-7) becomes solid yellow.
+    await exec("sed -i '1,8s/^\\(.\\{8\\}\\).\\{8\\}/\\1aaaaaaaa/' gfx.txt");
+    assert.deepEqual(assetSummary(game.draft.assets).sprites, [1]);
+    const look = await exec("p8 look --crop 60,60,8,8 | sed -n 3p");
+    assert.match(look.stdout, /^aaaaaaaa$/m);
+    assert.equal(game.revision, 2, "the resource change committed with main.lua");
+    assert.deepEqual(assetSummary(game.snapshot.assets).sprites, [1]);
+    await env.writeFile("/cart/map.txt", "oops\n");
+    const bad = await exec("p8 check");
+    assert.equal(bad.exitCode, 2);
+    assert.match(bad.stdout, /map.txt has 1 lines; it needs exactly 32/);
+    assert.equal((await env.readTextFile("/cart/map.txt")).value, "oops\n", "the malformed file is not overwritten");
+    await exec("rm map.txt");
+    assert.match((await exec("ls")).stdout, /map.txt/, "a deleted resource file comes back from the draft");
+    assert.match((await exec("p8 sfx 0")).stdout, /sfx 0: .*silent/);
+    const sheet = await exec("p8 sheet --png /tmp/sheet.png");
+    assert.match(sheet.stdout, /wrote \/tmp\/sheet.png \(512x512/);
   } finally {
     await worker.close();
     await game.dispose();

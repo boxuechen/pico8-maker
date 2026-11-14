@@ -20,7 +20,7 @@ import {
   normalizeCart,
 } from "../src/cart-store.js";
 import { sessionContext, activeSession, addSession } from "../src/sessions.js";
-import { createResourceTools } from "../src/pico8/shell/resource-tools.js";
+import { applyResourceFiles, assetFiles, resourceErrors } from "../src/pico8/shell/resource-files.js";
 
 const rows = (color) => Array(8).fill(color.repeat(8));
 const edits = [
@@ -249,21 +249,19 @@ test("asset-only drafts persist, duplicate and invalidate resumed conversations"
   );
 });
 
-test("resource tools edit the shared draft without committing it", async () => {
-  const g = new Game(() => {});
-  const tools = createResourceTools(g);
-  const write = tools.find((t) => t.name === "edit_assets");
-  const read = tools.find((t) => t.name === "read_assets");
-  await write.execute({ edits }, {}, {});
-  const result = await read.execute({ kind: "sprite", id: 1 }, {}, {});
-  assert.equal(JSON.parse(result.output[0].text)[0].flags, 129);
-  assert.equal(g.hasGame, false);
-  assert.equal(g.draft.source, "");
-  const aborted = new AbortController();
-  aborted.abort();
-  await assert.rejects(() =>
-    write.execute({ edits: [edits[0]] }, {}, { abortSignal: aborted.signal }),
-  );
+test("resource files round-trip the native resources and reject malformed text with its line", () => {
+  const files = assetFiles(assets);
+  assert.deepEqual(Object.keys(files), ["gfx.txt", "gff.txt", "map.txt", "sfx.txt", "music.txt"]);
+  assert.equal(applyResourceFiles(emptyAssets(), files).assets, assets);
+  // Present files override their section only.
+  const onlyMap = applyResourceFiles(assets, { "map.txt": assetFiles(emptyAssets())["map.txt"] }).assets;
+  assert.equal(readAssets(onlyMap).mapCells, 0);
+  assert.deepEqual(readAssets(onlyMap).sprites, readAssets(assets).sprites);
+  const broken = files["gfx.txt"].replace(/^.{3}/, "xyz");
+  const r = applyResourceFiles(assets, { "gfx.txt": broken });
+  assert.equal(r.assets, assets, "nothing is applied when a file is malformed");
+  assert.match(r.errors[0], /gfx.txt line 1 is not 128 hex digits/);
+  assert.match(resourceErrors("music.txt", "00 41424344\n")[0], /needs exactly 64/);
 });
 
 test("cancellation during live loading never commits and restores the full previous cart", async () => {
