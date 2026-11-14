@@ -79,6 +79,16 @@ test("records are validated; broken ones are skipped", async () => {
   });
   assert.equal(fixed.title, "Untitled cartridge");
   assert.equal(fixed.revision, 2);
+  // Schema 3 conversations used the removed agent tools: the game stays, history goes.
+  const old = { ...newSession(), title: "Old", transcript: [{ id: "e1", model: [{ role: "user", content: "hi" }] }] };
+  const upgraded = normalizeCart({ schemaVersion: 3, id: "y", sessions: [old], activeSessionId: old.id, versions: ["a"].map(emptySnapshot), title: "Kept" });
+  assert.equal(upgraded.schemaVersion, 4);
+  assert.equal(upgraded.title, "Kept");
+  assert.equal(upgraded.revision, 1);
+  assert.equal(upgraded.sessions.length, 1);
+  assert.notEqual(upgraded.sessions[0].id, old.id);
+  assert.equal(upgraded.sessions[0].transcript?.length ?? 0, 0);
+  assert.equal(upgraded.activeSessionId, upgraded.sessions[0].id);
   const backend = memoryBackend();
   await backend.put("carts", { id: "broken" });
   await backend.put("carts", newCart({ id: "ok" }));
