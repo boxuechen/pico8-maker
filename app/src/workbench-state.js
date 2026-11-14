@@ -70,6 +70,8 @@ const toolNames = new Set([
   "observe_game",
   "inspect_game",
   "reset_game",
+  "write", // Shell flow.
+  "bash", // Shell flow.
 ]);
 const toolLabel = (name) => (toolNames.has(name) ? t(`tool_${name}`) : null);
 export function describeTool(tool) {
@@ -98,6 +100,13 @@ export function describeTool(tool) {
           meta: t("nLines", { n: args.source.split("\n").length }),
         }
       : { label: toolLabel("load_game"), meta: "" };
+  if (tool?.toolName === "bash" && typeof args.command === "string") {
+    const command = args.command.trim().split("\n")[0];
+    return {
+      label: toolLabel("bash"),
+      meta: command.length > 60 ? `${command.slice(0, 59)}…` : command,
+    };
+  }
   if (tool?.toolName === "edit" || tool?.toolName === "edit_assets") {
     const n = Array.isArray(args.edits) ? args.edits.length : 1;
     return { label: toolLabel(tool.toolName), meta: t("nChanges", { n }) };

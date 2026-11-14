@@ -83,8 +83,16 @@ export class Agent {
   constructor(
     game,
     onUpdate,
-    { knowledge = defaultKnowledgeFiles, projectContext } = {},
+    {
+      knowledge = defaultKnowledgeFiles,
+      projectContext,
+      // "frozen" (default) or "shell" (lab-derived, opt-in; see docs/shell-flow-migration.md)
+      flow = "frozen",
+      startP8,
+    } = {},
   ) {
+    this.flow = flow;
+    this.startP8 = startP8;
     this.knowledge = knowledge;
     this.projectContext = projectContext;
     this.game = game;
@@ -95,10 +103,22 @@ export class Agent {
   async open(transcript = []) {
     await this.knowledge.prepare();
     const registry = createRegistry();
-    const pico8 = createPico8Extension({
-      game: this.game,
-      knowledge: this.knowledge,
-    });
+    this.shell =
+      this.flow === "shell"
+        ? await (
+            await import("./pico8/shell/flow.js")
+          ).openShellFlow({
+            game: this.game,
+            knowledge: this.knowledge,
+            startP8: this.startP8,
+          })
+        : null;
+    const pico8 =
+      this.shell?.extension ??
+      createPico8Extension({
+        game: this.game,
+        knowledge: this.knowledge,
+      });
     if (this.projectContext)
       pico8.sections.push(
         section(
@@ -117,6 +137,7 @@ export class Agent {
           stream: { maxRetries: 0 },
           toolExecution: "sequential",
         }),
+        ...(this.shell ? { env: () => this.shell.env } : {}),
       },
       context,
     );
@@ -220,5 +241,6 @@ export class Agent {
     else await this.abort();
     await this.watch?.stop();
     await this.harness?.close(context);
+    await this.shell?.close();
   }
 }

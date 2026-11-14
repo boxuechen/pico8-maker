@@ -6,6 +6,7 @@ import { createKnowledgeFiles } from "../../src/pico8/knowledge-files.js";
 import { newCart } from "../../src/cart-store.js";
 import { activeSession, sessionContext } from "../../src/sessions.js";
 import { EvaluationGame } from "./node-game.mjs";
+import { startNodeP8Worker } from "./p8-worker-node.mjs";
 import { verifyShooter, verifyAgentRoutes } from "./shooter-oracle.mjs";
 import { s4Metrics, transcriptEvidence } from "./s4-metrics.mjs";
 // S4 budgets; slower local models may raise the time limit (recorded in the archive).
@@ -24,7 +25,8 @@ const knowledge = createKnowledgeFiles({
     ),
 });
 
-export async function runS4Case(task, config, progress = () => {}) {
+/** `flow`: "frozen" (default) or "shell" (docs/shell-flow-migration.md). */
+export async function runS4Case(task, config, progress = () => {}, { flow = "frozen" } = {}) {
   const before = task.snapshot(),
     started = performance.now();
   const cart = newCart({
@@ -74,7 +76,12 @@ export async function runS4Case(task, config, progress = () => {}) {
         void agent.abort();
       }
     },
-    { knowledge, projectContext: () => sessionContext(cart, session) },
+    {
+      knowledge,
+      projectContext: () => sessionContext(cart, session),
+      flow,
+      ...(flow === "shell" ? { startP8: startNodeP8Worker } : {}),
+    },
   );
   const timer = setTimeout(() => {
     stopReason ??= "time_limit";

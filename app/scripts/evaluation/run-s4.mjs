@@ -84,6 +84,8 @@ const report = {
     knowledge: index.version,
     limits,
     tasks: process.env.S4_TASKS?.split(",") ?? "all",
+    // S4_FLOW=shell runs the opt-in shell flow; unset is the frozen flow.
+    flow: process.env.S4_FLOW ?? "frozen",
     files: frozen,
     prompts: await Promise.all(
       shooterCases.map(async (t) => ({
@@ -123,8 +125,11 @@ for (const [i, profile] of matrix.entries()) {
       record.activeTask = task.id;
       await save();
       console.log(`${profile.metadata.id}: ${task.id}`);
-      const run = await runS4Case(task, profile.config, (p) =>
-        console.log(`${p.task}: ${p.toolCalls} tools`),
+      const run = await runS4Case(
+        task,
+        profile.config,
+        (p) => console.log(`${p.task}: ${p.toolCalls} tools`),
+        { flow: process.env.S4_FLOW ?? "frozen" },
       );
       record.runs.push(run);
       await save();
