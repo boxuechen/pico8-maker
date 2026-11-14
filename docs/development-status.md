@@ -39,6 +39,7 @@
 
 ## 后续工作
 
+- **Shell 流程迁移（待评审）：** 把 lab 的 read/edit/write/bash + `p8` 形态作为默认关闭的第二条流程接入，冻结流程不变；方案、决策点与评测门槛见 [shell-flow-migration.md](shell-flow-migration.md)。
 - **扩展效果验证：** 在已有 S4 小样本基础上固定 prompt/runtime/知识/预算，增加重复次数与不同 provider；分别报告 Agent 正常路线和独立验证，保留失败。
 - **首版延迟：** 新建任务存在长时间思考、首次加载迟的情况。缩小首版规模或调整思考强度需要独立对照，冻结期内不直接改流程。
 - **纯文本模式：** 当前要求图像与工具调用。后续需验证 text+tools、vision+tools、跨模式恢复和正常输入通关；纯文本请求不能携带 image block，视觉检查须明确未验证。
