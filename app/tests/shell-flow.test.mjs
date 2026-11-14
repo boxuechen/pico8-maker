@@ -33,7 +33,7 @@ test("shell environment: draft-backed main.lua, commits via load_game, replayed 
     assert.equal(game.hasGame, false);
     const checked = await sh("p8 check");
     assert.match(checked.out, /PASS boot/);
-    assert.match(checked.out, /Maker: committed as version 1; the player now runs it\.\n$/);
+    assert.match(checked.out, /Maker: committed as version 1; the player now runs it\. Revision 1: no normal-input route recorded yet\. Only p8 run routes on this version count as tested\.\n$/);
     assert.equal(game.hasGame, true);
     assert.deepEqual(assetSummary(game.snapshot.assets).sfx, [0, 1, 2, 3, 4, 5, 6, 7]);
     assert.match((await sh("p8 check")).out, /PASS boot[\s\S]*$/);
@@ -124,6 +124,8 @@ function _draw() cls(1) circfill(g.x,64,4,8) end`;
     assert.equal(game.playtests.runs.length, before + 1, "a scan loop records only its last route");
     await exec('p8 run --press "right*8" > /dev/null');
     assert.equal(game.playtests.runs.length, before + 1, "the same press is not recorded twice on a revision");
+    await exec('p8 run --press "left*3" > /dev/null');
+    assert.equal(game.playtests.runs.length, before + 1, "after the first route, only routes that change g.mode are recorded");
   } finally {
     await worker.close();
     await game.dispose();

@@ -37,30 +37,31 @@ class UserError extends Error {}
 
 /** Tell the host what a run or look played (Maker shows the last frame and records the route). */
 const report = (onPlay, command, press, r) =>
-  onPlay?.({ command, press, frames: r.rt.frames, ok: r.ok, frame: r.rt.frame ? { width: 128, height: 128, rgba: r.rt.frame.rgba } : null });
+  onPlay?.({ command, press, frames: r.rt.frames, ok: r.ok, modes: r.modes ?? [], frame: r.rt.frame ? { width: 128, height: 128, rgba: r.rt.frame.rgba } : null });
 
 /** Boot, play the presses, and report mode changes, sounds and the final state. */
 async function play(src, press, assets) {
   const rt = new Runtime(assets);
   const loaded = await rt.load(src);
   if (!loaded.ok) return { rt, lines: [`does not boot: ${loaded.diagnostics.map((d) => explainFault(d, src)).join("; ")}`], ok: false };
-  const lines = [];
+  const lines = [],
+    modes = [];
   let mode = (await rt.read(["g.mode"]))["g.mode"];
   const sounds = (loaded.audio ?? []).map((e) => `sfx ${e.sfx ?? `music ${e.music}`}@1`);
   for (const step of parsePress(press)) {
     const r = await rt.advance(step.bits, step.frames, async (frame) => {
       const now = (await rt.read(["g.mode"]))["g.mode"];
-      if (now !== mode) lines.push(`frame ${frame}: g.mode ${JSON.stringify(mode)}→${JSON.stringify(now)}`), (mode = now);
+      if (now !== mode) lines.push(`frame ${frame}: g.mode ${JSON.stringify(mode)}→${JSON.stringify(now)}`), modes.push(now), (mode = now);
     });
     for (const e of r.audio) sounds.push("sfx" in e ? `sfx ${e.sfx}@${e.frame}` : `music ${e.music}@${e.frame}`);
     if (r.fault) {
       lines.push(`fault at frame ${rt.frames + 1}: ${r.fault.map((d) => explainFault(d, src)).join("; ")}`);
-      return { rt, lines, ok: false };
+      return { rt, lines, modes, ok: false };
     }
   }
   lines.unshift(`ran ${rt.frames} frames`);
   if (sounds.length) lines.push(`sounds: ${sounds.slice(0, 12).join(", ")}${sounds.length > 12 ? ", …" : ""}`);
-  return { rt, lines, ok: true };
+  return { rt, lines, modes, ok: true };
 }
 
 /**
@@ -68,7 +69,7 @@ async function play(src, press, assets) {
  * @param argv arguments after `p8`
  * @param io { fs: IFileSystem, cwd, templateDir?, memo?: Map, onPlay?, assets? } – memo remembers the
  *   last failing check per file across invocations of one environment; onPlay gets
- *   { command, press, frames, ok, frame } after each run/look; assets are the cart
+ *   { command, press, frames, ok, modes (g.mode values entered), frame } after each run/look; assets are the cart
  *   resources loaded with main.lua (default: the fixed sound bank).
  * @returns { stdout, exitCode }
  */
