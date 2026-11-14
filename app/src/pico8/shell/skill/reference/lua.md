@@ -60,4 +60,13 @@ Metatables: setmetatable/getmetatable. Raw operations: rawget/rawset/rawequal/ra
 
 Use ASCII hex digits for pixel rows. Default game text uses P8SCII, not an arbitrary Unicode font. A Chinese conversation does not mean the built-in game font supports Chinese text.
 
-Optional lookups: /skill/pico8/reference/runtime-compatibility.md, /skill/pico8/reference/runtime-compatibility.md, /skill/pico8/reference/runtime-compatibility.md, /skill/pico8/reference/runtime-compatibility.md and /skill/pico8/reference/runtime-compatibility.md list the local API coverage. /skill/pico8/reference/input-system.md covers callbacks, input and system facilities.
+The browser runtime differences are in the last section below; callbacks, input and system facilities are in /skill/pico8/reference/api.md.
+
+## Browser runtime differences
+
+- Keep game source and native resources in the current cart. The host has no writable guest cart filesystem. Console commands such as save, folder, ls, resume, reboot and info are unavailable.
+- Guest load depends on a host-authorized local cart bundle. Prefer self-contained carts. Use run or stop only when the requested behavior needs them. Prefer standard update/draw callbacks over custom flip loops.
+- printh and extcmd do not write files, record media or access the system. printh text appears in `p8 run` output. Use `p8 run --read` for globals and tables, with `p8 look` for the screen.
+- stat is a partial local profile. Use time() for the simulation clock and see the input and system section of /skill/pico8/reference/api.md for covered audio and input selectors. Prefer directly observed behavior over assuming an undocumented stat value.
+- menuitem supports five VM-local slots. Serial I/O is unavailable. Each p8 run starts with empty saves. Check any required save lifecycle explicitly.
+- p8 token counts, frame instruction counts and startup checks describe this host. Test official cart compatibility separately when required.

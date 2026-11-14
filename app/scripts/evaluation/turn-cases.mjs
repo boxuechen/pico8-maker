@@ -90,8 +90,13 @@ export const catchChecks = JSON.stringify(
   1,
 );
 
-/** The Agent's own checks.json after a turn: it must pass and keep every starting case (by name). */
-export async function ownChecks(snapshot, files, checkSource) {
+/**
+ * The Agent's own checks.json after a turn: it must pass, keep at least as many
+ * cases as it started with, and keep every starting case (by name, or renamed
+ * with the same presses and all its expectations) except those whose rule the
+ * request changed (`changed`).
+ */
+export async function ownChecks(snapshot, files, checkSource, changed = []) {
   const text = files?.["checks.json"];
   if (!text) return [{ name: "own: checks.json kept", pass: false, detail: "checks.json was deleted" }];
   let cases;
@@ -100,8 +105,13 @@ export async function ownChecks(snapshot, files, checkSource) {
   } catch (e) {
     return [{ name: "own: checks.json kept", pass: false, detail: `not JSON: ${e.message}` }];
   }
+  // A starting case is kept under its name, or as a case with the same presses that still has
+  // every one of its expectations (renamed and strengthened, such as a restart that now also resets a level).
   const names = new Set(cases.map((c) => c.name));
-  const missing = JSON.parse(catchChecks).cases.map((c) => c.name).filter((n) => !names.has(n));
+  const same = (a, b) => (a.press ?? "") === (b.press ?? "") && (a.expect ?? []).every((e) => (b.expect ?? []).some((f) => JSON.stringify(f) === JSON.stringify(e)));
+  const start = JSON.parse(catchChecks).cases;
+  const missing = start.filter((c) => !names.has(c.name) && !changed.includes(c.name) && !cases.some((d) => same(c, d))).map((c) => c.name);
+  if (cases.length < start.length) missing.push(`${start.length - cases.length} case(s) in total`);
   const failed = (await checkSource(snapshot.source, cases, { assets: snapshot.assets })).filter((i) => !i.pass);
   return [
     { name: "own: starting cases kept", pass: !missing.length, detail: missing.length ? `missing ${missing.join(", ")}` : `${cases.length} cases` },
@@ -216,10 +226,19 @@ async function levelScore(snapshot) {
     await rt.advance(0, 12);
     const at10 = await read("g.mode", "g.score");
     out.push(item("a3: 10 points no longer win", at10["g.mode"] === "play" && at10["g.score"] === 10, `g.mode=${at10["g.mode"]} g.score=${at10["g.score"]}`));
-    await rt.setup("g.fruits={{x=20,y=40}}");
+    // A fruit the game spawns itself (it may carry the game's own speed field).
+    await rt.setup("g.fruits={}");
+    let spawned = null;
+    for (let i = 0; i < 90 && !spawned; i++) {
+      await rt.advance(0, 1);
+      const list = (await read("g.fruits"))["g.fruits"];
+      const first = list && Object.values(list)[0];
+      if (first && typeof first.y === "number") spawned = first;
+    }
     await rt.advance(0, 5);
-    const y = (await read("g.fruits.1.y"))["g.fruits.1.y"];
-    out.push(item("a3: level 2 fruit falls 2px per frame", y === 50, `fruit y 40 → ${y} in 5 frames`));
+    const later = (await read("g.fruits.1.y"))["g.fruits.1.y"];
+    const fell = spawned && typeof later === "number" ? later - spawned.y : null;
+    out.push(item("a3: level 2 fruit falls 2px per frame", fell === 10, spawned ? `a spawned item fell ${fell} px in 5 frames` : "no item spawned within 90 frames"));
     await rt.advance(0, 90);
     const frame = rt.frame.rgba;
     await rt.setup("g.mode='play' g.score=19 g.lives=3 g.fruits={{x=64,y=108}}");
@@ -235,7 +254,7 @@ const rulesExceptWin = base.filter((c) => c.name !== "base: 10 points win");
 export const assetTurns = [
   { prompt: "把篮子和水果画成像素精灵：水果像红苹果、带一片绿叶，篮子像编织篮。不要再用纯色圆和矩形，其他规则不变。", checks: base, score: spriteScore },
   { prompt: "加一段轻快的背景音乐，开局就循环播放；接住水果和漏接要用不同的音效。", checks: base, score: audioScore },
-  { prompt: "加第二关：得到 10 分后不再直接胜利，而是进入第二关，屏幕中间显示 LEVEL 2 两秒（游戏不暂停）。第二关水果下落速度翻倍，并开始掉落炸弹，接到炸弹扣一条命；总分到 20 才胜利。", checks: rulesExceptWin, score: levelScore },
+  { changes: ["10 points win"], prompt: "加第二关：得到 10 分后不再直接胜利，而是进入第二关，屏幕中间显示 LEVEL 2 两秒（游戏不暂停）。第二关水果下落速度翻倍，并开始掉落炸弹，接到炸弹扣一条命；总分到 20 才胜利。", checks: rulesExceptWin, score: levelScore },
 ];
 
 export const vagueCases = {

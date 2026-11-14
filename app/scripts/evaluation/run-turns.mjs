@@ -71,7 +71,7 @@ const result = await runConversation({
     const items = await checkSource(snap.source, scripted ? scripted[i].checks : [], { assets: snap.assets });
     const scored = scripted?.[i].score ? await scripted[i].score(snap) : { items: [] };
     items.push(...scored.items);
-    if (scripted) items.push(...(await ownChecks(snap, run.files, checkSource)));
+    if (scripted) items.push(...(await ownChecks(snap, run.files, checkSource, scripted[i].changes)));
     for (const [label, rgba] of Object.entries(scored.frames ?? {})) await writeFile(new URL(`${run.id}-${label}.png`, out), png(rgba));
     const failed = items.filter((x) => !x.pass);
     run.score = {

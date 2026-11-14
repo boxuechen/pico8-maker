@@ -128,6 +128,14 @@ test("the starting checks.json passes on the base game and conflicts with the le
   updated.cases.find((c) => c.name === "10 points win").setup = "g.score=19 g.fruits={{x=64,y=108}}";
   assert.deepEqual((await ownChecks(a3, { "checks.json": JSON.stringify(updated) }, checkSource)).filter((i) => !i.pass), [], "the case updated to 20 points");
   const deleted = { cases: updated.cases.filter((c) => c.name !== "10 points win") };
-  assert.deepEqual((await ownChecks(a3, { "checks.json": JSON.stringify(deleted) }, checkSource)).filter((i) => !i.pass).map((i) => i.name), ["own: starting cases kept"]);
+  assert.deepEqual((await ownChecks(a3, { "checks.json": JSON.stringify(deleted) }, checkSource, ["10 points win"])).filter((i) => !i.pass).map((i) => i.name), ["own: starting cases kept"], "deleting the changed case without a replacement");
+  const renamed = { cases: [...deleted.cases, { ...updated.cases.find((c) => c.name === "10 points win"), name: "20 points win" }] };
+  assert.deepEqual((await ownChecks(a3, { "checks.json": JSON.stringify(renamed) }, checkSource, ["10 points win"])).filter((i) => !i.pass), [], "a changed rule may be renamed");
+  const strengthened = { cases: renamed.cases.map((c) => (c.name === "x restarts" ? { ...c, name: "x restarts everything", setup: c.setup + " g.score=15", expect: [...c.expect, { path: "g.score", equals: 0 }] } : c)) };
+  assert.deepEqual((await ownChecks(a3, { "checks.json": JSON.stringify(strengthened) }, checkSource, ["10 points win"])).filter((i) => !i.pass), [], "a renamed, strengthened case counts as kept");
+  const weakened = { cases: renamed.cases.map((c) => (c.name === "x restarts" ? { ...c, name: "x restarts (mode only)", expect: c.expect.slice(0, 1) } : c)) };
+  assert.equal((await ownChecks(a3, { "checks.json": JSON.stringify(weakened) }, checkSource, ["10 points win"]))[0].pass, false, "a renamed case that lost an expectation does not");
+  const dropped = { cases: [...renamed.cases.filter((c) => c.name !== "right moves 2px")] };
+  assert.equal((await ownChecks(a3, { "checks.json": JSON.stringify(dropped) }, checkSource, ["10 points win"]))[0].pass, false, "an unchanged rule must keep its case");
   assert.equal((await ownChecks(a3, {}, checkSource))[0].pass, false);
 });

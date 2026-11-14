@@ -1,42 +1,42 @@
-PICO-8 API (most used). Numbers are 16.16 fixed point: range -32768..32767.
 
-Callbacks: _init() once; _update() 30 fps (or _update60() 60 fps); _draw() every frame.
 
-Input:
-- btn(b) true while button b is held; btnp(b) true on the frame it is pressed (repeats when held). b: 0 left, 1 right, 2 up, 3 down, 4 O, 5 X.
+## Input, time, system and menus
 
-Drawing (c = colour 0-15):
-- cls(c) clear the screen
-- pset(x,y,c) one pixel; pget(x,y) read a pixel
-- line(x0,y0,x1,y1,c)
-- rect(x0,y0,x1,y1,c) outline; rectfill(x0,y0,x1,y1,c) filled
-- circ(x,y,r,c) outline; circfill(x,y,r,c) filled
-- oval(x0,y0,x1,y1,c); ovalfill(x0,y0,x1,y1,c)
-- print(str,x,y,c) text; each character is 4 px wide, 6 px tall
-- spr(n,x,y) draw sprite n (only if sprites exist; prefer shapes)
-- camera(x,y) offset drawing; camera() resets
-- pal(c0,c1) swap colours; pal() resets
+### Button indices and p8 names
 
-Colours: 0 black, 1 dark blue, 2 dark purple, 3 dark green, 4 brown, 5 dark grey, 6 light grey, 7 white, 8 red, 9 orange, 10 yellow, 11 green, 12 blue, 13 lavender, 14 pink, 15 peach.
+| Action | Lua button | `p8 --press` name |
+| --- | --- | --- |
+| Left | 0 | left |
+| Right | 1 | right |
+| Up | 2 | up |
+| Down | 3 | down |
+| O / Z | 4 | o |
+| X | 5 | x |
 
-Math:
-- flr(x) round down; ceil(x); abs(x); sgn(x); min(a,b); max(a,b); mid(a,b,c) clamp
-- rnd(n) random 0<=r<n; rnd(tbl) random element; srand(seed)
-- sqrt(x); sin(t) cos(t) with t in turns (0..1), sin is inverted for screen y
-- atan2(dx,dy) angle in turns
-- a\b integer divide; a%b modulo
+btn tests held state; btnp includes new presses and automatic repeats. Hold two buttons at once with `right+x`. Player defaults to 0; p8 supplies only player 0.
 
-Tables:
-- add(t,v) append; del(t,v) remove value; deli(t,i) remove index; count(t) or #t length
-- for v in all(t) do ... end  (safe to del(t,v) while iterating)
-- foreach(t,f); pairs(t); ipairs(t)
+### System API
 
-Strings: s1..s2 join; #s length; sub(s,i,j); tostr(n); tonum(s); chr(n); ord(s)
+| Call | Behavior |
+| --- | --- |
+| btn([i,p]) | Held button boolean; no button can return a bitfield; player defaults to 0 |
+| btnp([i,p]) | New press and automatic repeat; use during update |
+| time(), t() | Logical runtime seconds, not operating-system time |
+| stat(selector) | Selector-dependent return type; unsupported selectors are not valid measurements |
+| menuitem(index[,label,callback]) | Pause menu slots 1–5; omit label to remove; callback can receive button information |
+| assert(condition[,message]) | Fail with runtime diagnostics |
+| run([parameter]) | Restart cart execution |
+| stop([message]) | Stop execution |
+| reset() | Reset machine/draw state; not session reset or global-variable reinitialization |
+| flip() | Frame boundary in custom loops; ordinary games should use callbacks |
+| load(filename[,breadcrumb,parameter]) | Cart switch; requires host-supplied cart bundle, not arbitrary URL access |
+| printh(text,...) | Printed in `p8 run` / `p8 look` output (last 20 lines); no file output |
+| extcmd(command) | Platform commands; do not assume external recording/clipboard/network capabilities |
 
-Sound (built-in bank):
-- sfx(0) pickup, sfx(1) shoot, sfx(2) hit, sfx(3) win, sfx(4) lose, sfx(5) jump, sfx(6) blip, sfx(7) explode
-- sfx(-1) stop all sound
+Console/platform entries such as save/folder/ls/resume/reboot/info/serial are listed in the API catalog. Normal game states (title/play/win/gameover) should be implemented in Lua with input transitions rather than depending on console/editor operations.
 
-Time and misc: t() seconds since start; stat(n) system info; printh(str) debug log; stop() halts the cart (do not use).
+Useful local stat selectors: 0 memory KiB, 1 CPU fraction; 16–19 or 46–49 channel SFX IDs; 20–23 or 50–53 note positions; 24/54 music pattern, 25/55 pattern count, 26/56 music tick, 57 music-playing boolean.
 
-Lua syntax notes: x+=1 and x-=1 work; != and ~= both mean not equal; comments start with --; use local for temporaries inside functions.
+p8 cannot query arbitrary stat values. A game may render a diagnostic HUD; development verification can instrument assertions. Neither implies a general live-variable tool exists.
+
+For a fresh btnp edge, advance a release frame with buttons=0 before pressing again. Held movement uses btn; menu/grid input using btnp must account for repeats. To ignore automatic repeats, compare current btn with previous-frame state yourself. Test reset/focus/pause boundaries where relevant.

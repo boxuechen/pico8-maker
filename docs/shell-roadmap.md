@@ -180,3 +180,11 @@ P0 → P1-1、P1-2、P1-3（改动小、直接影响用户）→ P2-5 知识回�
 ### 顺序与依赖
 
 A1+A2（一轮 agent+turns 评测）→ B1 → C1 → A3–A5（整理，可穿插）→ C2（待选卡带）→ C3 → C4（待 key）→ B2（待 UI 决定）。A 和 C1 依赖现有 turns 基础设施；B1 独立；C2/C4/B2 等用户输入，未到之前不阻塞其他项。
+
+### A 的结果（2026-11-14）
+
+- **A1：** 先查出更根本的问题——checks.json 只在 shell 环境内存里，刷新或换会话就丢，「沿用已有 checks.json」在真实使用里不成立。改为随卡带保存（`cart.files`，不进版本、撤销和导出；c877d16）。评测：scripted 用例的底座带上 checks.json（含「10 points win」），每轮判 Agent 自己的 checks.json 能通过、初始用例都在（按名字，或按键相同且原期望都在的改名加强；本轮请求改动的规则可替换）。**旧 skill 基线下 flash 第二关一轮已经 5/5 正确**：把「10 points win」换成「10 points starts level 2」+「20 points win」，没有删用例或放宽——担心的冲突在 flash 上不存在。新规则（请求改掉的规则同步更新用例，其余不得放宽）作为说明保留，新版 5/5 × 2 轮。打分器修正两处：改名加强算保留；第二关速度改为测游戏自己生成的掉落物（模型给水果加了速度字段，setup 塞入的水果没有）。
+- **A2：** playtest.md 的按键写法、命令、checks.json 格式和验证要点并入 SKILL.md（6.1 k → 8.2 k 字符），playtest.md 只留细节。turns 层 41 轮里读 playtest.md 的次数 8 → 0。第一版顺手加了「第 6 步先用 p8 run 玩改动」，edits 每轮中位 14 → 21 s、工具调用 +13%，正确性不变，已删回原文；删后 edits 中位 14 s（持平），assets 89 s / vague 62 s（基线 70 / 52 s，单轮 35–323 s 波动大），工具调用 +7%。agent 层 lab 9/9、修复 5/5、新建独立 5/5（1 次 180 s 超时）；quick 层一次 T6 像素失败，复跑两次 9/9。
+- **A3：** palette 并入 graphics、runtime-compatibility 并入 lua、input-system 并入 api（memory-storage 内容独立，保留）；修了 lua.md 里同一路径重复 5 次的迁移残留。reference 16 → 13 篇。
+- **A4、A5：** app/AGENTS.md 写明 `p8` 表面冻结（新增须有评测证据）和宿主隐式规则（版本、路线挑选、`Maker:` 提示行、checks.json 随卡带保存）。
+

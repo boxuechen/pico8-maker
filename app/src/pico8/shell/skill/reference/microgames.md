@@ -2,7 +2,7 @@
 
 These complete, deliberately small Lua games are learning material for this host. Code, sprite rows and note sequences were newly authored for the knowledge pack. They do not contain the studied classics' code, maps, sprites or music. Use a recipe when a runnable example would help, and adapt it to the request. These examples are optional; their mechanics and features are not requirements for new games.
 
-Each recipe rebuilds assets in _init, keeps round state in global g rebuilt by new_game() (the skeleton convention, readable with `p8 run --read g...`), runs at 60 updates per second, and has a title, a visible objective, success/failure and an X-button restart after a short result lock. Write it to main.lua and run `p8 check`. The player's keyboard maps arrows to movement, Z (the O button) to Lua button 4, and X to Lua button 5; in `p8 --press` they are left, right, up, down, o and x (see /skill/pico8/reference/playtest.md).
+Each recipe rebuilds assets in _init, keeps round state in global g rebuilt by new_game() (the skeleton convention, readable with `p8 run --read g...`), runs at 60 updates per second, and has a title, a visible objective, success/failure and an X-button restart after a short result lock. Write it to main.lua and run `p8 check`. The player's keyboard maps arrows to movement, Z (the O button) to Lua button 4, and X to Lua button 5; in `p8 --press` they are left, right, up, down, o and x (press syntax in SKILL.md).
 
 ## Spring Courier — /skill/pico8/examples/spring-courier.lua
 
