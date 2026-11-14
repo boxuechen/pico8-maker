@@ -45,6 +45,8 @@ const arg = (name) => {
   return i < 0 ? undefined : process.argv[i + 1];
 };
 const spec = cases[arg("case")];
+// --model deepseek-v4-pro runs another DeepSeek model with the same prompts and limits.
+const config = { ...defaultConfig, ...(arg("model") ? { model: arg("model") } : {}) };
 if (!spec) throw Error("--case garden|lodge is required");
 const apiKey = process.env.DEEPSEEK_API_KEY;
 if (!apiKey) throw Error("DEEPSEEK_API_KEY is required");
@@ -108,9 +110,9 @@ const report = {
   id,
   startedAt: new Date().toISOString(),
   model: {
-    provider: defaultConfig.provider,
-    model: defaultConfig.model,
-    thinkingLevel: defaultConfig.thinkingLevel,
+    provider: config.provider,
+    model: config.model,
+    thinkingLevel: config.thinkingLevel,
   },
   limits: { millisecondsPerTurn, toolCalls: null },
   runs: [],
@@ -120,7 +122,7 @@ const entries = async () =>
     .items;
 
 await agent.open();
-await agent.configure({ ...defaultConfig, apiKey });
+await agent.configure({ ...config, apiKey });
 for (const [i, prompt] of spec.prompts.entries()) {
   const before = (await entries()).length;
   turnStarted = performance.now();

@@ -13,7 +13,7 @@ const apiKey = process.env.SMOKE_DEEPSEEK_KEY;
 if (!apiKey) throw Error("SMOKE_DEEPSEEK_KEY is required");
 const modelConfig = {
   provider: "deepseek",
-  model: "deepseek-flash",
+  model: process.env.SMOKE_MODEL ?? "deepseek-flash",
   baseUrl: "https://api.deepseek.com",
   apiKey,
   remember: true,

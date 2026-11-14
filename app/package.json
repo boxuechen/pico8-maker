@@ -17,7 +17,8 @@
     "test:model": "node tests/mock-model.mjs",
     "pretest": "npm run prepare:app",
     "test:s4": "node --test tests/s4-evaluation.test.mjs tests/outcome-metrics.test.mjs",
-    "eval:s4": "node scripts/evaluation/run-s4.mjs"
+    "eval:s4": "node scripts/evaluation/run-s4.mjs",
+    "eval:tier": "node scripts/evaluation/eval-tier.mjs"
   },
   "dependencies": {
     "@assistant-ui/react": "0.15.36",

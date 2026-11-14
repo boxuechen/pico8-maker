@@ -38,5 +38,5 @@
 
 ## Evaluation
 
-- Layers: lab T1–T7 (`lab/local-agent`, about 2 min) for every skill or p8 change; S4 ×5 (`npm run eval:s4 -- --run --matrix <file>`, about 6 min) for agent-facing changes; case reruns (`run-case.mjs --case garden|lodge`) plus manual play for large changes; `app-smoke.mjs` for UI or environment changes.
+- Layers, in one command: `npm run eval:tier -- --tier quick` (lab T1–T9) for every skill or p8 change; `--tier agent` (+ S4 ×5) for agent-facing changes; `--tier full` (+ Garden/Lodge reruns and app smoke) for large changes, then play the case results by hand. `app-smoke.mjs` alone for UI or environment changes.
 - Run real-model checks with disposable carts and keep detailed runs in the ignored evaluation cache. Keep model credentials in per-endpoint environment variables; archive unavailable configurations as not_run and failed generations as errors. Preserve failures and distinguish scoped checks from gameplay quality. Keep Agent normal-route coverage separate from the fresh-session state/pixel oracle. Scripted providers (`npm run test:s4`, `tests/mock-model.mjs`) do not establish real-model quality.

@@ -1,5 +1,17 @@
 # PICO-8 Agent evaluation
 
+## Layers
+
+`DEEPSEEK_API_KEY=... npm run eval:tier -- --tier quick|agent|full [--model deepseek-flash] [--repeat 5]` runs the layers in parallel and prints one summary (logs under `.cache/evaluations/tier-*`):
+
+| Tier | Runs | When |
+| --- | --- | --- |
+| quick | lab T1–T9 (`lab/local-agent`, about 2–3 min) | every skill or p8 change |
+| agent | quick + S4 ×N (create and repair, about 6–10 min) | every agent-facing change (startup text, skill, p8 output, tools) |
+| full | agent + Garden and Lodge reruns + app smoke (about 30 min) | large changes; then play the case results by hand |
+
+Record results, failures included, in docs/development-status.md.
+
 ## Open-ended case study
 
 Open `/scripts/evaluation/case-study.html` locally for the Lodge Podge experiment. This uses the same Agent, p8 Worker and saved provider configuration with a disposable cart. Send the initial request, then follow-up feedback in the same session. Each turn has a 15-minute timeout and no tool-call limit. It archives the original prompts, transcript, committed revisions, draft and separate evaluator inputs through the loopback recorder. It does not write to the user's cart library or score fun automatically. The page is a local research tool, not a production entry point.

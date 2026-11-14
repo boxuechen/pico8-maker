@@ -112,6 +112,10 @@
 - **加载：** 工作台空闲时预取 shell 分块和 p8 Worker；裁掉 just-bash 用不到的命令。
 - **纯文本模型：** shell 的 `p8 look` 字符画和 `p8 run --read` 不依赖图片，可以正式验证 text+tools 模式（`development-status.md` 里原有的待办）。
 
+**P3 结果**
+
+- **P3-1 分层评测（2026-11-14）：** `npm run eval:tier -- --tier quick|agent|full [--model] [--repeat]` 并行跑 lab T1–T9 / + S4 ×N / + 两个案例和主界面烟测，日志与 `summary.md` 在 `.cache/evaluations/tier-*`。`run-case.mjs` 新增 `--model`，`app-smoke.mjs` 读 `SMOKE_MODEL`，便于换模型对照。试跑 quick：9/9，173 s。
+
 ## 6. 建议顺序
 
 P0 → P1-1、P1-2、P1-3（改动小、直接影响用户）→ P2-5 知识回迁（P0 删除知识包时一起做最省事，也可以先存档、后改写）→ P2-4、P2-6、P2-7 → P2-8 资源即文件 → P3 穿插进行。每一步遵循：先在 lab 跑通，再进 Maker，按第 5 节的分层评测，前后对比记进文档，完成即提交。
