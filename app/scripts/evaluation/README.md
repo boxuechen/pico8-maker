@@ -32,6 +32,8 @@ This loads the unchanged cart in the bundled WASM runtime and writes actual PNG 
 
 `node scripts/evaluation/reverify-s4.mjs <archive-dir>...` reruns the current independent and Agent-route verifiers on archived S4 final carts without provider requests and writes `reverify.json` beside the untouched report. The independent oracle waits 30 idle frames after a result before pressing X (a short result lock is valid), and Agent-route evidence replays normal input before the first debug event.
 
+`SMOKE_DEEPSEEK_KEY=... node scripts/evaluation/app-smoke.mjs` drives the product entry instead (home composer → MAKE → workbench, temporary Chrome profile) and saves `summary.json` and a workbench screenshot under `.cache/evaluations/app-smoke-*`.
+
 `SMOKE_DEEPSEEK_KEY=... node scripts/evaluation/browser-smoke.mjs` is a real-browser end-to-end smoke: it starts the dev server, opens the case-study page in headless Chrome with a temporary profile, sends one short creation prompt through the production browser Game/Worker/Agent and prints the archive, final reply and any console errors. Set `SMOKE_CHROME_NO_SANDBOX=1` where Chrome's renderer sandbox crashes inside an outer sandbox.
 
 ## Fixed suites
@@ -70,6 +72,6 @@ Finish builds before starting the browser evaluator: generated-file changes can 
 
 ## S4 result matrix
 
-See [S4 implementation, commands and evidence](../../../docs/s4-evaluation.md) for the shooter tasks, matrix configuration, metrics and same-board 128/512 experiment. `npm run test:s4` runs deterministic checks; `npm run eval:s4 -- --run --matrix scripts/evaluation/s4-matrix.example.json` explicitly makes real provider requests. Use exact model IDs/endpoints and independent credential environment variables. Unconfigured rows are `not_run`; provider failures remain errors. `S4_FLOW=shell` runs the opt-in shell flow (recorded as `freeze.flow`); `SMOKE_FLOW=shell` does the same for the browser smoke.
+See [S4 implementation, commands and evidence](../../../docs/s4-evaluation.md) for the shooter tasks, matrix configuration, metrics and same-board 128/512 experiment. `npm run test:s4` runs deterministic checks; `npm run eval:s4 -- --run --matrix scripts/evaluation/s4-matrix.example.json` explicitly makes real provider requests. Use exact model IDs/endpoints and independent credential environment variables. Unconfigured rows are `not_run`; provider failures remain errors. Runs use Maker's default shell flow; `S4_FLOW=frozen` (recorded as `freeze.flow`), `SMOKE_FLOW=frozen`, `run-case.mjs --flow frozen` and `case-study.html?flow=frozen` run the earlier frozen flow.
 
 Real-model gameplay, cross-provider comparison and image recognition effects have not been validated. The initial Kimi configuration returned a subscription 403 and further comparisons were skipped. Scripted integration providers establish pipeline behavior only.

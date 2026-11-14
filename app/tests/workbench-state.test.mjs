@@ -38,6 +38,9 @@ test("one assistant post per user turn retains text and every tool across model 
 test("tool completion, errors and cancellation never share a success state", () => {
   assert.equal(toolState({ result: "ok" }, false), "completed");
   assert.equal(toolState({ result: "bad", isError: true }, false), "failed");
+  const exited = [{ type: "text", text: "1 FAILED\n" }, { type: "text", text: "<harness>\n[error] Command exited with code 1\n</harness>" }];
+  assert.equal(toolState({ toolName: "bash", result: exited, isError: true }, false), "completed");
+  assert.equal(toolState({ toolName: "bash", result: [{ type: "text", text: "Command timed out after 5 seconds" }], isError: true }, false), "failed");
   assert.equal(
     toolState({ result: interruptedToolResult, isError: true }, false),
     "interrupted",

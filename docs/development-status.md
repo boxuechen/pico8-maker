@@ -15,11 +15,13 @@
 
 播放器版本由 [`app/player.lock.json`](../app/player.lock.json) 确定，升级方式见[开发指南](development.md#player-updates)。Maker 不维护自己的 VM 分支。
 
-## Agent 流程冻结
+## Agent 流程
 
-冻结基线：Maker 标签 `agent-flow-freeze-2026-11-13` 与播放器 `69521e7`（标签同名）。冻结范围包括工具/schema、结果 DTO、启动段 AGENT/MACHINE/WORKFLOW/Host、重开骨架、图像裁剪、音频事件与覆盖提示。
+**默认：shell 流程**（2026-11-14 决定，依据见 [shell-flow-migration.md](shell-flow-migration.md)）。新会话使用 pi-durable 的 read/write/edit/bash、`p8` 命令和 pico8 skill，资源仍用 `read_assets`/`edit_assets`；p8 跑通 `main.lua` 后经 `load_game` 提交版本，测试路线经 `reset_game`/`press_buttons` 记录。
 
-仅因评测或测试确认的缺陷修改上述流程，并在此记录证据与前后复跑结果。UI、文档和评测工作可独立进行。运行时调试、正常输入覆盖及状态隔离规则集中维护在宿主契约和 `app/AGENTS.md`，不在此重复。
+**回退：冻结流程**，标签 `agent-flow-freeze-2026-11-13` 与播放器 `69521e7`（标签同名）。有历史、没有存储 flow 的旧会话继续用它；`?flow=frozen` 可让新会话使用它。冻结范围包括工具/schema、结果 DTO、启动段 AGENT/MACHINE/WORKFLOW/Host、重开骨架、图像裁剪、音频事件与覆盖提示。
+
+两条流程面向模型的行为都只因评测或测试确认的问题修改，并在此记录证据与前后复跑结果。UI、文档和评测工作可独立进行。删除冻结流程需要单独决定。
 
 ## 验证与证据
 
@@ -39,7 +41,7 @@
 
 ## 后续工作
 
-- **Shell 流程（已接入，默认关闭）：** lab 的 read/edit/write/bash + `p8` 形态作为第二条流程接入，`?flow=shell` 仅对无历史的新会话生效，`S4_FLOW=shell` / `SMOKE_FLOW=shell` / `run-case.mjs --flow shell` 用于评测。冻结流程的工具、schema、启动段与代码路径未改。M3（2026-11-14，各 ×5）：S4 新建独立检查 shell 4/5、frozen 5/5（frozen 4 次撞 180 s 时限），修复均 5/5，shell 中位耗时约为一半；两个案例各 ×2 全部完成，胜利/重开两条流程都未自动验证。结论：不转默认，先补路线覆盖与交付证据再复跑，详见 [shell-flow-migration.md](shell-flow-migration.md)。
+- **Shell 流程跟进：** 已转为默认。主界面端到端已用 `app-smoke.mjs` 跑通（v4 提交、试玩帧时间线、无控制台错误）。仍待做：(1) 模型用临时改代码代替 debug 测试，会在撤销历史里留下临时版本；(2) 案例 Garden/Lodge 最终版本的人工试玩对比；(3) S4 新建失败集中在题面细节（受伤闪烁、无敌时长），需要靠更多样本或 skill 内容改进再验证；(4) shell 下没有 debug 写状态、ASCII 裁剪观察和 `/cart/playtests.json`，按实际失败再补。
 - **扩展效果验证：** 在已有 S4 小样本基础上固定 prompt/runtime/知识/预算，增加重复次数与不同 provider；分别报告 Agent 正常路线和独立验证，保留失败。
 - **首版延迟：** 新建任务存在长时间思考、首次加载迟的情况。缩小首版规模或调整思考强度需要独立对照，冻结期内不直接改流程。
 - **纯文本模式：** 当前要求图像与工具调用。后续需验证 text+tools、vision+tools、跨模式恢复和正常输入通关；纯文本请求不能携带 image block，视觉检查须明确未验证。

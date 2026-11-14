@@ -3,7 +3,7 @@
 // browser transport and PNG encoding are replaced (EvaluationGame). Uses a
 // disposable cart; never touches the user's library.
 //
-//   DEEPSEEK_API_KEY=... node scripts/evaluation/run-case.mjs --case garden [--flow shell]
+//   DEEPSEEK_API_KEY=... node scripts/evaluation/run-case.mjs --case garden [--flow shell|frozen]
 //
 // The key is read from the environment only and redacted from the archive.
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -48,14 +48,14 @@ const arg = (name) => {
 };
 const spec = cases[arg("case")];
 if (!spec) throw Error("--case garden|lodge is required");
-const flow = arg("flow") ?? "frozen";
+const flow = arg("flow") ?? "shell";
 if (!["frozen", "shell"].includes(flow)) throw Error("--flow frozen|shell");
 const apiKey = process.env.DEEPSEEK_API_KEY;
 if (!apiKey) throw Error("DEEPSEEK_API_KEY is required");
 const millisecondsPerTurn = 900000; // Same per-turn limit as the baseline; no tool cap.
 const id = crypto.randomUUID();
 const out = new URL(
-  `../../../.cache/evaluations/case-${spec.slug}${flow === "shell" ? "-shell" : ""}-${id}/`,
+  `../../../.cache/evaluations/case-${spec.slug}-${flow}-${id}/`,
   import.meta.url,
 );
 await mkdir(out, { recursive: true });

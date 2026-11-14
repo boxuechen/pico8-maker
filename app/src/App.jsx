@@ -415,15 +415,16 @@ const showcase = {
 const isCartFile = (name) =>
   /\.p8(\.png)?$/i.test(name) || /\.png$/i.test(name);
 const defaultSessionTitles = new Set(["New session", "New conversation"]);
-// Opt-in shell flow (docs/shell-flow-migration.md): only ?flow=shell selects it,
-// only for a conversation without history; a stored choice always wins.
-const requestedFlow =
-  new URLSearchParams(globalThis.location?.search ?? "").get("flow") === "shell"
-    ? "shell"
-    : null;
+// New conversations use the shell flow (docs/shell-flow-migration.md);
+// ?flow=frozen selects the earlier structured-tool flow for a new one. A stored
+// choice always wins, and older conversations with history but no stored flow
+// were made with the frozen flow's tools.
+const requestedFlow = ["shell", "frozen"].find(
+  (f) => new URLSearchParams(globalThis.location?.search ?? "").get("flow") === f,
+);
 const sessionFlow = (session) =>
   session.flow ??
-  (requestedFlow && !session.transcript?.length ? requestedFlow : "frozen");
+  (session.transcript?.length ? "frozen" : (requestedFlow ?? "shell"));
 const sessionTitle = (session) =>
   !session.titleEdited && defaultSessionTitles.has(session.title)
     ? t("newConversation")
@@ -681,8 +682,7 @@ function Studio({ store }) {
       await previous.dispose({ preserveGame: true }).catch(() => {});
     // A conversation keeps the flow it started with; ?flow=shell opts new ones in.
     const flow = sessionFlow(session);
-    if (flow !== (session.flow ?? "frozen"))
-      persistSession({ flow }, cart.id, session.id);
+    if (session.flow !== flow) persistSession({ flow }, cart.id, session.id);
     const a = new Agent(
       gameRef.current,
       (state, transcript) => {

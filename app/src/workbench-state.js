@@ -13,11 +13,22 @@ export function groupAssistantTurns(messages) {
   }
   return grouped;
 }
+const resultText = (result) =>
+  typeof result === "string"
+    ? result
+    : Array.isArray(result)
+      ? result.map((p) => (typeof p?.text === "string" ? p.text : "")).join("")
+      : "";
+// Shell flow: a command that ran and exited nonzero (a failing p8 check, grep
+// with no match) is an ordinary step, not a tool failure.
+const exitedNonzero = (tool) =>
+  tool.toolName === "bash" &&
+  /Command exited with code \d+/.test(resultText(tool.result));
 export function toolState(tool, running) {
   if (tool.isError && tool.result === interruptedToolResult)
     return "interrupted";
   if (tool.result === undefined) return running ? "running" : "interrupted";
-  return tool.isError ? "failed" : "completed";
+  return tool.isError && !exitedNonzero(tool) ? "failed" : "completed";
 }
 export function summarizeTools(tools, running) {
   const states = tools.map((tool) => toolState(tool, running));

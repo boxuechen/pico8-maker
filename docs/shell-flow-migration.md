@@ -1,6 +1,6 @@
 # Shell 流程迁移方案（待评审）
 
-更新：2026-11-14。状态：**方案，未实施**。本文只提议，不授权修改冻结流程；冻结规则见 [development-status.md](development-status.md#agent-流程冻结) 与 `app/AGENTS.md` 的 Agent flow freeze。
+更新：2026-11-14。状态：**已实施，shell 流程为默认**（M4 决定见文末）。冻结流程保留为回退，见 [development-status.md](development-status.md#agent-流程) 与 `app/AGENTS.md` 的 Agent flows。
 
 ## 1. 结论先行
 
@@ -93,7 +93,7 @@ Agent (app/src/agent.js, 不变)
 | **M1 p8 跨线程（已完成）** | `remoteP8` / `p8Host` / Worker 入口；`createEnvironment({ p8 })` | 只动 `lab/` | 已通过：进程内与 worker 线程输出、退出码、文件逐字节一致；durable 循环 + worker p8 跑 T1–T7 7/7 |
 | **M2 Maker 接入（已完成）** | p8 核心与 skill 移入 `app/src/pico8/shell/`（lab 经 `maker.mjs` 复用同一份代码）；shell 环境、扩展、p8 Worker、D2 提交、D7 路线、D8 开关 | `app/src/pico8/shell/` 新目录；`agent.js` 按 flow 选扩展（懒加载）；App/评测脚本加 flow 入口 | 已通过：`npm test` 150/150、生产构建；S4 两条流程同时复跑；浏览器烟测通过，见下文 |
 | **M3 评测门槛（已执行）** | 第 6 节矩阵，两条流程同模型同输入 | 只动评测脚本与文档 | **未全部达标**：S4 新建独立检查 shell 4/5 < frozen 5/5，见下文 |
-| **M4 决策** | 记入 development-status.md：转为默认 / 保持开关 / 放弃 | 文档；转默认需另起评审 | — |
+| **M4 决策（已定）** | shell 转为新会话默认；冻结流程保留为回退（`?flow=frozen`，旧会话不变） | App 默认、评测默认、AGENTS.md、development-status.md | 2026-11-14 用户决定，依据与残留风险见文末 |
 
 M0 结果（2026-11-14，DeepSeek Flash high）：首个请求逐项核对，系统提示与 coding agent 会话**逐字节相同**；工具定义只差键顺序、工具顺序和两三个词。`read` 能把 `p8 look --png` 的图片作为图像块返回。成绩与 session 循环同档（T6 失败是模型的游戏没过 S4 偏轴路线，不是 harness 问题），归档 `.cache/lab/20261114T0027-5p8a`、`.cache/lab/20261114T0032-ve7i`。结论：**循环不是变量**，换成 pi-durable 不丢效果；第 2 节边界 4 解除。
 
@@ -173,3 +173,23 @@ M3 跟进（2026-11-14）：
 ## 8. 不在本方案范围
 
 本地模型、纯文本模式、音频观察、debug 写状态的 p8 子命令、资源编辑改成 p8 子命令。这些都等 M4 之后按证据排期。
+
+## M4 决定（2026-11-14）
+
+用户决定以 shell 流程替代冻结流程推进：它直接沿用 Pi coding agent 的形态（通用工具 + 命令 + skill），和 lab 共用同一份代码，后续改进可以先在 lab 快速验证再进 Maker。
+
+依据（DeepSeek Flash，均为小样本）：S4 修复 shell 15/15、frozen 5/5，shell 中位耗时约一半；S4 新建 shell 12/15、frozen 5/5，但 frozen 4/5 撞 180 s 时限，shell 全部自然结束；token 约为一半；两个案例 8 次全部完成。
+
+做法：
+
+- 新会话默认 shell；有历史、没有存储 flow 的旧会话按冻结流程打开（转录里是冻结工具），`?flow=frozen` 让新会话用冻结流程。冻结流程代码不删，删除需另行决定。
+- 评测脚本默认 shell，`S4_FLOW=frozen` / `SMOKE_FLOW=frozen` / `--flow frozen` 跑冻结流程做对照。
+
+残留风险：
+
+1. S4 新建通过率可能略低于冻结流程，失败集中在题面细节；试过的通用 skill 规则没有改善，已回退。
+2. 案例的可玩性两边都未人工验证。
+3. shell 缺 debug 写状态、ASCII 裁剪观察、`/cart/playtests.json`，以及 frozen 启动段里的设计/调色板/交付格式指导（AGENT/MACHINE/WORKFLOW 没有进 shell 启动段）。交付回复不再强制 Gameplay/Controls/Verified/Unverified 四段格式。
+4. 版本变多：shell 没有 debug 写状态，模型会临时改代码做测试（例如让水果在篮子处生成），每次 p8 跑通都会提交，撤销历史（12 个版本）里会混入这些临时版本。
+
+主界面端到端（`app-smoke.mjs`，主页输入 → MAKE → 工作台，默认 shell，2026-11-14）：两次各 40–51 s、18 步，提交到 v4，「READY TO PLAY」，Playtest frames 时间线显示回放路线的画面，控制台无错误或警告。第一次的步骤汇总显示「Finished with errors · 1 failed」，原因是 bash 非零退出（如 `p8 check` 有 FAIL）被当成工具失败；已改为只把超时/中止等真正失败计入，非零退出算普通步骤。归档 `.cache/evaluations/app-smoke-*`。
