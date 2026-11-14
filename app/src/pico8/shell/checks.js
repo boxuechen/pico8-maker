@@ -131,12 +131,17 @@ export async function checkSource(source, cases = [], { assets } = {}) {
     const { g } = await base.rt.read(["g"]);
     const colours = base.rt.colors();
     const problems = [];
-    if (!g || typeof g !== "object") problems.push("global g is missing; create it in new_game() and call new_game() from _init()");
-    else if (typeof g.mode !== "string") problems.push('g.mode is not set; use g.mode="play" in new_game()');
+    // g and g.mode are optional: games without a result (toys, sandboxes) need neither.
+    const state =
+      !g || typeof g !== "object"
+        ? "no global g (state reads need --read on your own globals)"
+        : typeof g.mode === "string"
+          ? `g.mode=${show(g.mode)}`
+          : "no g.mode (no result tracking)";
     if (colours < 2) problems.push("the screen has one colour; draw the game in _draw()");
-    items.push({ name: "boot", pass: !problems.length, detail: problems.length ? problems.join("; ") : `${BOOT_FRAMES} frames, g.mode=${show(g.mode)}, ${colours} colours` });
+    items.push({ name: "boot", pass: !problems.length, detail: problems.length ? problems.join("; ") : `${BOOT_FRAMES} frames, ${state}, ${colours} colours` });
     if (problems.length) return items;
-    // Some button must change g or the screen compared with idling.
+    // Some button must change g (when there is one) or the screen compared with idling.
     const idle = await boot(source, assets);
     await idle.rt.advance(0, HOLD_FRAMES);
     const idleG = canonical((await idle.rt.read(["g"])).g),

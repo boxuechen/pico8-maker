@@ -264,3 +264,12 @@ now use sorted keys.
 
 DeepSeek Flash, durable loop, `--p8 worker`, one run each: T1–T7 7/7 (T1–T5 3–13 s, T6
 67 s, T7 40 s). Archive `.cache/lab/20261114T0041-dzcu`.
+
+## Optional g / g.mode (P1-1, 2026-11-14)
+
+`p8 check` no longer requires a global `g` or `g.mode`; boot reports which it found and
+still requires more than one colour, and input still requires some button to change `g`
+(when present) or the screen. The skill describes `g.mode` as the way to write games with a
+result and tells the model not to add results to toys; `p8 new toy` is a template without
+one. T8 is a new task (paint toy from an empty cart, hidden case: `g.mode` stays nil).
+DeepSeek Flash, durable loop, worker p8: T1–T8 8/8. Archive `.cache/lab/20261114T0405-t68d`.

@@ -65,6 +65,10 @@
 | 2 | 不改源码设置状态 | `p8 run/look --setup "lua"`：加载后、按键前执行（`Runtime.setup` 已有，`checks.json` 用例已在用）；带 setup 的运行不回放、不算 normal 路线 | 主界面烟测里不再出现「临时改代码」的版本；S4 不退化 |
 | 3 | 每次请求一个版本 | 同一次用户请求里的多次提交合并成一个版本（后一次替换前一次）；撤销按请求回退 | Game 单测；主界面烟测 v1 → v1（而不是 v4） |
 
+**P1 结果**
+
+- **P1-1 放宽契约（2026-11-14）：** `p8 check` 的 boot 不再要求 `g`/`g.mode`，只报告状态（`g.mode="play"` / `no g.mode (no result tracking)` / `no global g`），仍要求画面多于一种颜色、至少一个按键改变 `g` 或画面。skill 的「Game rules the checker expects」改为「How games are written」：有胜负的游戏用 `g.mode`，玩具/沙盒不加任务没要求的结果；新增 `p8 new toy` 模板。lab 新增 T8（空卡带做画画玩具，隐藏用例含「长时间游玩后 `g.mode` 为 nil」）。DeepSeek Flash durable + worker p8：T1–T8 8/8，T8 23 s、12 次调用；T1–T5 5–24 s，T6 56 s，T7 47 s（归档 `.cache/lab/20261114T0405-t68d`）。
+
 ## 4. P2：质量
 
 | # | 事项 | 做法 | 验证 |

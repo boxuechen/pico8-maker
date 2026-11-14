@@ -90,9 +90,9 @@ async function dispatch(argv, { fs, cwd, templateDir = TEMPLATE_DIR, memo = new 
   const templates = async () =>
     (await fs.exists(templateDir)) ? (await fs.readdir(templateDir)).filter((f) => f.endsWith(".lua")).map((f) => f.slice(0, -4)) : [];
   const source = async (file = "main.lua") => {
-    if (!(await fs.exists(at(file)))) throw new UserError(`${file} not found. Create it, or start from a template with: p8 new skeleton`);
+    if (!(await fs.exists(at(file)))) throw new UserError(`${file} not found. Create it, or start from a template with: p8 new skeleton (or p8 new toy)`);
     const text = await fs.readFile(at(file), "utf8");
-    if (!text.trim()) throw new UserError(`${file} is empty. Write the game, or start from a template with: p8 new skeleton`);
+    if (!text.trim()) throw new UserError(`${file} is empty. Write the game, or start from a template with: p8 new skeleton (or p8 new toy)`);
     return text;
   };
   const [cmd, ...args] = argv;

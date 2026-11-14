@@ -1,0 +1,10 @@
+{
+ "cases": [
+  { "name": "starts at the centre", "press": "wait", "expect": [ { "path": "g.x", "equals": 64 }, { "path": "g.y", "equals": 64 } ] },
+  { "name": "moves one pixel per frame", "press": "right*10 down*5", "expect": [ { "path": "g.x", "equals": 74 }, { "path": "g.y", "equals": 69 } ] },
+  { "name": "stays on screen", "press": "left*100 up*100", "expect": [ { "path": "g.x", "equals": 0 }, { "path": "g.y", "equals": 0 } ] },
+  { "name": "stays on screen right", "press": "right*100", "expect": [ { "path": "g.x", "equals": 127 } ] },
+  { "name": "x changes colour", "press": "wait x wait", "expect": [ { "path": "g.colour", "changes": true } ] },
+  { "name": "no result after long play", "press": "o*20 right*30 o*20 x wait*300", "expect": [ { "path": "g.mode", "equals": null } ] }
+ ]
+}

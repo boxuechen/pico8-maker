@@ -96,3 +96,15 @@ test("p8 in a worker thread prints exactly what in-process p8 prints and writes 
     await worker.close();
   }
 });
+
+test("g and g.mode are optional: toys and plain-global carts pass boot and input", async () => {
+  const plain = "x=64\nfunction _update() if btn(1) then x+=1 end end\nfunction _draw() cls(1) circfill(x,64,3,8) end";
+  const noMode = "function _init() g={x=64} end\nfunction _update() if btn(0) then g.x-=1 end end\nfunction _draw() cls(1) pset(g.x,64,7) end";
+  for (const [src, note] of [[plain, /no global g/], [noMode, /no g.mode/]]) {
+    const items = await checkSource(src);
+    assert.ok(items.every((i) => i.pass), JSON.stringify(items));
+    assert.match(items.find((i) => i.name === "boot").detail, note);
+  }
+  const still = await checkSource("function _update() end\nfunction _draw() cls(1) end");
+  assert.ok(still.some((i) => !i.pass), "a one-colour screen still fails: " + JSON.stringify(still));
+});

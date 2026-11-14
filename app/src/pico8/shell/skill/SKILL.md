@@ -17,7 +17,7 @@ Other commands:
 
 - `p8 run --press "right*30 wait*60" --read g.score,g.mode` plays the game and prints mode changes, sounds and values.
 - `p8 look --press "right*30"` prints the screen as 32x32 characters (colours 0-f). Add `--png screen.png` to also write a 512x512 image, then open it with `read` to see the screen.
-- `p8 new skeleton` starts `main.lua` from a working game skeleton (for new games).
+- `p8 new skeleton` starts an empty `main.lua` from a working game skeleton with win/lose; `p8 new toy` from a toy without a result.
 
 ## PICO-8 Lua is not standard Lua
 
@@ -35,10 +35,11 @@ Other commands:
 
 Write code, comments and on-screen text in plain ASCII English.
 
-## Game rules the checker expects
+## How games are written
 
-- All game state lives in the global table `g` (never `local g`). `new_game()` builds `g`; `_init()` calls `new_game()`.
-- `g.mode` is `"play"`, `"win"` or `"lose"`. After a result, count `g.wait` and restart only when `g.wait>15 and btnp(5)`.
+- Keep game state in a global table `g` (never `local g`): `new_game()` builds `g`, `_init()` calls `new_game()`. Then `p8 run --read g.x,g.score` can show any value.
+- Games with a result use `g.mode`: `"play"`, `"win"` or `"lose"`. After a result, count `g.wait` and restart only when `g.wait>15 and btnp(5)`. `p8 run` reports every change of `g.mode`.
+- Toys, sandboxes and other games without winning or losing need no `g.mode`; do not add a result the task does not ask for.
 - `_update()` runs 30 times per second and changes state; `_draw()` starts with `cls(c)` and draws everything.
 - Screen 128x128, coordinates 0-127, y grows downward. Buttons: `btn(0)` left, `1` right, `2` up, `3` down, `4` O, `5` X; `btnp(b)` is true on the frame of a press.
 - Drawing: `rectfill(x0,y0,x1,y1,c)`, `circfill(x,y,r,c)`, `line(...)`, `print(str,x,y,c)`. Colours: 0 black, 1 dark blue, 7 white, 8 red, 9 orange, 10 yellow, 11 green, 12 blue.
