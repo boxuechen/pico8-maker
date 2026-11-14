@@ -76,6 +76,8 @@ try {
     ta.dispatchEvent(new Event("input", { bubbles: true }));
     return true;
   })()`);
+  // SMOKE_IDLE_MS waits like a user typing, so idle prefetch can run first.
+  await delay(Number(process.env.SMOKE_IDLE_MS ?? 0));
   for (let i = 0; await page(`!!document.querySelector('button.send')?.disabled`); i++) {
     if (i > 100) throw Error("send button stays disabled");
     await delay(100);
@@ -84,18 +86,21 @@ try {
   log("sent from home");
   const started = Date.now();
   let sawRunning = false,
-    lastSteps = "";
+    lastSteps = "",
+    firstStepMs = null;
   for (;;) {
     const s = await page(`({
       running: !!document.querySelector('button.send.stop'),
       version: document.querySelector('.version-badge')?.textContent ?? "",
+      firstStep: !!document.querySelector('.activity-steps .step'),
       steps: [...document.querySelectorAll('.tool-step, .tool-label, [class*="tool"]')].map((e) => e.textContent.trim()).filter(Boolean).slice(-6).join(" | ").slice(0, 300),
     })`);
     if (s.running) sawRunning = true;
+    if (firstStepMs === null && s.firstStep) firstStepMs = Date.now() - started;
     if (s.steps !== lastSteps) log("steps:", s.steps), (lastSteps = s.steps);
     if (sawRunning && !s.running) break;
     if (Date.now() - started > timeoutMs) throw Error("app smoke timed out");
-    await delay(1000);
+    await delay(firstStepMs === null ? 100 : 1000);
   }
   await delay(1500);
   const summary = await page(`({
@@ -134,6 +139,7 @@ try {
   const shot = await cdp.command("Page.captureScreenshot", { format: "png" });
   await writeFile(new URL("workbench.png", out), Buffer.from(shot.data, "base64"));
   summary.seconds = Math.round((Date.now() - started) / 1000);
+  summary.firstStepMs = firstStepMs;
   summary.screenshot = new URL("workbench.png", out).pathname;
   summary.problems = problems;
   await writeFile(new URL("summary.json", out), JSON.stringify(summary, null, 2).replaceAll(apiKey, "[REDACTED]"));

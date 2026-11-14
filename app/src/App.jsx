@@ -446,6 +446,30 @@ function urlToRgba(url) {
 // Opens the browser-only cart shelf first; the studio renders once it is ready.
 export function App() {
   const [store, setStore] = useState(null);
+  // While the page is idle, load the agent's shell code and start a p8 Worker.
+  useEffect(() => {
+    const prefetch = () =>
+      import("./pico8/shell/flow.js")
+        .then((m) => m.prewarmShell())
+        .catch(() => {});
+    const id = globalThis.requestIdleCallback
+      ? requestIdleCallback(prefetch, { timeout: 5000 })
+      : setTimeout(prefetch, 2000);
+    return () =>
+      globalThis.cancelIdleCallback ? cancelIdleCallback(id) : clearTimeout(id);
+  }, []);
+  // While the page is idle, load the agent's shell code and start a p8 Worker.
+  useEffect(() => {
+    const prefetch = () =>
+      import("./pico8/shell/flow.js")
+        .then((m) => m.prewarmShell())
+        .catch(() => {});
+    const id = globalThis.requestIdleCallback
+      ? requestIdleCallback(prefetch, { timeout: 5000 })
+      : setTimeout(prefetch, 2000);
+    return () =>
+      globalThis.cancelIdleCallback ? cancelIdleCallback(id) : clearTimeout(id);
+  }, []);
   useEffect(() => {
     let cancelled = false;
     openCartStore()
