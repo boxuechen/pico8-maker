@@ -17,7 +17,7 @@ import { checkSource } from "../../src/pico8/shell/checks.js";
 import { runConversation } from "./conversation.mjs";
 import { png } from "./png.mjs";
 import { resultReplay } from "./result-replay.mjs";
-import { assetTurns, catchBase, editTurns, vagueCases } from "./turn-cases.mjs";
+import { assetTurns, catchBase, catchChecks, editTurns, ownChecks, vagueCases } from "./turn-cases.mjs";
 
 setSessionFactory(createPico8Session);
 const arg = (name) => {
@@ -58,6 +58,8 @@ const report = { schemaVersion: 1, suite: `turns-${name}`, id, startedAt: new Da
 const result = await runConversation({
   title: `turns ${name}`,
   start,
+  // The scripted suites start like a cart the Agent made: with its checks.json.
+  files: scripted ? { "checks.json": catchChecks + "\n" } : {},
   prompts,
   config,
   apiKey,
@@ -69,6 +71,7 @@ const result = await runConversation({
     const items = await checkSource(snap.source, scripted ? scripted[i].checks : [], { assets: snap.assets });
     const scored = scripted?.[i].score ? await scripted[i].score(snap) : { items: [] };
     items.push(...scored.items);
+    if (scripted) items.push(...(await ownChecks(snap, run.files, checkSource)));
     for (const [label, rgba] of Object.entries(scored.frames ?? {})) await writeFile(new URL(`${run.id}-${label}.png`, out), png(rgba));
     const failed = items.filter((x) => !x.pass);
     run.score = {

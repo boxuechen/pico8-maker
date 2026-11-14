@@ -5,7 +5,7 @@ import assert from "node:assert/strict";
 import { createPico8Session } from "../public/player/main/player.mjs";
 import { setSessionFactory } from "../src/pico8/shell/runtime.js";
 import { checkSource } from "../src/pico8/shell/checks.js";
-import { catchBase, editTurns, assetTurns } from "../scripts/evaluation/turn-cases.mjs";
+import { catchBase, catchChecks, editTurns, assetTurns, ownChecks } from "../scripts/evaluation/turn-cases.mjs";
 import { emptySnapshot } from "../src/pico8/assets.js";
 import { withSoundBank } from "../src/pico8/shell/sounds.js";
 import { assetFiles, applyResourceFiles } from "../src/pico8/shell/resource-files.js";
@@ -118,3 +118,16 @@ for (const [i, turn] of assetTurns.entries()) {
     assert.deepEqual(prev.items.filter((x) => x.pass && !x.guard).map((x) => x.name), [], "previous cart passes none of the new scores");
   });
 }
+
+test("the starting checks.json passes on the base game and conflicts with the level-2 rule until updated", async () => {
+  const files = { "checks.json": catchChecks };
+  assert.deepEqual((await ownChecks(baseSnap, files, checkSource)).filter((i) => !i.pass), []);
+  const stale = await ownChecks(a3, files, checkSource);
+  assert.deepEqual(stale.filter((i) => !i.pass).map((i) => i.name), ["own: checks.json passes"]);
+  const updated = JSON.parse(catchChecks);
+  updated.cases.find((c) => c.name === "10 points win").setup = "g.score=19 g.fruits={{x=64,y=108}}";
+  assert.deepEqual((await ownChecks(a3, { "checks.json": JSON.stringify(updated) }, checkSource)).filter((i) => !i.pass), [], "the case updated to 20 points");
+  const deleted = { cases: updated.cases.filter((c) => c.name !== "10 points win") };
+  assert.deepEqual((await ownChecks(a3, { "checks.json": JSON.stringify(deleted) }, checkSource)).filter((i) => !i.pass).map((i) => i.name), ["own: starting cases kept"]);
+  assert.equal((await ownChecks(a3, {}, checkSource))[0].pass, false);
+});

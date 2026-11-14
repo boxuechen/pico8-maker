@@ -657,6 +657,8 @@ function Studio({ store }) {
         onPlaytests: (playtests) => persist({ playtests }),
         comparison: project.current.comparison,
         onComparison: (comparison) => persist({ comparison }),
+        files: project.current.files,
+        onFiles: (files) => persist({ files }),
         onSave: (versions, revision) =>
           persist({ versions, revision, savedRevision: null }),
         onDraft: (text) => persist({ workingDraft: text }),

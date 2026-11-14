@@ -14,15 +14,17 @@ import { outcomeMetrics } from "./outcome-metrics.mjs";
 
 /**
  * @param start snapshot of an existing game (version 1), or null for a blank cart
+ * @param files cart working files to start with, such as { "checks.json": text }
  * @param afterTurn async (run, game) => void, called after every turn (scoring, archiving)
  * @returns { runs, playtests, revisions }
  */
-export async function runConversation({ title, start = null, prompts, config, apiKey, millisecondsPerTurn, log = () => {}, afterTurn = async () => {} }) {
+export async function runConversation({ title, start = null, files = {}, prompts, config, apiKey, millisecondsPerTurn, log = () => {}, afterTurn = async () => {} }) {
   const cart = newCart({
     title,
     versions: start ? [start] : [],
     workingDraft: start ?? emptySnapshot(),
     revision: start ? 1 : 0,
+    files: { ...files },
   });
   const session = activeSession(cart);
   let firstPlayableMs, turnStarted;
@@ -30,6 +32,10 @@ export async function runConversation({ title, start = null, prompts, config, ap
   const game = new EvaluationGame({
     versions: cart.versions,
     draft: cart.workingDraft,
+    files: cart.files,
+    onFiles: (f) => {
+      cart.files = f;
+    },
     onDraft: (d) => {
       cart.workingDraft = d;
       cart.contentVersion++;
@@ -107,6 +113,7 @@ export async function runConversation({ title, start = null, prompts, config, ap
         metrics,
         finalText,
         after: structuredClone(game.snapshot),
+        files: structuredClone(game.files),
         entries: turn,
       };
       runs.push(run);

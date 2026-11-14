@@ -32,6 +32,9 @@ function readOnly(fs) {
 }
 
 /** p8 press text → Game route calls (≤ maxInputSteps steps and ≤ maxInputFrames frames each). */
+/** Working files besides main.lua and the resources that persist with the cart. */
+export const KEPT_FILES = ["checks.json"];
+
 export function routeCalls(press) {
   const calls = [];
   let steps = [],
@@ -61,7 +64,9 @@ export function routeCalls(press) {
  */
 export async function createShellEnvironment({ game, skillFiles, sendP8 }) {
   const { Bash, defineCommand, InMemoryFs, MountableFs } = await import("just-bash");
-  const cart = new InMemoryFs({ "/main.lua": game.draft.source });
+  // checks.json is kept with the cart (Game.files), so later sessions keep the tests.
+  const kept = Object.fromEntries(Object.entries(game.files ?? {}).filter(([name]) => KEPT_FILES.includes(name)).map(([name, text]) => [`/${name}`, text]));
+  const cart = new InMemoryFs({ "/main.lua": game.draft.source, ...kept });
   const skill = readOnly(new InMemoryFs(Object.fromEntries(Object.entries(skillFiles).map(([k, v]) => [`/${k}`, v]))));
   const fs = new MountableFs({
     base: new InMemoryFs({ "/tmp/.keep": "" }),
@@ -99,6 +104,7 @@ export async function createShellEnvironment({ game, skillFiles, sendP8 }) {
     if (here !== game.draft.source) game.setDraft(here);
     const files = {};
     for (const name of RESOURCE_FILES) if (await cart.exists(`/${name}`)) files[name] = await cart.readFile(`/${name}`, "utf8");
+    for (const name of KEPT_FILES) game.setFile?.(name, (await cart.exists(`/${name}`)) ? await cart.readFile(`/${name}`, "utf8") : null);
     const { assets, errors } = applyResourceFiles(game.draft.assets, files);
     if (!errors.length && assets !== game.draft.assets) {
       game.setWorking({ ...game.draft, assets });

@@ -202,3 +202,13 @@ test("titles from prompts and imported carts", () => {
   assert.equal(saveStatus(cart), "unsaved");
   assert.equal(cart.origin.author, "Adam Atomic");
 });
+
+test("cart working files: checks.json is kept, other names and non-text values are dropped", () => {
+  const base = newCart({ workingDraft: emptySnapshot("x=1") });
+  assert.deepEqual(base.files, {});
+  const kept = normalizeCart({ ...base, files: { "checks.json": '{"cases":[]}', "notes.txt": "x", "gfx.txt": 3 } });
+  assert.deepEqual(kept.files, { "checks.json": '{"cases":[]}' });
+  assert.deepEqual(normalizeCart({ ...base, files: "bad" }).files, {});
+  const { files: _, ...old } = base;
+  assert.deepEqual(normalizeCart(old).files, {}, "carts saved before files existed load with none");
+});

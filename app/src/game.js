@@ -38,8 +38,14 @@ export class Game {
       onPlaytests,
       comparison,
       onComparison,
+      files,
+      onFiles,
     } = {},
   ) {
+    // Cart working files that are not part of the game (checks.json): kept
+    // with the cart across sessions, not versioned and not exported.
+    this.files = { ...(files ?? {}) };
+    this.onFiles = onFiles;
     this.onSave = onSave;
     this.onDraft = onDraft;
     this.onChange = onChange;
@@ -98,6 +104,13 @@ export class Game {
       committedRevision: this.hasGame ? this.revision : null,
       draftDirty: !sameSnapshot(this.draft, this.snapshot),
     };
+  }
+  /** Store a cart working file (text), or remove it with null. */
+  setFile(name, text) {
+    if ((this.files[name] ?? null) === (text ?? null)) return;
+    if (text == null) delete this.files[name];
+    else this.files[name] = text;
+    this.onFiles?.({ ...this.files });
   }
   setDraft(text) {
     this.setWorking({ ...this.draft, source: text });

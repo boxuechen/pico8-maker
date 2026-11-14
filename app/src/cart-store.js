@@ -9,6 +9,9 @@ const dbName = "pico8-maker";
 // Default names in either UI language share one counter: "New Cart 3", "新卡带 3".
 const numbered = /^(?:New Cart|新卡带) ?(\d+)$/;
 
+/** Cart working files the Agent may keep next to main.lua. */
+export const CART_FILES = ["checks.json"];
+
 export function newCart(patch = {}) {
   const now = Date.now();
   const session = patch.sessions?.[0] ?? newSession();
@@ -21,6 +24,8 @@ export function newCart(patch = {}) {
     contentVersion: 0,
     versions: [],
     playtests: [],
+    // Working files kept with the cart, outside versions (checks.json).
+    files: {},
     comparison: null,
     revision: 0,
     label: null,
@@ -59,6 +64,11 @@ export function normalizeCart(data) {
   const cart = { ...newCart(), ...data };
   cart.versions = cart.versions.slice(-12);
   cart.playtests = normalizePlaytests(cart.playtests);
+  cart.files = Object.fromEntries(
+    Object.entries(cart.files && typeof cart.files === "object" ? cart.files : {}).filter(
+      ([k, v]) => CART_FILES.includes(k) && typeof v === "string",
+    ),
+  );
   cart.comparison =
     validSnapshot(cart.comparison?.snapshot) &&
     Number.isInteger(cart.comparison.revision) &&

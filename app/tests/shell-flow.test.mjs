@@ -180,6 +180,33 @@ test("p8 run --bot: a Lua bot finds presses to a result, replayed and recorded a
   }
 });
 
+test("checks.json is kept with the cart: a later session sees the tests the Agent wrote", async () => {
+  const source = `function _init() g={mode="play",x=64} end
+function _update() if btn(1) then g.x+=1 end end
+function _draw() cls(1) circfill(g.x,64,4,8) end`;
+  const committed = { ...emptySnapshot(), source };
+  let saved = null;
+  const game = new EvaluationGame({ versions: [committed], draft: committed, onFiles: (f) => (saved = f) });
+  const worker = await startNodeP8Worker(skillFiles);
+  try {
+    const first = await createShellEnvironment({ game, skillFiles, sendP8: worker.send });
+    const checks = '{"cases":[{"name":"right moves","press":"right*5","expect":[{"path":"g.x","equals":69}]}]}';
+    await first.exec(`echo '${checks}' > checks.json`);
+    assert.equal(game.files["checks.json"], checks + "\n");
+    assert.deepEqual(saved, { "checks.json": checks + "\n" }, "the host is told to persist it");
+    // A new session (page reload, another conversation) on the same cart.
+    const reopened = new EvaluationGame({ versions: [committed], draft: committed, files: saved });
+    const second = await createShellEnvironment({ game: reopened, skillFiles, sendP8: worker.send });
+    assert.match((await second.exec("p8 check")).stdout, /PASS right moves/);
+    await second.exec("rm checks.json");
+    assert.deepEqual(reopened.files, {}, "deleting it removes it from the cart");
+    await reopened.dispose();
+  } finally {
+    await worker.close();
+    await game.dispose();
+  }
+});
+
 test("p8 --setup changes state without touching main.lua and is never recorded as a route", async () => {
   const source = `function new_game() g={mode="play",score=0} end
 function _init() new_game() end

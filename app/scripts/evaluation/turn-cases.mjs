@@ -73,6 +73,42 @@ function _draw()
 end
 `;
 
+// The base game's own checks.json, as the Agent would have left it: the
+// scripted suites start with it. Turn 3 of `assets` changes the win rule, so
+// "10 points win" must be updated (not deleted) for the Agent's checks to pass.
+export const catchChecks = JSON.stringify(
+  {
+    cases: [
+      { name: "right moves 2px", press: "right*5", expect: [{ path: "g.basket.x", equals: 74 }] },
+      { name: "catching scores", setup: "g.fruits={{x=64,y=108}}", press: "wait*12", expect: [{ path: "g.score", equals: 1 }] },
+      { name: "last life lost loses", setup: "g.lives=1 g.fruits={{x=10,y=120}}", press: "wait*12", expect: [{ path: "g.mode", equals: "lose" }] },
+      { name: "10 points win", setup: "g.score=9 g.fruits={{x=64,y=108}}", press: "wait*12", expect: [{ path: "g.mode", equals: "win" }] },
+      { name: "x restarts", setup: "g.mode='lose' g.lives=0", press: "x wait", expect: [{ path: "g.mode", equals: "play" }, { path: "g.lives", equals: 3 }] },
+    ],
+  },
+  null,
+  1,
+);
+
+/** The Agent's own checks.json after a turn: it must pass and keep every starting case (by name). */
+export async function ownChecks(snapshot, files, checkSource) {
+  const text = files?.["checks.json"];
+  if (!text) return [{ name: "own: checks.json kept", pass: false, detail: "checks.json was deleted" }];
+  let cases;
+  try {
+    cases = JSON.parse(text).cases ?? [];
+  } catch (e) {
+    return [{ name: "own: checks.json kept", pass: false, detail: `not JSON: ${e.message}` }];
+  }
+  const names = new Set(cases.map((c) => c.name));
+  const missing = JSON.parse(catchChecks).cases.map((c) => c.name).filter((n) => !names.has(n));
+  const failed = (await checkSource(snapshot.source, cases, { assets: snapshot.assets })).filter((i) => !i.pass);
+  return [
+    { name: "own: starting cases kept", pass: !missing.length, detail: missing.length ? `missing ${missing.join(", ")}` : `${cases.length} cases` },
+    { name: "own: checks.json passes", pass: !failed.length, detail: failed.map((i) => `${i.name}: ${i.detail}`).join("; ").slice(0, 300) || "all pass" },
+  ];
+}
+
 // Base rules: hold on the base game and after every turn (speed-independent).
 const base = [
   { name: "base: right moves 2px", press: "right*5", expect: [{ path: "g.basket.x", equals: 74 }] },
