@@ -5,7 +5,7 @@ import { mkdtempSync, copyFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { readFileSync } from "node:fs";
-import { checkSource, loadCasesText, parsePress, scoreSource } from "../src/checks.mjs";
+import { checkSource, loadCasesText, parsePress, scoreSource, SKILL_DIR } from "../src/maker.mjs";
 
 const scoreCart = (main, checks) => scoreSource(readFileSync(main, "utf8"), loadCasesText(readFileSync(checks, "utf8")));
 
@@ -74,9 +74,9 @@ test("the agent environment: p8 in the shell, unchanged re-checks, isolation fro
 
 test("p8 in a worker thread prints exactly what in-process p8 prints and writes back its files", async () => {
   const { createEnvironment } = await import("../src/env.mjs");
-  const { remoteP8 } = await import("../src/p8-remote.mjs");
+  const { remoteP8 } = await import("../src/maker.mjs");
   const { startP8Worker } = await import("../src/p8-worker-node.mjs");
-  const skillFiles = { "SKILL.md": "skill", "templates/skeleton.lua": readFileSync(join(lab, "skill/pico8/templates/skeleton.lua"), "utf8") };
+  const skillFiles = { "SKILL.md": "skill", "templates/skeleton.lua": readFileSync(join(SKILL_DIR, "templates/skeleton.lua"), "utf8") };
   const cartFiles = { "main.lua": readFileSync(join(lab, "tasks/T2/start/main.lua"), "utf8"), "checks.json": readFileSync(join(lab, "tasks/T2/start/checks.json"), "utf8") };
   const worker = await startP8Worker(skillFiles);
   const plays = [];

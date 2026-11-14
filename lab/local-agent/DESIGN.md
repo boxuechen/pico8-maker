@@ -25,35 +25,34 @@ read the failure → edit again**, like fixing code until tests pass.
 ```
 lab/local-agent/
   DESIGN.md
-  package.json        pins @earendil-works/pi-coding-agent and just-bash; scripts: test, eval
+  package.json        pins pi-coding-agent, pi-durable, chord and just-bash; scripts: test, eval
   agent/              models.json for local Ollama runs (historical)
-  skill/pico8/        SKILL.md, reference/api.md, examples/*.lua, templates/*.lua
   bin/p8              the checker CLI on the real disk
-  bin/eval.mjs        runs tasks × repeats through an in-process Pi session, scores them
+  bin/eval.mjs        runs tasks × repeats (--loop session|durable, --p8 inline|worker), scores them
   browser/            build.mjs (esbuild, Node shims), worker.mjs (agent side in a Worker),
                       page.html, run.mjs (headless Chrome: --probe or --task)
   src/
+    maker.mjs         the only import path into app/: player runtime, cart codec, tokens,
+                      S4 oracle, and the shell-flow p8 core in app/src/pico8/shell/
     env.mjs           just-bash over MountableFs: /cart writable, /skill/pico8 read-only, p8
-    pi-tools.mjs      Pi's stock read/edit/write/bash with operations on env
+    pi-tools.mjs      Pi coding-agent's read/edit/write/bash with operations on env
     agent.mjs         Node: stock Pi AgentSession; piSystemPrompt() for the other loops
     durable-agent.mjs pi-durable Harness (Maker's harness) with its CodingTools, same prompt
-    durable-env.mjs   pi-durable ExecutionEnv over the just-bash environment
-    p8-remote.mjs     p8 across a message boundary: p8Host, remoteP8 client, portSender
-    p8-worker.mjs     Worker entry for p8 (Web Worker semantics); p8-worker-node.mjs for Node
     browser-agent.mjs browser: pi-agent-core Agent + pi-ai, same tools and system prompt
     opfs-fs.mjs       /cart on an OPFS directory (write-through InMemoryFs)
+    p8-worker*.mjs    Worker entry for p8 (Web Worker semantics) and its Node starter
     tasks.mjs         Node: skill tree, task loading, scoring, run metrics
-    maker.mjs         the only import path into app/: player runtime, cart codec, tokens, S4 oracle
-    runtime.mjs       one inspection session: load, advance, read, ASCII thumbnail
-    lint.mjs          static checks with fix hints
-    checks.mjs        check specs: boot, smoke, scripted cases with expectations
-    p8.mjs            p8 subcommands over any just-bash IFileSystem
-    sounds.mjs        fixed sfx 0–7 bank for new carts
   tasks/<id>/         task.md, start files, checks.json (visible), hidden.json (eval only)
   tests/              node --test for p8 and checks; no model requests
+
+app/src/pico8/shell/  (moved from the lab for Maker's shell flow; the lab runs this code)
+  p8.js checks.js lint.js runtime.js png.js sounds.js posix-path.js
+  p8-remote.js        p8 across a message boundary: p8Host, remoteP8, portSender
+  durable-env.js      pi-durable ExecutionEnv over a just-bash fs and shell
+  skill/              SKILL.md, reference/api.md, examples/*.lua, templates/*.lua
 ```
 
-Rules: `app/` never imports `lab/`; `lab/` imports `app/` only through `src/maker.mjs`. The
+Rules: `app/` never imports `lab/`; `lab/` imports `app/` only through `src/maker.mjs`. The p8 core and skill live in `app/src/pico8/shell/` since M2, so lab results measure the code Maker ships; the runtime factory is injected (`setSessionFactory`) and `maker.mjs` sets it for Node. The
 agent sees only its workspace, the skill and `p8`. Results go to `.cache/lab/` (ignored).
 
 ## `p8` command

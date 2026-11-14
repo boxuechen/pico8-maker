@@ -1,6 +1,6 @@
 // A fixed sound bank preloaded into every cart, so a game gets sound effects by
 // calling sfx(n) without authoring audio data. Documented in prompts/api.md.
-import { editAssets, emptySnapshot } from "./maker.mjs";
+import { editAssets, emptySnapshot } from "../assets.js";
 
 const note = (pitch, waveform, volume = 5, effect = 0) => ({ pitch, waveform, volume, effect });
 const seq = (pitches, waveform, volume, effect) => pitches.map((p) => note(p, waveform, volume, effect));

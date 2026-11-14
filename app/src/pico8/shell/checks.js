@@ -1,7 +1,7 @@
 // Checks behind `p8 check` and task scoring. Every check runs in a fresh
 // session from boot, and every failure line says what to change.
-import { lint } from "./lint.mjs";
-import { BUTTONS, Runtime } from "./runtime.mjs";
+import { lint } from "./lint.js";
+import { BUTTONS, Runtime } from "./runtime.js";
 
 const BOOT_FRAMES = 30,
   HOLD_FRAMES = 10;
@@ -71,8 +71,8 @@ function judge(actual, start, e) {
 }
 
 
-async function boot(source) {
-  const rt = new Runtime();
+async function boot(source, assets) {
+  const rt = new Runtime(assets);
   const loaded = await rt.load(source);
   if (!loaded.ok) return { rt, fault: loaded.diagnostics };
   const run = await rt.advance(0, BOOT_FRAMES - 1);
@@ -80,8 +80,8 @@ async function boot(source) {
 }
 
 /** One scripted case from boot: optional setup Lua, button steps, expectations on g. */
-export async function runCase(source, c) {
-  const rt = new Runtime();
+export async function runCase(source, c, assets) {
+  const rt = new Runtime(assets);
   try {
     const loaded = await rt.load(source);
     if (!loaded.ok) return { pass: false, detail: `does not boot: ${loaded.diagnostics.map(explainFault).join("; ")}` };
@@ -110,7 +110,8 @@ export async function runCase(source, c) {
 }
 
 /** Full check: lint, boot, input response, then cases. Returns [{name, pass, detail}]. */
-export async function checkSource(source, cases = []) {
+/** `assets`: the cart resources to load with the source (default: the fixed sound bank). */
+export async function checkSource(source, cases = [], { assets } = {}) {
   const items = [];
   const { errors, tokens } = lint(source);
   if (errors.length) {
@@ -121,7 +122,7 @@ export async function checkSource(source, cases = []) {
     return items;
   }
   items.push({ name: "lint", pass: true, detail: `${tokens} of 8192 tokens` });
-  const base = await boot(source);
+  const base = await boot(source, assets);
   try {
     if (base.fault) {
       items.push({ name: "boot", pass: false, detail: base.fault.map((d) => explainFault(d, source)).join("; ") });
@@ -136,14 +137,14 @@ export async function checkSource(source, cases = []) {
     items.push({ name: "boot", pass: !problems.length, detail: problems.length ? problems.join("; ") : `${BOOT_FRAMES} frames, g.mode=${show(g.mode)}, ${colours} colours` });
     if (problems.length) return items;
     // Some button must change g or the screen compared with idling.
-    const idle = await boot(source);
+    const idle = await boot(source, assets);
     await idle.rt.advance(0, HOLD_FRAMES);
     const idleG = canonical((await idle.rt.read(["g"])).g),
       idleFrame = idle.rt.ascii(32);
     await idle.rt.dispose();
     const responds = [];
     for (const name of ["left", "right", "up", "down", "o", "x"]) {
-      const held = await boot(source);
+      const held = await boot(source, assets);
       const r = await held.rt.advance(BUTTONS[name], HOLD_FRAMES);
       if (r.fault) {
         items.push({ name: "input", pass: false, detail: `holding ${name}: ${r.fault.map((d) => explainFault(d, source)).join("; ")}` });
@@ -158,7 +159,7 @@ export async function checkSource(source, cases = []) {
     await base.rt.dispose();
   }
   for (const c of cases) {
-    const r = await runCase(source, c);
+    const r = await runCase(source, c, assets);
     items.push({ name: c.name, pass: r.pass, detail: r.detail });
   }
   return items;

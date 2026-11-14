@@ -4,8 +4,8 @@
 // unchanged runP8 on a private InMemoryFs (plus the skill templates) and returns
 // stdout, exit code, every file it created or changed, and what run/look played.
 import { InMemoryFs } from "just-bash";
-import { runP8 } from "./p8.mjs";
-import { posix } from "./posix-path.mjs";
+import { runP8 } from "./p8.js";
+import { posix } from "./posix-path.js";
 
 const SKILL = "/skill/pico8";
 const MAX_FILES = 64;
@@ -17,10 +17,10 @@ const equal = (a, b) => a.length === b.length && a.every((x, i) => x === b[i]);
 export function p8Host({ skillFiles = {} } = {}) {
   const memo = new Map();
   const skill = Object.fromEntries(Object.entries(skillFiles).map(([k, v]) => [`${SKILL}/${k}`, v]));
-  return async function handle({ argv, cwd, files }) {
+  return async function handle({ argv, cwd, files, assets }) {
     const fs = new InMemoryFs({ ...skill, ...files, "/tmp/.keep": "" });
     const plays = [];
-    const r = await runP8(argv, { fs, cwd, memo, onPlay: (p) => plays.push(p) });
+    const r = await runP8(argv, { fs, cwd, memo, assets, onPlay: (p) => plays.push(p) });
     const changes = {};
     for (const path of fs.getAllPaths()) {
       if (path.startsWith(SKILL) || path === "/tmp/.keep") continue;
@@ -50,14 +50,15 @@ async function collect(fs, dir, out, budget) {
 /**
  * Client side: a just-bash custom command body. `send(request)` delivers to a host
  * (a Worker, a worker_thread, or p8Host directly) and resolves with its response.
- * `onPlay(play)` lets the host page show frames and record routes.
+ * `onPlay(play)` lets the host page show frames and record routes; `assets()`
+ * supplies the cart resources to load with main.lua.
  */
-export function remoteP8(send, { onPlay } = {}) {
+export function remoteP8(send, { onPlay, assets } = {}) {
   return async (args, ctx) => {
     const files = {};
     const cwd = ctx.cwd.startsWith(SKILL) ? "/" : ctx.cwd;
     await collect(ctx.fs, cwd, files, { files: 0, bytes: 0 });
-    const r = await send({ argv: args, cwd: ctx.cwd, files });
+    const r = await send({ argv: args, cwd: ctx.cwd, files, ...(assets ? { assets: await assets() } : {}) });
     for (const [path, bytes] of Object.entries(r.changes)) {
       await ctx.fs.mkdir(posix.dirname(path), { recursive: true });
       await ctx.fs.writeFile(path, bytes);

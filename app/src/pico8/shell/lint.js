@@ -1,6 +1,6 @@
 // Static checks run before every load. Errors block loading because PICO-8
 // would reject or crash on them; each message says what to write instead.
-import { countTokens, TOKEN_LIMIT } from "./maker.mjs";
+import { countTokens, TOKEN_LIMIT } from "../tokens.js";
 
 // Replace strings and comments with spaces, keeping line structure, so API
 // checks only see code.

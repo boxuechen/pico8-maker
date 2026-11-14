@@ -1,7 +1,18 @@
 // One loaded cart in an inspection session: load, frame-by-frame input, raw
-// state reads, setup code and a text thumbnail of the last frame.
-import { cartBytes, compactInspected, createPico8Session } from "./maker.mjs";
-import { soundAssets } from "./sounds.mjs";
+// state reads, setup code and a text thumbnail of the last frame. Resources
+// default to the fixed sound bank (sounds.js); Maker passes the cart's own.
+import { cartBytes } from "../cart.js";
+import { compactInspected } from "../observation.js";
+import { soundAssets } from "./sounds.js";
+
+// The player runtime is injected: Node imports player.mjs directly, a browser
+// Worker imports it by URL (it is a static asset, not part of the bundle).
+let createSession = () => {
+  throw new Error("p8: no player runtime; call setSessionFactory first");
+};
+export function setSessionFactory(factory) {
+  createSession = factory;
+}
 
 export const BUTTONS = { left: 1, right: 2, up: 4, down: 8, o: 16, x: 32 };
 const input = (buttons = 0) => ({
@@ -30,7 +41,7 @@ export class Runtime {
   /** Load source in a fresh session and run the first frame. */
   async load(source) {
     await this.dispose();
-    this.session = await createPico8Session({ inspection: true });
+    this.session = await createSession({ inspection: true });
     this.frames = 0;
     this.frame = null;
     // A fixed seed makes checks repeatable; appended so line numbers stay the same.

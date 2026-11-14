@@ -2,12 +2,12 @@
 // just-bash command) or the real disk (bin/p8). Text only, except `look --png`,
 // which writes an image file for an image-capable read tool. Every error says
 // what to do next.
-import { posix } from "./posix-path.mjs";
-import { checkSource, explainFault, formatItems, loadCasesText, parsePress } from "./checks.mjs";
-import { cartText } from "./maker.mjs";
-import { encodePng } from "./png.mjs";
-import { Runtime } from "./runtime.mjs";
-import { soundAssets } from "./sounds.mjs";
+import { posix } from "./posix-path.js";
+import { checkSource, explainFault, formatItems, loadCasesText, parsePress } from "./checks.js";
+import { cartText } from "../cart.js";
+import { encodePng } from "./png.js";
+import { Runtime } from "./runtime.js";
+import { soundAssets } from "./sounds.js";
 
 export const TEMPLATE_DIR = "/skill/pico8/templates";
 
@@ -40,8 +40,8 @@ const report = (onPlay, command, press, r) =>
   onPlay?.({ command, press, frames: r.rt.frames, ok: r.ok, frame: r.rt.frame ? { width: 128, height: 128, rgba: r.rt.frame.rgba } : null });
 
 /** Boot, play the presses, and report mode changes, sounds and the final state. */
-async function play(src, press) {
-  const rt = new Runtime();
+async function play(src, press, assets) {
+  const rt = new Runtime(assets);
   const loaded = await rt.load(src);
   if (!loaded.ok) return { rt, lines: [`does not boot: ${loaded.diagnostics.map((d) => explainFault(d, src)).join("; ")}`], ok: false };
   const lines = [];
@@ -66,9 +66,10 @@ async function play(src, press) {
 /**
  * Run one p8 invocation.
  * @param argv arguments after `p8`
- * @param io { fs: IFileSystem, cwd, templateDir?, memo?: Map, onPlay? } – memo remembers the
+ * @param io { fs: IFileSystem, cwd, templateDir?, memo?: Map, onPlay?, assets? } – memo remembers the
  *   last failing check per file across invocations of one environment; onPlay gets
- *   { command, press, frames, ok, frame } after each run/look.
+ *   { command, press, frames, ok, frame } after each run/look; assets are the cart
+ *   resources loaded with main.lua (default: the fixed sound bank).
  * @returns { stdout, exitCode }
  */
 export async function runP8(argv, io) {
@@ -83,7 +84,7 @@ export async function runP8(argv, io) {
   }
 }
 
-async function dispatch(argv, { fs, cwd, templateDir = TEMPLATE_DIR, memo = new Map(), onPlay }, log) {
+async function dispatch(argv, { fs, cwd, templateDir = TEMPLATE_DIR, memo = new Map(), onPlay, assets }, log) {
   const at = (p) => posix.resolve(cwd, p);
   const templates = async () =>
     (await fs.exists(templateDir)) ? (await fs.readdir(templateDir)).filter((f) => f.endsWith(".lua")).map((f) => f.slice(0, -4)) : [];
@@ -100,7 +101,7 @@ async function dispatch(argv, { fs, cwd, templateDir = TEMPLATE_DIR, memo = new 
       const code = await source(rest[0]);
       const casesPath = at("checks.json");
       const cases = (await fs.exists(casesPath)) ? loadCasesText(await fs.readFile(casesPath, "utf8")) : [];
-      const items = await checkSource(code, cases);
+      const items = await checkSource(code, cases, { assets });
       const pass = items.every((i) => i.pass);
       // A run re-checked an unchanged file ~60 times, reading the same failure as
       // a stuck tool. Say plainly that only an edit can change the result.
@@ -113,7 +114,7 @@ async function dispatch(argv, { fs, cwd, templateDir = TEMPLATE_DIR, memo = new 
       return pass ? 0 : 1;
     }
     case "run": {
-      const r = await play(await source(rest[0]), opts.press ?? "wait*30");
+      const r = await play(await source(rest[0]), opts.press ?? "wait*30", assets);
       try {
         await report(onPlay, "run", opts.press ?? "wait*30", r);
         if (r.ok) {
@@ -128,7 +129,7 @@ async function dispatch(argv, { fs, cwd, templateDir = TEMPLATE_DIR, memo = new 
       }
     }
     case "look": {
-      const r = await play(await source(rest[0]), opts.press ?? "wait*30");
+      const r = await play(await source(rest[0]), opts.press ?? "wait*30", assets);
       try {
         await report(onPlay, "look", opts.press ?? "wait*30", r);
         const pic = r.rt.ascii(32);
@@ -158,7 +159,7 @@ async function dispatch(argv, { fs, cwd, templateDir = TEMPLATE_DIR, memo = new 
     }
     case "export": {
       const file = rest[1] ?? "game.p8";
-      await fs.writeFile(at(file), cartText({ source: await source(rest[0]), assets: soundAssets() }, "game"));
+      await fs.writeFile(at(file), cartText({ source: await source(rest[0]), assets: assets ?? soundAssets() }, "game"));
       log(`wrote ${file}`);
       return 0;
     }

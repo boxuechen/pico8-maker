@@ -2,7 +2,7 @@
 // just-bash MountableFs, commands through its shell. This is the shape Maker's
 // shell flow would use, with /cart/main.lua mapped to the cart draft.
 import { ok, err, ExecutionError, FileError, LineScanner } from "@earendil-works/pi-durable/env";
-import { posix } from "./posix-path.mjs";
+import { posix } from "./posix-path.js";
 
 /** just-bash throws Node-style messages ("ENOENT: ...", "EROFS: ..."); map them to FileError codes. */
 function fileError(e, path) {

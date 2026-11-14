@@ -1,6 +1,6 @@
 // Worker entry for `p8` (Web Worker semantics: self.onmessage / self.postMessage).
 // The first request is { init: { skillFiles } }; every later one is a p8Host request.
-import { p8Host } from "./p8-remote.mjs";
+import { p8Host } from "./maker.mjs";
 
 let handle;
 self.onmessage = async ({ data: { id, request } }) => {

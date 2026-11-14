@@ -1,7 +1,7 @@
 // Node: run src/p8-worker.mjs in a worker_thread with the same self/postMessage
 // shim Maker's evaluator uses for its test Worker.
 import { Worker } from "node:worker_threads";
-import { portSender } from "./p8-remote.mjs";
+import { portSender } from "./maker.mjs";
 
 export async function startP8Worker(skillFiles) {
   const entry = new URL("./p8-worker.mjs", import.meta.url).href;

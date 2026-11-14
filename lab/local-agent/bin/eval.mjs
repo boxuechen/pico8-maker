@@ -13,7 +13,7 @@ import { parseArgs } from "node:util";
 import { piSystemPrompt, runAgent, skillPrompt } from "../src/agent.mjs";
 import { runDurableAgent } from "../src/durable-agent.mjs";
 import { CART, createEnvironment } from "../src/env.mjs";
-import { remoteP8 } from "../src/p8-remote.mjs";
+import { remoteP8 } from "../src/maker.mjs";
 import { startP8Worker } from "../src/p8-worker-node.mjs";
 import { loadTask, metrics, score, skillFiles } from "../src/tasks.mjs";
 

@@ -7,7 +7,7 @@ import { BACKGROUND_CONTEXT as context } from "@earendil-works/chord/context";
 import { createRegistry, defineExtension, Harness, MemoryStorage, section } from "@earendil-works/pi-durable";
 import { CodingTools } from "@earendil-works/pi-durable/tools";
 import { connect } from "./browser-agent.mjs";
-import { durableEnv } from "./durable-env.mjs";
+import { durableEnv } from "./maker.mjs";
 
 /**
  * @param env from createEnvironment()

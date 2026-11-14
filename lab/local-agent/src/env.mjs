@@ -3,7 +3,7 @@
 // plus `p8` as a shell command. Platform-neutral: the same environment backs the
 // Node lab and, with an OPFS-backed /cart, the browser.
 import { Bash, defineCommand, InMemoryFs, MountableFs } from "just-bash";
-import { runP8 } from "./p8.mjs";
+import { runP8 } from "./maker.mjs";
 
 export const CART = "/cart";
 export const SKILL = "/skill/pico8";

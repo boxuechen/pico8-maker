@@ -2,8 +2,8 @@
 // run metrics, shared by bin/eval.mjs and browser/run.mjs.
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
-import { loadCasesText, scoreSource } from "./checks.mjs";
-import { emptySnapshot, shooterCases, verifyShooter } from "./maker.mjs";
+import { loadCasesText, scoreSource } from "./maker.mjs";
+import { emptySnapshot, shooterCases, SKILL_DIR, verifyShooter } from "./maker.mjs";
 
 const LAB = resolve(new URL("..", import.meta.url).pathname);
 
@@ -19,7 +19,7 @@ export function readTree(root) {
   walk(root);
   return files;
 }
-export const skillFiles = readTree(join(LAB, "skill/pico8"));
+export const skillFiles = readTree(SKILL_DIR);
 
 export function loadTask(id) {
   const dir = join(LAB, "tasks", id);
