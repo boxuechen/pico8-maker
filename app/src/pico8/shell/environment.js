@@ -113,6 +113,8 @@ export async function createShellEnvironment({ game, skillFiles, sendP8 }) {
       const first = result.output?.find((o) => o.type === "text")?.text ?? "";
       return [`not committed; the player keeps the last version. ${first.split("\n").at(-1)}`];
     }
+    // A commit (new or replacing this request's version) starts fresh route evidence.
+    recorded.delete(game.revision);
     // The commit note carries the coverage facts for the new revision.
     const text = result.output?.find((o) => o.type === "text")?.text ?? "";
     const note = text.slice(text.indexOf("Committed as version")).split("\n")[0];

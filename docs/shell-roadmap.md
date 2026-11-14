@@ -57,7 +57,7 @@
 - 主界面烟测：两次 57 / 73 s，提交、试玩帧、无控制台问题；烟测现在会从 IndexedDB 列出工具调用和失败结果。第二次的调用序列里模型用 `sed` 临时改 `score=9` 测胜利再恢复，正是 P1-2 要解决的临时版本。
 - 归档：S4 `.cache/evaluations/s4-34f3b431-89fc-4672-84a4-d6ee525f73ad`、`s4-e21b5f9f-a408-490e-b7ba-28dae993f76f`、`s4-39a35ce5-4551-449f-b4f1-aa7a40af1062`、`s4-e653733c-493a-44f4-911e-a35cbc424b7c`、`s4-801c7623-fb54-4ea8-ad0f-94faebf40b9e`；烟测 `.cache/evaluations/app-smoke-*`。
 
-## 3. P1：最影响体验的三件事
+## 3. P1：最影响体验的三件事（已完成）
 
 | # | 事项 | 做法 | 验证 |
 | --- | --- | --- | --- |
@@ -70,6 +70,9 @@
 - **P1-1 放宽契约（2026-11-14）：** `p8 check` 的 boot 不再要求 `g`/`g.mode`，只报告状态（`g.mode="play"` / `no g.mode (no result tracking)` / `no global g`），仍要求画面多于一种颜色、至少一个按键改变 `g` 或画面。skill 的「Game rules the checker expects」改为「How games are written」：有胜负的游戏用 `g.mode`，玩具/沙盒不加任务没要求的结果；新增 `p8 new toy` 模板。lab 新增 T8（空卡带做画画玩具，隐藏用例含「长时间游玩后 `g.mode` 为 nil」）。DeepSeek Flash durable + worker p8：T1–T8 8/8，T8 23 s、12 次调用；T1–T5 5–24 s，T6 56 s，T7 47 s（归档 `.cache/lab/20261114T0405-t68d`）。
 
 - **P1-2 `p8 run/look --setup`（2026-11-14）：** 加载后、按键前执行 Lua（复用 `Runtime.setup`），输出首行注明「setup ran (main.lua unchanged; this run is not recorded as normal play)」，出错时给示例；Maker 不回放带 setup 的运行。skill 说明用它测胜利、失败、后期关卡，「不要为了测试改 main.lua」；host 规则补一句。lab T1–T8 8/8（归档 `.cache/lab/20261114T0408-7an2`）；主界面烟测两次（41 / 55 s）模型分别用了 6 次和 6 次 `--setup`，不再出现 `sed` 临时改代码，版本数 v2 / v3（此前 v4）。S4 与 P1-3 一起复跑。
+
+- **P1-3 每次请求一个版本（2026-11-14）：** `Game.beginRequest()` 起记录本次请求的版本；同一请求里再次提交时替换该版本（版本号不变），并清掉旧代码上的路线（`Playtests.dropRevision`），提交行写明「It replaces this request's earlier version N; routes on that code were cleared」；下一次请求才新建版本，撤销按请求回退。host 规则说明这一点。单测覆盖替换、路线清空、跨请求新版本和撤销。
+- **P1 验收（DeepSeek Flash high）：** S4 ×5：新建独立检查 4/5（失败仍是受伤闪烁的像素契约），修复 5/5；中位耗时新建 62 s、修复 35 s（P0 时 84 / 71 s）。主界面烟测两次：29 / 59 s，**都只产生 v1**（P0 前 v4、P1-2 后 v2/v3），分别用了 3 / 4 次 `--setup`、0 次 `sed` 临时改代码，无控制台问题。新观察：agent 覆盖统计 2 次缺项，模型用 `--setup` 直接置 `g.mode='lose'` 看画面，没有正常玩到失败——这类证据不算 normal 路线，是 `--setup` 带来的取舍，留到 P2-4（交付格式写明已验证/未验证）一起处理。归档 `.cache/evaluations/s4-25a9e703-1ec2-4073-bf1a-46753774dd25`、`s4-627fbfce-f815-4063-965b-f14cf6c0c332`、`s4-4e193b4d-a85c-44a6-9250-2f418682dd09`、`s4-53bdd4af-18f5-487c-a5a3-543e9e499d4b`、`s4-2d9afbd7-96fd-4a8b-8464-6ea1b7ac6b3f`。
 
 ## 4. P2：质量
 

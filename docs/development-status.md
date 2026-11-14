@@ -29,10 +29,11 @@
 | 同期结构化工具流程对照 | 新建 5/5（4 次撞 180 s 时限）、修复 5/5，耗时与 token 约为 shell 的两倍；详见迁移文档 |
 | Sweet Garden / Lodge Podge 复跑 | 两条流程各 ×2 全部完成两轮；胜利/重开没有自动证据，未人工试玩 |
 | 主界面烟测（`app-smoke.mjs`） | 主页 → MAKE → 工作台，约 1 分钟提交、试玩帧时间线正常，无控制台问题 |
-| lab T1–T7 | 每次 skill/p8 改动跑一次，7/7 |
+| lab T1–T8 | 每次 skill/p8 改动跑一次，8/8（T8 为无胜负的画画玩具） |
+| P1 后 S4 ×5 | 新建 4/5、修复 5/5，中位 62 / 35 s；主界面烟测两次均只产生 v1 |
 
 普通 CI 和部署 smoke 使用脚本模型与真实 WASM，证明集成可用，不证明模型质量。都是小样本，不是统计结论。详细归档（含失败）在忽略的 `.cache/evaluations/` 与 `.cache/lab/`；命令见[评测指南](../app/scripts/evaluation/README.md)。案例报告 [Sweet Garden](sweet-garden-case-study.md)、[Lodge Podge](lodge-podge-case-study.md) 记录的是旧流程的结果。
 
 ## 后续工作
 
-按 [shell-roadmap.md](shell-roadmap.md) 推进：P0（删除旧流程）已完成；下一步 P1——放宽 `g`/`g.mode` 契约、`p8 --setup` 不改源码设状态、每次请求一个版本；然后 P2（题面要求写进 `checks.json`、知识迁回 skill、`look --crop`、交付格式、资源即文件）与 P3（评测分层、通用重放检查、预取、纯文本模型）。
+按 [shell-roadmap.md](shell-roadmap.md) 推进：P0（删除旧流程）与 P1（`g`/`g.mode` 可选、`p8 --setup`、每次请求一个版本）已完成；下一步 P2（题面要求写进 `checks.json`、知识迁回 skill、`look --crop`、交付格式、资源即文件）与 P3（评测分层、通用重放检查、预取、纯文本模型）。

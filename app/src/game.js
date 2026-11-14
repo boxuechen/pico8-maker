@@ -265,9 +265,12 @@ export class Game {
     this.requestBaseline = this.hasGame
       ? { snapshot: { ...this.snapshot }, revision: this.revision }
       : null;
+    // One user request makes at most one version: later commits replace it.
+    this.requestVersion = null;
   }
   endRequest() {
     this.requestBaseline = null;
+    this.requestVersion = null;
   }
   async previewComparison(version) {
     if (
@@ -566,27 +569,42 @@ export class Game {
           else await this.player.pause();
           throw error;
         }
-        this.versions.push(snapshot);
-        if (this.requestBaseline) {
-          this.comparison = this.requestBaseline;
-          this.onComparison?.(this.comparison);
-          this.requestBaseline = null;
+        const amend =
+          this.requestVersion != null &&
+          this.requestVersion === this.revision &&
+          this.versions.length > 0;
+        if (amend) {
+          // Same request: replace its version; routes on the replaced code no longer apply.
+          this.versions[this.versions.length - 1] = snapshot;
+          this.playtests.dropRevision(this.revision);
+          this.previewVersion = "current";
+          this.save();
+          note = `\nCommitted as version ${this.revision}. It replaces this request's earlier version ${this.revision}; routes on that code were cleared. ${coverageNote(revisionCoverage(this.playtests.runs, this.revision))}`;
+        } else {
+          this.versions.push(snapshot);
+          if (this.requestBaseline) {
+            this.comparison = this.requestBaseline;
+            this.onComparison?.(this.comparison);
+            this.requestBaseline = null;
+          }
+          this.previewVersion = "current";
+          this.versions = this.versions.slice(-12);
+          this.revision++;
+          if (this.requestVersion !== undefined)
+            this.requestVersion = this.revision;
+          this.save();
+          // Earlier evidence belongs to the previous revision; say so where the
+          // model commits, so final checks are rerun on the delivered version.
+          const previous = revisionCoverage(
+            this.playtests.runs,
+            this.revision - 1,
+          );
+          note =
+            `\nCommitted as version ${this.revision}. ${coverageNote(revisionCoverage(this.playtests.runs, this.revision))}` +
+            (previous.normalRoutes
+              ? ` Revision ${previous.revision} had ${previous.normalRoutes} normal-input route(s) (longest ${previous.longestNormalCalls} input calls); rerun the affected routes on this revision before reporting them as verified.`
+              : "");
         }
-        this.previewVersion = "current";
-        this.versions = this.versions.slice(-12);
-        this.revision++;
-        this.save();
-        // Earlier evidence belongs to the previous revision; say so where the
-        // model commits, so final checks are rerun on the delivered version.
-        const previous = revisionCoverage(
-          this.playtests.runs,
-          this.revision - 1,
-        );
-        note =
-          `\nCommitted as version ${this.revision}. ${coverageNote(revisionCoverage(this.playtests.runs, this.revision))}` +
-          (previous.normalRoutes
-            ? ` Revision ${previous.revision} had ${previous.normalRoutes} normal-input route(s) (longest ${previous.longestNormalCalls} input calls); rerun the affected routes on this revision before reporting them as verified.`
-            : "");
       }
       const cartHash = await fingerprint(cartBytes(snapshot));
       signal?.throwIfAborted();

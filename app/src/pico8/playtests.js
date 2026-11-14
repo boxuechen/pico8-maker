@@ -158,6 +158,12 @@ export class Playtests {
     this.runs = [...this.runs.slice(-(maxRuns - 1)), this.active];
     this.save();
   }
+  /** Forget every route on a revision whose cart was replaced in place. */
+  dropRevision(revision) {
+    if (this.active?.revision === revision) this.active = null;
+    this.runs = this.runs.filter((r) => r.revision !== revision);
+    this.save();
+  }
   summary() {
     return this.active
       ? {

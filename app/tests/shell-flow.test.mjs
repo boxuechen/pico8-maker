@@ -155,3 +155,37 @@ function _draw() cls(1) print(g.score,2,2,7) end`;
     await game.dispose();
   }
 });
+
+test("one user request makes one version: later commits replace it and clear its routes", async () => {
+  const src = (c) => `function new_game() g={mode="play",x=64} end
+function _init() new_game() end
+function _update() if btn(1) then g.x+=1 end end
+function _draw() cls(${c}) circfill(g.x,64,3,8) end`;
+  const v1 = { ...emptySnapshot(), source: src(1) };
+  const game = new EvaluationGame({ versions: [v1], draft: v1 });
+  const worker = await startNodeP8Worker(skillFiles);
+  try {
+    const { exec } = await createShellEnvironment({ game, skillFiles, sendP8: worker.send });
+    game.beginRequest();
+    await exec("sed -i 's/cls(1)/cls(2)/' main.lua && p8 run --press 'right*3' > /dev/null");
+    assert.equal(game.revision, 2);
+    assert.equal(game.playtests.runs.filter((r) => r.revision === 2 && r.calls.length).length, 1);
+    const second = await exec("sed -i 's/cls(2)/cls(3)/' main.lua && p8 check | tail -1");
+    assert.match(second.stdout, /Maker: committed as version 2; .*replaces this request's earlier version 2/);
+    assert.equal(game.revision, 2);
+    assert.equal(game.versions.length, 2, "v1 plus this request's single version");
+    assert.match(game.snapshot.source, /cls\(3\)/);
+    assert.equal(game.playtests.runs.filter((r) => r.revision === 2 && r.calls.length).length, 0, "routes on the replaced code are gone");
+    await exec("p8 run --press 'right*3' > /dev/null");
+    assert.equal(game.playtests.runs.filter((r) => r.revision === 2 && r.calls.length).length, 1, "the same press is recorded again on the new code");
+    game.endRequest();
+    game.beginRequest();
+    await exec("sed -i 's/cls(3)/cls(4)/' main.lua && p8 check > /dev/null");
+    assert.equal(game.revision, 3, "the next request makes a new version");
+    await game.undo();
+    assert.match(game.snapshot.source, /cls\(3\)/, "undo steps back one request");
+  } finally {
+    await worker.close();
+    await game.dispose();
+  }
+});
