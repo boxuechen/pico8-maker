@@ -105,3 +105,27 @@ test("Agent with flow shell offers the shell tools and no frozen game tools", as
     await game.dispose();
   }
 });
+
+test("shell environment: one route per bash command, existing carts keep their resources", async () => {
+  const source = `function new_game() g={mode="play",x=64} end
+function _init() new_game() end
+function _update() if btn(0) then g.x-=1 end if btn(1) then g.x+=1 end end
+function _draw() cls(1) circfill(g.x,64,4,8) end`;
+  const committed = { ...emptySnapshot(), source };
+  const game = new EvaluationGame({ versions: [committed], draft: committed });
+  const worker = await startNodeP8Worker(skillFiles);
+  try {
+    const { exec } = await createShellEnvironment({ game, skillFiles, sendP8: worker.send });
+    await exec("sed -i 's/cls(1)/cls(2)/' main.lua && p8 check > /dev/null");
+    assert.equal(game.revision, 2);
+    assert.deepEqual(assetSummary(game.snapshot.assets).sfx, [], "no sound bank in an existing cart");
+    const before = game.playtests.runs.length;
+    await exec('for n in 5 6 7 8; do p8 run --press "right*$n" > /dev/null; done');
+    assert.equal(game.playtests.runs.length, before + 1, "a scan loop records only its last route");
+    await exec('p8 run --press "right*8" > /dev/null');
+    assert.equal(game.playtests.runs.length, before + 1, "the same press is not recorded twice on a revision");
+  } finally {
+    await worker.close();
+    await game.dispose();
+  }
+});

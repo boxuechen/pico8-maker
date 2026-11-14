@@ -2,7 +2,8 @@
 // /cart/main.lua mapped to the cart draft), the read-only pico8 skill at
 // /skill/pico8 and `p8` running in a separate Worker. After a p8 command that
 // runs main.lua, Maker commits a changed draft through the frozen load_game path
-// and replays each `p8 run` route through reset_game/press_buttons, so versions,
+// and replays the tested route (the last `p8 run` of each bash command) through
+// reset_game/press_buttons, so versions,
 // preview, playtest records and coverage stay Maker's own.
 import { capabilities } from "../capabilities.js";
 import { sameSnapshot } from "../assets.js";
@@ -79,27 +80,31 @@ export async function createShellEnvironment({ game, skillFiles, sendP8 }) {
     const here = (await cart.exists("/main.lua")) ? await cart.readFile("/main.lua", "utf8") : "";
     if (here !== game.draft.source) game.setDraft(here);
   };
+  // The sound bank goes only into a cart's first version; existing carts keep their resources.
+  const cartAssets = () => (game.hasGame ? game.draft.assets : withSoundBank(game.draft.assets));
+  // Routes from one bash command: a scan loop runs p8 many times, so only its last
+  // `p8 run` is replayed (Maker keeps 12 routes per cart), and a press already
+  // recorded on this revision is not recorded again.
+  let pendingRoute = null;
+  const recorded = new Map();
   const p8 = defineCommand("p8", async (args, ctx) => {
     await push();
     const plays = [];
-    const r = await remoteP8(sendP8, {
-      assets: async () => withSoundBank(game.draft.assets),
-      onPlay: (p) => plays.push(p),
-    })(args, ctx);
+    const r = await remoteP8(sendP8, { assets: async () => cartAssets(), onPlay: (p) => plays.push(p) })(args, ctx);
     await push();
     const notes = [];
     const file = args.slice(1).find((a, i, all) => !a.startsWith("--") && !all[i - 1]?.startsWith("--"));
     if (RUNS_MAIN.has(args[0]) && (!file || ctx.fs.resolvePath(ctx.cwd, file) === `${CART}/main.lua`)) {
       notes.push(...(await commit(ctx.signal)));
-      if (game.hasGame && !game.cartSummary().draftDirty)
-        for (const play of plays) if (play.command === "run" && play.ok) await replay(play.press, ctx.signal);
+      const run = plays.findLast((p) => p.command === "run" && p.ok);
+      if (run && game.hasGame && !game.cartSummary().draftDirty) pendingRoute = run.press;
     }
     return { ...r, stdout: r.stdout + notes.map((n) => `Maker: ${n}\n`).join("") };
   });
 
   async function commit(signal) {
     if (!game.draft.source.trim() || sameSnapshot(game.draft, game.snapshot)) return [];
-    const assets = withSoundBank(game.draft.assets);
+    const assets = cartAssets();
     if (assets !== game.draft.assets) game.setWorking({ ...game.draft, assets });
     const result = await game.execute("load_game", {}, signal);
     if (result.isError) {
@@ -111,7 +116,10 @@ export async function createShellEnvironment({ game, skillFiles, sendP8 }) {
   // Record the tested route on the committed cart, as press_buttons would.
   async function replay(press, signal) {
     const calls = routeCalls(press);
-    if (!calls.length) return;
+    const seen = recorded.get(game.revision) ?? new Set();
+    recorded.set(game.revision, seen);
+    if (!calls.length || seen.has(press)) return;
+    seen.add(press);
     await game.execute("reset_game", {}, signal);
     for (const call of calls) {
       const r = await game.execute("press_buttons", call, signal);
@@ -122,6 +130,7 @@ export async function createShellEnvironment({ game, skillFiles, sendP8 }) {
   const bash = new Bash({ fs, cwd: CART, env: { HOME: CART, PWD: CART }, customCommands: [p8] });
   const exec = async (command, options) => {
     await pull();
+    pendingRoute = null;
     try {
       return await bash.exec(command, options);
     } catch (e) {
@@ -129,6 +138,9 @@ export async function createShellEnvironment({ game, skillFiles, sendP8 }) {
       return { stdout: "", stderr: `bash: ${e?.message ?? e}\n`, exitCode: 1 };
     } finally {
       await push();
+      const press = pendingRoute;
+      pendingRoute = null;
+      if (press && game.hasGame && !game.cartSummary().draftDirty) await replay(press, options?.signal);
     }
   };
   const base = durableEnv({ fs, exec, cwd: CART });
