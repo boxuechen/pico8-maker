@@ -20,7 +20,16 @@ Prints the frames run, every change of `g.mode` with its frame, sounds started (
 p8 run --setup "g.lives=1 g.enemies={{x=60,y=100,vx=0}}" --press "wait*5" --read g.mode
 ```
 
-Runs Lua after boot (after `_init`) and before the presses. Use it to reach a win, a loss, a late level or a rare event quickly, without editing `main.lua`. Setup runs are not normal play: before reporting a path as played, also play it once with presses only when that is practical (for example, win a short game by playing it).
+Runs Lua after boot (after `_init`) and before the presses. Use it to reach a win, a loss, a late level or a rare event quickly, without editing `main.lua`. Setup runs are not normal play: before reporting a path as played, also play it once with presses only: by hand for a short game, with `--bot` for a long one.
+
+## p8 run --bot
+
+```sh
+p8 run --bot "local f=g.fruits[1] if f then return f.x<g.basket.x and 1 or 2 end" --until "g.mode=='win'" --read g.score
+p8 run --press "x" --bot "return 16" --until "g.mode~='play'" --frames 3600
+```
+
+A function body run every frame after `--press` (optional prefix, such as leaving a title screen): it reads the state and returns the buttons to hold that frame (left=1 right=2 up=4 down=8 o=16 x=32, added; nil holds nothing). It stops when the `--until` expression is true or after `--frames` (default 1800, at most 3600). Only the buttons are kept: they are printed as a press string and replayed in a fresh session with presses only, and that replay is the result (it counts as normal play). A bot that changes state proves nothing, because the replay does not include it. Use it for long routes (winning a scoring game, losing every life); write a simple greedy rule (move toward the target, fire when aligned, step away from danger), not a search.
 
 ## p8 look
 

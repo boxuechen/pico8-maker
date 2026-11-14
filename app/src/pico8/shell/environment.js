@@ -163,7 +163,7 @@ export async function createShellEnvironment({ game, skillFiles, sendP8 }) {
     const byHand = [...new Set(plays.filter((p) => p.ok && p.setup).flatMap((p) => p.modes))].filter((m) => !seen.has(m));
     if (!byHand.length) return [];
     const names = byHand.map((m) => `g.mode ${JSON.stringify(m)}`).join(" and ");
-    return [`${names} reached only with --setup on version ${game.revision} (state set by hand). Before calling it verified, reach it with presses only: p8 run --press "..." without --setup; otherwise list it under Unverified.`];
+    return [`${names} reached only with --setup on version ${game.revision} (state set by hand). Before calling it verified, reach it with presses only: p8 run --press "..." without --setup, or for a long route p8 run --bot "lua" --until "g.mode==...". Otherwise list it under Unverified.`];
   }
   // Record the tested route on the committed cart.
   async function replay(runs, signal) {

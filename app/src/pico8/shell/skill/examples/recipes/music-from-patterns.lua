@@ -1,3 +1,5 @@
+-- Only for sound the game generates while it runs. Fixed sounds and music
+-- belong in sfx.txt and music.txt (reference/asset-authoring.md).
 -- Standalone recipe: two-pattern loop on channels 0/1; X plays SFX on 3.
 -- Helpers intentionally included: this file needs no imports or editor data.
 function write_sfx(id,notes,speed)

@@ -1,10 +1,10 @@
 # SFX and music without an editor
 
-Optional examples: /skill/pico8/examples/recipes/sfx-from-notes.lua and /skill/pico8/examples/recipes/music-from-patterns.lua are complete Lua programs with encoding helpers. The layouts below are sufficient when you do not need a full example.
+Write sound effects as lines of `sfx.txt` and music patterns as lines of `music.txt` next to `main.lua` (formats and examples in reference/asset-authoring.md); game code only calls `sfx(n)` and `music(n)`. Check a sound with `p8 sfx n`; `p8 run` lists the sfx and music each run starts. Do not poke audio RAM from code for fixed sounds or music: data written by code is missing from the files the user sees and edits, so the cart's resources show no music. Poke RAM (layout below, recipes in examples/recipes) only for sound the game generates while it runs.
 
-## Workflow and API
+## API
 
-Define readable notes, write SFX RAM, then trigger playback. Music adds patterns assigning SFX tracks to channels. Initialize once in _init and include all data in source. Writing notes does not start sound; calling sfx on an empty slot does not compose sound.
+Calling sfx on an empty slot does not compose sound; give the slot notes in `sfx.txt` first.
 
 | Call | Meaning |
 | --- | --- |
@@ -18,7 +18,7 @@ Define readable notes, write SFX RAM, then trigger playback. Music adds patterns
 
 Mask 3 reserves channels 0 and 1 (1+2), not channel 3. An explicitly selected SFX channel may still interrupt music. Reserve e.g. 0/1 for music and 3 for feedback. music(-1) and sfx(-1) control different playback objects.
 
-## SFX byte layout
+## Generated audio: SFX byte layout
 
 base=0x3200+id*68. There are 32 two-byte notes plus four metadata bytes.
 
@@ -46,14 +46,14 @@ Clear all 68 bytes first, write notes, then speed. Remaining notes are silent. s
 
 The local synth uses 22050 Hz and roughly 183 samples per speed unit per note. Speed 8 is about 66 ms per note. This is not one note per game frame; verify timing by advancing the runtime.
 
-## Music patterns
+## Generated audio: music pattern layout
 
 base=0x3100+pattern*4. Each byte corresponds to channel 0–3. Low six bits select SFX; bit 6 disables a channel. Empty channels must use 0x40, because SFX 0 is valid.
 
 Bit 7 of channel byte 0 marks loop start; byte 1 marks loop end; byte 2 marks stop-after-pattern. Keep byte 3's high bit clear in basic patterns. Pattern loops differ from SFX loops.
 
-The recipe uses pattern 0 with SFX 0/1 and pattern 1 with SFX 2/3. Both music channels use 32-note, equal-speed, non-looping SFX for predictable pattern duration. The last pattern loops to the first. SFX 4 plays on channel 3 independently. Different SFX lengths/loops influence pattern progression; nonzero note count alone does not define pattern length.
+A simple loop: pattern 0 with two 32-note sfx of equal speed (in `music.txt`: `01 08094243`), pattern 1 with two more (`02 0a0b4243`), so 1 marks the loop start and 2 the loop end; feedback sfx play on channel 3 (`music(0,0,3)` reserves channels 0 and 1). Different SFX lengths or loops change how long a pattern lasts; the note count alone does not.
 
 ## Verification
 
-Check RAM encoding, non-silent PCM, pattern progression 0→1→0 and channel independence after input. The supplied recipes have passed these local runtime checks. This is synthesis/behavior evidence, not subjective listening approval. Current model tools do not return audio; do not claim to have heard it.
+Check each sound with `p8 sfx n`, and that `p8 run` lists the music starting (`music 0@1`) and the sfx your events trigger (`sfx 3@41`). This proves triggers and data, not how it sounds. The tools do not return audio; do not claim to have heard it.

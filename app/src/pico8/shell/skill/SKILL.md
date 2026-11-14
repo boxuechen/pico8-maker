@@ -18,6 +18,7 @@ Other commands:
 
 - `p8 run --press "right*30 wait*60" --read g.score,g.mode` plays the game and prints mode changes, sounds and values.
 - `--setup "g.score=9 g.lives=1"` on `p8 run` or `p8 look` runs Lua after boot and before the presses. Use it to test a win, a loss, a late level or a rare event quickly. Never edit `main.lua` just to test something: such edits end up in the game the user gets.
+- `p8 run --bot "lua" --until "g.mode=='win'"` lets a small Lua bot choose the buttons every frame from the state (return left=1 right=2 up=4 down=8 o=16 x=32, added) until the condition holds, then replays its presses as normal play. Use it to reach a win or loss with presses only when the route is long; do not search for press strings by hand or write simulators.
 - `p8 look --press "right*30"` prints the screen as 32x32 characters (colours 0-f). Add `--crop 56,96,16,16` (x,y,w,h, at most 64x64) for exact pixels, or `--png screen.png` to also write a 512x512 image, then open it with `read` to see the screen.
 - Sprites, flags, map, sound effects and music are the files `gfx.txt`, `gff.txt`, `map.txt`, `sfx.txt` and `music.txt` next to `main.lua` (formats in reference/asset-authoring.md). `p8 sheet --png sheet.png`, `p8 map 0,0,16,16 --png map.png` and `p8 sfx 3` show them.
 - `p8 new skeleton` starts an empty `main.lua` from a working game skeleton with win/lose; `p8 new toy` from a toy without a result.
@@ -62,4 +63,4 @@ Write code, comments and on-screen text in plain ASCII English.
 | Browser runtime limits | reference/runtime-compatibility.md |
 | Collect/build loops, match puzzles | reference/collect-build.md, reference/match-puzzle.md |
 | Complete small games | examples/star-catch.lua; examples/spring-courier.lua, signal-arena.lua, lantern-vault.lua (described in reference/microgames.md) |
-| Snippets that build sprites, maps, sfx, music or a high-score save in code (not complete games) | examples/recipes/*.lua |
+| Snippets that generate sprites, maps, sfx or music in code while the game runs (fixed data goes in the resource files), or save a high score | examples/recipes/*.lua |

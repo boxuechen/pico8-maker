@@ -6,7 +6,7 @@ import { posix } from "./posix-path.js";
 import { checkSource, explainFault, formatItems, loadCasesText, parsePress } from "./checks.js";
 import { cartText } from "../cart.js";
 import { encodePng } from "./png.js";
-import { Runtime } from "./runtime.js";
+import { BUTTONS, Runtime } from "./runtime.js";
 import { soundAssets } from "./sounds.js";
 import { applyResourceFiles, describeSfx, RESOURCE_FILES } from "./resource-files.js";
 import { renderMap, renderSheet } from "../asset-preview.js";
@@ -17,6 +17,9 @@ export const TEMPLATE_DIR = "/skill/pico8/templates";
 const usage = (templates) => `usage:
   p8 check [main.lua]                        lint, boot, input and every case in checks.json
   p8 run [main.lua] --press "right*30 x" [--read g.score,g.mode] [--setup "g.score=9"]
+  p8 run --bot "lua" --until "lua" [--press "x"] [--frames 1800]
+                                             a Lua bot picks the buttons every frame (after --press) until
+                                             --until is true; its presses are replayed as normal play
   p8 look [main.lua] [--press "..."] [--png screen.png] [--crop x,y,w,h] [--setup "lua"]
                                              32x32 text picture of the screen; --crop prints exact pixels
                                              (at most 64x64); --png also writes a 512x512 image
@@ -111,6 +114,57 @@ async function play(src, press, assets, setup) {
   return { rt, lines, modes, ok: true };
 }
 
+const BOT_HELP =
+  '--bot is a Lua function body that returns the buttons to hold this frame (left=1 right=2 up=4 down=8 o=16 x=32, add them; nil = none), e.g. --bot "local f=g.fruits[1] if f then return f.x<g.basket.x and 1 or 2 end"';
+const NAMES = Object.entries(BUTTONS);
+/** Buttons per frame → "left*16 wait*3 right+o*2". */
+export function pressText(bits) {
+  const out = [];
+  for (let i = 0; i < bits.length; ) {
+    let j = i;
+    while (j < bits.length && bits[j] === bits[i] && j - i < 3600) j++;
+    const name = NAMES.filter(([, b]) => bits[i] & b).map(([n]) => n).join("+") || "wait";
+    out.push(j - i > 1 ? `${name}*${j - i}` : name);
+    i = j;
+  }
+  return out.join(" ");
+}
+
+/**
+ * Let a Lua bot choose the buttons each frame from the game state (after an
+ * optional --press prefix) until --until is true. Only the buttons are kept:
+ * the caller replays them in a fresh session as normal play, so a bot that
+ * changes state proves nothing.
+ */
+async function botPresses(src, assets, { bot, until, press, frames }) {
+  const rt = new Runtime(assets);
+  try {
+    const loaded = await rt.load(src);
+    if (!loaded.ok) return { error: `does not boot: ${loaded.diagnostics.map((d) => explainFault(d, src)).join("; ")}` };
+    const def = await rt.setup(`function __p8bot()\n${bot}\nend\nfunction __p8until() return ${until} end`);
+    if (!def.ok) return { error: `--bot/--until do not compile: ${def.message}. ${BOT_HELP}; --until is a Lua expression such as "g.mode~='play'".` };
+    const bits = [];
+    for (const step of parsePress(press ?? "")) {
+      const r = await rt.advance(step.bits, step.frames);
+      if (r.fault) return { error: `fault during --press: ${r.fault.map((d) => explainFault(d, src)).join("; ")}` };
+      for (let i = 0; i < step.frames; i++) bits.push(step.bits);
+    }
+    for (let i = 0; ; i++) {
+      const s = await rt.setup("__p8u=__p8until() and true or false __p8b=0 if not __p8u then __p8b=__p8bot() or 0 end");
+      if (!s.ok) return { error: `--bot or --until failed at frame ${rt.frames + 1}: ${s.message}` };
+      const v = await rt.read(["__p8u", "__p8b"]);
+      if (v.__p8u === true) return { bits, reached: true };
+      if (i >= frames) return { bits, reached: false };
+      const b = Number(v.__p8b) & 63;
+      const r = await rt.advance(b, 1);
+      bits.push(b);
+      if (r.fault) return { bits, reached: false };
+    }
+  } finally {
+    await rt.dispose();
+  }
+}
+
 /**
  * Run one p8 invocation.
  * @param argv arguments after `p8`
@@ -171,9 +225,26 @@ async function dispatch(argv, { fs, cwd, templateDir = TEMPLATE_DIR, memo = new 
       return pass ? 0 : 1;
     }
     case "run": {
-      const r = await play(await source(rest[0]), opts.press ?? "wait*30", await resources(), opts.setup);
+      let press = opts.press ?? "wait*30";
+      const head = [];
+      if (opts.bot !== undefined) {
+        if (opts.setup !== undefined) throw new UserError("--bot plays normal input from boot; it cannot be combined with --setup");
+        if (!opts.bot.trim()) throw new UserError(BOT_HELP);
+        const frames = opts.frames === undefined ? 1800 : Number(opts.frames);
+        if (!Number.isInteger(frames) || frames < 1 || frames > 3600) throw new UserError("--frames is the bot's frame budget, 1..3600 (default 1800)");
+        const found = await botPresses(await source(rest[0]), await resources(), { bot: opts.bot, until: opts.until || "false", press: opts.press, frames });
+        if (found.error) throw new UserError(found.error);
+        if (!found.bits.length) throw new UserError(`--until is already true at boot${opts.press ? " after --press" : ""}; nothing to play`);
+        press = pressText(found.bits);
+        head.push(
+          `bot played ${found.bits.length} frames; --until ${found.reached ? "became true" : `was not reached within ${frames} frames`}.`,
+          `presses (replayed below with presses only, recorded as normal play): ${press.length > 800 ? press.slice(0, 800) + " …" : press}`,
+        );
+      }
+      const r = await play(await source(rest[0]), press, await resources(), opts.setup);
+      r.lines.unshift(...head);
       try {
-        await report(onPlay, "run", opts.press ?? "wait*30", r, opts.setup);
+        await report(onPlay, "run", press, r, opts.setup);
         if (r.ok) {
           const paths = opts.read ? opts.read.split(",").map((p) => p.trim()).filter(Boolean) : ["g"];
           const values = await r.rt.read(paths);

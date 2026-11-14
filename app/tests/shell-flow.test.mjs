@@ -151,6 +151,35 @@ function _draw() cls(1) print(g.mode,2,2,7) end`;
   }
 });
 
+test("p8 run --bot: a Lua bot finds presses to a result, replayed and recorded as normal play", async () => {
+  const { catchBase } = await import("../scripts/evaluation/turn-cases.mjs");
+  const committed = { ...emptySnapshot(), source: catchBase };
+  const game = new EvaluationGame({ versions: [committed], draft: committed });
+  const worker = await startNodeP8Worker(skillFiles);
+  try {
+    const { exec } = await createShellEnvironment({ game, skillFiles, sendP8: worker.send });
+    const before = game.playtests.runs.length;
+    const bot = `local t=nil for f in all(g.fruits) do if not t or f.y>t.y then t=f end end if t then if t.x<g.basket.x-1 then return 1 elseif t.x>g.basket.x+1 then return 2 end end`;
+    const r = await exec(`p8 run --bot "${bot}" --until "g.mode=='win'" --frames 3600 --read g.mode,g.score`);
+    assert.equal(r.exitCode, 0, r.stdout);
+    assert.match(r.stdout, /bot played \d+ frames; --until became true/);
+    assert.match(r.stdout, /presses \(replayed below with presses only, recorded as normal play\): (left|right|wait)/);
+    assert.match(r.stdout, /g.mode "play"→"win"/);
+    assert.match(r.stdout, /g.mode = "win"/);
+    assert.equal(game.playtests.runs.length, before + 1, "the bot's presses are recorded as a normal route");
+    assert.equal(game.playtests.runs.at(-1).purpose, "normal");
+    // A bot that cheats by changing state proves nothing: the replay shows the real result.
+    const cheat = await exec(`p8 run --bot "g.score=10" --until "g.mode=='win'" --read g.mode`);
+    assert.match(cheat.stdout, /--until became true/);
+    assert.doesNotMatch(cheat.stdout, /g.mode = "win"/);
+    assert.match((await exec(`p8 run --bot "return 2" --setup "g.score=1"`)).stdout, /cannot be combined with --setup/);
+    assert.match((await exec(`p8 run --bot "return (" --until "false"`)).stdout, /do not compile: .*returns the buttons/);
+  } finally {
+    await worker.close();
+    await game.dispose();
+  }
+});
+
 test("p8 --setup changes state without touching main.lua and is never recorded as a route", async () => {
   const source = `function new_game() g={mode="play",score=0} end
 function _init() new_game() end
@@ -167,7 +196,7 @@ function _draw() cls(1) print(g.score,2,2,7) end`;
     assert.match(r.stdout, /setup ran \(main.lua unchanged/);
     assert.match(r.stdout, /g.mode "play"→"win"/);
     assert.match(r.stdout, /g.score = 10/);
-    assert.match(r.stdout, /Maker: g.mode "win" reached only with --setup on version 1 .*without --setup; otherwise list it under Unverified/);
+    assert.match(r.stdout, /Maker: g.mode "win" reached only with --setup on version 1 .*without --setup, or for a long route p8 run --bot .*Otherwise list it under Unverified/);
     assert.equal(game.draft.source, source);
     assert.equal(game.revision, 1);
     assert.equal(game.playtests.runs.length, before, "setup runs are not replayed");

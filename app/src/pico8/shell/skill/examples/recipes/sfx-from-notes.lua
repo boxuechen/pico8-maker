@@ -1,3 +1,5 @@
+-- Only for sound the game generates while it runs. Fixed sounds and music
+-- belong in sfx.txt and music.txt (reference/asset-authoring.md).
 -- Standalone recipe: sound at startup; X replays it on channel 3.
 -- Each note: {pitch 0..63, waveform 0..7, volume 0..7, effect 0..7}.
 function write_sfx(id,notes,speed)
