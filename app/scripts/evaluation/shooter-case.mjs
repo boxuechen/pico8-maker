@@ -2,7 +2,7 @@ import { emptySnapshot } from "../../src/pico8/assets.js";
 
 // A public task contract, separate from the implementation/oracle. Deliberately
 // constrained geometry makes state + pixel assertions possible across models.
-export const shooterContract = `实现一个确定性的单屏两波射击小游戏（30Hz）。左右键每帧移动2像素，x限制8..120；O持续开火，间隔6帧，子弹从玩家上方发出、每帧向上4像素。玩家初始x=64,y=112,hp=3。每波三个敌人中心在(32,24),(64,24),(96,24)，各一击消灭；清掉第一波立即出现相同的第二波，累计6次击杀后胜利。存活敌人每60帧向下发射速度3的子弹；命中玩家扣1HP，有20帧无敌，HP为0失败。命中阈值abs(dx)<5且abs(dy)<5。胜负后X重开，恢复全部本局状态。不得自动命中、自动胜利或注入进度。
+export const shooterContract = `实现一个确定性的单屏两波射击小游戏（30Hz）。左右键每帧移动2像素，x限制8..120；O持续开火，间隔6帧，子弹从玩家上方发出、每帧向上4像素。玩家初始x=64,y=112,hp=3。每波三个敌人中心在(32,24),(64,24),(96,24)，各一击消灭；清掉第一波立即出现相同的第二波，累计6次击杀后胜利。存活敌人每60帧向下发射速度3的子弹；命中玩家扣1HP并令inv=20（每次命中都如此，包括使HP归0的那一下），之后每帧减1，减到0后才能再次受伤；HP为0失败。命中阈值abs(dx)<5且abs(dy)<5。胜负后X重开，恢复全部本局状态。不得自动命中、自动胜利或注入进度。
 使用全局g保存mode（play/win/lose）、player（x/y/hp/inv）、bullets（玩家弹）、hostiles（敌弹）、enemies（敌人）、wave、kills、tick和cooldown；实体表元素包含x/y。_init和重开共用new_game()。这是一份可独立验证的任务接口，不要添加测试专用函数。无随机性。
 背景色0；玩家为中心(玩家x,112)的7x7实心绿色11，敌人为中心上述位置的7x7实心红色8；玩家弹黄色10、敌弹橙色9，半径1像素。HUD置于y<16。胜利/失败在y=56..72绘制全宽实心绿色11/红色8横条（文字可置于x>=16,y>=60）。保持中心像素配色，不使用调色板重映射。其余细节自由设计。完成并用正常输入验证核心循环、两波胜利、失败和重开，边界情况可用独立debug轮次。`;
 

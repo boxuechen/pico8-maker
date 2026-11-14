@@ -108,11 +108,12 @@ export async function createShellEnvironment({ game, skillFiles, sendP8 }) {
   // The sound bank goes only into a cart's first version; existing carts keep their resources.
   const cartAssets = () => (game.hasGame ? game.draft.assets : withSoundBank(game.draft.assets));
   // Maker keeps 12 routes per cart, and the model runs p8 far more often than it
-  // would record a route. Replay only routes that count as evidence: the last
-  // `p8 run` of a bash command (a scan loop runs p8 many times), when it changed
-  // g.mode (reached a result or retried) or is the first route on this revision;
-  // never the same press twice on one revision.
-  let pendingRoute = null;
+  // would record a route. Replay only routes that count as evidence: per bash
+  // command, every `p8 run` that entered a g.mode no recorded route on this
+  // revision has entered yet (at most 3; a scan loop runs p8 many times), or else
+  // its last run when this revision has no route yet; never the same press twice.
+  // (Only the last run used to count, so `lose; lose+retry; wait*90` lost the loss.)
+  let pendingRoutes = [];
   const recorded = new Map();
   const p8 = defineCommand("p8", async (args, ctx) => {
     await push();
@@ -124,8 +125,11 @@ export async function createShellEnvironment({ game, skillFiles, sendP8 }) {
     if (RUNS_MAIN.has(args[0]) && (!file || ctx.fs.resolvePath(ctx.cwd, file) === `${CART}/main.lua`)) {
       notes.push(...(await commit(ctx.signal)));
       // Runs with --setup changed state by hand: not normal play, never recorded.
-      const run = plays.findLast((p) => p.command === "run" && p.ok && !p.setup);
-      if (run && game.hasGame && !game.cartSummary().draftDirty) pendingRoute = run;
+      const run = plays.some((p) => p.command === "run" && p.ok && !p.setup);
+      const current = game.hasGame && !game.cartSummary().draftDirty;
+      if (run && current)
+        pendingRoutes.push(...plays.filter((p) => p.command === "run" && p.ok && !p.setup).map((p) => ({ ...p, revision: game.revision })));
+      if (current) notes.push(...setupOnly(plays));
     }
     return { ...r, stdout: r.stdout + notes.map((n) => `Maker: ${n}\n`).join("") };
   });
@@ -141,26 +145,49 @@ export async function createShellEnvironment({ game, skillFiles, sendP8 }) {
     }
     // A commit (new or replacing this request's version) starts fresh route evidence.
     recorded.delete(game.revision);
+    reached.delete(game.revision);
     // The commit note carries the coverage facts for the new revision.
     const text = result.output?.find((o) => o.type === "text")?.text ?? "";
     const note = text.slice(text.indexOf("Committed as version")).split("\n")[0];
     const facts = note.startsWith("Committed as version") ? note.replace(/^Committed as version \d+\.\s*/, "") : "";
     return [`committed as version ${game.revision}; the player now runs it.${facts ? ` ${facts}` : ""} Only p8 run routes on this version count as tested.`];
   }
+  // g.mode values reached with presses only, per committed revision. Models often
+  // reach a loss or a retry only with --setup and then report it as verified;
+  // say so on the run that does it.
+  const reached = new Map();
+  function setupOnly(plays) {
+    const seen = reached.get(game.revision) ?? new Set();
+    reached.set(game.revision, seen);
+    for (const p of plays) if (p.command === "run" && p.ok && !p.setup) for (const m of p.modes) seen.add(m);
+    const byHand = [...new Set(plays.filter((p) => p.ok && p.setup).flatMap((p) => p.modes))].filter((m) => !seen.has(m));
+    if (!byHand.length) return [];
+    const names = byHand.map((m) => `g.mode ${JSON.stringify(m)}`).join(" and ");
+    return [`${names} reached only with --setup on version ${game.revision} (state set by hand). Before calling it verified, reach it with presses only: p8 run --press "..." without --setup; otherwise list it under Unverified.`];
+  }
   // Record the tested route on the committed cart.
-  async function replay({ press, modes }, signal) {
-    const calls = routeCalls(press);
-    const seen = recorded.get(game.revision) ?? new Set();
-    recorded.set(game.revision, seen);
-    if (!calls.length || seen.has(press) || (seen.size && !modes?.length)) return;
-    seen.add(press);
-    await game.replayRoute(calls, signal);
+  async function replay(runs, signal) {
+    const rev = game.revision;
+    const state = recorded.get(rev) ?? { presses: new Set(), modes: new Set() };
+    recorded.set(rev, state);
+    const mine = runs.filter((r) => r.revision === rev && !state.presses.has(r.press) && routeCalls(r.press).length);
+    const picked = [];
+    for (const r of mine) {
+      const fresh = (r.modes ?? []).filter((m) => !state.modes.has(m));
+      if (picked.length < 3 && fresh.length) picked.push(r), fresh.forEach((m) => state.modes.add(m));
+    }
+    if (!picked.length && !state.presses.size && mine.length) picked.push(mine.at(-1));
+    for (const r of picked) {
+      state.presses.add(r.press);
+      for (const m of r.modes ?? []) state.modes.add(m);
+      await game.replayRoute(routeCalls(r.press), signal);
+    }
   }
 
   const bash = new Bash({ fs, cwd: CART, env: { HOME: CART, PWD: CART }, customCommands: [p8] });
   const exec = async (command, options) => {
     await pull();
-    pendingRoute = null;
+    pendingRoutes = [];
     try {
       return await bash.exec(command, options);
     } catch (e) {
@@ -168,9 +195,9 @@ export async function createShellEnvironment({ game, skillFiles, sendP8 }) {
       return { stdout: "", stderr: `bash: ${e?.message ?? e}\n`, exitCode: 1 };
     } finally {
       await push();
-      const route = pendingRoute;
-      pendingRoute = null;
-      if (route && game.hasGame && !game.cartSummary().draftDirty) await replay(route, options?.signal);
+      const routes = pendingRoutes;
+      pendingRoutes = [];
+      if (routes.length && game.hasGame && !game.cartSummary().draftDirty) await replay(routes, options?.signal);
     }
   };
   const base = durableEnv({ fs, exec, cwd: CART });

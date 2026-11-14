@@ -125,6 +125,32 @@ function _draw() cls(1) circfill(g.x,64,4,8) end`;
   }
 });
 
+test("a bash command records every run that enters a new g.mode, not only its last run", async () => {
+  const source = `function new_game() g={mode="play",t=0} end
+function _init() new_game() end
+function _update() if g.mode=="play" then g.t+=1 if g.t>20 then g.mode="lose" end if btnp(4) then g.mode="win" end
+ elseif btnp(5) then new_game() end end
+function _draw() cls(1) print(g.mode,2,2,7) end`;
+  const committed = { ...emptySnapshot(), source };
+  const game = new EvaluationGame({ versions: [committed], draft: committed });
+  const worker = await startNodeP8Worker(skillFiles);
+  try {
+    const { exec } = await createShellEnvironment({ game, skillFiles, sendP8: worker.send });
+    const before = game.playtests.runs.length;
+    // The model's real command: loss, loss then retry, then an idle run last.
+    await exec('p8 run --press "wait*25" > /dev/null; p8 run --press "wait*25 x wait" > /dev/null; p8 run --press "wait*3" > /dev/null');
+    const routes = game.playtests.runs.slice(before);
+    assert.equal(routes.length, 2, "the loss and the retry are kept; the idle last run adds nothing");
+    await exec('for n in 22 23 24 25 26; do p8 run --press "wait*$n" > /dev/null; done');
+    assert.equal(game.playtests.runs.length, before + 2, "runs reaching a g.mode already recorded are not replayed again");
+    await exec('p8 run --press "wait*2 o" > /dev/null; p8 run --press "wait*3" > /dev/null');
+    assert.equal(game.playtests.runs.length, before + 3, "a win is new evidence");
+  } finally {
+    await worker.close();
+    await game.dispose();
+  }
+});
+
 test("p8 --setup changes state without touching main.lua and is never recorded as a route", async () => {
   const source = `function new_game() g={mode="play",score=0} end
 function _init() new_game() end
@@ -141,6 +167,7 @@ function _draw() cls(1) print(g.score,2,2,7) end`;
     assert.match(r.stdout, /setup ran \(main.lua unchanged/);
     assert.match(r.stdout, /g.mode "play"→"win"/);
     assert.match(r.stdout, /g.score = 10/);
+    assert.match(r.stdout, /Maker: g.mode "win" reached only with --setup on version 1 .*without --setup; otherwise list it under Unverified/);
     assert.equal(game.draft.source, source);
     assert.equal(game.revision, 1);
     assert.equal(game.playtests.runs.length, before, "setup runs are not replayed");
@@ -149,6 +176,9 @@ function _draw() cls(1) print(g.score,2,2,7) end`;
     assert.match(bad.stdout, /setup failed: .*--setup runs Lua statements/);
     await exec(`p8 run --press "x"`);
     assert.equal(game.playtests.runs.length, before + 1, "a normal run is still recorded");
+    // Once presses alone reach the result, a --setup run no longer warns.
+    assert.doesNotMatch((await exec(`p8 run --press "${"x wait ".repeat(10).trim()}" --read g.mode`)).stdout, /reached only with --setup/);
+    assert.doesNotMatch((await exec(`p8 run --setup "g.score=9" --press "x"`)).stdout, /reached only with --setup/);
   } finally {
     await worker.close();
     await game.dispose();
