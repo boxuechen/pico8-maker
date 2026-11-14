@@ -116,6 +116,8 @@
 
 - **P3-1 分层评测（2026-11-14）：** `npm run eval:tier -- --tier quick|agent|full [--model] [--repeat]` 并行跑 lab T1–T9 / + S4 ×N / + 两个案例和主界面烟测，日志与 `summary.md` 在 `.cache/evaluations/tier-*`。`run-case.mjs` 新增 `--model`，`app-smoke.mjs` 读 `SMOKE_MODEL`，便于换模型对照。试跑 quick：9/9，173 s。
 
+- **P3-2 案例通用结果重放（2026-11-14）：** `scripts/evaluation/result-replay.mjs`：把 agent 在最终版本上记录的每条正常按键路线，在新会话里用 p8 同款的固定随机种子运行时重放，逐帧读 `g.mode`，报告正常游玩是否到达胜利、失败和结果后重开；`run-case.mjs` 结束时自动写入 `report.json.resultReplay`，`eval:tier` 汇总里也会显示。复核现有 12 个案例归档：**Lodge Podge 6/6 都由正常路线到达胜利并重开**（含 M3 两条流程各 2 次和 P2-8 的 1 次；此前看最后一帧在游戏中途，是因为路线在重开后继续玩了几步）；**Sweet Garden 只有 2/6 到达胜利**（M3 shell 两次的路线只有 113–160 帧，没有玩到结果），失败路径都没有被正常路线覆盖。
+
 ## 6. 建议顺序
 
 P0 → P1-1、P1-2、P1-3（改动小、直接影响用户）→ P2-5 知识回迁（P0 删除知识包时一起做最省事，也可以先存档、后改写）→ P2-4、P2-6、P2-7 → P2-8 资源即文件 → P3 穿插进行。每一步遵循：先在 lab 跑通，再进 Maker，按第 5 节的分层评测，前后对比记进文档，完成即提交。

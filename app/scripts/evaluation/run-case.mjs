@@ -21,6 +21,7 @@ import { EvaluationGame } from "./node-game.mjs";
 import { startNodeP8Worker } from "./p8-worker-node.mjs";
 import { outcomeMetrics } from "./outcome-metrics.mjs";
 import { png } from "./png.mjs";
+import { resultReplay } from "./result-replay.mjs";
 
 const cases = {
   garden: {
@@ -227,6 +228,9 @@ if (route) {
     frames,
   };
 }
+// Did normal play on the final version reach a win, a loss and a restart (g.mode)?
+report.resultReplay = await resultReplay(report.runs.at(-1).after, report.playtests, report.runs.at(-1).revision);
+log(`result replay: ${report.resultReplay.summary}`);
 await writeFile(new URL("report.json", out), redact(report));
 await writeFile(new URL("final.p8", out), cartText(report.runs.at(-1).after));
 log(`archive ${out.pathname}`);
