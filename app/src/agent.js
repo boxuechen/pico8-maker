@@ -98,7 +98,7 @@ export class Agent {
     const registry = createRegistry();
     // The shell environment (just-bash, p8 Worker) loads on first use.
     const { openShellFlow } = await import("./pico8/shell/flow.js");
-    this.shell = await openShellFlow({ game: this.game, startP8: this.startP8 });
+    this.shell = await openShellFlow({ game: this.game, startP8: this.startP8, vision: () => this.vision !== false });
     const pico8 = this.shell.extension;
     if (this.projectContext)
       pico8.sections.push(
@@ -186,6 +186,8 @@ export class Agent {
     if (this.providerId && this.providerId !== model.provider)
       this.models.deleteProvider(this.providerId);
     this.providerId = model.provider;
+    // Text-only models get screens as text (see shell/extension.js).
+    this.vision = model.input.includes("image");
     this.apiKey = config.apiKey;
     this.configured = true;
   }

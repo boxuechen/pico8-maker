@@ -193,8 +193,9 @@ export function readableError(error, apiKey = "") {
   return text;
 }
 
-// Uses the SAME Pi streaming adapter as the game agent: image input, a real
-// model-selected tool call, then a tool result containing an image and final reply.
+// Uses the SAME Pi streaming adapter as the game agent: image input (text for
+// text-only models), a real model-selected tool call, then a tool result
+// containing an image and final reply.
 export async function probeConnection(
   config,
   image,
@@ -203,6 +204,9 @@ export async function probeConnection(
   signal,
 ) {
   const { model, provider } = createConnection(config);
+  // Text-only models get the colour in words; the tool call and result round trip is the same.
+  const vision = model.input.includes("image");
+  if (!vision) image = { type: "text", text: `(This model reads text only. The test screen is filled with ${expectedColor}.)` };
   const models = createModels();
   models.setProvider(provider);
   const tool = {
@@ -221,7 +225,9 @@ export async function probeConnection(
       content: [
         {
           type: "text",
-          text: "Inspect this image and report its dominant color using report_screen.",
+          text: vision
+            ? "Inspect this image and report its dominant color using report_screen."
+            : "Report the test screen's dominant color using report_screen.",
         },
         image,
       ],

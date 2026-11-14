@@ -22,7 +22,7 @@ export function prewarmShell() {
   warm = { url, worker: startBrowser(url).catch(() => null) };
 }
 
-export async function openShellFlow({ game, startP8 }) {
+export async function openShellFlow({ game, startP8, vision }) {
   const start =
     startP8 ??
     (async () => {
@@ -42,7 +42,7 @@ export async function openShellFlow({ game, startP8 }) {
     return {
       env,
       exec,
-      extension: createShellExtension({ game, skillFiles }),
+      extension: createShellExtension({ game, skillFiles, vision }),
       close: () => worker.close(),
     };
   } catch (e) {

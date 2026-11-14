@@ -19,6 +19,8 @@ export { SOUNDS, soundAssets, withSoundBank } from "../../../app/src/pico8/shell
 export { applyResourceFiles, assetFiles, RESOURCE_FILES } from "../../../app/src/pico8/shell/resource-files.js";
 export { p8Host, portSender, remoteP8 } from "../../../app/src/pico8/shell/p8-remote.js";
 export { durableEnv } from "../../../app/src/pico8/shell/durable-env.js";
+export { textOnlyImages } from "../../../app/src/pico8/image-retention.js";
+export { textOnlyRule } from "../../../app/src/pico8/shell/prompt.js";
 export { posix } from "../../../app/src/pico8/shell/posix-path.js";
 export const SKILL_DIR = new URL("../../../app/src/pico8/shell/skill/", import.meta.url).pathname;
 export {

@@ -4,10 +4,10 @@
 // exact prompt a Pi coding-agent session builds for those tools. Everything else
 // (retry, compaction, transcript) is pi-durable's default behaviour.
 import { BACKGROUND_CONTEXT as context } from "@earendil-works/chord/context";
-import { createRegistry, defineExtension, Harness, MemoryStorage, section } from "@earendil-works/pi-durable";
+import { createRegistry, defineExtension, GenerationTask, Harness, hook, MemoryStorage, section } from "@earendil-works/pi-durable";
 import { CodingTools } from "@earendil-works/pi-durable/tools";
 import { connect } from "./browser-agent.mjs";
-import { durableEnv } from "./maker.mjs";
+import { durableEnv, textOnlyImages, textOnlyRule } from "./maker.mjs";
 
 /**
  * @param env from createEnvironment()
@@ -16,7 +16,13 @@ import { durableEnv } from "./maker.mjs";
  */
 export async function runDurableAgent({ env, prompt, systemPrompt, model, thinking = "high", timeMs = 600000 }) {
   const { model: resolved, models } = connect(model);
-  const lab = defineExtension({ name: "lab", sections: [section("pi_prompt", () => systemPrompt, { tag: false })] });
+  // Text-only models (e.g. deepseek-v4-pro) get Maker's text-only rule and text notes for images.
+  const vision = resolved.input?.includes("image") ?? true;
+  const lab = defineExtension({
+    name: "lab",
+    sections: [section("pi_prompt", () => systemPrompt, { tag: false }), ...(vision ? [] : [section("text_only", () => textOnlyRule)])],
+    hooks: vision ? [] : [hook(GenerationTask, { beforeRequest: ({ messages }) => ({ messages: textOnlyImages(messages) }) })],
+  });
   const registry = createRegistry();
   registry.install(lab);
   registry.install(CodingTools);

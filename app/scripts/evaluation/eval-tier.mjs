@@ -4,7 +4,7 @@
 //   agent  quick + S4 ×N (about 6–10 min)     every agent-facing change
 //   full   agent + Garden/Lodge reruns + app smoke (about 30 min)   large changes
 //
-//   DEEPSEEK_API_KEY=... node scripts/evaluation/eval-tier.mjs --tier agent [--model deepseek-flash] [--repeat 5]
+//   DEEPSEEK_API_KEY=... node scripts/evaluation/eval-tier.mjs --tier agent [--model deepseek-flash] [--repeat 5] [--s4-time-ms 600000] [--parallel 3]
 //
 // Runs the layers in parallel, keeps every child log under
 // .cache/evaluations/tier-<id>/ and prints one summary table. Case reruns still
@@ -20,6 +20,11 @@ const { values: a } = parseArgs({
     model: { type: "string", default: "deepseek-flash" },
     repeat: { type: "string", default: "5" },
     thinking: { type: "string", default: "high" },
+    // S4 time limit per task; slower models (deepseek-v4-pro) need more than the default 180 s.
+    "s4-time-ms": { type: "string" },
+    // Provider concurrency: unset runs everything at once; a number runs lab with that
+    // many tasks, then the other jobs that many at a time (deepseek-v4-pro allows few).
+    parallel: { type: "string" },
   },
 });
 const tiers = ["quick", "agent", "full"];
@@ -35,7 +40,7 @@ mkdirSync(out, { recursive: true });
 const matrix = join(out, "matrix.json");
 writeFileSync(matrix, JSON.stringify({ schemaVersion: 1, models: [{ id: a.model, family: "DeepSeek", provider: "deepseek", model: a.model, baseUrl: "https://api.deepseek.com", apiKeyEnv: "DEEPSEEK_API_KEY", thinkingLevel: a.thinking }] }));
 
-const env = { ...process.env, S4_DEEPSEEK_KEY: key, SMOKE_DEEPSEEK_KEY: key, SMOKE_MODEL: a.model, SMOKE_CHROME_NO_SANDBOX: process.env.SMOKE_CHROME_NO_SANDBOX ?? "1" };
+const env = { ...process.env, ...(a["s4-time-ms"] ? { S4_TIME_LIMIT_MS: a["s4-time-ms"] } : {}), S4_DEEPSEEK_KEY: key, SMOKE_DEEPSEEK_KEY: key, SMOKE_MODEL: a.model, SMOKE_CHROME_NO_SANDBOX: process.env.SMOKE_CHROME_NO_SANDBOX ?? "1" };
 const run = (name, cwd, args, extra = {}) =>
   new Promise((resolve) => {
     const log = join(out, `${name}.log`);
@@ -50,16 +55,23 @@ const run = (name, cwd, args, extra = {}) =>
     });
   });
 
-const jobs = [run("lab", LAB, ["bin/eval.mjs", "--loop", "durable", "--p8", "worker", "--model", a.model, "--thinking", a.thinking, "--tasks", "T1,T2,T3,T4,T5,T6,T7,T8,T9", "--parallel", "9"])];
+const limit = a.parallel ? Number(a.parallel) : null;
+const labJob = () => run("lab", LAB, ["bin/eval.mjs", "--loop", "durable", "--p8", "worker", "--model", a.model, "--thinking", a.thinking, "--tasks", "T1,T2,T3,T4,T5,T6,T7,T8,T9", "--parallel", String(limit ?? 9)]);
+const later = [];
 if (level >= 1)
-  for (let i = 1; i <= Number(a.repeat); i++) jobs.push(run(`s4-${i}`, APP, ["scripts/evaluation/run-s4.mjs", "--run", "--matrix", matrix]));
+  for (let i = 1; i <= Number(a.repeat); i++) later.push(() => run(`s4-${i}`, APP, ["scripts/evaluation/run-s4.mjs", "--run", "--matrix", matrix]));
 if (level >= 2) {
-  for (const c of ["garden", "lodge"]) jobs.push(run(`case-${c}`, APP, ["scripts/evaluation/run-case.mjs", "--case", c, "--model", a.model]));
-  jobs.push(run("app-smoke", APP, ["scripts/evaluation/app-smoke.mjs"]));
+  for (const c of ["garden", "lodge"]) later.push(() => run(`case-${c}`, APP, ["scripts/evaluation/run-case.mjs", "--case", c, "--model", a.model]));
+  later.push(() => run("app-smoke", APP, ["scripts/evaluation/app-smoke.mjs"]));
 }
-const results = await Promise.all(jobs);
+let results;
+if (!limit) results = await Promise.all([labJob(), ...later.map((f) => f())]);
+else {
+  results = [await labJob()];
+  for (let i = 0; i < later.length; i += limit) results.push(...(await Promise.all(later.slice(i, i + limit).map((f) => f()))));
+}
 
-const lines = [`# tier ${a.tier} · deepseek/${a.model} · thinking ${a.thinking} · ${id}`, ""];
+const lines = [`# tier ${a.tier} · deepseek/${a.model} · thinking ${a.thinking}${a["s4-time-ms"] ? ` · S4 limit ${a["s4-time-ms"]} ms` : ""} · ${id}`, ""];
 const lab = results.find((r) => r.name === "lab");
 const labRows = lab.text.split("\n").filter((l) => /^\| T\d/.test(l));
 const labPass = labRows.filter((l) => l.split("|")[3].trim() === "✓").length;

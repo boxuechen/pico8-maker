@@ -34,8 +34,9 @@ test("Pi presets retain DeepSeek vision, reasoning compatibility and provider en
   assert.equal(model.compat.maxTokensField, "max_tokens");
   assert.equal(model.compat.requiresReasoningContentOnAssistantMessages, true);
   assert.equal(model.contextWindow, 1000000);
-  assert.ok(providers[0].models.every((m) => m.input.includes("image")));
-  assert.ok(!providers[0].models.some((m) => m.id === "deepseek-v4-pro"));
+  // Text-only models are listed too; the agent then gets screens as text.
+  assert.ok(providers[0].models.find((m) => m.id === "deepseek-flash").input.includes("image"));
+  assert.deepEqual(providers[0].models.find((m) => m.id === "deepseek-v4-pro").input, ["text"]);
   assert.ok(providers[1].models.length > 1);
   assert.throws(
     () => createConnection({ ...config, baseUrl: "https://other.invalid" }),
@@ -184,7 +185,7 @@ test("mainstream catalogs preserve Pi protocols and distinguish Qwen regional ke
   for (const p of providers) {
     assert.ok(p.models.length > 0, p.id);
     for (const model of p.models) {
-      assert.ok(model.input.includes("image"));
+      assert.ok(model.input.includes("text"));
       const connection = createConnection({
         provider: p.id,
         model: model.id,
@@ -298,3 +299,25 @@ for (const [id, modelId, path, authHeader] of [
     assert.equal(requests, 1);
   });
 }
+
+test("text-only models pass the connection probe without an image", async (t) => {
+  const bodies = [];
+  t.mock.method(globalThis, "fetch", async (_url, init) => {
+    const body = JSON.parse(init.body);
+    bodies.push(body);
+    const first = bodies.length === 1;
+    const delta = first
+      ? { role: "assistant", tool_calls: [{ index: 0, id: "c1", type: "function", function: { name: "report_screen", arguments: JSON.stringify({ color: "red" }) } }] }
+      : { role: "assistant", content: "OK" };
+    const chunks = [
+      `data: ${JSON.stringify({ id: "t", object: "chat.completion.chunk", created: 1, model: "deepseek-v4-pro", choices: [{ index: 0, delta, finish_reason: null }] })}\n\n`,
+      `data: ${JSON.stringify({ id: "t", object: "chat.completion.chunk", created: 1, model: "deepseek-v4-pro", choices: [{ index: 0, delta: {}, finish_reason: first ? "tool_calls" : "stop" }] })}\n\n`,
+      "data: [DONE]\n\n",
+    ];
+    return new Response(chunks.join(""), { headers: { "content-type": "text/event-stream" } });
+  });
+  const text = { ...config, model: "deepseek-v4-pro" };
+  assert.match(await probeConnection(text, image, "red"), /Connection passed/);
+  assert.doesNotMatch(JSON.stringify(bodies), /image_url/);
+  assert.match(JSON.stringify(bodies[0]), /reads text only/);
+});

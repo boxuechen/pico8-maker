@@ -222,3 +222,25 @@ function _draw() cls(1) spr(1,60,60) end`;
     await game.dispose();
   }
 });
+
+test("text-only models: host rules say so and tool images become text notes", async () => {
+  const game = new EvaluationGame({ versions: [], draft: emptySnapshot() });
+  try {
+    let vision = true;
+    const ext = createShellExtension({ game, skillFiles, vision: () => vision });
+    const host = ext.sections.find((s) => s.key === "pico8_host");
+    assert.doesNotMatch(await host.render({}, {}), /cannot see images/);
+    vision = false;
+    assert.match(await host.render({}, {}), /This model cannot see images/);
+    const before = ext.hooks[0].hooks?.beforeRequest ?? ext.hooks[0].beforeRequest ?? Object.values(ext.hooks[0]).find((v) => v?.beforeRequest)?.beforeRequest;
+    const messages = [
+      { role: "user", content: "go" },
+      { role: "toolResult", toolCallId: "a", content: [{ type: "text", text: "png" }, { type: "image", mimeType: "image/png", data: "x" }] },
+    ];
+    const out = await before({ messages }, {}, {});
+    assert.equal(JSON.stringify(out.messages).includes('"image"'), false);
+    assert.match(JSON.stringify(out.messages), /reads text only/);
+  } finally {
+    await game.dispose();
+  }
+});

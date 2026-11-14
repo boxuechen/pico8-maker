@@ -341,7 +341,7 @@ const en = {
   searchModels: "Search model names…",
   model: "Model",
   modelCount: ({ n }) =>
-    `${plural(n, "image-capable model", "image-capable models")} · Test to verify tool support`,
+    `${plural(n, "model", "models")} · Test to verify tool support`,
   baseUrl: "Base URL",
   apiKey: "API Key",
   enterApiKey: "Enter your API key",
@@ -705,7 +705,7 @@ const zh = {
   findModel: "查找模型",
   searchModels: "搜索模型名称…",
   model: "模型",
-  modelCount: ({ n }) => `${n} 个支持图像的模型 · 可点“测试连接”确认工具调用`,
+  modelCount: ({ n }) => `${n} 个模型 · 可点“测试连接”确认工具调用`,
   baseUrl: "Base URL",
   apiKey: "API Key",
   enterApiKey: "填写你的 API Key",

@@ -36,7 +36,8 @@ function catalog(id, name, models) {
     id,
     name,
     models: Object.values(models)
-      .filter((m) => supportedApis.has(m.api) && m.input.includes("image"))
+      // Text-only models work too: the agent describes screens as text (p8 look, --crop).
+      .filter((m) => supportedApis.has(m.api) && m.input.includes("text"))
       .sort((a, b) => a.name.localeCompare(b.name)),
   };
 }

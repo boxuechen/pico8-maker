@@ -39,3 +39,17 @@ export function retainRecentImages(messages, { keep, step } = imageRetention) {
   });
   return changed ? result : messages;
 }
+
+export const textOnlyImageText =
+  "[Image not shown: this model reads text only. Use the 32x32 text picture of p8 look, or p8 look --crop x,y,w,h for exact pixels.]";
+
+/** For a model without image input: every tool-result image becomes a text note. */
+export function textOnlyImages(messages) {
+  let changed = false;
+  const result = messages.map((m) => {
+    if (m.role !== "toolResult" || !Array.isArray(m.content) || !m.content.some((p) => p.type === "image")) return m;
+    changed = true;
+    return { ...m, content: m.content.map((p) => (p.type === "image" ? { type: "text", text: textOnlyImageText } : p)) };
+  });
+  return changed ? result : messages;
+}
