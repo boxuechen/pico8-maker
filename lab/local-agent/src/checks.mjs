@@ -57,7 +57,9 @@ export function explainFault(d, source = "") {
   return `${where}${d.message}${hint}${code ? `\n    code: ${code}` : ""}`;
 }
 
-const show = (v) => JSON.stringify(v ?? null);
+/** JSON with sorted keys: Lua table iteration order differs between sessions. */
+const canonical = (v) => JSON.stringify(v, (_, x) => (x && typeof x === "object" && !Array.isArray(x) ? Object.fromEntries(Object.entries(x).sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0))) : x));
+const show = (v) => canonical(v ?? null);
 function judge(actual, start, e) {
   if ("equals" in e && show(actual) !== show(e.equals)) return `is ${show(actual)}, expected ${show(e.equals)}`;
   if ("notEquals" in e && show(actual) === show(e.notEquals)) return `is ${show(actual)}, expected a different value`;
@@ -67,6 +69,7 @@ function judge(actual, start, e) {
   if (e.changes === false && show(actual) !== show(start)) return `changed ${show(start)}→${show(actual)}, expected no change`;
   return null;
 }
+
 
 async function boot(source) {
   const rt = new Runtime();
@@ -135,7 +138,7 @@ export async function checkSource(source, cases = []) {
     // Some button must change g or the screen compared with idling.
     const idle = await boot(source);
     await idle.rt.advance(0, HOLD_FRAMES);
-    const idleG = JSON.stringify((await idle.rt.read(["g"])).g),
+    const idleG = canonical((await idle.rt.read(["g"])).g),
       idleFrame = idle.rt.ascii(32);
     await idle.rt.dispose();
     const responds = [];
@@ -147,7 +150,7 @@ export async function checkSource(source, cases = []) {
         await held.rt.dispose();
         return items;
       }
-      if (JSON.stringify((await held.rt.read(["g"])).g) !== idleG || held.rt.ascii(32) !== idleFrame) responds.push(name);
+      if (canonical((await held.rt.read(["g"])).g) !== idleG || held.rt.ascii(32) !== idleFrame) responds.push(name);
       await held.rt.dispose();
     }
     items.push({ name: "input", pass: responds.length > 0, detail: responds.length ? `responds to ${responds.join(", ")}` : "no button changes g or the screen; read btn() in _update()" });

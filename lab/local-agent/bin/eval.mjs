@@ -2,7 +2,7 @@
 // Runs lab tasks through the stock Pi coding agent in process and scores them.
 //   DEEPSEEK_API_KEY=... node bin/eval.mjs [--provider deepseek] [--model deepseek-flash]
 //     [--tasks T1,T2] [--repeat 1] [--thinking high] [--time-ms 600000] [--parallel 3]
-//     [--loop session|durable]
+//     [--loop session|durable] [--p8 inline|worker]
 // Each run gets its own virtual environment (env.mjs): /cart seeded from the task's
 // start/ folder, /skill/pico8 read-only, p8 as a shell command. The agent never
 // touches the host disk. Scoring: hidden checks (p8 tasks) or the S4 shooter
@@ -13,6 +13,8 @@ import { parseArgs } from "node:util";
 import { piSystemPrompt, runAgent, skillPrompt } from "../src/agent.mjs";
 import { runDurableAgent } from "../src/durable-agent.mjs";
 import { CART, createEnvironment } from "../src/env.mjs";
+import { remoteP8 } from "../src/p8-remote.mjs";
+import { startP8Worker } from "../src/p8-worker-node.mjs";
 import { loadTask, metrics, score, skillFiles } from "../src/tasks.mjs";
 
 const LAB = resolve(new URL("..", import.meta.url).pathname);
@@ -27,6 +29,7 @@ const { values: a } = parseArgs({
     "time-ms": { type: "string", default: "600000" },
     parallel: { type: "string", default: "3" },
     loop: { type: "string", default: "session" },
+    p8: { type: "string", default: "inline" },
   },
 });
 const apiKey = process.env[`${a.provider.toUpperCase().replace(/-/g, "_")}_API_KEY`];
@@ -37,11 +40,14 @@ mkdirSync(OUT, { recursive: true });
 async function runOne(task, n) {
   const base = join(OUT, `${task.id}-${n}`);
   mkdirSync(base, { recursive: true });
-  const env = createEnvironment({ cartFiles: task.cart, skillFiles });
+  // worker: p8 runs in its own thread, one message per command (Maker's main-thread shape).
+  const worker = a.p8 === "worker" ? await startP8Worker(skillFiles) : null;
+  const env = createEnvironment({ cartFiles: task.cart, skillFiles, ...(worker ? { p8: remoteP8(worker.send) } : {}) });
   const model = { provider: a.provider, id: a.model, apiKey, modelsPath: a["models-path"] };
   const common = { env, prompt: skillPrompt(skillFiles["SKILL.md"], task.text), model, thinking: a.thinking, timeMs: Number(a["time-ms"]) };
   // session: Pi coding-agent AgentSession; durable: pi-durable Harness with the same system prompt.
   const run = a.loop === "durable" ? await runDurableAgent({ ...common, systemPrompt: await piSystemPrompt(env, model) }) : await runAgent(common);
+  await worker?.close();
   writeFileSync(join(base, "events.jsonl"), run.events.map((e) => JSON.stringify(e)).join("\n") + "\n");
   const source = (await env.fs.exists(`${CART}/main.lua`)) ? await env.fs.readFile(`${CART}/main.lua`, "utf8") : "";
   writeFileSync(join(base, "main.lua"), source);
@@ -69,7 +75,7 @@ await Promise.all(
 );
 rows.sort((x, y) => x.task.localeCompare(y.task) || x.n - y.n);
 const md = [
-  `# ${a.provider}/${a.model} · thinking ${a.thinking} · loop ${a.loop} · ${runId}`,
+  `# ${a.provider}/${a.model} · thinking ${a.thinking} · loop ${a.loop} · p8 ${a.p8} · ${runId}`,
   "",
   "| task | n | pass | s | turns | tools | errors | in/out/cached tok | status |",
   "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",

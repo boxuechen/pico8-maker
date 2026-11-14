@@ -35,6 +35,10 @@ const compact = (v, max = 600) => {
 
 class UserError extends Error {}
 
+/** Tell the host what a run or look played (Maker shows the last frame and records the route). */
+const report = (onPlay, command, press, r) =>
+  onPlay?.({ command, press, frames: r.rt.frames, ok: r.ok, frame: r.rt.frame ? { width: 128, height: 128, rgba: r.rt.frame.rgba } : null });
+
 /** Boot, play the presses, and report mode changes, sounds and the final state. */
 async function play(src, press) {
   const rt = new Runtime();
@@ -62,8 +66,9 @@ async function play(src, press) {
 /**
  * Run one p8 invocation.
  * @param argv arguments after `p8`
- * @param io { fs: IFileSystem, cwd, templateDir?, memo?: Map } – memo remembers the
- *   last failing check per file across invocations of one environment.
+ * @param io { fs: IFileSystem, cwd, templateDir?, memo?: Map, onPlay? } – memo remembers the
+ *   last failing check per file across invocations of one environment; onPlay gets
+ *   { command, press, frames, ok, frame } after each run/look.
  * @returns { stdout, exitCode }
  */
 export async function runP8(argv, io) {
@@ -78,7 +83,7 @@ export async function runP8(argv, io) {
   }
 }
 
-async function dispatch(argv, { fs, cwd, templateDir = TEMPLATE_DIR, memo = new Map() }, log) {
+async function dispatch(argv, { fs, cwd, templateDir = TEMPLATE_DIR, memo = new Map(), onPlay }, log) {
   const at = (p) => posix.resolve(cwd, p);
   const templates = async () =>
     (await fs.exists(templateDir)) ? (await fs.readdir(templateDir)).filter((f) => f.endsWith(".lua")).map((f) => f.slice(0, -4)) : [];
@@ -110,6 +115,7 @@ async function dispatch(argv, { fs, cwd, templateDir = TEMPLATE_DIR, memo = new 
     case "run": {
       const r = await play(await source(rest[0]), opts.press ?? "wait*30");
       try {
+        await report(onPlay, "run", opts.press ?? "wait*30", r);
         if (r.ok) {
           const paths = opts.read ? opts.read.split(",").map((p) => p.trim()).filter(Boolean) : ["g"];
           const values = await r.rt.read(paths);
@@ -124,6 +130,7 @@ async function dispatch(argv, { fs, cwd, templateDir = TEMPLATE_DIR, memo = new 
     case "look": {
       const r = await play(await source(rest[0]), opts.press ?? "wait*30");
       try {
+        await report(onPlay, "look", opts.press ?? "wait*30", r);
         const pic = r.rt.ascii(32);
         const lines = [...r.lines, ...(pic ? ["screen 32x32 (one character per 4x4 pixels, colour 0-f):", pic] : [])];
         if (opts.png !== undefined && r.rt.frame) {

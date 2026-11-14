@@ -29,8 +29,10 @@ export function readOnly(fs, mountPoint) {
  * @param cartFiles { "main.lua": "...", "checks.json": "..." } relative to /cart
  * @param skillFiles { "SKILL.md": "...", "reference/api.md": "...", ... } relative to /skill/pico8
  * @param cartFs optional IFileSystem for /cart (e.g. OPFS in the browser)
+ * @param p8 optional command body (args, ctx) => { stdout, stderr, exitCode } replacing the
+ *   in-process p8, e.g. remoteP8(send) to run it in a Worker
  */
-export function createEnvironment({ cartFiles = {}, skillFiles = {}, cartFs } = {}) {
+export function createEnvironment({ cartFiles = {}, skillFiles = {}, cartFs, p8: p8Body } = {}) {
   const cart = cartFs ?? new InMemoryFs(Object.fromEntries(Object.entries(cartFiles).map(([k, v]) => [`/${k}`, v])));
   const skill = readOnly(new InMemoryFs(Object.fromEntries(Object.entries(skillFiles).map(([k, v]) => [`/${k}`, v]))), SKILL);
   const fs = new MountableFs({
@@ -41,10 +43,14 @@ export function createEnvironment({ cartFiles = {}, skillFiles = {}, cartFs } = 
     ],
   });
   const memo = new Map();
-  const p8 = defineCommand("p8", async (args, ctx) => {
-    const r = await runP8(args, { fs: ctx.fs, cwd: ctx.cwd, memo });
-    return { stdout: r.stdout, stderr: "", exitCode: r.exitCode };
-  });
+  const p8 = defineCommand(
+    "p8",
+    p8Body ??
+      (async (args, ctx) => {
+        const r = await runP8(args, { fs: ctx.fs, cwd: ctx.cwd, memo });
+        return { stdout: r.stdout, stderr: "", exitCode: r.exitCode };
+      }),
+  );
   const bash = new Bash({ fs, cwd: CART, env: { HOME: CART, PWD: CART }, customCommands: [p8] });
   // just-bash lets some filesystem errors escape exec (e.g. a redirect into the
   // read-only skill); report them like a shell would instead of crashing the run.

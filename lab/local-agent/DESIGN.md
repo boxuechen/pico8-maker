@@ -38,6 +38,8 @@ lab/local-agent/
     agent.mjs         Node: stock Pi AgentSession; piSystemPrompt() for the other loops
     durable-agent.mjs pi-durable Harness (Maker's harness) with its CodingTools, same prompt
     durable-env.mjs   pi-durable ExecutionEnv over the just-bash environment
+    p8-remote.mjs     p8 across a message boundary: p8Host, remoteP8 client, portSender
+    p8-worker.mjs     Worker entry for p8 (Web Worker semantics); p8-worker-node.mjs for Node
     browser-agent.mjs browser: pi-agent-core Agent + pi-ai, same tools and system prompt
     opfs-fs.mjs       /cart on an OPFS directory (write-through InMemoryFs)
     tasks.mjs         Node: skill tree, task loading, scoring, run metrics
@@ -123,7 +125,7 @@ runs, tool errors, output tokens, whether the agent stopped on its own.
 
 ```sh
 cd lab/local-agent && npm install
-DEEPSEEK_API_KEY=... npm run eval -- --tasks T1,T2,T3,T4,T5,T6,T7 [--loop session|durable]
+DEEPSEEK_API_KEY=... npm run eval -- --tasks T1,T2,T3,T4,T5,T6,T7 [--loop session|durable] [--p8 inline|worker]
 node browser/build.mjs && node browser/run.mjs --probe     # no model
 DEEPSEEK_API_KEY=... node browser/run.mjs --task T6
 ```
@@ -239,3 +241,27 @@ one, a failing `p8 check`, `read` used as a shell command). Archives:
 `.cache/lab/20261114T0027-5p8a`, `.cache/lab/20261114T0032-ve7i`. Conclusion: swapping the
 coding-agent session for pi-durable with the same prompt keeps the lab's results; the
 loop is not the variable.
+
+## p8 in a Worker (M1, 2026-11-14)
+
+Maker's agent runs on the page's main thread, so `p8` must run the player runtime
+elsewhere. The lab's checks read `g.mode` after every frame and keep several sessions
+open at once (boot, idle, one per held button), so a frame-level port over Maker's test
+Worker would cost a round trip per frame and need more than one session. Instead the whole
+command crosses once: `remoteP8(send)` sends argv, cwd and the files under cwd;
+`p8Host` runs the unchanged `runP8` on a private InMemoryFs with the skill templates and
+returns stdout, exit code, every created or changed file (also outside cwd, e.g.
+`--png /tmp/a.png`) and what run/look played (`onPlay`: command, press, frames, last frame
+RGBA) for the host to show and record. `createEnvironment({ p8 })` takes the command body.
+
+`tests/checks.test.mjs` runs a script (check twice for the NOTE, run, look --png into a
+subdirectory and /tmp, new from template, a bad subcommand) in-process and through a
+worker_thread and requires identical stdout, exit codes and files.
+
+That test found a flaky check: Lua table key order differs between sessions, so
+`JSON.stringify(g)` in the input check and case expectations could report buttons that do
+nothing (T2 "responds to … up, down, x" after T3 had run in the same thread). Comparisons
+now use sorted keys.
+
+DeepSeek Flash, durable loop, `--p8 worker`, one run each: T1–T7 7/7 (T1–T5 3–13 s, T6
+67 s, T7 40 s). Archive `.cache/lab/20261114T0041-dzcu`.

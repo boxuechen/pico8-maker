@@ -71,3 +71,28 @@ test("the agent environment: p8 in the shell, unchanged re-checks, isolation fro
   assert.match((await sh("p8 look --png s.png")).out, /wrote s.png \(512x512/);
   assert.deepEqual([...(await env.fs.readFileBuffer("/cart/s.png")).slice(1, 4)], [80, 78, 71]);
 });
+
+test("p8 in a worker thread prints exactly what in-process p8 prints and writes back its files", async () => {
+  const { createEnvironment } = await import("../src/env.mjs");
+  const { remoteP8 } = await import("../src/p8-remote.mjs");
+  const { startP8Worker } = await import("../src/p8-worker-node.mjs");
+  const skillFiles = { "SKILL.md": "skill", "templates/skeleton.lua": readFileSync(join(lab, "skill/pico8/templates/skeleton.lua"), "utf8") };
+  const cartFiles = { "main.lua": readFileSync(join(lab, "tasks/T2/start/main.lua"), "utf8"), "checks.json": readFileSync(join(lab, "tasks/T2/start/checks.json"), "utf8") };
+  const worker = await startP8Worker(skillFiles);
+  const plays = [];
+  try {
+    const inline = createEnvironment({ cartFiles, skillFiles });
+    const remote = createEnvironment({ cartFiles, skillFiles, p8: remoteP8(worker.send, { onPlay: (p) => plays.push(p) }) });
+    const script = ["p8 check", "p8 check", "p8 run --press 'right*20 x' --read g.score", "p8 look --png shots/a.png | head -3", "p8 look --png /tmp/b.png | tail -1", "rm main.lua && touch main.lua && p8 new skeleton && p8 check", "p8 bogus"];
+    for (const command of script) {
+      const [a, b] = [await inline.exec(command), await remote.exec(command)];
+      assert.equal(b.stdout, a.stdout, command);
+      assert.equal(b.exitCode, a.exitCode, command);
+    }
+    for (const path of ["/cart/shots/a.png", "/tmp/b.png", "/cart/main.lua"])
+      assert.deepEqual(await remote.fs.readFileBuffer(path), await inline.fs.readFileBuffer(path), path);
+    assert.deepEqual(plays.map((p) => [p.command, p.ok, p.frame?.rgba.length]), [["run", true, 65536], ["look", true, 65536], ["look", true, 65536]]);
+  } finally {
+    await worker.close();
+  }
+});

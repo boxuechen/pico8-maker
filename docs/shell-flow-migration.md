@@ -7,7 +7,7 @@
 - 把 lab 的 Agent 形态（通用 read/edit/write/bash + `p8` 命令 + skill）以**新增的第二条流程** `shell` 接入 Maker，默认关闭，按开关启用；冻结流程 `frozen` 不改一行。
 - **保留 pi-durable**（重试、压缩、转录恢复、STOP、顺序工具都由它负责），只换工具面和启动知识。不迁移到 lab 浏览器版用的 pi-agent-core 裸循环。
 - Maker 侧**不引入 OPFS**：`main.lua` 已经由卡带存储（IndexedDB）持久化，再加一份 OPFS 会多出一个真相源。草稿文件之外的临时文件放会话内存。
-- `p8` 跑在现有测试 Worker 上（复用 `game.rpc`），不在主线程起播放器。
+- `p8` 跑在**独立的 p8 Worker** 里，每条命令一次消息往返；不在主线程起播放器，也不复用测试 Worker 的逐帧 RPC（原因见 4.2）。
 - 是否转为默认，只看第 6 节的评测门槛；结果写入 development-status.md，和冻结规则的要求一致。
 
 ## 2. 证据与边界
@@ -58,17 +58,18 @@ Agent (app/src/agent.js, 不变)
 
 ### 4.2 `p8` 在 Maker 里的语义
 
-`p8` 的命令解析和输出文案沿用 `lab/local-agent/src/p8.mjs`，底层换掉：
+`p8` 的命令解析、检查和输出文案原样沿用 `lab/local-agent/src/p8.mjs`。M1 已实现整条命令跨线程：主线程的 bash 里 `p8` 把 argv、cwd 和 `/cart` 下的文件发给 p8 Worker，Worker 跑原版 `runP8`，返回输出、退出码、新建或改动的文件，以及 run/look 实际播放的内容（按键、帧数、最后一帧 RGBA），供主线程提交版本、显示关键帧、记录路线。
+
+不复用测试 Worker 的原因：lab 的检查每帧都读一次 `g.mode`，还会同时开多个会话（启动、空闲、每个按键各一个）；测试 Worker 每次只有一个会话，逐帧 RPC 每次还带整帧画面和日志。代价是多一个播放器 wasm 实例。
 
 | 子命令 | Maker 实现 | 对 UI 的影响 |
 | --- | --- | --- |
-| `p8 check` | lint + 在测试 Worker 加载草稿 + 冒烟输入 + `checks.json`（若存在） | 启动成功且源码有变化 → 提交新版本（同 `load_game` 的语义） |
-| `p8 run --press … --read …` | 测试 Worker `advance` / `inspect read` | 先按需提交；记录为 normal 路线 |
-| `p8 look [--png f]` | `observe`；PNG 写入会话内存 | 不提交 |
+| `p8 check` | lint + 在 p8 Worker 加载草稿 + 冒烟输入 + `checks.json`（若存在） | 启动成功且源码有变化 → 提交新版本（同 `load_game` 的语义） |
+| `p8 run --press … --read …` | p8 Worker；`onPlay` 回报按键与最后一帧 | 先按需提交；记录为 normal 路线 |
+| `p8 look [--png f]` | p8 Worker；PNG 随返回的文件写回会话内存 | 不提交 |
 | `p8 new <template>` | 写入草稿；模板自带的音效写进草稿资源，而不是每次加载时注入 | 草稿变化 |
 | `p8 export` | 走现有导出 | 无 |
 
-需要先抽一层：`runtime.mjs` 的 `Runtime` 改为依赖一个「会话端口」（load/advance/read/observe），lab 用直接会话实现，Maker 用 `game.rpc` 实现。`p8.mjs`、`checks.mjs`、`lint.mjs` 本身平台无关，可以原样复用。
 
 ### 4.3 需要评审拍板的决策
 
@@ -89,12 +90,14 @@ Agent (app/src/agent.js, 不变)
 | 阶段 | 内容 | 改动范围 | 退出条件 |
 | --- | --- | --- | --- |
 | **M0 lab 对齐（已完成）** | lab 增加 `--loop durable`：pi-durable Harness + 它自带的 CodingTools + just-bash ExecutionEnv，系统提示用 coding agent 生成的原文 | 只动 `lab/` | 已通过：T1–T5 5/5，T6 3/4，T7 4/4，与 session 循环同档，见下文 |
-| **M1 端口抽象** | `Runtime` 依赖会话端口；lab 用直接实现，测试不变 | 只动 `lab/` | lab 单测 10/10，eval T1 回归通过 |
+| **M1 p8 跨线程（已完成）** | `remoteP8` / `p8Host` / Worker 入口；`createEnvironment({ p8 })` | 只动 `lab/` | 已通过：进程内与 worker 线程输出、退出码、文件逐字节一致；durable 循环 + worker p8 跑 T1–T7 7/7 |
 | **M2 Maker 接入** | `createShellExtension`、ShellEnv、p8 走 `game.rpc`、D2 提交、D7 路线、D8 开关 | `app/src/pico8/` 新文件；`agent.js` 只加按 flow 选扩展 | `npm test` 全绿；冻结流程的 S4 复跑结果不变；shell 流程手动烟测通过 |
 | **M3 评测门槛** | 第 6 节矩阵，两条流程同模型同输入 | 只动评测脚本与文档 | 见第 6 节 |
 | **M4 决策** | 记入 development-status.md：转为默认 / 保持开关 / 放弃 | 文档；转默认需另起评审 | — |
 
-M0 结果（2026-11-14，DeepSeek Flash high）：首个请求逐项核对，系统提示与 coding agent 会话**逐字节相同**；工具定义只差键顺序、工具顺序和两三个词。`read` 能把 `p8 look --png` 的图片作为图像块返回。成绩与 session 循环同档（T6 失败是模型的游戏没过 S4 偏轴路线，不是 harness 问题），归档 `.cache/lab/20261114T0027-5p8a`、`.cache/lab/20261114T0032-ve7i`。结论：**循环不是变量**，换成 pi-durable 不丢效果；第 2 节边界 4 解除。下一步是 M1。
+M0 结果（2026-11-14，DeepSeek Flash high）：首个请求逐项核对，系统提示与 coding agent 会话**逐字节相同**；工具定义只差键顺序、工具顺序和两三个词。`read` 能把 `p8 look --png` 的图片作为图像块返回。成绩与 session 循环同档（T6 失败是模型的游戏没过 S4 偏轴路线，不是 harness 问题），归档 `.cache/lab/20261114T0027-5p8a`、`.cache/lab/20261114T0032-ve7i`。结论：**循环不是变量**，换成 pi-durable 不丢效果；第 2 节边界 4 解除。
+
+M1 结果（2026-11-14）：方案从「p8 走测试 Worker 逐帧 RPC」改为「整条命令发给独立 p8 Worker」。顺带修掉 lab 一个不稳定的检查：Lua 表的键顺序在会话间会变，按 `JSON.stringify(g)` 比较会误报按键有响应，现改为排序后比较。durable 循环 + worker p8，T1–T7 7/7（归档 `.cache/lab/20261114T0041-dzcu`）。下一步是 M2，第一次改 `app/`。
 
 ## 6. 评测门槛（M3）
 
