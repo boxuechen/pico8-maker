@@ -31,6 +31,7 @@
 | 主界面烟测（`app-smoke.mjs`） | 主页 → MAKE → 工作台，约 1 分钟提交、试玩帧时间线正常，无控制台问题 |
 | lab T1–T8 | 每次 skill/p8 改动跑一次，8/8（T8 为无胜负的画画玩具） |
 | P1 后 S4 ×5 | 新建 4/5、修复 5/5，中位 62 / 35 s；主界面烟测两次均只产生 v1 |
+| P2-4 后 S4（新建 ×10、修复 ×5） | 新游戏先把精确规则写成 `checks.json` 用例（含像素期望）：新建 10/10、修复 5/5，中位 92 / 66 s |
 
 普通 CI 和部署 smoke 使用脚本模型与真实 WASM，证明集成可用，不证明模型质量。都是小样本，不是统计结论。详细归档（含失败）在忽略的 `.cache/evaluations/` 与 `.cache/lab/`；命令见[评测指南](../app/scripts/evaluation/README.md)。案例报告 [Sweet Garden](sweet-garden-case-study.md)、[Lodge Podge](lodge-podge-case-study.md) 记录的是旧流程的结果。
 

@@ -35,11 +35,12 @@ Runs Lua after boot (after `_init`) and before the presses. Use it to reach a wi
  {"name":"starts with 3 lives","press":"wait","expect":[{"path":"g.lives","equals":3}]},
  {"name":"last life lost loses","setup":"g.lives=1 g.fish={{x=10,y=126,vy=1}}","press":"wait*3","expect":[{"path":"g.mode","equals":"lose"}]},
  {"name":"x restarts","setup":"g.mode='lose' g.wait=20","press":"x wait","expect":[{"path":"g.mode","equals":"play"},{"path":"g.lives","equals":3}]},
- {"name":"right moves","press":"right*10","expect":[{"path":"g.player.x","changes":true}]}
+ {"name":"right moves","press":"right*10","expect":[{"path":"g.player.x","changes":true}]},
+ {"name":"player stays green when hit","setup":"g.inv=30","press":"wait*7","expect":[{"pixel":["g.player.x","g.player.y"],"equals":11}]}
 ]}
 ```
 
-Each case boots fresh, runs `setup` (optional), then `press`, then compares. Expectations: `equals`, `notEquals`, `atLeast`, `atMost`, `changes` (true/false compared with the value right after setup). `equals: null` means the value is nil. Keep cases short (a few frames after setup) so they stay exact.
+Each case boots fresh, runs `setup` (optional), then `press`, then compares. Expectations: `equals`, `notEquals`, `atLeast`, `atMost`, `changes` (true/false compared with the value right after setup). `equals: null` means the value is nil. `pixel: [x, y]` checks the screen colour (0-15) at a point of the last frame instead of a path; x and y are numbers or paths such as `"g.player.x"`. Use pixel cases for rules about what is drawn (a colour that must not change, an object that must stay visible); check a few different frames (`wait*6`, `wait*7`) when something could flicker. Keep cases short (a few frames after setup) so they stay exact.
 
 ## What to check
 

@@ -280,3 +280,12 @@ DeepSeek Flash, durable loop, worker p8: T1–T8 8/8. Archive `.cache/lab/202611
 (`Runtime.setup`, the same hook `checks.json` cases use); output says main.lua is unchanged
 and the run is not normal play. Maker never replays setup runs. T1–T8 8/8
 (`.cache/lab/20261114T0408-7an2`).
+
+## Requirements as checks (P2-4, 2026-11-14)
+
+`checks.json` expectations can name a screen pixel instead of a path:
+`{"pixel":["g.player.x","g.player.y"],"equals":11}` (palette colour of the last frame;
+coordinates are numbers or paths). The skill now has the model write a new game's exact
+rules as at most 8 cases before coding; edits and fixes add none. With that rule S4
+create 10/10 and repair 5/5 (median 92 / 66 s); applying it to every task cost more time
+(T1 18 s) without a measured gain. T1–T8 8/8.

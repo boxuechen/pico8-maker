@@ -88,6 +88,16 @@
 
 - **P2-5 知识回迁（2026-11-14）：** 从标签 `agent-flow-freeze-2026-11-13` 的 `docs/pico8-agent/` 迁入 `skill/reference/`：lua、graphics、palette、sprites-maps、audio、asset-authoring、input-system、memory-storage、game-design、collect-build、match-puzzle、microgames、runtime-compatibility（路径改到 `/skill/pico8/...`，旧工具名改成 p8/bash 写法）；新写 `reference/playtest.md`（按键语法、`--read`、`--setup`、`look`、`checks.json` 格式、该检查什么）和 `reference/workflow.md`（原 WORKFLOW 的创作/修改/资源/可读性配色表 + MACHINE 的机器事实）；3 个示例游戏和 5 个 recipe 进 `examples/`（游戏和模板都过 `p8 check`；两个音频 recipe 没有输入，标为片段）。SKILL.md 末尾改成参考索引表（+1 KB）。顺带补上 `p8 run/look` 输出 printh（最后 20 行），此前 skill 让用 printh 但 p8 不显示。lab T1–T8 8/8，模型在 T6–T8 主动读了 playtest.md/workflow.md；T6 这次 187 s（模型自己写了 awk 模拟器算路线），其余 3–62 s（归档 `.cache/lab/20261114T0656-svwo`）。
 
+- **P2-4 题面要求写成检查（2026-11-14）：** `checks.json` 用例新增像素期望 `{"pixel":["g.player.x","g.player.y"],"equals":11}`（最后一帧该点的调色板颜色，坐标可用数字或状态路径），`reference/playtest.md` 写了格式和「可能闪烁时查相邻两帧」。SKILL.md 工作流加第 2 步。两轮对照（DeepSeek Flash high，S4 新建 ×10、修复 ×5、lab T1–T8）：
+
+  | 版本 | S4 新建独立检查 | 新建中位 | 修复 | 修复中位 | lab |
+  | --- | --- | --- | --- | --- | --- |
+  | 此前 shell 累计（无此规则） | 19/25 | 62–103 s | 25/25 | 35–71 s | T1–T5 4–24 s |
+  | 规则 A：任何带精确规则的任务都先写用例 | 9/10 | 127 s | 5/5 | 89 s | 8/8，T1 18 s、T4 67 s |
+  | **规则 B（保留）：仅新游戏，最多 8 条，修改/修复不加用例** | **10/10** | 92 s | 5/5 | 66 s | 8/8，T1 7 s、T4 37 s |
+
+  10 次新建都写了 `checks.json`。规则 A 唯一的失败仍是受伤闪烁的像素契约。agent 正常覆盖统计缺项 B 轮 2 次（模型用用例和 `--setup` 验证失败路径）。代价：新建中位耗时比 P1 的 62 s 多约 30 s。归档：A `.cache/evaluations/s4-c736b81e-c213-49d8-97a1-0a39a991e5c7`、`s4-67f13a6d-7e62-49e6-8c51-3e363e5efa51`、`s4-c12d0e15-794a-4007-b82f-bc98f53ea114`、`s4-522e4c56-3298-493b-baeb-d95c8b383064`、`s4-a80d6223-b5b3-466b-81ec-37941af585ad`、`s4-f152b806-e2b3-4b5f-baf4-4fc3305ea96c`、`s4-da4b4dc5-5fe3-4dd9-9c88-e1ce1bf40329`、`s4-f4154b91-c628-4494-960f-eeb9e4f450c8`、`s4-0ee2c631-e06e-49e4-9c2f-3e9eddc58b8b`、`s4-0e21c0e5-4c88-4349-8100-54c76ac3ae7b`，`.cache/lab/20261114T0702-x5p4`；B `.cache/evaluations/s4-19f14955-8db5-41c1-9cf0-d95a71969e20`、`s4-588a0aad-9a18-4915-bc71-ce728dabf2db`、`s4-8613d9a5-2830-4e3a-9fa8-30f6897426da`、`s4-9daa4d5c-7559-4622-b7d2-023e9a1424e1`、`s4-5c87f458-5dbf-478f-89a5-2306d849b603`、`s4-9eccb8ae-4933-4e24-91f6-3b9168d8892a`、`s4-98294c9b-76f7-4ff8-a654-2c60c6d569fb`、`s4-4605b44f-feb0-441a-a60c-037cfdf40bb3`、`s4-df9b50e3-331d-47c3-90eb-379078855acd`、`s4-06980de2-0d17-49ce-988b-4daf10a49922`，`.cache/lab/20261114T0708-pi3a`。
+
 ## 5. P3：评测与工程
 
 - **评测分层：** lab T1–T7（约 2 分钟，每次改 skill 或 p8 都跑）→ S4 ×5（约 6 分钟，每次改面向模型的行为都跑）→ 案例 ×2 + 人工试玩（大改时跑）→ `app-smoke`（改 UI 或环境时跑）。所有结果记在 `development-status.md`，失败保留。

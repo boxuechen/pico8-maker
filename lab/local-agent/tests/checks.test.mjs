@@ -108,3 +108,22 @@ test("g and g.mode are optional: toys and plain-global carts pass boot and input
   const still = await checkSource("function _update() end\nfunction _draw() cls(1) end");
   assert.ok(still.some((i) => !i.pass), "a one-colour screen still fails: " + JSON.stringify(still));
 });
+
+test("checks.json pixel expectations read the screen colour at fixed or state-based points", async () => {
+  const src = `function new_game() g={p={x=40,y=50},inv=0,t=0} end
+function _init() new_game() end
+function _update() g.t+=1 if g.inv>0 then g.inv-=1 end if btn(1) then g.p.x+=1 end end
+function _draw() cls(1) if g.inv==0 or g.t%2==0 then rectfill(g.p.x-2,g.p.y-2,g.p.x+2,g.p.y+2,11) end end`;
+  const cases = [
+    { name: "green at start", press: "wait", expect: [{ pixel: ["g.p.x", "g.p.y"], equals: 11 }, { pixel: [0, 0], equals: 1 }] },
+    { name: "still green while invincible (odd frame)", setup: "g.inv=30", press: "wait*1", expect: [{ pixel: ["g.p.x", "g.p.y"], equals: 11 }] },
+    { name: "still green while invincible (even frame)", setup: "g.inv=30", press: "wait*2", expect: [{ pixel: ["g.p.x", "g.p.y"], equals: 11 }] },
+    { name: "off screen", press: "wait", expect: [{ pixel: [200, 0], equals: 1 }] },
+  ];
+  const items = await checkSource(src, cases);
+  const by = Object.fromEntries(items.map((i) => [i.name, i]));
+  assert.equal(by["green at start"].pass, true, by["green at start"].detail);
+  assert.notEqual(by["still green while invincible (odd frame)"].pass, by["still green while invincible (even frame)"].pass, "one of the two frames catches the flicker");
+  assert.match([by["still green while invincible (odd frame)"], by["still green while invincible (even frame)"]].find((i) => !i.pass).detail, /pixel \["g.p.x","g.p.y"\]=\(40,50\) is 1, expected 11/);
+  assert.match(by["off screen"].detail, /is off screen/);
+});

@@ -89,7 +89,9 @@ export async function runCase(source, c, assets) {
       const s = await rt.setup(c.setup);
       if (!s.ok) return { pass: false, detail: `setup failed: ${s.message}` };
     }
-    const paths = (c.expect ?? []).map((e) => e.path);
+    // An expectation names a state path, or a screen pixel whose x and y are numbers or paths.
+    const pixelPaths = (c.expect ?? []).flatMap((e) => (Array.isArray(e.pixel) ? e.pixel.filter((v) => typeof v === "string") : []));
+    const paths = (c.expect ?? []).filter((e) => e.path).map((e) => e.path);
     const start = await rt.read(paths.length ? paths : ["g.mode"]);
     let mode = (await rt.read(["g.mode"]))["g.mode"];
     const modes = [];
@@ -100,9 +102,18 @@ export async function runCase(source, c, assets) {
       });
       if (r.fault) return { pass: false, detail: `fault: ${r.fault.map((d) => explainFault(d, source)).join("; ")}` };
     }
-    const values = await rt.read(paths);
-    const fails = c.expect.map((e) => [e.path, judge(values[e.path], start[e.path], e)]).filter(([, f]) => f);
-    const facts = fails.length ? fails.map(([p, f]) => `${p} ${f}`) : paths.map((p) => `${p}=${show(values[p])}`);
+    const wanted = [...new Set([...paths, ...pixelPaths])];
+    const values = wanted.length ? await rt.read(wanted) : {};
+    const results = c.expect.map((e) => {
+      if (!Array.isArray(e.pixel)) return [e.path, values[e.path], judge(values[e.path], start[e.path], e)];
+      const [x, y] = e.pixel.map((v) => (typeof v === "string" ? values[v] : v));
+      const label = `pixel ${JSON.stringify(e.pixel)}=(${show(x)},${show(y)})`;
+      if (typeof x !== "number" || typeof y !== "number") return [label, null, "has no numeric position"];
+      const colour = rt.pixel(x, y);
+      return [label, colour, colour === null ? "is off screen" : judge(colour, undefined, e)];
+    });
+    const fails = results.filter(([, , f]) => f);
+    const facts = fails.length ? fails.map(([p, , f]) => `${p} ${f}`) : results.map(([p, v]) => `${p}=${show(v)}`);
     return { pass: !fails.length, detail: [...facts, ...(modes.length ? [`mode ${modes.join(", ")}`] : [])].join("; ") };
   } finally {
     await rt.dispose();
