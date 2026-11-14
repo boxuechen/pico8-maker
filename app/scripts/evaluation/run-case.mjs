@@ -3,7 +3,7 @@
 // browser transport and PNG encoding are replaced (EvaluationGame). Uses a
 // disposable cart; never touches the user's library.
 //
-//   DEEPSEEK_API_KEY=... node scripts/evaluation/run-case.mjs --case garden
+//   DEEPSEEK_API_KEY=... node scripts/evaluation/run-case.mjs --case garden [--flow shell]
 //
 // The key is read from the environment only and redacted from the archive.
 import { mkdir, readFile, writeFile } from "node:fs/promises";
@@ -20,6 +20,7 @@ import { inputPlan } from "../../src/pico8/input-sequence.js";
 import { revisionCoverage } from "../../src/pico8/playtests.js";
 import { createPico8Session } from "../../public/player/main/player.mjs";
 import { EvaluationGame } from "./node-game.mjs";
+import { startNodeP8Worker } from "./p8-worker-node.mjs";
 import { outcomeMetrics } from "./outcome-metrics.mjs";
 import { png } from "./png.mjs";
 
@@ -47,12 +48,14 @@ const arg = (name) => {
 };
 const spec = cases[arg("case")];
 if (!spec) throw Error("--case garden|lodge is required");
+const flow = arg("flow") ?? "frozen";
+if (!["frozen", "shell"].includes(flow)) throw Error("--flow frozen|shell");
 const apiKey = process.env.DEEPSEEK_API_KEY;
 if (!apiKey) throw Error("DEEPSEEK_API_KEY is required");
 const millisecondsPerTurn = 900000; // Same per-turn limit as the baseline; no tool cap.
 const id = crypto.randomUUID();
 const out = new URL(
-  `../../../.cache/evaluations/case-${spec.slug}-${id}/`,
+  `../../../.cache/evaluations/case-${spec.slug}${flow === "shell" ? "-shell" : ""}-${id}/`,
   import.meta.url,
 );
 await mkdir(out, { recursive: true });
@@ -108,7 +111,12 @@ const agent = new Agent(
     if (n !== lastCount && n % 10 === 0) log(`${n} tool calls`);
     lastCount = n;
   },
-  { knowledge, projectContext: () => sessionContext(cart, session) },
+  {
+    knowledge,
+    projectContext: () => sessionContext(cart, session),
+    flow,
+    ...(flow === "shell" ? { startP8: startNodeP8Worker } : {}),
+  },
 );
 const report = {
   schemaVersion: 1,
@@ -121,6 +129,7 @@ const report = {
     thinkingLevel: defaultConfig.thinkingLevel,
   },
   knowledgeVersion: index.version,
+  flow,
   limits: { millisecondsPerTurn, toolCalls: null },
   runs: [],
 };
