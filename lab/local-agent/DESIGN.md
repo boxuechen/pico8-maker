@@ -35,7 +35,9 @@ lab/local-agent/
   src/
     env.mjs           just-bash over MountableFs: /cart writable, /skill/pico8 read-only, p8
     pi-tools.mjs      Pi's stock read/edit/write/bash with operations on env
-    agent.mjs         Node: stock Pi AgentSession; piSystemPrompt() for the browser run
+    agent.mjs         Node: stock Pi AgentSession; piSystemPrompt() for the other loops
+    durable-agent.mjs pi-durable Harness (Maker's harness) with its CodingTools, same prompt
+    durable-env.mjs   pi-durable ExecutionEnv over the just-bash environment
     browser-agent.mjs browser: pi-agent-core Agent + pi-ai, same tools and system prompt
     opfs-fs.mjs       /cart on an OPFS directory (write-through InMemoryFs)
     tasks.mjs         Node: skill tree, task loading, scoring, run metrics
@@ -121,7 +123,7 @@ runs, tool errors, output tokens, whether the agent stopped on its own.
 
 ```sh
 cd lab/local-agent && npm install
-DEEPSEEK_API_KEY=... npm run eval -- --tasks T1,T2,T3,T4,T5,T6,T7
+DEEPSEEK_API_KEY=... npm run eval -- --tasks T1,T2,T3,T4,T5,T6,T7 [--loop session|durable]
 node browser/build.mjs && node browser/run.mjs --probe     # no model
 DEEPSEEK_API_KEY=... node browser/run.mjs --task T6
 ```
@@ -208,3 +210,32 @@ Same tool mix as in Node (p8 check/run/look, read, edit, write). Archives:
 skill) runs entirely in the browser with no server beyond static files and the model API;
 this is the shape a Maker migration would take. Bundle size is dominated by just-bash
 (1.2 MB) and Pi render code (pi-tui, highlight.js, photon) that the browser never calls.
+
+## pi-durable loop (M0 of the Maker migration, 2026-11-14)
+
+`--loop durable` runs the same task on pi-durable, the harness Maker uses: a MemoryStorage
+Harness, pi-durable's own `CodingTools` extension (read/write/edit/bash) over
+`durable-env.mjs` (ExecutionEnv on the just-bash environment, p8 included), and one
+untagged section holding the exact prompt `piSystemPrompt()` returns. Retry, compaction
+and transcript are pi-durable defaults; tools run sequentially.
+
+The first request was checked field by field: the system prompt is byte-identical to the
+coding-agent session's; tool schemas match except key order, tool order (read, write,
+edit, bash), "Bash command" vs "Shell command" for `bash.command`, "combined stdout and
+stderr" in the bash description and no bmp in read's. `read` returns `p8 look --png`
+images as image blocks without an image processor.
+
+DeepSeek Flash, thinking high:
+
+| task | durable | session (earlier) |
+| --- | --- | --- |
+| T1–T5 | 5/5, 5–16 s | 5/5, 4–12 s |
+| T6 S4 shooter-create | 3/4, 56–77 s | 3/4, 38–110 s |
+| T7 S4 shooter-repair | 4/4, 37–60 s | 3/3, 53–72 s |
+
+The T6 failure is the model's game (S4 off-axis route: no core loop), not a harness error;
+tool errors in all runs are ordinary nonzero exits (`cat checks.json` on a cart without
+one, a failing `p8 check`, `read` used as a shell command). Archives:
+`.cache/lab/20261114T0027-5p8a`, `.cache/lab/20261114T0032-ve7i`. Conclusion: swapping the
+coding-agent session for pi-durable with the same prompt keeps the lab's results; the
+loop is not the variable.

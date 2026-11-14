@@ -13,4 +13,5 @@ export const posix = {
   resolve: (cwd, path) => normalize(path.startsWith("/") ? path : `${cwd}/${path}`),
   join: (...parts) => normalize(parts.join("/")),
   dirname: (path) => normalize(path).replace(/\/[^/]*$/, "") || "/",
+  basename: (path) => normalize(path).split("/").pop(),
 };

@@ -11,7 +11,8 @@ import { piTools } from "./pi-tools.mjs";
 
 const CATALOG = { deepseek: DEEPSEEK_MODELS };
 
-function connect({ provider, id, apiKey }) {
+/** pi-ai Models with one catalog model and a fixed key; works in Node and the browser. */
+export function connect({ provider, id, apiKey }, onRequest) {
   const model = CATALOG[provider]?.[id];
   if (!model) throw new Error(`unknown model ${provider}/${id}`);
   const api = openAICompletionsApi();
@@ -23,7 +24,10 @@ function connect({ provider, id, apiKey }) {
       baseUrl: model.baseUrl,
       models: [model],
       auth: { apiKey: { name: "lab key", resolve: async () => ({ auth: { apiKey } }) } },
-      api: { stream: (m, c, o) => api.stream(m, c, o), streamSimple: (m, c, o) => api.streamSimple(m, c, o) },
+      api: {
+        stream: (m, c, o) => api.stream(m, c, o),
+        streamSimple: (m, c, o) => (onRequest?.(c), api.streamSimple(m, c, o)),
+      },
     }),
   );
   return { model, models };

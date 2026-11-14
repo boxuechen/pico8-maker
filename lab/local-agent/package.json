@@ -9,7 +9,9 @@
     "eval": "node bin/eval.mjs"
   },
   "dependencies": {
+    "@earendil-works/chord": "1.5.2",
     "@earendil-works/pi-coding-agent": "1.5.2",
+    "@earendil-works/pi-durable": "1.5.2",
     "just-bash": "3.6.0"
   },
   "license": "MIT"

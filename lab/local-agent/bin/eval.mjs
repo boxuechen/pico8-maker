@@ -2,6 +2,7 @@
 // Runs lab tasks through the stock Pi coding agent in process and scores them.
 //   DEEPSEEK_API_KEY=... node bin/eval.mjs [--provider deepseek] [--model deepseek-flash]
 //     [--tasks T1,T2] [--repeat 1] [--thinking high] [--time-ms 600000] [--parallel 3]
+//     [--loop session|durable]
 // Each run gets its own virtual environment (env.mjs): /cart seeded from the task's
 // start/ folder, /skill/pico8 read-only, p8 as a shell command. The agent never
 // touches the host disk. Scoring: hidden checks (p8 tasks) or the S4 shooter
@@ -9,7 +10,8 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
-import { runAgent, skillPrompt } from "../src/agent.mjs";
+import { piSystemPrompt, runAgent, skillPrompt } from "../src/agent.mjs";
+import { runDurableAgent } from "../src/durable-agent.mjs";
 import { CART, createEnvironment } from "../src/env.mjs";
 import { loadTask, metrics, score, skillFiles } from "../src/tasks.mjs";
 
@@ -24,6 +26,7 @@ const { values: a } = parseArgs({
     thinking: { type: "string", default: "high" },
     "time-ms": { type: "string", default: "600000" },
     parallel: { type: "string", default: "3" },
+    loop: { type: "string", default: "session" },
   },
 });
 const apiKey = process.env[`${a.provider.toUpperCase().replace(/-/g, "_")}_API_KEY`];
@@ -35,13 +38,10 @@ async function runOne(task, n) {
   const base = join(OUT, `${task.id}-${n}`);
   mkdirSync(base, { recursive: true });
   const env = createEnvironment({ cartFiles: task.cart, skillFiles });
-  const run = await runAgent({
-    env,
-    prompt: skillPrompt(skillFiles["SKILL.md"], task.text),
-    model: { provider: a.provider, id: a.model, apiKey, modelsPath: a["models-path"] },
-    thinking: a.thinking,
-    timeMs: Number(a["time-ms"]),
-  });
+  const model = { provider: a.provider, id: a.model, apiKey, modelsPath: a["models-path"] };
+  const common = { env, prompt: skillPrompt(skillFiles["SKILL.md"], task.text), model, thinking: a.thinking, timeMs: Number(a["time-ms"]) };
+  // session: Pi coding-agent AgentSession; durable: pi-durable Harness with the same system prompt.
+  const run = a.loop === "durable" ? await runDurableAgent({ ...common, systemPrompt: await piSystemPrompt(env, model) }) : await runAgent(common);
   writeFileSync(join(base, "events.jsonl"), run.events.map((e) => JSON.stringify(e)).join("\n") + "\n");
   const source = (await env.fs.exists(`${CART}/main.lua`)) ? await env.fs.readFile(`${CART}/main.lua`, "utf8") : "";
   writeFileSync(join(base, "main.lua"), source);
@@ -69,7 +69,7 @@ await Promise.all(
 );
 rows.sort((x, y) => x.task.localeCompare(y.task) || x.n - y.n);
 const md = [
-  `# ${a.provider}/${a.model} · thinking ${a.thinking} · ${runId}`,
+  `# ${a.provider}/${a.model} · thinking ${a.thinking} · loop ${a.loop} · ${runId}`,
   "",
   "| task | n | pass | s | turns | tools | errors | in/out/cached tok | status |",
   "| --- | --- | --- | --- | --- | --- | --- | --- | --- |",

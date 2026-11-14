@@ -23,7 +23,7 @@
 1. 样本很小（每格 1–4 次），只能说明「不比冻结差、可能更快」，不是统计结论。
 2. lab 的 skill 带有一套**游戏契约**（全局 `g`、`g.mode` 为 play/win/lose、`g.wait` 后按 X 重开，见 `lab/local-agent/skill/pico8/SKILL.md:38-45`）。S4 和 T1–T7 都贴合这套契约；Maker 产品规则要求「设计模式可选、保留宽松或表达型游戏」。去掉或放宽契约后的效果**没有证据**。
 3. lab 只覆盖代码；精灵、地图、SFX、音乐编辑完全没测过。lab 每次加载都注入一套固定音效库（`lab/local-agent/src/runtime.mjs:24`、`src/sounds.mjs`），Maker 的卡带资源来自草稿。
-4. lab 的系统提示和工具文案来自 pi-coding-agent；Maker 用 pi-durable 的同名工具，文案不同。这个变量在 M0 单独验证。
+4. ~~lab 的系统提示和工具文案来自 pi-coding-agent；Maker 用 pi-durable 的同名工具，文案不同。~~ M0 已验证：同一提示下 pi-durable 结果同档。
 
 ## 3. 现状对照
 
@@ -74,11 +74,11 @@ Agent (app/src/agent.js, 不变)
 
 | # | 问题 | 推荐 | 理由 |
 | --- | --- | --- | --- |
-| D1 | 循环用 pi-durable 还是 pi-agent-core | **pi-durable** | 重试、压缩、转录 v3 恢复、STOP 都是 Maker 的硬约束，裸循环要重写这些 |
+| D1 | 循环用 pi-durable 还是 pi-agent-core | **pi-durable** | 重试、压缩、转录 v3 恢复、STOP 都是 Maker 的硬约束；M0 证明它不影响效果 |
 | D2 | 什么时候提交版本 | **p8 加载成功且源码 hash 变化时提交**，同一请求内去重 | 和 `load_game`「成功才提交、失败保留草稿」一致；预览、导出、撤销不用改 |
 | D3 | 资源（精灵/地图/音效）怎么改 | **第一阶段保留 `read_assets`/`edit_assets` 两个结构化工具**，和 bash 并存 | 已冻结、有测试；做成 p8 子命令没有任何证据 |
 | D4 | skill 里的游戏契约 | `p8 check` 不再强制 `g.mode`；契约降为 skill 里的「推荐写法」 | 遵守产品规则；代价是失去 lab 证据，靠 Garden/Lodge 补 |
-| D5 | 知识来源 | 启动段用 lab SKILL.md + Maker host 段；Maker 参考文档只读挂到 `/skill/pico8/reference/` | 启动前缀保持小（lab 证据的前提），参考按需读 |
+| D5 | 知识来源 | 启动段用 coding agent 默认提示（M0 验证过的原文，去掉指向 Pi 文档的 docs 段）+ lab SKILL.md + Maker host 段；Maker 参考文档只读挂到 `/skill/pico8/reference/` | 启动前缀保持小（lab 证据的前提），参考按需读 |
 | D6 | 图像 | `p8 look --png` + read 读图；image-retention 钩子照常生效 | 和 lab 实测一致；冻结流程的 ×4 直出不搬 |
 | D7 | 路线/覆盖统计 | `p8 run --press` 记 normal 路线；第一阶段不提供 debug 写状态 | 覆盖事实可以延续；debug 在 lab 没出现过需求 |
 | D8 | 开关 | 会话级 `flow: "frozen" \| "shell"`，默认 frozen；评测矩阵增加 `flow` 维度；UI 入口仅 `?flow=shell` | 默认关闭、可配置开启；工具名不同，转录不能跨流程续接，会话创建时固定 |
@@ -88,13 +88,13 @@ Agent (app/src/agent.js, 不变)
 
 | 阶段 | 内容 | 改动范围 | 退出条件 |
 | --- | --- | --- | --- |
-| **M0 lab 对齐** | lab 新增一条跑法：pi-durable Harness + 它自带的 4 个工具 + just-bash ShellEnv，其余不变；跑 T1–T7 ×2 | 只动 `lab/` | 和现有 lab 结果同档：T1–T5 全过，S4 的 4 次中至少 3 次通过。不达标就停，先查文案/循环差异 |
+| **M0 lab 对齐（已完成）** | lab 增加 `--loop durable`：pi-durable Harness + 它自带的 CodingTools + just-bash ExecutionEnv，系统提示用 coding agent 生成的原文 | 只动 `lab/` | 已通过：T1–T5 5/5，T6 3/4，T7 4/4，与 session 循环同档，见下文 |
 | **M1 端口抽象** | `Runtime` 依赖会话端口；lab 用直接实现，测试不变 | 只动 `lab/` | lab 单测 10/10，eval T1 回归通过 |
 | **M2 Maker 接入** | `createShellExtension`、ShellEnv、p8 走 `game.rpc`、D2 提交、D7 路线、D8 开关 | `app/src/pico8/` 新文件；`agent.js` 只加按 flow 选扩展 | `npm test` 全绿；冻结流程的 S4 复跑结果不变；shell 流程手动烟测通过 |
 | **M3 评测门槛** | 第 6 节矩阵，两条流程同模型同输入 | 只动评测脚本与文档 | 见第 6 节 |
 | **M4 决策** | 记入 development-status.md：转为默认 / 保持开关 / 放弃 | 文档；转默认需另起评审 | — |
 
-先做 M0：成本最低，而且能单独回答「pi-durable 工具文案和循环会不会丢掉 lab 的效果」，这是整份方案最大的未知数。
+M0 结果（2026-11-14，DeepSeek Flash high）：首个请求逐项核对，系统提示与 coding agent 会话**逐字节相同**；工具定义只差键顺序、工具顺序和两三个词。`read` 能把 `p8 look --png` 的图片作为图像块返回。成绩与 session 循环同档（T6 失败是模型的游戏没过 S4 偏轴路线，不是 harness 问题），归档 `.cache/lab/20261114T0027-5p8a`、`.cache/lab/20261114T0032-ve7i`。结论：**循环不是变量**，换成 pi-durable 不丢效果；第 2 节边界 4 解除。下一步是 M1。
 
 ## 6. 评测门槛（M3）
 
